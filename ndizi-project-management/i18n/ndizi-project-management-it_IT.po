@@ -1,0 +1,706 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Ndizi Project Management 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-01-21 00:13+0100\n"
+"PO-Revision-Date: 2011-01-21 00:21+0100\n"
+"Last-Translator: Massimiliano Losego <losegomax@gmail.com>\n"
+"Language-Team: Massimiliano Losego <losegomax@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: __;gettext;gettext_noop;_e\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-Language: Italian\n"
+"X-Poedit-Country: ITALY\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: Ndizi.class.php:219
+#: Ndizi.class.php:234
+#: Ndizi.class.php:1737
+#: Ndizi.class.php:2541
+msgid "Ndizi Project Management"
+msgstr "Ndizi Project Management"
+
+#: Ndizi.class.php:219
+msgid "Ndizi"
+msgstr "Ndizi"
+
+#: Ndizi.class.php:220
+msgid "Options"
+msgstr "Opzioni"
+
+#: Ndizi.class.php:221
+msgid "Clients"
+msgstr "Clienti"
+
+#: Ndizi.class.php:222
+#: Ndizi.class.php:1207
+#: Ndizi.class.php:1225
+#: Ndizi.class.php:2258
+msgid "Projects"
+msgstr "Progetti"
+
+#: Ndizi.class.php:223
+#: Ndizi.class.php:1208
+#: Ndizi.class.php:1226
+#: Ndizi.class.php:1275
+#: Ndizi.class.php:1288
+msgid "Tasks"
+msgstr "Compiti"
+
+#: Ndizi.class.php:224
+#: Ndizi.class.php:1209
+#: Ndizi.class.php:1227
+#: Ndizi.class.php:1276
+#: Ndizi.class.php:1289
+#: Ndizi.class.php:1456
+#: Ndizi.class.php:1473
+msgid "Time"
+msgstr "Tempo"
+
+#: Ndizi.class.php:225
+#: Ndizi.class.php:2271
+msgid "Invoices"
+msgstr "Fatture"
+
+#: Ndizi.class.php:876
+msgid "New Client &rarr;"
+msgstr "Nuovo Cliente &rarr;"
+
+#: Ndizi.class.php:879
+msgid "New Project &rarr;"
+msgstr "Nuovo Progetto &rarr;"
+
+#: Ndizi.class.php:882
+msgid "New Task &rarr;"
+msgstr "Nuovo Compito &rarr;"
+
+#: Ndizi.class.php:885
+msgid "New Time Report &rarr;"
+msgstr "Nuovo Report Orario &rarr;"
+
+#: Ndizi.class.php:888
+msgid "New Invoice &rarr;"
+msgstr "Nuova Fattura &rarr;"
+
+#: Ndizi.class.php:1186
+msgid "No clients yet &hellip; why not add one?"
+msgstr "Ancora nessun cliente &hellip; perché  non aggiungerne uno?"
+
+#: Ndizi.class.php:1199
+#: Ndizi.class.php:1217
+#: Ndizi.class.php:1271
+#: Ndizi.class.php:1284
+#: Ndizi.class.php:1328
+#: Ndizi.class.php:1343
+#: Ndizi.class.php:1391
+#: Ndizi.class.php:1405
+#: Ndizi.class.php:1451
+#: Ndizi.class.php:1468
+#: Ndizi.class.php:2275
+#: Ndizi.class.php:2285
+#: Ndizi.class.php:2425
+msgid "ID"
+msgstr "ID"
+
+#: Ndizi.class.php:1200
+#: Ndizi.class.php:1218
+#: Ndizi.class.php:1272
+#: Ndizi.class.php:1285
+#: Ndizi.class.php:1329
+#: Ndizi.class.php:1344
+#: Ndizi.class.php:1452
+#: Ndizi.class.php:1469
+#: Ndizi.class.php:2244
+#: Ndizi.class.php:2326
+#: Ndizi.class.php:2334
+#: Ndizi.class.php:2397
+msgid "Name"
+msgstr "Nome"
+
+#: Ndizi.class.php:1201
+#: Ndizi.class.php:1219
+#: Ndizi.class.php:2248
+#: Ndizi.class.php:2401
+msgid "Phone"
+msgstr "Telefono"
+
+#: Ndizi.class.php:1202
+#: Ndizi.class.php:1220
+#: Ndizi.class.php:1525
+msgid "Email"
+msgstr "Email"
+
+#: Ndizi.class.php:1203
+#: Ndizi.class.php:1221
+#: Ndizi.class.php:2250
+#: Ndizi.class.php:2403
+msgid "Site"
+msgstr "Sito"
+
+#: Ndizi.class.php:1204
+#: Ndizi.class.php:1222
+#: Ndizi.class.php:1273
+#: Ndizi.class.php:1286
+#: Ndizi.class.php:1330
+#: Ndizi.class.php:1345
+#: Ndizi.class.php:1392
+#: Ndizi.class.php:1406
+#: Ndizi.class.php:1529
+#: Ndizi.class.php:2315
+#: Ndizi.class.php:2415
+#: Ndizi.class.php:2428
+msgid "Description"
+msgstr "Descrizione"
+
+#: Ndizi.class.php:1205
+#: Ndizi.class.php:1223
+#: Ndizi.class.php:1531
+#: Ndizi.class.php:2246
+#: Ndizi.class.php:2399
+msgid "Address"
+msgstr "Indirizzo"
+
+#: Ndizi.class.php:1206
+#: Ndizi.class.php:1224
+#: Ndizi.class.php:1533
+#: Ndizi.class.php:2224
+msgid "Access Key"
+msgstr "Chiave di Accesso"
+
+#: Ndizi.class.php:1210
+#: Ndizi.class.php:1228
+#: Ndizi.class.php:1247
+#: Ndizi.class.php:1277
+#: Ndizi.class.php:1290
+#: Ndizi.class.php:1304
+#: Ndizi.class.php:1336
+#: Ndizi.class.php:1351
+#: Ndizi.class.php:1367
+#: Ndizi.class.php:1398
+#: Ndizi.class.php:1412
+#: Ndizi.class.php:1427
+#: Ndizi.class.php:1461
+#: Ndizi.class.php:1478
+#: Ndizi.class.php:1496
+#: Ndizi.class.php:1515
+#: Ndizi.class.php:1536
+#: Ndizi.class.php:1549
+#: Ndizi.class.php:1562
+#: Ndizi.class.php:1575
+#: Ndizi.class.php:1598
+#: Ndizi.class.php:1611
+#: Ndizi.class.php:1632
+#: Ndizi.class.php:1645
+#: Ndizi.class.php:1670
+msgid "Edit"
+msgstr "Modifica"
+
+#: Ndizi.class.php:1211
+#: Ndizi.class.php:1229
+#: Ndizi.class.php:1248
+#: Ndizi.class.php:1278
+#: Ndizi.class.php:1291
+#: Ndizi.class.php:1305
+#: Ndizi.class.php:1337
+#: Ndizi.class.php:1352
+#: Ndizi.class.php:1368
+#: Ndizi.class.php:1399
+#: Ndizi.class.php:1413
+#: Ndizi.class.php:1428
+#: Ndizi.class.php:1462
+#: Ndizi.class.php:1479
+#: Ndizi.class.php:1497
+msgid "Delete"
+msgstr "Cancella"
+
+#: Ndizi.class.php:1258
+msgid "No projects yet &hellip; why not add one?"
+msgstr "Ancora nessun progetto &hellip; perché  non aggiungerne uno?"
+
+#: Ndizi.class.php:1274
+#: Ndizi.class.php:1287
+#: Ndizi.class.php:1333
+#: Ndizi.class.php:1348
+#: Ndizi.class.php:1395
+#: Ndizi.class.php:1409
+#: Ndizi.class.php:1454
+#: Ndizi.class.php:1471
+#: Ndizi.class.php:1515
+#: Ndizi.class.php:1536
+#: Ndizi.class.php:1559
+#: Ndizi.class.php:2515
+msgid "Client"
+msgstr "Cliente"
+
+#: Ndizi.class.php:1315
+msgid "No tasks yet &hellip; why not add one?"
+msgstr "Ancora nessun compito &hellip; perché  non aggiungerne uno?"
+
+#: Ndizi.class.php:1331
+#: Ndizi.class.php:1346
+#: Ndizi.class.php:2327
+#: Ndizi.class.php:2335
+#: Ndizi.class.php:2372
+msgid "Priority"
+msgstr "Priorità"
+
+#: Ndizi.class.php:1332
+#: Ndizi.class.php:1347
+#: Ndizi.class.php:1457
+#: Ndizi.class.php:1474
+#: Ndizi.class.php:2278
+#: Ndizi.class.php:2288
+#: Ndizi.class.php:2328
+#: Ndizi.class.php:2336
+msgid "Status"
+msgstr "Stato"
+
+#: Ndizi.class.php:1334
+#: Ndizi.class.php:1349
+#: Ndizi.class.php:1396
+#: Ndizi.class.php:1410
+#: Ndizi.class.php:1455
+#: Ndizi.class.php:1472
+#: Ndizi.class.php:1549
+#: Ndizi.class.php:1562
+#: Ndizi.class.php:1581
+#: Ndizi.class.php:1617
+#: Ndizi.class.php:1651
+#: Ndizi.class.php:2277
+#: Ndizi.class.php:2287
+#: Ndizi.class.php:2366
+#: Ndizi.class.php:2517
+msgid "Project"
+msgstr "Progetto"
+
+#: Ndizi.class.php:1335
+#: Ndizi.class.php:1350
+#: Ndizi.class.php:1397
+#: Ndizi.class.php:1411
+#: Ndizi.class.php:1625
+#: Ndizi.class.php:2329
+#: Ndizi.class.php:2337
+#: Ndizi.class.php:2426
+msgid "User"
+msgstr "Utente"
+
+#: Ndizi.class.php:1378
+msgid "No time reports yet &hellip; why not add one?"
+msgstr "Ancora nessun report orario &hellip; perché  non aggiungerne uno?"
+
+#: Ndizi.class.php:1393
+#: Ndizi.class.php:1407
+#: Ndizi.class.php:1453
+#: Ndizi.class.php:1470
+#: Ndizi.class.php:1619
+#: Ndizi.class.php:2276
+#: Ndizi.class.php:2286
+#: Ndizi.class.php:2427
+msgid "Date"
+msgstr "Data"
+
+#: Ndizi.class.php:1394
+#: Ndizi.class.php:1408
+#: Ndizi.class.php:1621
+#: Ndizi.class.php:2429
+msgid "Duration"
+msgstr "Durata"
+
+#: Ndizi.class.php:1438
+msgid "No invoices yet &hellip; why not add one?"
+msgstr "Ancora nessuna fattura &hellip; perché  non aggiungerne una?"
+
+#: Ndizi.class.php:1458
+#: Ndizi.class.php:1475
+#: Ndizi.class.php:2455
+#: Ndizi.class.php:2459
+msgid "Total"
+msgstr "Totale"
+
+#: Ndizi.class.php:1459
+#: Ndizi.class.php:1476
+#: Ndizi.class.php:2055
+#: Ndizi.class.php:2460
+msgid "Paid"
+msgstr "Pagato"
+
+#: Ndizi.class.php:1460
+#: Ndizi.class.php:1477
+#: Ndizi.class.php:2461
+msgid "Balance"
+msgstr "Bilancio"
+
+#: Ndizi.class.php:1493
+#: Ndizi.class.php:1494
+#: Ndizi.class.php:1495
+#: Ndizi.class.php:2300
+#: Ndizi.class.php:2466
+#: Ndizi.class.php:2467
+#: Ndizi.class.php:2468
+msgid "$"
+msgstr "$"
+
+#: Ndizi.class.php:1515
+#: Ndizi.class.php:1536
+#: Ndizi.class.php:1549
+#: Ndizi.class.php:1562
+#: Ndizi.class.php:1575
+#: Ndizi.class.php:1598
+#: Ndizi.class.php:1611
+#: Ndizi.class.php:1632
+#: Ndizi.class.php:1645
+#: Ndizi.class.php:1670
+msgid "Add New"
+msgstr "Aggiungi Nuovo"
+
+#: Ndizi.class.php:1521
+msgid "Client Name"
+msgstr "Nome Cliente"
+
+#: Ndizi.class.php:1523
+msgid "Phone Number"
+msgstr "Telefono"
+
+#: Ndizi.class.php:1527
+msgid "Website"
+msgstr "Sito"
+
+#: Ndizi.class.php:1555
+msgid "Project Name"
+msgstr "Nome Progetto"
+
+#: Ndizi.class.php:1557
+msgid "Project Description"
+msgstr "Descrizione Progetto"
+
+#: Ndizi.class.php:1575
+#: Ndizi.class.php:1598
+#: Ndizi.class.php:2519
+#: Ndizi.class.php:2532
+msgid "Task"
+msgstr "Compito"
+
+#: Ndizi.class.php:1583
+#: Ndizi.class.php:2368
+msgid "Task Name"
+msgstr "Nome Compito"
+
+#: Ndizi.class.php:1585
+#: Ndizi.class.php:2370
+msgid "Task Description"
+msgstr "Descrizione Compito"
+
+#: Ndizi.class.php:1587
+msgid "Task Priority"
+msgstr "Priorità Compito"
+
+#: Ndizi.class.php:1589
+msgid "Task Status"
+msgstr "Stato Compito"
+
+#: Ndizi.class.php:1591
+msgid "Assign To User"
+msgstr "Assegna all'utente"
+
+#: Ndizi.class.php:1611
+#: Ndizi.class.php:1632
+#: Ndizi.class.php:2521
+#: Ndizi.class.php:2534
+msgid "Time Report"
+msgstr "Report Orario"
+
+#: Ndizi.class.php:1623
+msgid "Time Summary"
+msgstr "Sommario Tempo"
+
+#: Ndizi.class.php:1645
+#: Ndizi.class.php:1670
+msgid "Invoice"
+msgstr "Fattura"
+
+#: Ndizi.class.php:1653
+msgid "Invoice Date"
+msgstr "Data Fattura"
+
+#: Ndizi.class.php:1655
+msgid "Invoice Name"
+msgstr "Nome Fattura"
+
+#: Ndizi.class.php:1657
+msgid "Invoice Description"
+msgstr "Descrizione Fattura"
+
+#: Ndizi.class.php:1657
+msgid "sent to client"
+msgstr "manda al cliente"
+
+#: Ndizi.class.php:1659
+msgid "Invoice Notes"
+msgstr "Note Fattura"
+
+#: Ndizi.class.php:1659
+msgid "private"
+msgstr "privato"
+
+#: Ndizi.class.php:1661
+msgid "Invoice Terms"
+msgstr "Termini Fattura"
+
+#: Ndizi.class.php:1663
+msgid "Invoice Total"
+msgstr "Totale Fattura"
+
+#: Ndizi.class.php:1665
+msgid "Invoice Paid"
+msgstr "Fattura Pagata"
+
+#: Ndizi.class.php:1667
+msgid "Invoice Status"
+msgstr "Stato Fattura"
+
+#: Ndizi.class.php:1683
+#: Ndizi.class.php:1691
+#: Ndizi.class.php:1707
+msgid "none"
+msgstr "niente"
+
+#: Ndizi.class.php:1743
+msgid "About"
+msgstr "Informazioni"
+
+#: Ndizi.class.php:1745
+msgid "Come mister tally man, tally me bananas &hellip;"
+msgstr "Vieni uomo del conteggio, conta le banane &hellip;"
+
+#: Ndizi.class.php:1746
+msgid "Ndizi is Swahili for Banana.  Owing to Harry Belafonte&rsquo;s classic ballad, and a fondness for Potassium, we&rsquo;ve decided to name this project <strong>Ndizi Project Management</strong>."
+msgstr "Ndizi significa Banana in Swahili. Abbiamo deciso di chiamre questo progetto <strong>Ndizi Project Management</strong> per la ballata di Harry Belafonte e per l'alto tasso di potassio."
+
+#: Ndizi.class.php:1747
+msgid "It still is Beta software, so not <em>all</em> functionality actually works yet, and some of it may not be extactly <em>pretty</em>, but please shoot me some feed back if you catch anything glaring, or just want to speak your mind!  You can E-Mail me at "
+msgstr "Il software è in beta, per questo non <em>tutte</em>  le funzionalità lavorano al meglio ed alcune possono non essere esattamente <em>carine</em>, quindi datemi qualche feed-back per quello che non va, o per nuove idee! Potete scrivermi su "
+
+#: Ndizi.class.php:1751
+msgid "Miscellaneous"
+msgstr "Varie"
+
+#: Ndizi.class.php:1765
+msgid "Client Log-In"
+msgstr "Log-in Cliente"
+
+#: Ndizi.class.php:1770
+msgid "Ndizi Front-End Page"
+msgstr "Pagina Front-End Ndizi"
+
+#: Ndizi.class.php:1778
+msgid "What page should clients log in to?"
+msgstr "In che pagina possono accedere i clienti?"
+
+#: Ndizi.class.php:1781
+msgid "Time Form in Admin Header?"
+msgstr "Form tempo nell'header dell'admin?"
+
+#: Ndizi.class.php:1782
+msgid "Yes"
+msgstr "Si"
+
+#: Ndizi.class.php:1783
+msgid "Do you want to display a handy little form up top?"
+msgstr "Vuoi mostrare un piccolo form in alto?"
+
+#: Ndizi.class.php:1786
+msgid "Save Options"
+msgstr "Salva Opzioni"
+
+#: Ndizi.class.php:1801
+msgid "Ndizi Clients"
+msgstr "Clienti Ndizi"
+
+#: Ndizi.class.php:1821
+msgid "Ndizi Projects"
+msgstr "Progetti Ndizi"
+
+#: Ndizi.class.php:1841
+msgid "Ndizi Tasks"
+msgstr "Compiti Ndizi"
+
+#: Ndizi.class.php:1861
+msgid "Ndizi Time"
+msgstr "Tempo Ndizi"
+
+#: Ndizi.class.php:1881
+msgid "Ndizi Invoices"
+msgstr "Fatture Ndizi"
+
+#: Ndizi.class.php:1995
+msgid "Critical"
+msgstr "Critico"
+
+#: Ndizi.class.php:1996
+msgid "High"
+msgstr "Alto"
+
+#: Ndizi.class.php:1997
+msgid "Normal"
+msgstr "Normale"
+
+#: Ndizi.class.php:1998
+msgid "Low"
+msgstr "Basso"
+
+#: Ndizi.class.php:1999
+msgid "Trivial"
+msgstr "Banale"
+
+#: Ndizi.class.php:2024
+msgid "Finished"
+msgstr "Finito"
+
+#: Ndizi.class.php:2025
+msgid "Waiting on Approval"
+msgstr "In Approvazione"
+
+#: Ndizi.class.php:2026
+msgid "Waiting on Client Response"
+msgstr "In Attesa del Responso del Cliente"
+
+#: Ndizi.class.php:2027
+msgid "Work In Progress"
+msgstr "Work In Progress"
+
+#: Ndizi.class.php:2028
+msgid "On The To-Do List"
+msgstr "Nella lista del To-Do"
+
+#: Ndizi.class.php:2029
+msgid "On The Back Burner"
+msgstr "Nel dimenticatoio"
+
+#: Ndizi.class.php:2030
+msgid "Not Yet Begun"
+msgstr "Non iniziato"
+
+#: Ndizi.class.php:2056
+msgid "Overdue"
+msgstr "In ritardo"
+
+#: Ndizi.class.php:2057
+msgid "Partial"
+msgstr "Parziale"
+
+#: Ndizi.class.php:2058
+msgid "Submitted"
+msgstr "Inviato"
+
+#: Ndizi.class.php:2059
+msgid "Draft"
+msgstr "Bozza"
+
+#: Ndizi.class.php:2117
+msgid "Displaying "
+msgstr "Visualizzati"
+
+#: Ndizi.class.php:2117
+msgid "&mdash"
+msgstr "&mdash"
+
+#: Ndizi.class.php:2117
+msgid " of "
+msgstr " di"
+
+#: Ndizi.class.php:2140
+msgid "Displaying all "
+msgstr "Mostra tutti"
+
+#: Ndizi.class.php:2140
+msgid " results"
+msgstr " risultati"
+
+#: Ndizi.class.php:2192
+msgid "Error: You are not authorized to view this invoice."
+msgstr "Errore: Non sei autorizzato a visuallizare questa fattura."
+
+#: Ndizi.class.php:2227
+msgid "Log-In"
+msgstr "Entra"
+
+#: Ndizi.class.php:2235
+msgid "Log-Out"
+msgstr "Esci"
+
+#: Ndizi.class.php:2252
+#: Ndizi.class.php:2405
+msgid "E-mail"
+msgstr "E-mail"
+
+#: Ndizi.class.php:2266
+msgid "No invoices yet."
+msgstr "Nessuna fattura per ora."
+
+#: Ndizi.class.php:2279
+#: Ndizi.class.php:2289
+msgid "Due"
+msgstr "Debito"
+
+#: Ndizi.class.php:2280
+#: Ndizi.class.php:2290
+msgid "View"
+msgstr "Visualizza"
+
+#: Ndizi.class.php:2317
+msgid "Time Spent"
+msgstr "Tempo Impiegato"
+
+#: Ndizi.class.php:2322
+msgid "Tasks for"
+msgstr "Compiti per"
+
+#: Ndizi.class.php:2361
+#: Ndizi.class.php:2375
+msgid "Add New Task"
+msgstr "Aggiungi Compito"
+
+#: Ndizi.class.php:2389
+msgid "Invoice #"
+msgstr "Fattura #"
+
+#: Ndizi.class.php:2391
+msgid "Submitted On"
+msgstr "Inviato il"
+
+#: Ndizi.class.php:2395
+msgid "Submitted To"
+msgstr "Inviato a"
+
+#: Ndizi.class.php:2474
+msgid "Terms"
+msgstr "Termini"
+
+#: Ndizi.class.php:2499
+msgid "Enter Time"
+msgstr "Inserisci Ora"
+
+#: Ndizi.class.php:2523
+#: Ndizi.class.php:2536
+msgid "Hours Logged"
+msgstr "Ore Loggate"
+
+#: Ndizi.class.php:2532
+msgid "Assigned"
+msgstr "Assegnato"
+
+#: Ndizi.class.php:2534
+msgid "Entered"
+msgstr "Inserito"
+
+#: Ndizi.class.php:2541
+msgid "This is"
+msgstr "Questa è"
+
+#: Ndizi.class.php:2541
+msgid "version"
+msgstr "versione"
+
