@@ -34,7 +34,7 @@ class Google_Tag_Manager {
 	public static function fields_html() {
 		?>
 		<input type="text" id="google_tag_manager_id" name="google_tag_manager_id" placeholder="ABC-DEFG" class="regular-text code" value="<?php echo esc_attr( get_option( 'google_tag_manager_id', '' ) ); ?>" />
-		<p class="description"><?php esc_html_e( ‘The ID from Google&#8217;s provided code (as emphasized):’, ‘google-tag-manager’ ); ?><br />
+		<p class="description"><?php esc_html_e( ‘The ID from Google’s provided code (as emphasized):’, ‘google-tag-manager’ ); ?><br />
 			<code>&lt;noscript&gt;&lt;iframe src="//www.googletagmanager.com/ns.html?id=<strong style="color:#c00;">ABC-DEFG</strong>"</code></p>
 		<p class="description"><?php
 			printf(
