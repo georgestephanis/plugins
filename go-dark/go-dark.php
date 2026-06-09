@@ -4,7 +4,7 @@ Plugin Name: Go Dark
 Plugin URI:  http://wordpress.org/extend/plugins/go-dark/
 Description: This plugin enables websites to 'go dark' on January 18th to protest SOPA/PIPA and Internet Censorship
 Author:      George Stephanis
-Author URI:  http://www.Stephanis.info/
+Author URI:  https://georgestephanis.wordpress.com
 Version:     1.0.7
 */
 

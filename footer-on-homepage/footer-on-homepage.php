@@ -4,7 +4,7 @@ Plugin Name: Footer on Homepage
 Plugin URI:  http://wordpress.org/extend/plugins/footer-on-homepage/
 Description: Provides a space in the administrative area to add SEO-Driven Copy to *only* your homepage.  It will, by default, display a link that (when clicked) displays the entered copy.
 Author:      George Stephanis
-Author URI:  http://www.Stephanis.info/
+Author URI:  https://georgestephanis.wordpress.com
 Version:     1.0.1
 */
 
