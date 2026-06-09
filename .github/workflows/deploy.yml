@@ -1,0 +1,172 @@
+name: Deploy plugin to WordPress.org
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin to deploy
+        required: true
+        type: choice
+        options:
+          - add-ids-to-header-tags
+          - automatic-internal-links
+          - big-emoji-comments
+          - category-posts-widget
+          - custom-content-width
+          - footer-on-homepage
+          - go-dark
+          - google-tag-manager
+          - hugh
+          - legacy-jetpack-custom-css-editor
+          - ndizi-project-management
+          - omnisearch
+          - press-this-v2
+          - random-blocks
+          - restrict-block-content
+          - reusable-block-count
+          - simple-404-keyword-insertion
+          - tarot
+          - the
+          - theme-downloader
+          - update-control
+      version:
+        description: Version number to release (e.g. 1.2.3)
+        required: true
+        type: string
+      dry_run:
+        description: Dry run — skip the SVN commit
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Bump version in plugin files
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          VERSION="${{ inputs.version }}"
+
+          # PHP plugin header — find the file that contains "Plugin Name:"
+          PHP_FILE=$(grep -rl "Plugin Name:" "./$SLUG" --include="*.php" | head -1)
+          if [ -n "$PHP_FILE" ]; then
+            sed -i "s/Version: .*/Version: $VERSION/" "$PHP_FILE"
+            echo "Bumped version in $PHP_FILE"
+          fi
+
+          # Stable tag in readme.txt or README.md
+          for readme in "./$SLUG/readme.txt" "./$SLUG/README.md"; do
+            if [ -f "$readme" ]; then
+              sed -i "s/Stable tag: .*/Stable tag: $VERSION/" "$readme"
+              echo "Bumped Stable tag in $readme"
+            fi
+          done
+
+      - name: Build assets (if package.json present)
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          if [ -f "./$SLUG/package.json" ]; then
+            echo "Building $SLUG..."
+            cd "./$SLUG"
+            npm ci
+            npm run build
+          else
+            echo "No package.json found — skipping build."
+          fi
+
+      - name: Install SVN
+        run: sudo apt-get install -y subversion
+
+      - name: Deploy to WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          VERSION="${{ inputs.version }}"
+          SRC="./$SLUG"
+          SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
+          SVN_DIR="/tmp/svn-$SLUG"
+
+          # Shallow checkout — only trunk, no tags/branches
+          svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
+          svn update --set-depth infinity "$SVN_DIR/trunk"
+
+          # Build rsync exclusions from .distignore (preferred) or .gitattributes
+          EXCLUDES="--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore"
+          if [ -f "$SRC/.distignore" ]; then
+            echo "Using .distignore for exclusions:"
+            while IFS= read -r line; do
+              [[ -z "$line" || "$line" == \#* ]] && continue
+              echo "  excluding: $line"
+              EXCLUDES="$EXCLUDES --exclude=${line#/}"
+            done < "$SRC/.distignore"
+          elif [ -f "$SRC/.gitattributes" ]; then
+            echo "Using .gitattributes export-ignore for exclusions:"
+            while IFS= read -r line; do
+              [[ "$line" == *"export-ignore"* ]] || continue
+              path=$(echo "$line" | awk '{print $1}')
+              echo "  excluding: $path"
+              EXCLUDES="$EXCLUDES --exclude=${path#/}"
+            done < "$SRC/.gitattributes"
+          fi
+
+          # Sync plugin files into SVN trunk
+          rsync -rc --delete $EXCLUDES "$SRC/" "$SVN_DIR/trunk/"
+
+          # Stage new and removed files
+          svn status "$SVN_DIR/trunk" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
+          svn status "$SVN_DIR/trunk" | grep '^!' | awk '{print $2}' | xargs -r svn delete
+
+          # Show what would be committed
+          echo "--- SVN diff summary ---"
+          svn status "$SVN_DIR/trunk"
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run — skipping SVN commit and tag."
+            exit 0
+          fi
+
+          # Commit trunk
+          svn commit "$SVN_DIR/trunk" \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Deploying $SLUG v$VERSION"
+
+          # Tag the release
+          svn copy \
+            "$SVN_URL/trunk" \
+            "$SVN_URL/tags/$VERSION" \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Tagging $SLUG v$VERSION"
+
+          echo "Deployed $SLUG v$VERSION to WordPress.org"
+
+      - name: Commit version bump back to Git
+        # For plugins that live directly in this repo (not submodules), commits the
+        # version bump so the monorepo stays in sync. Submodule plugins need a
+        # separate commit pushed to their own repo.
+        if: ${{ !inputs.dry_run }}
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          VERSION="${{ inputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet "./$SLUG"; then
+            echo "No uncommitted changes in ./$SLUG — submodule plugins require a version bump commit in their own repo."
+          else
+            git add "./$SLUG"
+            git commit -m "Bump $SLUG to v$VERSION"
+            git push
+          fi

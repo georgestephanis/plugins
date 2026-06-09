@@ -1,0 +1,135 @@
+name: Update plugin readme/assets on WordPress.org
+
+# Use this to push readme.txt and .wordpress-org/ asset changes (banners, icons,
+# screenshots) to SVN without cutting a full release. Touches trunk and the current
+# Stable tag directory. Does not modify plugin code.
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin to update
+        required: true
+        type: choice
+        options:
+          - add-ids-to-header-tags
+          - automatic-internal-links
+          - big-emoji-comments
+          - category-posts-widget
+          - custom-content-width
+          - footer-on-homepage
+          - go-dark
+          - google-tag-manager
+          - hugh
+          - legacy-jetpack-custom-css-editor
+          - ndizi-project-management
+          - omnisearch
+          - press-this-v2
+          - random-blocks
+          - restrict-block-content
+          - reusable-block-count
+          - simple-404-keyword-insertion
+          - tarot
+          - the
+          - theme-downloader
+          - update-control
+      dry_run:
+        description: Dry run — show what would change without committing
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  asset-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install SVN
+        run: sudo apt-get install -y subversion
+
+      - name: Update readme and assets on WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          SRC="./$SLUG"
+          SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
+          SVN_DIR="/tmp/svn-$SLUG"
+
+          # Shallow checkout: trunk + assets, no tags yet
+          svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
+          svn update --set-depth infinity "$SVN_DIR/trunk"
+          svn update --set-depth infinity "$SVN_DIR/assets"
+
+          CHANGED=false
+
+          # Sync readme.txt / README.md into trunk
+          for readme in readme.txt README.md; do
+            if [ -f "$SRC/$readme" ]; then
+              cp "$SRC/$readme" "$SVN_DIR/trunk/$readme"
+              if svn status "$SVN_DIR/trunk/$readme" | grep -q '^M'; then
+                echo "Updated trunk/$readme"
+                CHANGED=true
+              else
+                echo "No change in trunk/$readme"
+              fi
+            fi
+          done
+
+          # Sync .wordpress-org/ into SVN assets/
+          if [ -d "$SRC/.wordpress-org" ]; then
+            rsync -rc "$SRC/.wordpress-org/" "$SVN_DIR/assets/"
+            svn status "$SVN_DIR/assets" | grep '^?' | awk '{print $2}' | xargs -r svn add
+            svn status "$SVN_DIR/assets" | grep '^!' | awk '{print $2}' | xargs -r svn delete
+            if svn status "$SVN_DIR/assets" | grep -qE '^[MAD!]'; then
+              echo "Updated assets/"
+              CHANGED=true
+            else
+              echo "No change in assets/"
+            fi
+          else
+            echo "No .wordpress-org directory found — skipping asset sync."
+          fi
+
+          # Also mirror readme into the current Stable tag directory
+          STABLE_TAG=$(grep "^Stable tag:" "$SVN_DIR/trunk/readme.txt" 2>/dev/null | awk '{print $NF}' | tr -d '[:space:]')
+          if [ -n "$STABLE_TAG" ] && [ "$STABLE_TAG" != "trunk" ]; then
+            if svn info "$SVN_URL/tags/$STABLE_TAG" &>/dev/null; then
+              svn update --set-depth infinity "$SVN_DIR/tags/$STABLE_TAG"
+              for readme in readme.txt README.md; do
+                [ -f "$SRC/$readme" ] && cp "$SRC/$readme" "$SVN_DIR/tags/$STABLE_TAG/$readme"
+              done
+              if svn status "$SVN_DIR/tags/$STABLE_TAG" | grep -qE '^[MAD]'; then
+                echo "Updated tags/$STABLE_TAG readme"
+                CHANGED=true
+              fi
+            else
+              echo "Stable tag $STABLE_TAG not found in SVN tags/ — skipping."
+            fi
+          fi
+
+          echo "--- SVN diff summary ---"
+          svn status "$SVN_DIR"
+
+          if [ "$CHANGED" = false ]; then
+            echo "Nothing changed — no SVN commit needed."
+            exit 0
+          fi
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run — skipping SVN commit."
+            exit 0
+          fi
+
+          svn commit "$SVN_DIR" \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Update $SLUG readme/assets"
+
+          echo "Done — readme/assets updated for $SLUG on WordPress.org"
