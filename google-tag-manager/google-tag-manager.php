@@ -28,19 +28,22 @@ class Google_Tag_Manager {
 			'sanitize_callback' => 'sanitize_text_field',
 			'default'           => '',
 		) );
-		add_settings_field( 'google_tag_manager_id', '<label for="google_tag_manager_id">' . esc_html__( 'Google Tag Manager ID', 'google_tag_manager' ) . '</label>', array( __CLASS__, 'fields_html' ), 'general' );
+		add_settings_field( 'google_tag_manager_id', '<label for="google_tag_manager_id">' . esc_html__( 'Google Tag Manager ID', 'google-tag-manager' ) . '</label>', array( __CLASS__, 'fields_html' ), 'general' );
 	}
 
 	public static function fields_html() {
 		?>
 		<input type="text" id="google_tag_manager_id" name="google_tag_manager_id" placeholder="ABC-DEFG" class="regular-text code" value="<?php echo esc_attr( get_option( 'google_tag_manager_id', '' ) ); ?>" />
-		<p class="description"><?php esc_html_e( 'The ID from Google’s provided code (as emphasized):', 'google_tag_manager' ); ?><br />
+		<p class="description"><?php esc_html_e( ‘The ID from Google&#8217;s provided code (as emphasized):’, ‘google-tag-manager’ ); ?><br />
 			<code>&lt;noscript&gt;&lt;iframe src="//www.googletagmanager.com/ns.html?id=<strong style="color:#c00;">ABC-DEFG</strong>"</code></p>
 		<p class="description"><?php
 			printf(
-				/* translators: %s: link to Google Tag Manager sign-up page */
-				esc_html__( 'You can get yours %s!', 'google_tag_manager' ),
-				'<a href="https://www.google.com/tagmanager/">' . esc_html__( 'here', 'google_tag_manager' ) . '</a>'
+				wp_kses(
+					/* translators: %s: URL to the Google Tag Manager sign-up page */
+					__( ‘You can get yours <a href="%s">here</a>!’, ‘google-tag-manager’ ),
+					array( ‘a’ => array( ‘href’ => array() ) )
+				),
+				esc_url( ‘https://www.google.com/tagmanager/’ )
 			);
 		?></p>
 		<?php
