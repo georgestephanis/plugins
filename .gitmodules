@@ -1,0 +1,36 @@
+[submodule "add-ids-to-header-tags"]
+	path = add-ids-to-header-tags
+	url = https://github.com/georgestephanis/add-ids-to-header-tags
+[submodule "automatic-internal-links"]
+	path = automatic-internal-links
+	url = https://github.com/georgestephanis/automatic-internal-links
+[submodule "big-emoji-comments"]
+	path = big-emoji-comments
+	url = https://github.com/georgestephanis/big-emoji-comments
+[submodule "custom-content-width"]
+	path = custom-content-width
+	url = https://github.com/georgestephanis/Custom-Content-Width
+[submodule "legacy-jetpack-custom-css-editor"]
+	path = legacy-jetpack-custom-css-editor
+	url = https://github.com/georgestephanis/legacy-jetpack-custom-css-editor
+[submodule "omnisearch"]
+	path = omnisearch
+	url = https://github.com/georgestephanis/omnisearch
+[submodule "random-blocks"]
+	path = random-blocks
+	url = https://github.com/georgestephanis/random-blocks
+[submodule "restrict-block-content"]
+	path = restrict-block-content
+	url = https://github.com/bethinkstudio/restrict-block-content
+[submodule "reusable-block-count"]
+	path = reusable-block-count
+	url = https://github.com/georgestephanis/Reusable-Block-Count
+[submodule "tarot"]
+	path = tarot
+	url = https://github.com/georgestephanis/tarot
+[submodule "theme-downloader"]
+	path = theme-downloader
+	url = https://github.com/georgestephanis/theme-downloader
+[submodule "update-control"]
+	path = update-control
+	url = https://github.com/chipbennett/update-control
