@@ -152,10 +152,12 @@ jobs:
           echo "Deployed $SLUG v$VERSION to WordPress.org"
 
       - name: Commit version bump back to Git
-        # For plugins that live directly in this repo (not submodules), commits the
-        # version bump so the monorepo stays in sync. Submodule plugins need a
-        # separate commit pushed to their own repo.
+        # Direct-directory plugins: commits the bump to the monorepo.
+        # Submodule plugins: pushes a branch to the upstream repo and opens a PR.
+        # Requires GH_PAT secret (repo scope) for cross-repo push/PR access.
         if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           SLUG="${{ inputs.plugin }}"
           VERSION="${{ inputs.version }}"
@@ -163,10 +165,34 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet "./$SLUG"; then
-            echo "No uncommitted changes in ./$SLUG — submodule plugins require a version bump commit in their own repo."
+          if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
+            # Submodule plugin — push a branch and open a PR upstream
+            REMOTE_URL=$(git config -f .gitmodules --get "submodule.$SLUG.url")
+            REPO=$(echo "$REMOTE_URL" | sed 's|https://github.com/||;s|\.git$||')
+            BRANCH="bump-v$VERSION"
+            DEFAULT_BRANCH=$(gh repo view "$REPO" --json defaultBranchRef --jq '.defaultBranchRef.name')
+
+            cd "./$SLUG"
+            git checkout -b "$BRANCH"
+            git add -A
+            git commit -m "Bump version to $VERSION"
+            git push origin "$BRANCH"
+
+            gh pr create \
+              --repo "$REPO" \
+              --title "Bump $SLUG to v$VERSION" \
+              --body "Version bump to \`$VERSION\` for WordPress.org release, deployed via the [plugins monorepo](https://github.com/${{ github.repository }})." \
+              --base "$DEFAULT_BRANCH" \
+              --head "$BRANCH"
+
+            echo "PR opened in $REPO"
           else
-            git add "./$SLUG"
-            git commit -m "Bump $SLUG to v$VERSION"
-            git push
+            # Direct-directory plugin — commit bump to the monorepo
+            if git diff --quiet "./$SLUG"; then
+              echo "No changes to commit in ./$SLUG"
+            else
+              git add "./$SLUG"
+              git commit -m "Bump $SLUG to v$VERSION"
+              git push
+            fi
           fi
