@@ -2,7 +2,7 @@
 /*
  * Plugin Name: The
  * Author: George Stephanis
- * Author URI: http://stephanis.info
+ * Author URI: https://georgestephanis.wordpress.com
  * Plugin Muses: WordCamp Philly (@WCPhilly), John Hawkins (@VegasGeek), Dre Armeda (@DreMeda), and Ben Metcalfe (@DotBen)
  * Description: This plugin adds a shortcode of [the], which replaces the shortcode with either `the`, `The`, `teh`, or `Teh` depending on whether or not the `caps` or `hipster` parameters are set.
  * Version: 1.1

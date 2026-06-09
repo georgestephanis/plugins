@@ -4,7 +4,7 @@ Plugin Name: Recent Category Posts Widget
 Plugin URI: http://www.Stephanis.info/
 Description: Displays the most recent posts in the selected category in a simple list.
 Author: E. George Stephanis
-Author URI: http://www.Stephanis.info/
+Author URI: https://georgestephanis.wordpress.com
 Version: 2.0
 */
 

@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/press-this-v2/
 Description: This is a rewrite of the Press This functionality from core.
 Author: George Stephanis
 Version: 0.1
-Author URI: http://stephanis.info/
+Author URI: https://georgestephanis.wordpress.com
 */
 
 add_filter( 'shortcut_link', 'v2_shortcut_link' );

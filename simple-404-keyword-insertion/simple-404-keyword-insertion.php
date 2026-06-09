@@ -4,7 +4,7 @@ Plugin Name: Simple 404 Keyword Insertion
 Plugin URI:  http://wordpress.org/extend/plugins/simple-404-keyword-insertion/
 Description: This builds a custom 404 page based off the request string.
 Author:      George Stephanis
-Author URI:  http://www.Stephanis.info/
+Author URI:  https://georgestephanis.wordpress.com
 Version:     1.0
 */
 
