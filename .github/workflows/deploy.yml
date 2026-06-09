@@ -85,7 +85,7 @@ jobs:
 
       - name: Deploy to WordPress.org SVN
         env:
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_USERNAME: ${{ vars.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
         run: |
           SLUG="${{ inputs.plugin }}"
