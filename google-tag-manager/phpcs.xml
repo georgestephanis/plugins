@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ruleset name="google-tag-manager">
+    <description>WPCS config for google-tag-manager.</description>
+
+    <file>./</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+
+    <!-- Single-file plugin; the plugin bootstrap and class live in the same file,
+         so the class-*.php filename convention cannot be followed. -->
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>*/google-tag-manager.php</exclude-pattern>
+    </rule>
+
+    <config name="minimum_supported_wp_version" value="5.0"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+</ruleset>
