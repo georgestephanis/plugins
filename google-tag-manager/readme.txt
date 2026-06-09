@@ -3,8 +3,8 @@ Contributors: georgestephanis
 Donate link: http://www.charitywater.org/donate/
 Tags: google, tag manager, tag management, analytics, theme hook alliance, genesis
 Requires at least: 2.7
-Tested up to: 5.4.1
-Stable tag: 1.0.3
+Tested up to: 7.0
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,15 @@ This plugin makes it even easier to use Google Tag Manager, adding all the code 
 Two possibilities: First, you haven't yet specified the ID in the admin panel, or second, your theme is missing a `<?php wp_footer(); ?>` call.
 
 == Changelog ==
+
+= 1.0.4 =
+* Security: escape option value on output in settings field.
+* Standards: update `register_setting()` to array form; use `sanitize_text_field` instead of `esc_attr` on save.
+* Standards: replace `add_filter` with `add_action` for `admin_init` hook.
+* Standards: rename class to `Google_Tag_Manager` (UpperCamelCase).
+* Standards: extract HTML from translatable string in settings field.
+* Performance: raise `wp_head` priority to 1 so GTM snippet loads as early as possible.
+* Housekeeping: update Plugin URI to https and current path.
 
 = 1.0.3 =
 * Add support for the new `wp_body_open` hook in core.
