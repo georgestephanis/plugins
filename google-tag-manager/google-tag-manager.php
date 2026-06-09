@@ -5,7 +5,7 @@
  * Description: This is an implementation of the Tag Management system from Google. It adds a field to the existing General Settings page for the ID, and if specified, outputs the tag management javascript in the page footer.
  * Version: 1.0.4
  * Author: George Stephanis
- * Author URI: http://stephanis.info
+ * Author URI: https://georgestephanis.wordpress.com
  * License: GPLv2 or later
  *
  * @package Google_Tag_Manager
