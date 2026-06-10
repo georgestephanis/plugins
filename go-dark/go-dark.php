@@ -131,7 +131,7 @@ if ( ! class_exists( 'go_dark' ) ) :
 			update_option( 'go_dark_img', $img );
 
 			if ( isset( $_POST['go_dark_text'] ) ) {
-				update_option( 'go_dark_text', wp_kses_post( wp_unslash( $_POST['go_dark_text'] ) ) );
+				update_option( 'go_dark_text', wp_kses( wp_unslash( $_POST['go_dark_text'] ), self::get_allowed_tags() ) );
 			}
 		}
 
@@ -141,7 +141,7 @@ if ( ! class_exists( 'go_dark' ) ) :
 		 * @return void
 		 */
 		public static function show_page() {
-			$font    = 'Just+Another+Hand';
+			$font    = 'Just Another Hand';
 			$img_opt = get_option( 'go_dark_img', 'none' );
 
 			if ( ! headers_sent() ) {
@@ -164,7 +164,7 @@ if ( ! class_exists( 'go_dark' ) ) :
 		html {
 			min-height:100%; width:100%;
 			text-shadow:1px 1px 0 #222;
-			font-family:'<?php echo esc_html( str_replace( '+', ' ', $font ) ); ?>', cursive;
+			font-family:'<?php echo esc_html( $font ); ?>', cursive;
 			font-size:24px; color:#eee;
 		}
 		html {
@@ -179,19 +179,19 @@ if ( ! class_exists( 'go_dark' ) ) :
 			<?php
 			switch ( $img_opt ) {
 				case 'sign':
-					echo '<img src="' . esc_url( plugins_url( 'sign.png', __FILE__ ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
+					echo '<img src="' . esc_url( self::get_img( 'sign' ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
 					break;
 				case 'seal':
-					echo '<img src="' . esc_url( plugins_url( 'seal.png', __FILE__ ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
+					echo '<img src="' . esc_url( self::get_img( 'seal' ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
 					break;
 			}
-			echo wp_kses_post( get_option( 'go_dark_text', self::get_default_text() ) );
+			echo wp_kses( get_option( 'go_dark_text', self::get_default_text() ), self::get_allowed_tags() );
 			?>
 		</div>
 		</body>
 		</html>
 			<?php
-			wp_die();
+			exit;
 		}
 
 		/**
@@ -205,20 +205,41 @@ if ( ! class_exists( 'go_dark' ) ) :
 		}
 
 		/**
+		 * Return the wp_kses allowed-tags array including iframe for the Vimeo embed.
+		 *
+		 * @return array<string, array<string, bool>>
+		 */
+		public static function get_allowed_tags() {
+			$allowed           = wp_kses_allowed_html( 'post' );
+			$allowed['iframe'] = array(
+				'src'                   => true,
+				'width'                 => true,
+				'height'                => true,
+				'frameborder'           => true,
+				'webkitallowfullscreen' => true,
+				'mozallowfullscreen'    => true,
+				'allowfullscreen'       => true,
+			);
+			return $allowed;
+		}
+
+		/**
 		 * Return the default splash page text.
 		 *
 		 * @return string
 		 */
 		public static function get_default_text() {
-			return get_bloginfo( 'name' ) . ' has gone dark from '
-			. wp_date( self::get_timedate_format(), self::get_start() )
-			. ' until '
-			. wp_date( self::get_timedate_format(), self::get_end() )
-			. ' to protest SOPA/PIPA and Internet Censorship.'
+			return sprintf(
+				/* translators: 1: site name, 2: go-dark start date/time, 3: go-dark end date/time */
+				__( '%1$s has gone dark from %2$s until %3$s to protest SOPA/PIPA and Internet Censorship.', 'go-dark' ),
+				get_bloginfo( 'name' ),
+				wp_date( self::get_timedate_format(), self::get_start() ),
+				wp_date( self::get_timedate_format(), self::get_end() )
+			)
 			. "\r\n\r\n"
 			. '<iframe src="https://player.vimeo.com/video/31100268?byline=0&#038;portrait=0" width="400" height="225" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>'
 			. "\r\n\r\n"
-			. '<a href="https://sopastrike.com/">Learn more.</a>';
+			. '<a href="https://sopastrike.com/">' . esc_html__( 'Learn more.', 'go-dark' ) . '</a>';
 		}
 
 		/**
