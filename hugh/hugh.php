@@ -68,10 +68,14 @@ class Hugh {
 				'permission_callback' => '__return_true',
 				'args'                => array(
 					'color' => array(
-						'required' => true,
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 					'label' => array(
-						'default' => '',
+						'default'           => '',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
 			)
@@ -100,8 +104,8 @@ class Hugh {
 	 * @return array|WP_Error The stored color entry, or a WP_Error on invalid input.
 	 */
 	public static function rest_add_color( $data ) {
-		$new_color = strtolower( $data['color'] );
-		$new_label = substr( wp_kses( $data['label'], array() ), 0, 255 );
+		$new_color = strtolower( (string) $data['color'] );
+		$new_label = substr( sanitize_text_field( (string) $data['label'] ), 0, 255 );
 
 		if ( ! preg_match( '/^#[\da-f]{6}$/', $new_color ) ) {
 			return new WP_Error( 'bad-color', __( 'The specified color is in an invalid format.', 'hugh' ) );
