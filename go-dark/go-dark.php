@@ -1,225 +1,282 @@
 <?php
-/*
-Plugin Name: Go Dark
-Plugin URI:  http://wordpress.org/extend/plugins/go-dark/
-Description: This plugin enables websites to 'go dark' on January 18th to protest SOPA/PIPA and Internet Censorship
-Author:      George Stephanis
-Author URI:  https://georgestephanis.wordpress.com
-Version:     1.0.7
-*/
+/**
+ * Plugin Name: Go Dark
+ * Plugin URI:  https://wordpress.org/plugins/go-dark/
+ * Description: plugin enables websites to 'go dark' on January 18th to protest SOPA/PIPA and Internet Censorship
+ * Author:      George Stephanis
+ * Author URI:  https://georgestephanis.wordpress.com
+ * Version:     1.0.7
+ * Text Domain: go-dark
+ *
+ * @package go-dark
+ */
 
-if( ! class_exists( 'go_dark' ) ):
-class go_dark {
+if ( ! class_exists( 'go_dark' ) ) :
 
-	function go(){
-		add_action( 'init', array( __CLASS__, 'init' ) );
-	}
-	function init(){
-		add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
-		if( ! is_admin() && ! is_feed() ){
-			if( isset( $_GET['go_dark'] ) || self::is_dark() ){
-				add_action( 'template_redirect', array( __CLASS__, 'show_page' ), 99 );
+	/**
+	 * Go Dark main plugin class.
+	 */
+	class go_dark {
+
+		/**
+		 * Bootstrap all hooks.
+		 *
+		 * @return void
+		 */
+		public static function go() {
+			add_action( 'init', array( __CLASS__, 'init' ) );
+		}
+
+		/**
+		 * Register hooks on init.
+		 *
+		 * @return void
+		 */
+		public static function init() {
+			add_action( 'admin_menu', array( __CLASS__, 'add_admin_menu' ) );
+			if ( ! is_admin() && ! is_feed() ) {
+				if ( isset( $_GET['go_dark'] ) || self::is_dark() ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					add_action( 'template_redirect', array( __CLASS__, 'show_page' ) );
+				}
 			}
 		}
-	}
-	function admin_menu(){
-		add_menu_page( 'Go Dark', 'Go Dark', 'manage_options', 'go-dark', array( __CLASS__, 'page_go_dark' ) );
-	}
-	function page_go_dark(){
-		if( $_POST ) self::catch_post();
-		?>
+
+		/**
+		 * Register the admin menu item.
+		 *
+		 * @return void
+		 */
+		public static function add_admin_menu() {
+			add_menu_page(
+				'Go Dark',
+				'Go Dark',
+				'manage_options',
+				'go-dark',
+				array( __CLASS__, 'page_go_dark' ),
+				'dashicons-hidden'
+			);
+		}
+
+		/**
+		 * Render the admin settings page.
+		 *
+		 * @return void
+		 */
+		public static function page_go_dark() {
+			if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+				self::catch_post();
+			}
+			?>
 		<div class="wrap">
-			<div id="icon-edit-pages" class="icon32"><br /></div>
-			<h2>Go Dark <a href="<?php bloginfo('wpurl'); ?>?go_dark" target="_blank" class="add-new-h2">Preview Display</a></h2>
-			<br class="clear" />
-			<?php if( self::is_dark() ): ?>
-				<p><strong>Your website is currently 'dark'.</strong></p>
-			<?php endif; ?>
-			<form method="post">
-				<?php wp_nonce_field(__CLASS__.'_action',__CLASS__.'_nonce'); ?>
+			<h2>Go Dark &mdash; <a href="<?php echo esc_url( home_url( '/?go_dark' ) ); ?>">Display</a></h2>
+			<p><?php esc_html_e( 'These settings control the go-dark behavior.', 'go-dark' ); ?></p>
+
+			<form method="post" action="">
+				<?php wp_nonce_field( 'go_dark_settings', 'go_dark_nonce' ); ?>
 				<table class="form-table">
 					<tr>
-						<th scope="row">Current Time</th>
-						<td><?php echo date('Y/m/d H:i:s',current_time('timestamp')); ?>
-							<br /><em>All times are local to your website&rsquo;s configured timezone ( GMT<?php echo get_option('gmt_offset'); ?> )</em></td>
-					</tr>
-					<tr>
 						<th scope="row">
-							<label for="<?php echo __CLASS__; ?>_start">Start</label>
+							<label for="go_dark_img"><?php esc_html_e( 'Image', 'go-dark' ); ?></label>
 						</th>
 						<td>
-							<input class="widefat" type="text" name="<?php echo __CLASS__; ?>_start" id="<?php echo __CLASS__; ?>_start" value="<?php echo date('Y/m/d H:i:s',self::get_start()); ?>" />
+							<select name="go_dark_img" id="go_dark_img">
+								<option value="none" <?php selected( get_option( 'go_dark_img', 'none' ), 'none' ); ?>><?php esc_html_e( 'None', 'go-dark' ); ?></option>
+								<option value="sign" <?php selected( get_option( 'go_dark_img', 'none' ), 'sign' ); ?>><?php esc_html_e( 'Sign', 'go-dark' ); ?></option>
+								<option value="seal" <?php selected( get_option( 'go_dark_img', 'none' ), 'seal' ); ?>><?php esc_html_e( 'Seal', 'go-dark' ); ?></option>
+							</select>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="<?php echo __CLASS__; ?>_end">End</label>
+							<label for="go_dark_text"><?php esc_html_e( 'Text', 'go-dark' ); ?></label>
 						</th>
 						<td>
-							<input class="widefat" type="text" name="<?php echo __CLASS__; ?>_end" id="<?php echo __CLASS__; ?>_end" value="<?php echo date('Y/m/d H:i:s',self::get_end()); ?>" />
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">Image</th>
-						<td>
-							<label style="display:block; float:left; vertical-align:top;">
-								<input style="display:block; float:left; margin:5px 5px 5px 10px;" type="radio" name="<?php echo __CLASS__; ?>_img" value="none" <?php checked('none',get_option(__CLASS__.'_img')); ?> />
-								( none )
-							</label>
-							<label style="display:block; float:left; vertical-align:top;">
-								<input style="display:block; float:left; margin:5px 5px 5px 10px;" type="radio" name="<?php echo __CLASS__; ?>_img" value="sign" <?php checked('sign',get_option(__CLASS__.'_img')); ?> />
-								<img src="<?php echo plugins_url('blocked.png',__FILE__); ?>" width="100" style="background:#111; margin-top:5px;" />
-							</label>
-							<label style="display:block; float:left; vertical-align:top;">
-								<input style="display:block; float:left; margin:5px 5px 5px 10px;" type="radio" name="<?php echo __CLASS__; ?>_img" value="seal" <?php checked('seal',get_option(__CLASS__.'_img')); ?> />
-								<img src="<?php echo plugins_url('seal.png',__FILE__); ?>" width="100" style="background:#111; margin-top:5px;" />
-							</label>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="<?php echo preg_replace('[^a-z]','',__CLASS__); ?>">Explanation Text on Homepage:</label>
-							<hr />
-							<p>Some useful resources for you to consider:</p>
-							<ul>
-								<li><a href="http://sopastrike.com/" target="_blank">http://sopastrike.com/</a></li>
-								<li><a href="http://demandprogress.org/" target="_blank">http://demandprogress.org/</a></li>
-								<li><a href="http://www.digitaltrends.com/opinion/sopa-sponsor-rep-lamar-smith-to-sopa-opponents-you-dont-matter/" target="_blank">http://www.digitaltrends.com/opinion/sopa-sponsor-rep-lamar-smith-to-sopa-opponents-you-dont-matter/</a></li>
-								<li><a href="http://vimeo.com/31100268" target="_blank">Vimeo Video</a></li>
-							</ul>
-						</th>
-						<td>
-							<?php if( function_exists( 'wp_editor' ) ): ?>
-								<?php wp_editor( wptexturize(stripslashes(get_option(__CLASS__,self::get_default_text()))), preg_replace('[^a-z]','',__CLASS__),  array( 'media_buttons' => false, 'textarea_name' => __CLASS__ ) ); ?>
-							<?php else: ?>
-								<textarea name="<?php echo __CLASS__; ?>" id="<?php echo preg_replace('[^a-z]','',__CLASS__); ?>" rows="10" cols="50" class="widefat"><?php echo wptexturize(stripslashes(get_option(__CLASS__,self::get_default_text()))); ?></textarea>
-							<?php endif; ?>
+							<?php
+							wp_editor(
+								get_option( 'go_dark_text', self::get_default_text() ),
+								'go_dark_text',
+								array(
+									'textarea_rows' => 5,
+								)
+							);
+							?>
 						</td>
 					</tr>
 				</table>
-				<br />
-				<?php if( function_exists( 'submit_button' ) ): ?>
 					<?php submit_button(); ?>
-				<?php else: ?>
-					<p class="submit"><input type="submit" name="submit" id="submit" class="button-primary" value="Save Changes"  /></p>
-				<?php endif; ?>
 			</form>
 		</div>
-		<?php 
-	}
-	function catch_post(){
-		if( !wp_verify_nonce($_REQUEST[__CLASS__.'_nonce'],__CLASS__.'_action') ){
-			return;
+			<?php
 		}
-	
-		if( isset( $_POST[__CLASS__.'_start'] ) ){
-			update_option(__CLASS__.'_start',strtotime($_POST[__CLASS__.'_start']));
-		}
-		if( isset( $_POST[__CLASS__.'_end'] ) ){
-			update_option(__CLASS__.'_end',strtotime($_POST[__CLASS__.'_end']));
-		}
-		if( isset( $_POST[__CLASS__.'_img'] ) ){
-			update_option(__CLASS__.'_img',$_POST[__CLASS__.'_img']);
-		}
-		if( isset( $_POST[__CLASS__] ) ){
-			update_option(__CLASS__,$_POST[__CLASS__]);
-		}
-	}
-	function show_page(){
-		$font = 'Covered By Your Grace';
-		if( ! headers_sent() ){
-			header('HTTP/1.1 503 Service Temporarily Unavailable');
-			header('Status: 503 Service Temporarily Unavailable');
 
-			$time_left = self::get_end() - current_time('timestamp');
-			if( ( $time_left > 0 ) && ( self::get_start() < current_time('timestamp') ) ){
-				header('Retry-After: '.$time_left); // in seconds
+		/**
+		 * Process the settings form POST.
+		 *
+		 * @return void
+		 */
+		public static function catch_post() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die( esc_html__( 'You do not have sufficient permissions.', 'go-dark' ) );
+			}
+
+			if ( ! isset( $_POST['go_dark_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['go_dark_nonce'] ), 'go_dark_settings' ) ) {
+				wp_die( esc_html__( 'Nonce verification failed.', 'go-dark' ) );
+			}
+
+			$allowed_images = array( 'none', 'sign', 'seal' );
+			$img            = isset( $_POST['go_dark_img'] ) ? sanitize_text_field( wp_unslash( $_POST['go_dark_img'] ) ) : 'none';
+			if ( ! in_array( $img, $allowed_images, true ) ) {
+				$img = 'none';
+			}
+			update_option( 'go_dark_img', $img );
+
+			if ( isset( $_POST['go_dark_text'] ) ) {
+				update_option( 'go_dark_text', wp_kses_post( wp_unslash( $_POST['go_dark_text'] ) ) );
 			}
 		}
-		?>
-<!DOCTYPE html>
-<html <?php language_attributes(); ?>>
-<head>
-	<meta charset="<?php bloginfo( 'charset' ); ?>" />
-	<title><?php echo strip_tags(wptexturize(stripslashes(get_option(__CLASS__,self::get_default_text())))); ?></title>
-	<link href="http://fonts.googleapis.com/css?family=<?php echo str_replace(' ','+',$font); ?>" rel="stylesheet" />
-	<style>
-		body,html {
-			margin:0;
-			padding:0;
-			color:#aaa;
-			font-family:'<?php echo $font; ?>',Helvetica,sans-serif;
-			font-size:20px;
-			letter-spacing:1px;
-			min-height:100%;
-			width:100%;
-			text-shadow:1px 1px 1px #222;
+
+		/**
+		 * Output the go-dark splash page and exit.
+		 *
+		 * @return void
+		 */
+		public static function show_page() {
+			$font    = 'Just+Another+Hand';
+			$img_opt = get_option( 'go_dark_img', 'none' );
+
+			if ( ! headers_sent() ) {
+				status_header( 503 );
+				$time_left = self::get_end() - time();
+				if ( $time_left > 0 ) {
+					header( 'Retry-After: ' . $time_left );
+				}
+			}
+
+			?>
+		<!doctype html>
+		<html <?php language_attributes(); ?>>
+		<head>
+		<meta charset="<?php bloginfo( 'charset' ); ?>">
+		<title><?php esc_html_e( 'Site Temporarily Unavailable', 'go-dark' ); ?></title>
+		<link href="<?php echo esc_url( 'https://fonts.googleapis.com/css?family=' . rawurlencode( $font ) ); ?>" rel="stylesheet" type="text/css"> <?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Custom standalone 503 page; wp_head() is not called. ?>
+		<style>
+		* { margin:0; padding:0; }
+		html {
+			min-height:100%; width:100%;
+			text-shadow:1px 1px 0 #222;
+			font-family:'<?php echo esc_html( str_replace( '+', ' ', $font ) ); ?>', cursive;
+			font-size:24px; color:#eee;
 		}
 		html {
-			background:#111 url('<?php echo plugins_url('wood.jpg',__FILE__); ?>') 50% 50% repeat;
+			background:#111 url('<?php echo esc_url( plugins_url( 'wood.jpg', __FILE__ ) ); ?>') 50% 50% repeat;
 		}
-		body {
-			background:rgba(0,0,0,.7);
+		body { display:table; height:100%; width:100%; }
+		#blocked { display:table-cell; text-align:center; vertical-align:middle; }
+		</style>
+		</head>
+		<body>
+		<div id="blocked">
+			<?php
+			switch ( $img_opt ) {
+				case 'sign':
+					echo '<img src="' . esc_url( plugins_url( 'sign.png', __FILE__ ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
+					break;
+				case 'seal':
+					echo '<img src="' . esc_url( plugins_url( 'seal.png', __FILE__ ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
+					break;
+			}
+			echo wp_kses_post( get_option( 'go_dark_text', self::get_default_text() ) );
+			?>
+		</div>
+		</body>
+		</html>
+			<?php
+			wp_die();
 		}
-		a {color:#ccc; text-decoration:none;}
-		a:hover {text-decoration:underline;}
-		#blocked {padding:50px 25%; text-align:center;}
-	</style>
-</head>
-<body>
-	<div id="blocked">
-		<?php echo self::get_img(); ?>
-		<?php echo wpautop(wptexturize(stripslashes(get_option(__CLASS__,self::get_default_text())))); ?>
-	</div>
-	<?php wp_footer(); ?>
-</body>
-</html>
-		<?php
-		exit;
-	}
-	function is_dark(){
-		if( ( self::get_start() < current_time('timestamp') ) && ( current_time('timestamp') < self::get_end() ) ){
-			return true;
+
+		/**
+		 * Return the image option URL for a given slug.
+		 *
+		 * @param string $img Image slug.
+		 * @return string
+		 */
+		public static function get_img( $img ) {
+			return plugins_url( $img . '.png', __FILE__ );
 		}
-		return false;
-	}
-	function get_img(){
-		switch( get_option(__CLASS__.'_img') ){
-			case 'sign':
-				return '<img src="' . plugins_url('blocked.png',__FILE__) . '" width="281" height="248" alt="BLOCKED - Censorship in Progress" />';
-			case 'seal':
-				return '<img src="' . plugins_url('seal.png',__FILE__) . '" width="222" height="223" alt="Censorship of this Website and its Content are (not) Authorized By RIAA/MPAA" />';
-			default:
-				return '';
+
+		/**
+		 * Return the default splash page text.
+		 *
+		 * @return string
+		 */
+		public static function get_default_text() {
+			return get_bloginfo( 'name' ) . ' has gone dark from '
+			. wp_date( self::get_timedate_format(), self::get_start() )
+			. ' until '
+			. wp_date( self::get_timedate_format(), self::get_end() )
+			. ' to protest SOPA/PIPA and Internet Censorship.'
+			. "\r\n\r\n"
+			. '<iframe src="https://player.vimeo.com/video/31100268?byline=0&#038;portrait=0" width="400" height="225" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>'
+			. "\r\n\r\n"
+			. '<a href="https://sopastrike.com/">Learn more.</a>';
 		}
-	}
-	function get_default_text(){
-		return get_bloginfo('name').' has gone dark from '
-			.date(self::get_timedate_format(),self::get_start())
-			.' until '
-			.date(self::get_timedate_format(),self::get_end())
-			.' to protest SOPA/PIPA and Internet Censorship.'
-			."\r\n\r\n"
-			.'<iframe src="http://player.vimeo.com/video/31100268?byline=0&#038;portrait=0" width="400" height="225" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>'
-			."\r\n\r\n"
-			.'<a href="http://sopastrike.com/">Learn More Here &raquo;</a>';
-	}
-	function get_start(){
-		return get_option( __CLASS__.'_start', self::get_default_start() );
-	}
-	function get_default_start(){
-		return strtotime( '2012/01/18 8:00' );
-	}
-	function get_end(){
-		return get_option( __CLASS__.'_end', self::get_default_end() );
-	}
-	function get_default_end(){
-		return strtotime( '2012/01/18 20:00' );
-	}
-	function get_timedate_format(){
-		return get_option('date_format').' \a\t '.get_option('time_format');
+
+		/**
+		 * Check whether the site is currently in the go-dark window.
+		 *
+		 * @return bool
+		 */
+		public static function is_dark() {
+			$now = time();
+			return ( $now >= self::get_start() && $now < self::get_end() );
+		}
+
+		/**
+		 * Return the go-dark start timestamp (UTC).
+		 *
+		 * @return int
+		 */
+		public static function get_start() {
+			return (int) get_option( 'go_dark_start', self::get_default_start() );
+		}
+
+		/**
+		 * Return the go-dark end timestamp (UTC).
+		 *
+		 * @return int
+		 */
+		public static function get_end() {
+			return (int) get_option( 'go_dark_end', self::get_default_end() );
+		}
+
+		/**
+		 * Return the default go-dark start timestamp.
+		 *
+		 * @return int
+		 */
+		public static function get_default_start() {
+			return strtotime( '2012/01/18 8:00' );
+		}
+
+		/**
+		 * Return the default go-dark end timestamp.
+		 *
+		 * @return int
+		 */
+		public static function get_default_end() {
+			return strtotime( '2012/01/19 8:00' );
+		}
+
+		/**
+		 * Return the date/time format string for display.
+		 *
+		 * @return string
+		 */
+		public static function get_timedate_format() {
+			return get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+		}
 	}
 
-}
-go_dark::go();
+	go_dark::go();
+
 endif;

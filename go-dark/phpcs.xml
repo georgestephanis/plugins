@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<ruleset name="go-dark">
+    <description>WPCS config for go-dark (GitHub source).</description>
+
+    <file>./</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+
+    <!-- Single-file plugin; class and bootstrap live in the same file. -->
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>*/go-dark.php</exclude-pattern>
+    </rule>
+
+    <!-- Legacy class name go_dark cannot be renamed without breaking existing sites. -->
+    <rule ref="PEAR.NamingConventions.ValidClassName">
+        <exclude-pattern>*/go-dark.php</exclude-pattern>
+    </rule>
+
+    <config name="minimum_supported_wp_version" value="5.0"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+</ruleset>
