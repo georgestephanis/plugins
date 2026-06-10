@@ -115,20 +115,38 @@ class Hugh {
 	}
 
 	/**
-	 * Retrieve the stored color transient.
+	 * Return all stored colors.
+	 *
+	 * Uses the external object cache directly when one is available (fast, avoids
+	 * DB writes on every read), otherwise falls back to a WP option for persistence.
 	 *
 	 * @return array Associative array of color entries keyed by hex value.
 	 */
 	public static function get_colors() {
-		$colors = get_transient( 'hugh_colors' );
-		if ( ! $colors ) {
-			return array();
+		if ( wp_using_ext_object_cache() ) {
+			$colors = wp_cache_get( 'hugh_colors', 'hugh' );
+		} else {
+			$colors = get_option( 'hugh_colors', array() );
 		}
-		return (array) $colors;
+		return $colors ? (array) $colors : array();
 	}
 
 	/**
-	 * Add a color entry to the transient store, capped at 100 entries.
+	 * Persist the colors array via object cache or WP option.
+	 *
+	 * @param array $colors Associative array of color entries to store.
+	 * @return void
+	 */
+	private static function save_colors( array $colors ) {
+		if ( wp_using_ext_object_cache() ) {
+			wp_cache_set( 'hugh_colors', $colors, 'hugh' );
+		} else {
+			update_option( 'hugh_colors', $colors, false );
+		}
+	}
+
+	/**
+	 * Add a color entry to the store, capped at 100 entries.
 	 *
 	 * @param string $color Hex color value (e.g. '#a1b2c3').
 	 * @param string $label Human-readable label for the color.
@@ -149,7 +167,7 @@ class Hugh {
 			$colors = array_slice( $colors, 0, 100, true );
 		}
 
-		set_transient( 'hugh_colors', $colors );
+		self::save_colors( $colors );
 
 		return $colors[ $color ];
 	}
