@@ -180,6 +180,9 @@ jobs:
             DEFAULT_BRANCH=$(gh repo view "$REPO" --json defaultBranchRef --jq '.defaultBranchRef.name')
 
             cd "./$SLUG"
+            # actions/checkout injects GITHUB_TOKEN into http.extraheader for every submodule,
+            # which overrides inline credentials in the remote URL. Unset it so GH_PAT is used.
+            git config --local --unset-all "http.https://github.com/.extraheader" 2>/dev/null || true
             git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
             git fetch origin "$DEFAULT_BRANCH"
             git checkout "$DEFAULT_BRANCH"
