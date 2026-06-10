@@ -39,11 +39,12 @@ if ( ! class_exists( 'Simple_404_Keyword_Insertion' ) ) :
 			// Intentional soft 404: return 200 so the keyword-injection page is served.
 			status_header( 200 );
 
-			$query = new WP_Query( array( 'pagename' => '404-page' ) );
-			if ( $query->have_posts() ) {
-				$query->the_post();
+			// Override the global $wp_query so the template's main loop renders the 404-page post.
+			global $wp_query;
+			$wp_query = new WP_Query( array( 'pagename' => '404-page' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+			if ( $wp_query->have_posts() ) {
+				$wp_query->the_post();
 			}
-			wp_reset_postdata();
 
 			add_shortcode( '404-keywords', array( __CLASS__, 'get_keywords' ) );
 
@@ -57,7 +58,8 @@ if ( ! class_exists( 'Simple_404_Keyword_Insertion' ) ) :
 		 * @return string Space-separated keywords, HTML-escaped for safe output.
 		 */
 		public static function get_keywords() {
-			$k = ' ' . trim( preg_replace( '/\W/', ' ', urldecode( $_SERVER['REQUEST_URI'] ) ) ) . ' '; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$k           = ' ' . trim( preg_replace( '/\W/', ' ', urldecode( $request_uri ) ) ) . ' ';
 			return esc_html( $k );
 		}
 
