@@ -36,15 +36,15 @@ No repo-wide build system. Each plugin is self-contained.
 
 ## PHP linting (phpcs / WPCS)
 
-A root-level `composer.json` + `phpcs.xml.dist` cover the entire repo:
+Some plugins include a `phpcs.xml` pre-tuned with `minimum_supported_wp_version` and `testVersion` ranges appropriate to that plugin. Install phpcs and WPCS separately (e.g. via Composer globally), then lint a specific plugin:
 
 ```bash
-composer install          # installs phpcs, WPCS, and auto-registers the standard
-vendor/bin/phpcs          # lint all plugins
-vendor/bin/phpcbf         # auto-fix what phpcs can
+cd google-tag-manager
+phpcs --standard=phpcs.xml
+phpcbf --standard=phpcs.xml
 ```
 
-Per-plugin `phpcs.xml` files are pre-tuned with `minimum_supported_wp_version` and `testVersion` ranges appropriate to each plugin. `restrict-block-content/` has its own `composer.json` for its JS build; the root one is dev-tooling only and does not conflict.
+`restrict-block-content/` has its own `composer.json` for its JS build toolchain (`@wordpress/scripts`); it is unrelated to phpcs.
 
 ## Submodules
 
@@ -52,10 +52,11 @@ Several plugins are git submodules pointing to their own standalone repositories
 
 ## GitHub Actions
 
-Two workflows live in `.github/workflows/`:
+See [ACTIONS.md](ACTIONS.md) for full documentation. Summary:
 
-- **`deploy.yml`** — manually triggered; bumps plugin version, publishes to WordPress.org SVN, opens a version-bump PR against the plugin's default branch.
-- **`asset-update.yml`** — syncs WordPress.org banner/icon assets.
+- **`deploy.yml`** — manually triggered; bumps plugin version, publishes to WordPress.org SVN, opens a version-bump PR against the plugin's default branch, then updates `versions.json` and the README deploy-status table.
+- **`asset-update.yml`** — syncs WordPress.org banner/icon assets between releases.
+- **`version-check.yml`** — manually triggered; regenerates the pending-deploys table in `README.md` from the current state of `versions.json` without doing a full deploy.
 
 The deploy workflow uses `npm run build --if-present` so plugins with a `package.json` but no `build` script (like `tuft-feedback`) are handled gracefully.
 

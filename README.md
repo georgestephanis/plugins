@@ -2,6 +2,10 @@
 
 A monorepo of WordPress.org plugins. Most plugins live directly in this repo; some with more complex histories or active co-development are tracked as **git submodules** pointing to their own standalone repositories.
 
+<!-- deploy-status-start -->
+
+<!-- deploy-status-end -->
+
 ## Plugins
 
 | Plugin | GitHub | Description |
@@ -36,14 +40,16 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 
 ```
 <plugin-slug>/          ← plugin source (some are submodules, others are in-repo)
-.github/workflows/      ← deploy.yml and asset-update.yml for WordPress.org publishing
+.github/workflows/      ← deploy.yml, asset-update.yml, version-check.yml for WordPress.org publishing
 ```
 
 Plugins that are submodules have their own commit history and default branch (often `trunk`). Non-submodule plugins are committed directly here.
 
 ## Deploying to WordPress.org
 
-Releases are published via the `.github/workflows/deploy.yml` workflow (manually triggered). It bumps versions, syncs to SVN, and opens a version-bump PR back against the plugin's default branch.
+Releases are published via the `.github/workflows/deploy.yml` workflow (manually triggered). It bumps versions, syncs to SVN, opens a version-bump PR back against the plugin's default branch, and updates the deploy-status table at the top of this README.
+
+See [ACTIONS.md](ACTIONS.md) for full workflow documentation, required credentials, and the version-tracking system.
 
 ## Working with this repo
 

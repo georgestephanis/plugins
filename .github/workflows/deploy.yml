@@ -169,6 +169,23 @@ jobs:
 
           echo "Deployed $SLUG v$VERSION to WordPress.org"
 
+      - name: Update versions.json
+        if: ${{ !inputs.dry_run }}
+        run: |
+          python3 -c "
+          import json
+          with open('versions.json') as f:
+              data = json.load(f)
+          data['${{ inputs.plugin }}'] = '${{ inputs.version }}'
+          with open('versions.json', 'w') as f:
+              json.dump(data, f, indent=2, sort_keys=True)
+              f.write('\n')
+          "
+
+      - name: Refresh README deploy status
+        if: ${{ !inputs.dry_run }}
+        run: python3 scripts/update-readme-status.py
+
       - name: Commit version bump back to Git
         # Direct-directory plugins: commits the bump to the monorepo.
         # Submodule plugins: pushes a branch to the upstream repo and opens a PR.
@@ -214,12 +231,20 @@ jobs:
 
               echo "PR opened in $REPO"
             fi
+
+            # Back to monorepo root — commit versions.json + README.md
+            cd "$GITHUB_WORKSPACE"
+            if ! git diff --quiet versions.json README.md; then
+              git add versions.json README.md
+              git commit -m "Update deploy status for $SLUG v$VERSION"
+              git push
+            fi
           else
             # Direct-directory plugin — commit bump to the monorepo
-            if git diff --quiet "./$SLUG"; then
+            if git diff --quiet "./$SLUG" versions.json README.md; then
               echo "No changes to commit in ./$SLUG"
             else
-              git add "./$SLUG"
+              git add "./$SLUG" versions.json README.md
               git commit -m "Bump $SLUG to v$VERSION"
               git push
             fi
