@@ -105,10 +105,10 @@ jobs:
           SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
           SVN_DIR="/tmp/svn-$SLUG"
 
-          # Fail early if this SVN tag already exists
+          # If the SVN tag already exists, skip the deploy but let downstream steps update records.
           if svn ls "$SVN_URL/tags/$VERSION" > /dev/null 2>&1; then
-            echo "ERROR: SVN tag $VERSION already exists for $SLUG. Aborting to avoid overwrite."
-            exit 1
+            echo "SVN tag $VERSION already exists for $SLUG — skipping deploy, updating records only."
+            exit 0
           fi
 
           # Shallow checkout — trunk and assets

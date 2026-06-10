@@ -28,10 +28,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet README.md; then
-            echo "README.md is already up to date."
+          if git diff --quiet README.md versions.json; then
+            echo "README.md and versions.json are already up to date."
           else
-            git add README.md
+            git add README.md versions.json
             git commit -m "Refresh deploy status in README"
             git push
           fi
