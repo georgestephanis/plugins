@@ -59,6 +59,10 @@ Two workflows live in `.github/workflows/`:
 
 The deploy workflow uses `npm run build --if-present` so plugins with a `package.json` but no `build` script (like `tuft-feedback`) are handled gracefully.
 
+## Git hygiene
+
+Never force-push to any branch in this repository. Maintaining full version history — including mistakes — is preferable to the risk of merge conflicts or lost history that force pushes can cause. If a commit needs to be undone, use a revert commit instead.
+
 ## Code reviews
 
 Each plugin has a `REVIEW.md` at its root documenting known issues: security gaps (nonces, escaping, capability checks), deprecated APIs, i18n completeness, and WPCS concerns. Consult it before making changes, and update it when issues are fixed or new ones are found.
