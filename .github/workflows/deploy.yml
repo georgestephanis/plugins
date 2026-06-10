@@ -199,17 +199,21 @@ jobs:
             git checkout "$DEFAULT_BRANCH"
             git checkout -b "$BRANCH"
             git add -A
-            git commit -m "Bump version to $VERSION"
-            git push origin "$BRANCH"
+            if git diff --cached --quiet; then
+              echo "Version already at $VERSION in $REPO — no bump needed, skipping PR."
+            else
+              git commit -m "Bump version to $VERSION"
+              git push origin "$BRANCH"
 
-            gh pr create \
-              --repo "$REPO" \
-              --title "Bump $SLUG to v$VERSION" \
-              --body "Version bump to \`$VERSION\` for WordPress.org release, deployed via the [plugins monorepo](https://github.com/${{ github.repository }})." \
-              --base "$DEFAULT_BRANCH" \
-              --head "$BRANCH"
+              gh pr create \
+                --repo "$REPO" \
+                --title "Bump $SLUG to v$VERSION" \
+                --body "Version bump to \`$VERSION\` for WordPress.org release, deployed via the [plugins monorepo](https://github.com/${{ github.repository }})." \
+                --base "$DEFAULT_BRANCH" \
+                --head "$BRANCH"
 
-            echo "PR opened in $REPO"
+              echo "PR opened in $REPO"
+            fi
           else
             # Direct-directory plugin — commit bump to the monorepo
             if git diff --quiet "./$SLUG"; then
