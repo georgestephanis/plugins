@@ -46,8 +46,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          submodules: recursive
+
+      - name: Initialize submodule if needed
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
+            echo "$SLUG is a submodule — initializing only this one"
+            git submodule update --init "$SLUG"
+          else
+            echo "$SLUG is a direct-directory plugin — no submodule init needed"
+          fi
 
       - name: Bump version in plugin files
         run: |
@@ -199,6 +207,11 @@ jobs:
 
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Override the GITHUB_TOKEN credential injected by actions/checkout so that
+          # pushes back to this monorepo use GH_PAT instead (which has write access).
+          git config --local --unset-all "http.https://github.com/.extraheader" 2>/dev/null || true
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
 
           if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
             # Submodule plugin — push a branch and open a PR upstream
