@@ -27,6 +27,9 @@ Nope.  Really.
 
 == Changelog ==
 
+= 2.0.1 =
+* Maintenance release for current PHP/WordPress coding standards and safer widget setting handling.
+
 = 2.0 =
 * Now Multi-Widget Friendly, with 200% more awesome!
 
@@ -35,9 +38,11 @@ Nope.  Really.
 
 == Upgrade Notice ==
 
+= 2.0.1 =
+Minor maintenance release with compatibility and hardening updates.
+
 = 2.0 =
 When you upgrade, you will need to re-create your widget from version 1.0 -- there is no clean upgrade path.
 
 = 1.0 =
 Not Applicable.  Initial Release.
-

@@ -80,8 +80,8 @@ class Single_Category_Posts_Widget extends WP_Widget {
 	public function update( $new_instance, $old_instance ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- $old_instance not needed; no merge required.
 		$instance          = array();
 		$instance['title'] = isset( $new_instance['title'] ) ? sanitize_text_field( $new_instance['title'] ) : '';
-		$instance['cat']   = isset( $new_instance['cat'] ) ? intval( $new_instance['cat'] ) : 0;
-		$instance['qty']   = isset( $new_instance['qty'] ) ? intval( $new_instance['qty'] ) : 5;
+		$instance['cat']   = isset( $new_instance['cat'] ) ? absint( $new_instance['cat'] ) : 0;
+		$instance['qty']   = isset( $new_instance['qty'] ) ? max( 1, absint( $new_instance['qty'] ) ) : 5;
 		return $instance;
 	}
 
@@ -99,8 +99,8 @@ class Single_Category_Posts_Widget extends WP_Widget {
 		$after_title   = isset( $args['after_title'] ) ? $args['after_title'] : '';
 
 		$title = apply_filters( 'widget_title', isset( $instance['title'] ) ? $instance['title'] : '' );
-		$cat   = isset( $instance['cat'] ) ? intval( $instance['cat'] ) : 0;
-		$qty   = isset( $instance['qty'] ) ? intval( $instance['qty'] ) : 5;
+		$cat   = isset( $instance['cat'] ) ? absint( $instance['cat'] ) : 0;
+		$qty   = isset( $instance['qty'] ) ? max( 1, absint( $instance['qty'] ) ) : 5;
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- theme-registered sidebar HTML.
 		echo $before_widget;
@@ -135,7 +135,7 @@ class Single_Category_Posts_Widget extends WP_Widget {
 		$return_this = '';
 
 		if ( $post_count ) {
-			$return_this .= '<ul class="single-category-posts-widget">' . "\n";
+			$return_this .= '<ul class="single_category_posts_widget single-category-posts-widget">' . "\n";
 		}
 
 		foreach ( $posts as $post ) {
