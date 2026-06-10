@@ -101,9 +101,10 @@ jobs:
             exit 1
           fi
 
-          # Shallow checkout — only trunk, no tags/branches
+          # Shallow checkout — trunk and assets
           svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
           svn update --set-depth infinity "$SVN_DIR/trunk"
+          svn update --set-depth infinity "$SVN_DIR/assets"
 
           # Build rsync exclusions from .distignore (preferred) or .gitattributes
           EXCLUDES="--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore"
@@ -131,17 +132,27 @@ jobs:
           svn status "$SVN_DIR/trunk" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
           svn status "$SVN_DIR/trunk" | grep '^!' | awk '{print $2}' | xargs -r svn delete
 
+          # Sync .wordpress-org/ into SVN assets/ (banners, icons, screenshots)
+          if [ -d "$SRC/.wordpress-org" ]; then
+            rsync -rc "$SRC/.wordpress-org/" "$SVN_DIR/assets/"
+            svn status "$SVN_DIR/assets" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
+            svn status "$SVN_DIR/assets" | grep '^!' | awk '{print $2}' | xargs -r svn delete
+          else
+            echo "No .wordpress-org directory found — skipping asset sync."
+          fi
+
           # Show what would be committed
           echo "--- SVN diff summary ---"
           svn status "$SVN_DIR/trunk"
+          svn status "$SVN_DIR/assets"
 
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "Dry run — skipping SVN commit and tag."
             exit 0
           fi
 
-          # Commit trunk
-          svn commit "$SVN_DIR/trunk" \
+          # Commit trunk and assets
+          svn commit "$SVN_DIR" \
             --username "$SVN_USERNAME" \
             --password "$SVN_PASSWORD" \
             --no-auth-cache \
