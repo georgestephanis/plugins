@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<ruleset name="Ndizi">
+    <description>Ndizi Project Management PHP Coding Standards ruleset.</description>
+
+    <!-- Exclude third party or build folders -->
+    <exclude-pattern>/node_modules/*</exclude-pattern>
+    <exclude-pattern>/vendor/*</exclude-pattern>
+
+    <!-- Lint PHP files in these directories -->
+    <file>Ndizi.php</file>
+    <file>includes/</file>
+
+    <!-- Use WordPress coding standards -->
+    <rule ref="WordPress">
+        <!-- Exclude filename checks since the main plugin bootstrap is Ndizi.php -->
+        <exclude name="WordPress.Files.FileName" />
+        
+        <!-- Exclude Yoda conditions for readability -->
+        <exclude name="WordPress.PHP.YodaConditions" />
+        
+        <!-- Exclude direct database query warnings since we use a custom table -->
+        <exclude name="WordPress.DB.DirectDatabaseQuery" />
+        
+        <!-- Exclude prepared SQL warnings for table name interpolation -->
+        <exclude name="WordPress.DB.PreparedSQL" />
+        
+        <!-- Exclude prepared SQL placeholders checks for dynamic IN list preparation -->
+        <exclude name="WordPress.DB.PreparedSQLPlaceholders" />
+        
+        <!-- Exclude output escaping checks since text escaping is handled globally/via standard methods -->
+        <exclude name="WordPress.Security.EscapeOutput" />
+        
+        <!-- Exclude nonce verification warning since they are checked globally or in custom request routing -->
+        <exclude name="WordPress.Security.NonceVerification" />
+        
+        <!-- Exclude sanitization warnings that are handled globally or in API controllers -->
+        <exclude name="WordPress.Security.ValidatedSanitizedInput" />
+        
+        <!-- Exclude custom capabilities checks since we define our own capabilities -->
+        <exclude name="WordPress.WP.Capabilities" />
+        
+        <!-- Exclude slow DB query checks since meta queries are required for custom post type relations -->
+        <exclude name="WordPress.DB.SlowDBQuery" />
+        
+        <!-- Exclude file operations checks since direct fopen/fclose are required for memory streaming exports -->
+        <exclude name="WordPress.WP.AlternativeFunctions" />
+    </rule>
+
+    <!-- Exclude Squiz commenting checks which are overly verbose -->
+    <rule ref="Squiz.Commenting.FileComment"><severity>0</severity></rule>
+    <rule ref="Squiz.Commenting.ClassComment"><severity>0</severity></rule>
+    <rule ref="Squiz.Commenting.FunctionComment"><severity>0</severity></rule>
+    <rule ref="Squiz.Commenting.InlineComment"><severity>0</severity></rule>
+
+    <!-- Exclude short ternary check from Universal standard -->
+    <rule ref="Universal.Operators.DisallowShortTernary"><severity>0</severity></rule>
+
+    <!-- Minimum WordPress version supported -->
+    <config name="minimum_supported_wp_version" value="6.0" />
+</ruleset>

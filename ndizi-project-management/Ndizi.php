@@ -7,3 +7,106 @@ Author: George Stephanis
 Author URI: https://georgestephanis.wordpress.com
 Version: 1.0
 */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+// Define plugin constants
+define( 'NDIZI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'NDIZI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'NDIZI_VERSION', '1.0' );
+
+/**
+ * Main Plugin Class
+ */
+class Ndizi_Project_Management {
+
+	/**
+	 * Initialize the plugin
+	 */
+	public static function init() {
+		// Include all core files
+		self::includes();
+
+		// Hook activation/deactivation
+		register_activation_hook( __FILE__, array( __CLASS__, 'activate' ) );
+		register_deactivation_hook( __FILE__, array( __CLASS__, 'deactivate' ) );
+
+		// Run core hooks
+		add_action( 'init', array( __CLASS__, 'bootstrap' ) );
+	}
+
+	/**
+	 * Include plugin dependencies
+	 */
+	private static function includes() {
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cpts.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-portal.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-notifications.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
+	}
+
+	/**
+	 * Run on plugin activation
+	 */
+	public static function activate() {
+		// Include DB class in case it hasn't been loaded yet
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+
+		// Create database tables
+		Ndizi_DB::create_table();
+
+		// Add custom roles & capabilities
+		Ndizi_Roles::add_roles();
+
+		// Flush rewrite rules
+		flush_rewrite_rules();
+	}
+
+	/**
+	 * Run on plugin deactivation
+	 */
+	public static function deactivate() {
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+
+		// Remove custom roles
+		Ndizi_Roles::remove_roles();
+
+		// Flush rewrite rules
+		flush_rewrite_rules();
+	}
+
+	/**
+	 * Bootstrap hooks for loaded components
+	 */
+	public static function bootstrap() {
+		// Initialize Custom Post Types & Meta
+		Ndizi_CPTs::init();
+
+		// Initialize REST API Routes
+		Ndizi_REST::init();
+
+		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
+		if ( is_admin() ) {
+			Ndizi_Admin::init();
+		}
+
+		// Initialize Client Frontend Portal
+		Ndizi_Portal::init();
+
+		// Initialize Notifications
+		Ndizi_Notifications::init();
+
+		// Initialize Integrations
+		Ndizi_Integrations::init();
+	}
+}
+
+// Start the plugin
+Ndizi_Project_Management::init();
