@@ -5,7 +5,7 @@
  * Description: plugin enables websites to 'go dark' on January 18th to protest SOPA/PIPA and Internet Censorship
  * Author:      George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com
- * Version:     1.0.7
+ * Version:     1.0.8
  * Text Domain: go-dark
  *
  * @package go-dark
