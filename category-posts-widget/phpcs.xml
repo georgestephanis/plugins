@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<ruleset name="category-posts-widget">
+    <description>WPCS config for category-posts-widget.</description>
+
+    <file>./</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+
+    <!-- Single-file plugin; bootstrap filename uses underscores (legacy SVN name)
+         and does not follow the class-*.php convention. -->
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>*/widget_cat_posts.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>*/widget_cat_posts.php</exclude-pattern>
+    </rule>
+
+    <config name="minimum_supported_wp_version" value="5.0"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+</ruleset>
