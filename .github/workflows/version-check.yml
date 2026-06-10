@@ -23,6 +23,8 @@ jobs:
 
       - name: Commit README update
         if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -31,6 +33,5 @@ jobs:
           else
             git add README.md
             git commit -m "Refresh deploy status in README"
-            gh repo set-default "$(gh repo view --json fullName -q .fullName)"
             git push
           fi
