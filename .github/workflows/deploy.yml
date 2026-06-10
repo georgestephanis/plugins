@@ -95,6 +95,12 @@ jobs:
           SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
           SVN_DIR="/tmp/svn-$SLUG"
 
+          # Fail early if this SVN tag already exists
+          if svn ls "$SVN_URL/tags/$VERSION" > /dev/null 2>&1; then
+            echo "ERROR: SVN tag $VERSION already exists for $SLUG. Aborting to avoid overwrite."
+            exit 1
+          fi
+
           # Shallow checkout — only trunk, no tags/branches
           svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
           svn update --set-depth infinity "$SVN_DIR/trunk"
@@ -106,7 +112,7 @@ jobs:
             while IFS= read -r line; do
               [[ -z "$line" || "$line" == \#* ]] && continue
               echo "  excluding: $line"
-              EXCLUDES="$EXCLUDES --exclude=${line#/}"
+              EXCLUDES="$EXCLUDES --exclude=$line"
             done < "$SRC/.distignore"
           elif [ -f "$SRC/.gitattributes" ]; then
             echo "Using .gitattributes export-ignore for exclusions:"
@@ -114,7 +120,7 @@ jobs:
               [[ "$line" == *"export-ignore"* ]] || continue
               path=$(echo "$line" | awk '{print $1}')
               echo "  excluding: $path"
-              EXCLUDES="$EXCLUDES --exclude=${path#/}"
+              EXCLUDES="$EXCLUDES --exclude=$path"
             done < "$SRC/.gitattributes"
           fi
 
@@ -174,6 +180,7 @@ jobs:
             DEFAULT_BRANCH=$(gh repo view "$REPO" --json defaultBranchRef --jq '.defaultBranchRef.name')
 
             cd "./$SLUG"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
             git fetch origin "$DEFAULT_BRANCH"
             git checkout "$DEFAULT_BRANCH"
             git checkout -b "$BRANCH"
