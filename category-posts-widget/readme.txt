@@ -2,9 +2,9 @@
 Contributors: georgestephanis
 Donate link: http://www.charitywater.org/donate/
 Tags: category, categories, widget
-Requires at least: 2.7
-Tested up to: 3.4.1
-Stable tag: 2.0
+Requires at least: 2.8
+Tested up to: 7.0
+Stable tag: 2.0.1
 
 This widget will let you display a list of the most recent posts in a single category in your sidebar.
 

@@ -5,7 +5,7 @@
  * Description: Displays the most recent posts in the selected category in a simple list.
  * Author:      E. George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com
- * Version:     2.0
+ * Version:     2.0.1
  * Text Domain: category-posts-widget
  *
  * @package Category_Posts_Widget
