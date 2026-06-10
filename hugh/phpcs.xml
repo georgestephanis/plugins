@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<ruleset name="hugh">
+    <description>WPCS config for hugh.</description>
+
+    <file>./</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+
+    <!-- Single-file plugin with two classes; splitting would require renaming the
+         plugin bootstrap file, which breaks WP plugin loading conventions. -->
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>*/hugh.php</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Files.OneObjectStructurePerFile">
+        <exclude-pattern>*/hugh.php</exclude-pattern>
+    </rule>
+
+    <config name="minimum_supported_wp_version" value="5.5"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+</ruleset>
