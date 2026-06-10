@@ -28,6 +28,7 @@ on:
           - tarot
           - the
           - theme-downloader
+          - tuft-feedback
           - update-control
       version:
         description: Version number to release (e.g. 1.2.3)

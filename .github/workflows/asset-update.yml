@@ -32,6 +32,7 @@ on:
           - tarot
           - the
           - theme-downloader
+          - tuft-feedback
           - update-control
       dry_run:
         description: Dry run — show what would change without committing

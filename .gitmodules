@@ -34,6 +34,6 @@
 [submodule "update-control"]
 	path = update-control
 	url = https://github.com/chipbennett/update-control
-[submodule "tuft"]
-	path = tuft
+[submodule "tuft-feedback"]
+	path = tuft-feedback
 	url = https://github.com/georgestephanis/tuft
