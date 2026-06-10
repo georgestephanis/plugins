@@ -12,19 +12,17 @@ on:
 jobs:
   version-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.GH_PAT }}
 
       - name: Run version check
         run: python3 scripts/update-readme-status.py
 
       - name: Commit README update
         if: ${{ !inputs.dry_run }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
