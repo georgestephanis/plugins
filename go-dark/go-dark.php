@@ -69,11 +69,49 @@ if ( ! class_exists( 'go_dark' ) ) :
 			?>
 		<div class="wrap">
 			<h2>Go Dark &mdash; <a href="<?php echo esc_url( home_url( '/?go_dark' ) ); ?>">Display</a></h2>
+			<?php if ( self::is_dark() ) : ?>
+			<div class="notice notice-warning"><p><strong><?php esc_html_e( 'Your website is currently dark.', 'go-dark' ); ?></strong></p></div>
+			<?php endif; ?>
 			<p><?php esc_html_e( 'These settings control the go-dark behavior.', 'go-dark' ); ?></p>
 
 			<form method="post" action="">
 				<?php wp_nonce_field( 'go_dark_settings', 'go_dark_nonce' ); ?>
 				<table class="form-table">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Current time', 'go-dark' ); ?></th>
+						<td>
+							<?php echo esc_html( wp_date( 'Y/m/d H:i:s' ) ); ?>
+							<p class="description">
+							<?php
+							printf(
+								/* translators: %s: timezone identifier, e.g. "America/New_York" */
+								esc_html__( 'All times use your site\'s configured timezone (%s).', 'go-dark' ),
+								esc_html( wp_timezone_string() )
+							);
+							?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="go_dark_start"><?php esc_html_e( 'Start', 'go-dark' ); ?></label>
+						</th>
+						<td>
+							<input class="regular-text" type="text" name="go_dark_start" id="go_dark_start"
+								value="<?php echo esc_attr( wp_date( 'Y/m/d H:i:s', self::get_start() ) ); ?>"
+								placeholder="YYYY/MM/DD HH:MM:SS" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="go_dark_end"><?php esc_html_e( 'End', 'go-dark' ); ?></label>
+						</th>
+						<td>
+							<input class="regular-text" type="text" name="go_dark_end" id="go_dark_end"
+								value="<?php echo esc_attr( wp_date( 'Y/m/d H:i:s', self::get_end() ) ); ?>"
+								placeholder="YYYY/MM/DD HH:MM:SS" />
+						</td>
+					</tr>
 					<tr>
 						<th scope="row">
 							<label for="go_dark_img"><?php esc_html_e( 'Image', 'go-dark' ); ?></label>
@@ -121,6 +159,22 @@ if ( ! class_exists( 'go_dark' ) ) :
 
 			if ( ! isset( $_POST['go_dark_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['go_dark_nonce'] ), 'go_dark_settings' ) ) {
 				wp_die( esc_html__( 'Nonce verification failed.', 'go-dark' ) );
+			}
+
+			if ( isset( $_POST['go_dark_start'] ) ) {
+				$tz = wp_timezone();
+				$dt = date_create( sanitize_text_field( wp_unslash( $_POST['go_dark_start'] ) ), $tz );
+				if ( $dt ) {
+					update_option( 'go_dark_start', $dt->getTimestamp() );
+				}
+			}
+
+			if ( isset( $_POST['go_dark_end'] ) ) {
+				$tz = wp_timezone();
+				$dt = date_create( sanitize_text_field( wp_unslash( $_POST['go_dark_end'] ) ), $tz );
+				if ( $dt ) {
+					update_option( 'go_dark_end', $dt->getTimestamp() );
+				}
 			}
 
 			$allowed_images = array( 'none', 'sign', 'seal' );
