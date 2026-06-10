@@ -76,7 +76,7 @@ jobs:
             echo "Building $SLUG..."
             cd "./$SLUG"
             npm ci
-            npm run build
+            npm run build --if-present
           else
             echo "No package.json found — skipping build."
           fi
