@@ -1266,24 +1266,36 @@ class Ndizi_Standalone_Tracker {
 								$list.empty();
 
 								if (response.success && response.data && response.data.entries && response.data.entries.length > 0) {
+									// Escape a string for safe insertion as HTML text content.
+									function escHtml(str) {
+										return String(str)
+											.replace(/&/g, '&amp;')
+											.replace(/</g, '&lt;')
+											.replace(/>/g, '&gt;')
+											.replace(/"/g, '&quot;')
+											.replace(/'/g, '&#039;');
+									}
+
 									response.data.entries.forEach(function(entry) {
-										const taskText = entry.task ? ' &bull; ' + entry.task : '';
-										const descText = entry.description ? entry.description : '<em><?php esc_html_e( 'No description', 'ndizi-project-management' ); ?></em>';
+										const taskText = entry.task ? ' &bull; ' + escHtml(entry.task) : '';
+										const descText = entry.description
+											? escHtml(entry.description)
+											: '<em><?php esc_html_e( 'No description', 'ndizi-project-management' ); ?></em>';
 										const billableBadge = entry.billable ? ' <span style="color: var(--color-emerald); font-weight: 800; font-size: 11px;">$</span>' : '';
 
 										const itemHtml = `
 											<div class="log-item">
 												<div class="log-details">
-													<div class="log-proj-task">${entry.project}${taskText}</div>
+													<div class="log-proj-task">${escHtml(entry.project)}${taskText}</div>
 													<div class="log-desc">${descText}</div>
 													<div class="log-meta">
-														<span>${entry.time}</span>
+														<span>${escHtml(entry.time)}</span>
 														${billableBadge}
 													</div>
 												</div>
 												<div class="log-right">
-													<div class="log-duration">${entry.duration}</div>
-													<button type="button" class="btn-delete" data-id="${entry.id}">
+													<div class="log-duration">${escHtml(entry.duration)}</div>
+													<button type="button" class="btn-delete" data-id="${escHtml(entry.id)}">
 														<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 													</button>
 												</div>
