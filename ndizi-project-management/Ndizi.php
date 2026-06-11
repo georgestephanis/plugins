@@ -54,6 +54,8 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-portal.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-notifications.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin-bar.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-standalone-tracker.php';
 	}
 
 	/**
@@ -100,6 +102,7 @@ class Ndizi_Project_Management {
 		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
 		if ( is_admin() ) {
 			Ndizi_Admin::init();
+			Ndizi_Standalone_Tracker::init();
 		}
 
 		// Initialize Client Frontend Portal
@@ -110,6 +113,9 @@ class Ndizi_Project_Management {
 
 		// Initialize Integrations
 		Ndizi_Integrations::init();
+
+		// Initialize Admin Bar Logger
+		Ndizi_Admin_Bar::init();
 	}
 }
 

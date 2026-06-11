@@ -20,7 +20,9 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 
 *   **Premium Dashboards**: Interactive, responsive HTML/CSS dashboards for managers to analyze team time allocations, billable totals, and status rates.
 *   **Gantt Timelines**: Custom CSS Grid and SVG-based Gantt charts directly in your admin dashboard to visualize project schedules.
-*   **Decoupled Time Tracker**: Start, stop, and log timesheets directly in the admin bar or task meta boxes.
+*   **Decoupled Time Tracker**: Start, stop, and log timesheets directly in the admin bar, meta boxes, or standalone pages. Projects are neatly grouped by client (`<optgroup>`), and input modes are gated (either/or) to prevent conflicts.
+*   **Standalone PWA Companion App**: A distraction-free companion tracking page stripped of WordPress admin menus/bars. Chrome-installable as a borderless desktop application featuring offline caching, ticking clock animations, and today's logged entry feed.
+*   **Customizable Tracker Icons**: A settings dashboard allowing users to select and dynamically render their preferred tracker icon (Banana, Clock, Punch Clock, Hourglass).
 *   **Glassmorphic Client Portal**: A premium front-end experience available as the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`) in the block editor. Clients can review their projects, verify tasks, download invoices, and submit new requests.
 *   **Secure Passwordless Portal Auth**: Authorize client portal sessions using unique, secure client authentication keys (e.g. `?ndizi_token=...`), avoiding the need for clients to create standard WordPress user accounts.
 *   **Collaborative Discussions**: Task and project comment boxes are filtered and embedded into the Client Portal, allowing team members and clients to exchange feedback and upload file attachments.
