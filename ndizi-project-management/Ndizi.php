@@ -78,12 +78,9 @@ class Ndizi_Project_Management {
 	 * Run on plugin deactivation
 	 */
 	public static function deactivate() {
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
-
-		// Remove custom roles
-		Ndizi_Roles::remove_roles();
-
-		// Flush rewrite rules
+		// Only flush rewrite rules on deactivation. Roles, capabilities, and the
+		// custom table are destructive to remove and would punish a temporary
+		// deactivation, so that cleanup lives in uninstall.php instead.
 		flush_rewrite_rules();
 	}
 
