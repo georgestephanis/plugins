@@ -160,7 +160,7 @@ import './adminbar-style.scss';
 				? 1
 				: 0;
 
-			$btn.prop( 'disabled', true ).text( 'Starting...' );
+			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_starting );
 
 			wp.ajax
 				.post( 'ndizi_start_timer_action', {
@@ -187,7 +187,7 @@ import './adminbar-style.scss';
 						$( '#ndizi-ab-active-task' ).hide();
 					}
 					$( '#ndizi-ab-active-desc' ).text(
-						desc || 'No description'
+						desc || ndizi_adminbar.labels.no_description
 					);
 
 					// Start local ticking
@@ -198,7 +198,7 @@ import './adminbar-style.scss';
 					window.alert(
 						err.message || ndizi_adminbar.labels.error_general
 					);
-					$btn.prop( 'disabled', false ).text( 'Start Timer' );
+					$btn.prop( 'disabled', false ).text( ndizi_adminbar.labels.btn_start_timer );
 				} );
 		} );
 
@@ -206,7 +206,7 @@ import './adminbar-style.scss';
 		$( '#ndizi-ab-btn-stop' ).on( 'click', function ( e ) {
 			e.preventDefault();
 			const $btn = $( this );
-			$btn.prop( 'disabled', true ).text( 'Stopping...' );
+			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_stopping );
 
 			wp.ajax
 				.post( 'ndizi_stop_timer_action', {
@@ -226,7 +226,7 @@ import './adminbar-style.scss';
 						$node
 							.find( '.ndizi-ab-label' )
 							.addClass( 'screen-reader-text' )
-							.text( 'Log Time' );
+							.text( ndizi_adminbar.labels.btn_log_time );
 					}, 3000 );
 
 					$panel.removeClass( 'ndizi-timer-running' );
@@ -260,7 +260,7 @@ import './adminbar-style.scss';
 			const projectId = $( '#ndizi-ab-project-select' ).val();
 
 			if ( ! projectId ) {
-				window.alert( 'Please select a project.' );
+				window.alert( ndizi_adminbar.labels.select_project_first );
 				return;
 			}
 
@@ -270,7 +270,7 @@ import './adminbar-style.scss';
 			const duration = h * 3600 + m * 60;
 
 			if ( duration <= 0 ) {
-				window.alert( 'Please enter a valid duration.' );
+				window.alert( ndizi_adminbar.labels.enter_duration );
 				return;
 			}
 
@@ -281,7 +281,7 @@ import './adminbar-style.scss';
 				? 1
 				: 0;
 
-			$btn.prop( 'disabled', true ).text( 'Saving...' );
+			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_saving );
 
 			wp.ajax
 				.post( 'ndizi_log_time_manual_action', {
@@ -307,7 +307,7 @@ import './adminbar-style.scss';
 						$node
 							.find( '.ndizi-ab-label' )
 							.addClass( 'screen-reader-text' )
-							.text( 'Log Time' );
+							.text( ndizi_adminbar.labels.btn_log_time );
 					}, 3000 );
 
 					// Reset inputs & cache
@@ -373,7 +373,7 @@ import './adminbar-style.scss';
 
 		if ( projectsData.length === 0 ) {
 			$select.append(
-				$( '<option>' ).val( '' ).text( 'No active projects' )
+				$( '<option>' ).val( '' ).text( ndizi_adminbar.labels.no_active_projects )
 			);
 			return;
 		}
@@ -387,7 +387,7 @@ import './adminbar-style.scss';
 		// Group projects by client_name
 		const groups = {};
 		projectsData.forEach( function ( project ) {
-			const clientName = project.client_name || 'Internal';
+			const clientName = project.client_name || ndizi_adminbar.labels.internal_client;
 			if ( ! groups[ clientName ] ) {
 				groups[ clientName ] = [];
 			}
@@ -429,11 +429,11 @@ import './adminbar-style.scss';
 		$statsCard.show();
 
 		let totalSeconds = selectedProject.total_logged;
-		let label = 'Project: ';
+		let label = ndizi_adminbar.labels.stat_label_project;
 
 		if ( selectedTask ) {
 			totalSeconds = selectedTask.total_logged;
-			label = 'Task: ';
+			label = ndizi_adminbar.labels.stat_label_task;
 		}
 
 		const hours = ( totalSeconds / 3600 ).toFixed( 2 );
