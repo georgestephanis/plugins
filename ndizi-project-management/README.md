@@ -19,6 +19,7 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 - **Admin Dashboards**: Gorgeous, CSS-only reports and responsive visualizations representing team productivity, billable time distributions, and project health.
 - **Client Portal**: A premium, glassmorphic client-facing interface utilizing CSS transitions, visual progress bars, and responsive layouts. Embed it with the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`).
 - **Gantt Charts**: A custom CSS Grid and SVG-based Gantt chart system to render project timelines without loading bloated, slow third-party chart libraries.
+- **Standalone PWA Companion App**: A distraction-free, installable desktop utility page (`admin.php?page=ndizi-tracker-standalone`) that runs without the WordPress admin menu or admin bar. Built with a dark glassmorphic interface, a ticking digital clock, and live lists to review or delete today's entries.
 
 ### 📅 Relational Data Model
 
@@ -30,8 +31,9 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 ### ⏱️ Decoupled Time Tracking
 
 - Decouples raw, high-frequency time logs from post/postmeta storage into a custom database table (`wp_ndizi_time_entries`).
-- Supports active start/stop timers (like Harvest/Clockify) and manual log inputs.
-- Logs aggregate hourly tracking metadata, which billing managers can selectively convert into invoice line items.
+- **Nested Project Groupings**: Auto-groups projects under their client names (`<optgroup>`) in project selection lists for simplified, intuitive categorization.
+- **Gated Timer and Manual Modes**: Prevents input conflicts by deactivating and hiding the active timer option when manual duration entry is open.
+- **Customizable Tracker Icons**: Exposes a Settings page (`admin.php?page=ndizi-settings`) allowing managers to select preferred tracking icons (Banana, Clock, Punch Clock, Hourglass) with live-updating SVG renderings.
 
 ### 🧾 Invoice Engine & Exports
 
