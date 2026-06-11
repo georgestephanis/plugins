@@ -440,7 +440,7 @@ class Ndizi_Portal {
 			// Double-check project ownership
 			$project_client = get_post_meta( $project_id, '_ndizi_client_id', true );
 			if ( intval( $project_client ) !== $client_id ) {
-				wp_die( __( 'Unauthorized project selection.', 'ndizi' ) );
+				wp_die( __( 'Unauthorized project selection.', 'ndizi-project-management' ) );
 			}
 
 			$title   = sanitize_text_field( $_POST['ndizi_task_title'] );
@@ -483,21 +483,21 @@ class Ndizi_Portal {
 			if ( 'ndizi_project' === $post_type ) {
 				$project_client = get_post_meta( $post_id, '_ndizi_client_id', true );
 				if ( intval( $project_client ) !== $client_id ) {
-					wp_die( __( 'Unauthorized access.', 'ndizi' ) );
+					wp_die( __( 'Unauthorized access.', 'ndizi-project-management' ) );
 				}
 			} elseif ( 'ndizi_task' === $post_type ) {
 				$project_id     = get_post_meta( $post_id, '_ndizi_project_id', true );
 				$project_client = get_post_meta( $project_id, '_ndizi_client_id', true );
 				if ( intval( $project_client ) !== $client_id ) {
-					wp_die( __( 'Unauthorized access.', 'ndizi' ) );
+					wp_die( __( 'Unauthorized access.', 'ndizi-project-management' ) );
 				}
 			} else {
-				wp_die( __( 'Invalid discussion target.', 'ndizi' ) );
+				wp_die( __( 'Invalid discussion target.', 'ndizi-project-management' ) );
 			}
 
 			if ( ! empty( $content ) ) {
 				// Bypass WP restrictions for anonymous comments by setting author parameters
-				$comment_author       = get_the_title( $client_id ) . ' (' . __( 'Client', 'ndizi' ) . ')';
+				$comment_author       = get_the_title( $client_id ) . ' (' . __( 'Client', 'ndizi-project-management' ) . ')';
 				$comment_author_email = get_post_meta( $client_id, '_ndizi_client_website', true ) ?: 'client@portal.local';
 
 				$comment_id = wp_insert_comment(
@@ -583,20 +583,20 @@ class Ndizi_Portal {
 		?>
 		<div class="ndizi-portal-login-card">
 			<div class="ndizi-portal-logo-glow"></div>
-			<h2><?php _e( 'Client Portal Access', 'ndizi' ); ?></h2>
-			<p><?php _e( 'Enter your secure Client Portal Key to review your projects, invoices, and tasks.', 'ndizi' ); ?></p>
+			<h2><?php _e( 'Client Portal Access', 'ndizi-project-management' ); ?></h2>
+			<p><?php _e( 'Enter your secure Client Portal Key to review your projects, invoices, and tasks.', 'ndizi-project-management' ); ?></p>
 
 			<?php if ( $error ) : ?>
 				<div class="ndizi-portal-alert alert-error">
-					<?php _e( 'Invalid portal key. Please double-check and try again.', 'ndizi' ); ?>
+					<?php _e( 'Invalid portal key. Please double-check and try again.', 'ndizi-project-management' ); ?>
 				</div>
 			<?php endif; ?>
 
 			<form method="post" action="">
 				<div class="ndizi-form-group">
-					<input type="password" name="ndizi_portal_key" placeholder="<?php esc_attr_e( 'Enter Portal Key (e.g. ndizi_...)', 'ndizi' ); ?>" required>
+					<input type="password" name="ndizi_portal_key" placeholder="<?php esc_attr_e( 'Enter Portal Key (e.g. ndizi_...)', 'ndizi-project-management' ); ?>" required>
 				</div>
-				<button type="submit" name="ndizi_portal_login" class="ndizi-portal-btn"><?php _e( 'Authenticate', 'ndizi' ); ?></button>
+				<button type="submit" name="ndizi_portal_login" class="ndizi-portal-btn"><?php _e( 'Authenticate', 'ndizi-project-management' ); ?></button>
 			</form>
 		</div>
 		<?php
@@ -625,26 +625,26 @@ class Ndizi_Portal {
 		<header class="ndizi-portal-header">
 			<div>
 				<h1><?php echo esc_html( $client->post_title ); ?></h1>
-				<p class="subtitle"><?php _e( 'Welcome to your project command center.', 'ndizi' ); ?></p>
+				<p class="subtitle"><?php _e( 'Welcome to your project command center.', 'ndizi-project-management' ); ?></p>
 			</div>
 			<div>
-				<a href="<?php echo esc_url( add_query_arg( 'ndizi_logout', '1', get_permalink() ) ); ?>" class="ndizi-portal-btn-secondary"><?php _e( 'Sign Out', 'ndizi' ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( 'ndizi_logout', '1', get_permalink() ) ); ?>" class="ndizi-portal-btn-secondary"><?php _e( 'Sign Out', 'ndizi-project-management' ); ?></a>
 			</div>
 		</header>
 
 		<?php if ( $task_success ) : ?>
 			<div class="ndizi-portal-alert alert-success">
-				<?php _e( 'Task successfully submitted! Our team has been notified and will review it shortly.', 'ndizi' ); ?>
+				<?php _e( 'Task successfully submitted! Our team has been notified and will review it shortly.', 'ndizi-project-management' ); ?>
 			</div>
 		<?php endif; ?>
 
 		<div class="ndizi-portal-layout">
 			<!-- Main projects column -->
 			<div class="ndizi-portal-main">
-				<h2><?php _e( 'Your Projects', 'ndizi' ); ?></h2>
+				<h2><?php _e( 'Your Projects', 'ndizi-project-management' ); ?></h2>
 				<?php if ( empty( $projects ) ) : ?>
 					<div class="ndizi-portal-card no-items">
-						<p><?php _e( 'You do not have any projects assigned yet.', 'ndizi' ); ?></p>
+						<p><?php _e( 'You do not have any projects assigned yet.', 'ndizi-project-management' ); ?></p>
 					</div>
 				<?php else : ?>
 					<div class="ndizi-portal-accordion-grid">
@@ -688,9 +688,9 @@ class Ndizi_Portal {
 									<div>
 										<h3><?php echo esc_html( $project->post_title ); ?></h3>
 										<div class="ndizi-project-summary-meta">
-											<span class="ndizi-meta-hours"><strong><?php echo esc_html( $total_hours ); ?></strong> <?php _e( 'hours tracked', 'ndizi' ); ?></span>
+											<span class="ndizi-meta-hours"><strong><?php echo esc_html( $total_hours ); ?></strong> <?php _e( 'hours tracked', 'ndizi-project-management' ); ?></span>
 											<span class="ndizi-meta-divider">&bull;</span>
-											<span class="ndizi-meta-tasks"><?php echo count( $tasks ); ?> <?php _e( 'tasks', 'ndizi' ); ?></span>
+											<span class="ndizi-meta-tasks"><?php echo count( $tasks ); ?> <?php _e( 'tasks', 'ndizi-project-management' ); ?></span>
 										</div>
 									</div>
 									<button type="button" class="ndizi-accordion-toggle-btn">
@@ -707,9 +707,9 @@ class Ndizi_Portal {
 
 									<!-- Project Task Checklist -->
 									<div class="ndizi-portal-tasks-section">
-										<h4><?php _e( 'Tasks & Status', 'ndizi' ); ?></h4>
+										<h4><?php _e( 'Tasks & Status', 'ndizi-project-management' ); ?></h4>
 										<?php if ( empty( $tasks ) ) : ?>
-											<p class="no-items-desc"><?php _e( 'No tasks registered for this project.', 'ndizi' ); ?></p>
+											<p class="no-items-desc"><?php _e( 'No tasks registered for this project.', 'ndizi-project-management' ); ?></p>
 										<?php else : ?>
 											<ul class="ndizi-portal-task-list">
 												<?php
@@ -722,7 +722,7 @@ class Ndizi_Portal {
 														<div class="ndizi-task-details-col">
 															<span class="ndizi-task-title"><?php echo esc_html( $task->post_title ); ?></span>
 															<?php if ( $due ) : ?>
-																<span class="ndizi-task-due"><?php _e( 'Due:', 'ndizi' ); ?> <?php echo esc_html( $due ); ?></span>
+																<span class="ndizi-task-due"><?php _e( 'Due:', 'ndizi-project-management' ); ?> <?php echo esc_html( $due ); ?></span>
 															<?php endif; ?>
 														</div>
 														<div class="ndizi-task-badges-col">
@@ -742,20 +742,20 @@ class Ndizi_Portal {
 
 									<!-- Invoices List -->
 									<div class="ndizi-portal-invoices-section">
-										<h4><?php _e( 'Project Invoices', 'ndizi' ); ?></h4>
+										<h4><?php _e( 'Project Invoices', 'ndizi-project-management' ); ?></h4>
 										<?php if ( empty( $invoices ) ) : ?>
-											<p class="no-items-desc"><?php _e( 'No invoices generated for this project.', 'ndizi' ); ?></p>
+											<p class="no-items-desc"><?php _e( 'No invoices generated for this project.', 'ndizi-project-management' ); ?></p>
 										<?php else : ?>
 											<div class="ndizi-portal-table-wrapper">
 												<table class="ndizi-portal-table">
 													<thead>
 														<tr>
-															<th><?php _e( 'Invoice #', 'ndizi' ); ?></th>
-															<th><?php _e( 'Date', 'ndizi' ); ?></th>
-															<th><?php _e( 'Due Date', 'ndizi' ); ?></th>
-															<th><?php _e( 'Amount', 'ndizi' ); ?></th>
-															<th><?php _e( 'Status', 'ndizi' ); ?></th>
-															<th><?php _e( 'Actions', 'ndizi' ); ?></th>
+															<th><?php _e( 'Invoice #', 'ndizi-project-management' ); ?></th>
+															<th><?php _e( 'Date', 'ndizi-project-management' ); ?></th>
+															<th><?php _e( 'Due Date', 'ndizi-project-management' ); ?></th>
+															<th><?php _e( 'Amount', 'ndizi-project-management' ); ?></th>
+															<th><?php _e( 'Status', 'ndizi-project-management' ); ?></th>
+															<th><?php _e( 'Actions', 'ndizi-project-management' ); ?></th>
 														</tr>
 													</thead>
 													<tbody>
@@ -787,7 +787,7 @@ class Ndizi_Portal {
 																	);
 																	?>
 																				" target="_blank" class="ndizi-portal-btn-table">
-																		<span class="dashicons dashicons-printer"></span> <?php _e( 'Print/PDF', 'ndizi' ); ?>
+																		<span class="dashicons dashicons-printer"></span> <?php _e( 'Print/PDF', 'ndizi-project-management' ); ?>
 																	</a>
 																</td>
 															</tr>
@@ -802,7 +802,7 @@ class Ndizi_Portal {
 
 									<!-- Project Discussion / Messages -->
 									<div class="ndizi-portal-discussion-section">
-										<h4><?php _e( 'Project Discussion & Attachments', 'ndizi' ); ?></h4>
+										<h4><?php _e( 'Project Discussion & Attachments', 'ndizi-project-management' ); ?></h4>
 										<?php self::render_discussion_thread( $project->ID ); ?>
 									</div>
 								</div>
@@ -815,15 +815,15 @@ class Ndizi_Portal {
 			<!-- Sidebar columns for submitting new tasks -->
 			<div class="ndizi-portal-sidebar">
 				<div class="ndizi-portal-card ndizi-sidebar-form-card">
-					<h3><?php _e( 'Submit a Request / Task', 'ndizi' ); ?></h3>
-					<p class="desc"><?php _e( 'Submit a new request. It will appear on our dashboards for immediate triage and user assignment.', 'ndizi' ); ?></p>
+					<h3><?php _e( 'Submit a Request / Task', 'ndizi-project-management' ); ?></h3>
+					<p class="desc"><?php _e( 'Submit a new request. It will appear on our dashboards for immediate triage and user assignment.', 'ndizi-project-management' ); ?></p>
 
 					<form method="post" action="">
 						<?php wp_nonce_field( 'ndizi_portal_submit_task' ); ?>
 						<div class="ndizi-form-group">
-							<label for="ndizi_task_project_id"><?php _e( 'Select Project', 'ndizi' ); ?></label>
+							<label for="ndizi_task_project_id"><?php _e( 'Select Project', 'ndizi-project-management' ); ?></label>
 							<select name="ndizi_task_project_id" id="ndizi_task_project_id" required>
-								<option value=""><?php _e( '-- Select Project --', 'ndizi' ); ?></option>
+								<option value=""><?php _e( '-- Select Project --', 'ndizi-project-management' ); ?></option>
 								<?php foreach ( $projects as $project ) : ?>
 									<option value="<?php echo esc_attr( $project->ID ); ?>"><?php echo esc_html( $project->post_title ); ?></option>
 								<?php endforeach; ?>
@@ -831,16 +831,16 @@ class Ndizi_Portal {
 						</div>
 
 						<div class="ndizi-form-group">
-							<label for="ndizi_task_title"><?php _e( 'Task Summary', 'ndizi' ); ?></label>
-							<input type="text" name="ndizi_task_title" id="ndizi_task_title" placeholder="<?php esc_attr_e( 'e.g. Design homepage hero layout', 'ndizi' ); ?>" required>
+							<label for="ndizi_task_title"><?php _e( 'Task Summary', 'ndizi-project-management' ); ?></label>
+							<input type="text" name="ndizi_task_title" id="ndizi_task_title" placeholder="<?php esc_attr_e( 'e.g. Design homepage hero layout', 'ndizi-project-management' ); ?>" required>
 						</div>
 
 						<div class="ndizi-form-group">
-							<label for="ndizi_task_details"><?php _e( 'Requirements / Details', 'ndizi' ); ?></label>
-							<textarea name="ndizi_task_details" id="ndizi_task_details" rows="5" placeholder="<?php esc_attr_e( 'Describe requirements, links, details...', 'ndizi' ); ?>" required></textarea>
+							<label for="ndizi_task_details"><?php _e( 'Requirements / Details', 'ndizi-project-management' ); ?></label>
+							<textarea name="ndizi_task_details" id="ndizi_task_details" rows="5" placeholder="<?php esc_attr_e( 'Describe requirements, links, details...', 'ndizi-project-management' ); ?>" required></textarea>
 						</div>
 
-						<button type="submit" name="ndizi_submit_task_portal" class="ndizi-portal-btn"><?php _e( 'Submit Task', 'ndizi' ); ?></button>
+						<button type="submit" name="ndizi_submit_task_portal" class="ndizi-portal-btn"><?php _e( 'Submit Task', 'ndizi-project-management' ); ?></button>
 					</form>
 				</div>
 			</div>
@@ -875,7 +875,7 @@ class Ndizi_Portal {
 		?>
 		<div class="ndizi-discussion-thread">
 			<?php if ( empty( $comments ) ) : ?>
-				<p class="no-items-desc"><?php _e( 'No messages posted yet. Start the conversation below.', 'ndizi' ); ?></p>
+				<p class="no-items-desc"><?php _e( 'No messages posted yet. Start the conversation below.', 'ndizi-project-management' ); ?></p>
 			<?php else : ?>
 				<ul class="ndizi-comments-list">
 					<?php
@@ -894,7 +894,7 @@ class Ndizi_Portal {
 							<!-- Display attachments if any -->
 							<?php if ( ! empty( $attach_ids ) && is_array( $attach_ids ) ) : ?>
 								<div class="ndizi-comment-attachments">
-									<strong><?php _e( 'Attached Files:', 'ndizi' ); ?></strong>
+									<strong><?php _e( 'Attached Files:', 'ndizi-project-management' ); ?></strong>
 									<ul>
 										<?php
 										foreach ( $attach_ids as $att_id ) :
@@ -920,19 +920,19 @@ class Ndizi_Portal {
 				<input type="hidden" name="ndizi_comment_post_id" value="<?php echo esc_attr( $post_id ); ?>">
 
 				<div class="ndizi-form-group">
-					<textarea name="ndizi_comment_content" rows="3" placeholder="<?php esc_attr_e( 'Write a message...', 'ndizi' ); ?>" required></textarea>
+					<textarea name="ndizi_comment_content" rows="3" placeholder="<?php esc_attr_e( 'Write a message...', 'ndizi-project-management' ); ?>" required></textarea>
 				</div>
 
 				<div class="ndizi-form-row">
 					<div class="ndizi-form-group flex-grow">
 						<label class="ndizi-file-upload-label">
-							<span class="dashicons dashicons-upload"></span> <?php _e( 'Attach files', 'ndizi' ); ?>
+							<span class="dashicons dashicons-upload"></span> <?php _e( 'Attach files', 'ndizi-project-management' ); ?>
 							<input type="file" name="ndizi_attachments[]" multiple style="display: none;" onchange="jQuery(this).parent().find('.file-count-label').text(this.files.length + ' file(s) selected');">
 							<span class="file-count-label" style="font-size: 11px; color: #94a3b8; font-weight: normal; margin-left: 5px;"></span>
 						</label>
 					</div>
 					<div>
-						<button type="submit" name="ndizi_submit_portal_comment" class="ndizi-portal-btn-sm"><?php _e( 'Send Message', 'ndizi' ); ?></button>
+						<button type="submit" name="ndizi_submit_portal_comment" class="ndizi-portal-btn-sm"><?php _e( 'Send Message', 'ndizi-project-management' ); ?></button>
 					</div>
 				</div>
 			</form>
@@ -946,19 +946,19 @@ class Ndizi_Portal {
 	public static function ajax_load_task_discussion() {
 		$client_id = self::get_authenticated_client_id();
 		if ( ! $client_id ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized access.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized access.', 'ndizi-project-management' ) ) );
 		}
 
 		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 		if ( ! $task_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid task ID.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid task ID.', 'ndizi-project-management' ) ) );
 		}
 
 		// Verify task belongs to a project belonging to this client
 		$project_id     = get_post_meta( $task_id, '_ndizi_project_id', true );
 		$project_client = get_post_meta( $project_id, '_ndizi_client_id', true );
 		if ( intval( $project_client ) !== $client_id ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized access to task.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized access to task.', 'ndizi-project-management' ) ) );
 		}
 
 		ob_start();

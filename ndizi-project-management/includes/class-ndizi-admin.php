@@ -94,9 +94,9 @@ class Ndizi_Admin {
 					'ajax_url' => admin_url( 'admin-ajax.php' ),
 					'nonce'    => wp_create_nonce( 'ndizi-admin-nonce' ),
 					'labels'   => array(
-						'timer_started'  => __( 'Timer started!', 'ndizi' ),
-						'timer_stopped'  => __( 'Timer stopped!', 'ndizi' ),
-						'confirm_delete' => __( 'Are you sure you want to delete this entry?', 'ndizi' ),
+						'timer_started'  => __( 'Timer started!', 'ndizi-project-management' ),
+						'timer_stopped'  => __( 'Timer stopped!', 'ndizi-project-management' ),
+						'confirm_delete' => __( 'Are you sure you want to delete this entry?', 'ndizi-project-management' ),
 					),
 				)
 			);
@@ -109,8 +109,8 @@ class Ndizi_Admin {
 	public static function register_admin_pages() {
 		// Top level menu
 		add_menu_page(
-			__( 'Ndizi PM', 'ndizi' ),
-			__( 'Ndizi PM', 'ndizi' ),
+			__( 'Ndizi PM', 'ndizi-project-management' ),
+			__( 'Ndizi PM', 'ndizi-project-management' ),
 			'ndizi_view_projects',
 			'ndizi-pm',
 			array( __CLASS__, 'render_dashboard_page' ),
@@ -121,8 +121,8 @@ class Ndizi_Admin {
 		// Submenu: Reports
 		add_submenu_page(
 			'ndizi-pm',
-			__( 'Ndizi Reports', 'ndizi' ),
-			__( 'Reports', 'ndizi' ),
+			__( 'Ndizi Reports', 'ndizi-project-management' ),
+			__( 'Reports', 'ndizi-project-management' ),
 			'ndizi_view_reports',
 			'ndizi-reports',
 			array( __CLASS__, 'render_reports_page' )
@@ -131,8 +131,8 @@ class Ndizi_Admin {
 		// Submenu: Gantt Chart
 		add_submenu_page(
 			'ndizi-pm',
-			__( 'Ndizi Gantt Chart', 'ndizi' ),
-			__( 'Gantt Chart', 'ndizi' ),
+			__( 'Ndizi Gantt Chart', 'ndizi-project-management' ),
+			__( 'Gantt Chart', 'ndizi-project-management' ),
 			'ndizi_view_projects',
 			'ndizi-gantt',
 			array( __CLASS__, 'render_gantt_page' )
@@ -196,26 +196,26 @@ class Ndizi_Admin {
 		?>
 		<div class="wrap ndizi-dashboard-page" style="max-width: 1200px; margin: 20px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
 			<div style="background: linear-gradient(135deg, #4f46e5, #3b82f6); padding: 40px; border-radius: 12px; color: #fff; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);">
-				<h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #fff;"><?php esc_html_e( 'Welcome to Ndizi Project Management', 'ndizi' ); ?></h1>
-				<p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;"><?php esc_html_e( 'Native WordPress tracking for clients, projects, tasks, timesheets, and invoices.', 'ndizi' ); ?></p>
+				<h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #fff;"><?php esc_html_e( 'Welcome to Ndizi Project Management', 'ndizi-project-management' ); ?></h1>
+				<p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;"><?php esc_html_e( 'Native WordPress tracking for clients, projects, tasks, timesheets, and invoices.', 'ndizi-project-management' ); ?></p>
 			</div>
 
 			<!-- Stats Grid -->
 			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #4f46e5;">
-					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Active Projects', 'ndizi' ); ?></h3>
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Active Projects', 'ndizi-project-management' ); ?></h3>
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $active_projects ); ?></div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #f59e0b;">
-					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Open Tasks', 'ndizi' ); ?></h3>
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Open Tasks', 'ndizi-project-management' ); ?></h3>
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $open_tasks ); ?></div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #10b981;">
-					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Total Hours Logged', 'ndizi' ); ?></h3>
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Total Hours Logged', 'ndizi-project-management' ); ?></h3>
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo esc_html( $total_hours ); ?>h</div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #ec4899;">
-					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Pending Invoices', 'ndizi' ); ?></h3>
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Pending Invoices', 'ndizi-project-management' ); ?></h3>
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $pending_invoices ); ?></div>
 				</div>
 			</div>
@@ -224,36 +224,36 @@ class Ndizi_Admin {
 			<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start;">
 				<!-- Quick Actions -->
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
-					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Quick Action Workspace', 'ndizi' ); ?></h2>
+					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Quick Action Workspace', 'ndizi-project-management' ); ?></h2>
 					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
 						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_client' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
 							<span class="dashicons dashicons-networking" style="margin-right: 10px; color: #4f46e5;"></span>
-							<?php esc_html_e( 'Add New Client', 'ndizi' ); ?>
+							<?php esc_html_e( 'Add New Client', 'ndizi-project-management' ); ?>
 						</a>
 						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_project' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
 							<span class="dashicons dashicons-portfolio" style="margin-right: 10px; color: #4f46e5;"></span>
-							<?php esc_html_e( 'Create New Project', 'ndizi' ); ?>
+							<?php esc_html_e( 'Create New Project', 'ndizi-project-management' ); ?>
 						</a>
 						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_task' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
 							<span class="dashicons dashicons-yes" style="margin-right: 10px; color: #4f46e5;"></span>
-							<?php esc_html_e( 'Create New Task', 'ndizi' ); ?>
+							<?php esc_html_e( 'Create New Task', 'ndizi-project-management' ); ?>
 						</a>
 						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_invoice' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
 							<span class="dashicons dashicons-analytics" style="margin-right: 10px; color: #4f46e5;"></span>
-							<?php esc_html_e( 'Generate Invoice', 'ndizi' ); ?>
+							<?php esc_html_e( 'Generate Invoice', 'ndizi-project-management' ); ?>
 						</a>
 					</div>
 				</div>
 
 				<!-- Navigation Quick Links -->
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
-					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi' ); ?></h2>
+					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi-project-management' ); ?></h2>
 					<div style="display: flex; flex-direction: column; gap: 10px;">
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-reports' ) ); ?>" style="display: block; background: #4f46e5; color: #fff; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#4338ca';" onmouseout="this.style.background='#4f46e5';">
-							<?php esc_html_e( 'View Productivity Reports', 'ndizi' ); ?>
+							<?php esc_html_e( 'View Productivity Reports', 'ndizi-project-management' ); ?>
 						</a>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-gantt' ) ); ?>" style="display: block; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f8fafc';">
-							<?php esc_html_e( 'View Gantt Charts', 'ndizi' ); ?>
+							<?php esc_html_e( 'View Gantt Charts', 'ndizi-project-management' ); ?>
 						</a>
 					</div>
 				</div>
@@ -269,9 +269,9 @@ class Ndizi_Admin {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
-				$new_columns['projects_count'] = __( 'Projects', 'ndizi' );
-				$new_columns['client_status']  = __( 'Status', 'ndizi' );
-				$new_columns['client_key']     = __( 'Portal Key', 'ndizi' );
+				$new_columns['projects_count'] = __( 'Projects', 'ndizi-project-management' );
+				$new_columns['client_status']  = __( 'Status', 'ndizi-project-management' );
+				$new_columns['client_key']     = __( 'Portal Key', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -298,7 +298,7 @@ class Ndizi_Admin {
 			echo count( $projects );
 		} elseif ( 'client_status' === $column ) {
 			$status       = get_post_meta( $post_id, '_ndizi_client_status', true );
-			$status_label = ( 'archived' === $status ) ? __( 'Archived', 'ndizi' ) : __( 'Active', 'ndizi' );
+			$status_label = ( 'archived' === $status ) ? __( 'Archived', 'ndizi-project-management' ) : __( 'Active', 'ndizi-project-management' );
 			$status_class = ( 'archived' === $status ) ? 'ndizi-badge-archived' : 'ndizi-badge-active';
 			echo '<span class="ndizi-badge ' . esc_attr( $status_class ) . '">' . esc_html( $status_label ) . '</span>';
 		} elseif ( 'client_key' === $column ) {
@@ -314,10 +314,10 @@ class Ndizi_Admin {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
-				$new_columns['project_client'] = __( 'Client', 'ndizi' );
-				$new_columns['project_status'] = __( 'Status', 'ndizi' );
-				$new_columns['project_time']   = __( 'Time Tracked', 'ndizi' );
-				$new_columns['project_budget'] = __( 'Budget', 'ndizi' );
+				$new_columns['project_client'] = __( 'Client', 'ndizi-project-management' );
+				$new_columns['project_status'] = __( 'Status', 'ndizi-project-management' );
+				$new_columns['project_time']   = __( 'Time Tracked', 'ndizi-project-management' );
+				$new_columns['project_budget'] = __( 'Budget', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -337,7 +337,7 @@ class Ndizi_Admin {
 			}
 		} elseif ( 'project_status' === $column ) {
 			$status       = get_post_meta( $post_id, '_ndizi_project_status', true );
-			$status_label = ( 'archived' === $status ) ? __( 'Archived', 'ndizi' ) : __( 'Active', 'ndizi' );
+			$status_label = ( 'archived' === $status ) ? __( 'Archived', 'ndizi-project-management' ) : __( 'Active', 'ndizi-project-management' );
 			$status_class = ( 'archived' === $status ) ? 'ndizi-badge-archived' : 'ndizi-badge-active';
 			echo '<span class="ndizi-badge ' . esc_attr( $status_class ) . '">' . esc_html( $status_label ) . '</span>';
 		} elseif ( 'project_time' === $column ) {
@@ -358,11 +358,11 @@ class Ndizi_Admin {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
-				$new_columns['task_project']  = __( 'Project', 'ndizi' );
-				$new_columns['task_assignee'] = __( 'Assignee', 'ndizi' );
-				$new_columns['task_status']   = __( 'Status', 'ndizi' );
-				$new_columns['task_priority'] = __( 'Priority', 'ndizi' );
-				$new_columns['task_due_date'] = __( 'Due Date', 'ndizi' );
+				$new_columns['task_project']  = __( 'Project', 'ndizi-project-management' );
+				$new_columns['task_assignee'] = __( 'Assignee', 'ndizi-project-management' );
+				$new_columns['task_status']   = __( 'Status', 'ndizi-project-management' );
+				$new_columns['task_priority'] = __( 'Priority', 'ndizi-project-management' );
+				$new_columns['task_due_date'] = __( 'Due Date', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -386,26 +386,26 @@ class Ndizi_Admin {
 				$user = get_userdata( $assignee_id );
 				echo $user ? esc_html( $user->display_name ) : '-';
 			} else {
-				echo '<em>' . esc_html__( 'Unassigned', 'ndizi' ) . '</em>';
+				echo '<em>' . esc_html__( 'Unassigned', 'ndizi-project-management' ) . '</em>';
 			}
 		} elseif ( 'task_status' === $column ) {
 			$status = get_post_meta( $post_id, '_ndizi_task_status', true );
 			$labels = array(
-				'open'        => __( 'Open', 'ndizi' ),
-				'in_progress' => __( 'In Progress', 'ndizi' ),
-				'completed'   => __( 'Completed', 'ndizi' ),
-				'cancelled'   => __( 'Cancelled', 'ndizi' ),
+				'open'        => __( 'Open', 'ndizi-project-management' ),
+				'in_progress' => __( 'In Progress', 'ndizi-project-management' ),
+				'completed'   => __( 'Completed', 'ndizi-project-management' ),
+				'cancelled'   => __( 'Cancelled', 'ndizi-project-management' ),
 			);
-			$label  = isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Open', 'ndizi' );
+			$label  = isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Open', 'ndizi-project-management' );
 			echo '<span class="ndizi-badge ndizi-task-' . esc_attr( $status ) . '">' . esc_html( $label ) . '</span>';
 		} elseif ( 'task_priority' === $column ) {
 			$priority = get_post_meta( $post_id, '_ndizi_task_priority', true );
 			$labels   = array(
-				'low'    => __( 'Low', 'ndizi' ),
-				'medium' => __( 'Medium', 'ndizi' ),
-				'high'   => __( 'High', 'ndizi' ),
+				'low'    => __( 'Low', 'ndizi-project-management' ),
+				'medium' => __( 'Medium', 'ndizi-project-management' ),
+				'high'   => __( 'High', 'ndizi-project-management' ),
 			);
-			$label    = isset( $labels[ $priority ] ) ? $labels[ $priority ] : __( 'Medium', 'ndizi' );
+			$label    = isset( $labels[ $priority ] ) ? $labels[ $priority ] : __( 'Medium', 'ndizi-project-management' );
 			echo '<span class="ndizi-priority-' . esc_attr( $priority ) . '">' . esc_html( $label ) . '</span>';
 		} elseif ( 'task_due_date' === $column ) {
 			$due = get_post_meta( $post_id, '_ndizi_task_due_date', true );
@@ -420,10 +420,10 @@ class Ndizi_Admin {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
-				$new_columns['invoice_project'] = __( 'Project', 'ndizi' );
-				$new_columns['invoice_status']  = __( 'Status', 'ndizi' );
-				$new_columns['invoice_amount']  = __( 'Amount', 'ndizi' );
-				$new_columns['invoice_due']     = __( 'Due Date', 'ndizi' );
+				$new_columns['invoice_project'] = __( 'Project', 'ndizi-project-management' );
+				$new_columns['invoice_status']  = __( 'Status', 'ndizi-project-management' );
+				$new_columns['invoice_amount']  = __( 'Amount', 'ndizi-project-management' );
+				$new_columns['invoice_due']     = __( 'Due Date', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -444,12 +444,12 @@ class Ndizi_Admin {
 		} elseif ( 'invoice_status' === $column ) {
 			$status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
 			$labels = array(
-				'draft' => __( 'Draft', 'ndizi' ),
-				'sent'  => __( 'Sent', 'ndizi' ),
-				'paid'  => __( 'Paid', 'ndizi' ),
-				'void'  => __( 'Void', 'ndizi' ),
+				'draft' => __( 'Draft', 'ndizi-project-management' ),
+				'sent'  => __( 'Sent', 'ndizi-project-management' ),
+				'paid'  => __( 'Paid', 'ndizi-project-management' ),
+				'void'  => __( 'Void', 'ndizi-project-management' ),
 			);
-			$label  = isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Draft', 'ndizi' );
+			$label  = isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Draft', 'ndizi-project-management' );
 			echo '<span class="ndizi-badge ndizi-invoice-' . esc_attr( $status ) . '">' . esc_html( $label ) . '</span>';
 		} elseif ( 'invoice_amount' === $column ) {
 			$amount = get_post_meta( $post_id, '_ndizi_invoice_amount', true );
@@ -465,20 +465,20 @@ class Ndizi_Admin {
 	 */
 	public static function add_meta_boxes() {
 		// Client Meta Box
-		add_meta_box( 'ndizi_client_details', __( 'Client Details', 'ndizi' ), array( __CLASS__, 'render_client_meta_box' ), 'ndizi_client', 'normal', 'high' );
+		add_meta_box( 'ndizi_client_details', __( 'Client Details', 'ndizi-project-management' ), array( __CLASS__, 'render_client_meta_box' ), 'ndizi_client', 'normal', 'high' );
 
 		// Project Meta Box
-		add_meta_box( 'ndizi_project_details', __( 'Project Details', 'ndizi' ), array( __CLASS__, 'render_project_meta_box' ), 'ndizi_project', 'normal', 'high' );
-		add_meta_box( 'ndizi_project_time', __( 'Time Log / Tracker', 'ndizi' ), array( __CLASS__, 'render_project_time_meta_box' ), 'ndizi_project', 'normal', 'default' );
+		add_meta_box( 'ndizi_project_details', __( 'Project Details', 'ndizi-project-management' ), array( __CLASS__, 'render_project_meta_box' ), 'ndizi_project', 'normal', 'high' );
+		add_meta_box( 'ndizi_project_time', __( 'Time Log / Tracker', 'ndizi-project-management' ), array( __CLASS__, 'render_project_time_meta_box' ), 'ndizi_project', 'normal', 'default' );
 
 		// Task Meta Box
-		add_meta_box( 'ndizi_task_details', __( 'Task Details', 'ndizi' ), array( __CLASS__, 'render_task_meta_box' ), 'ndizi_task', 'normal', 'high' );
+		add_meta_box( 'ndizi_task_details', __( 'Task Details', 'ndizi-project-management' ), array( __CLASS__, 'render_task_meta_box' ), 'ndizi_task', 'normal', 'high' );
 
 		// Invoice Meta Box
-		add_meta_box( 'ndizi_invoice_details', __( 'Invoice Details', 'ndizi' ), array( __CLASS__, 'render_invoice_meta_box' ), 'ndizi_invoice', 'normal', 'high' );
+		add_meta_box( 'ndizi_invoice_details', __( 'Invoice Details', 'ndizi-project-management' ), array( __CLASS__, 'render_invoice_meta_box' ), 'ndizi_invoice', 'normal', 'high' );
 
 		// Contact Meta Box
-		add_meta_box( 'ndizi_contact_details', __( 'Contact Details', 'ndizi' ), array( __CLASS__, 'render_contact_meta_box' ), 'ndizi_contact', 'normal', 'high' );
+		add_meta_box( 'ndizi_contact_details', __( 'Contact Details', 'ndizi-project-management' ), array( __CLASS__, 'render_contact_meta_box' ), 'ndizi_contact', 'normal', 'high' );
 	}
 
 	/**
@@ -498,28 +498,28 @@ class Ndizi_Admin {
 		?>
 		<table class="form-table ndizi-meta-table">
 			<tr>
-				<th><label for="ndizi_client_website"><?php _e( 'Website URL', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_client_website"><?php _e( 'Website URL', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="url" name="ndizi_client_website" id="ndizi_client_website" value="<?php echo esc_url( $website ); ?>" class="regular-text"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_client_address"><?php _e( 'Billing Address', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_client_address"><?php _e( 'Billing Address', 'ndizi-project-management' ); ?></label></th>
 				<td><textarea name="ndizi_client_address" id="ndizi_client_address" class="large-text" rows="3"><?php echo esc_textarea( $address ); ?></textarea></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_client_status"><?php _e( 'Status', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_client_status"><?php _e( 'Status', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_client_status" id="ndizi_client_status">
-						<option value="active" <?php selected( $status, 'active' ); ?>><?php _e( 'Active', 'ndizi' ); ?></option>
-						<option value="archived" <?php selected( $status, 'archived' ); ?>><?php _e( 'Archived / Inactive', 'ndizi' ); ?></option>
+						<option value="active" <?php selected( $status, 'active' ); ?>><?php _e( 'Active', 'ndizi-project-management' ); ?></option>
+						<option value="archived" <?php selected( $status, 'archived' ); ?>><?php _e( 'Archived / Inactive', 'ndizi-project-management' ); ?></option>
 					</select>
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_client_auth_key"><?php _e( 'Portal Key', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_client_auth_key"><?php _e( 'Portal Key', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<input type="text" name="ndizi_client_auth_key" id="ndizi_client_auth_key" value="<?php echo esc_attr( $key ); ?>" class="regular-text" readonly>
-					<button type="button" class="button ndizi-regen-key-btn"><?php _e( 'Regenerate Key', 'ndizi' ); ?></button>
-					<p class="description"><?php _e( 'Used for frontend access authentication.', 'ndizi' ); ?></p>
+					<button type="button" class="button ndizi-regen-key-btn"><?php _e( 'Regenerate Key', 'ndizi-project-management' ); ?></button>
+					<p class="description"><?php _e( 'Used for frontend access authentication.', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
 		</table>
@@ -547,10 +547,10 @@ class Ndizi_Admin {
 		?>
 		<table class="form-table ndizi-meta-table">
 			<tr>
-				<th><label for="ndizi_client_id"><?php _e( 'Client', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_client_id"><?php _e( 'Client', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_client_id" id="ndizi_client_id" required>
-						<option value=""><?php _e( '-- Select Client --', 'ndizi' ); ?></option>
+						<option value=""><?php _e( '-- Select Client --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $clients as $client ) : ?>
 							<option value="<?php echo esc_attr( $client->ID ); ?>" <?php selected( $client_id, $client->ID ); ?>>
 								<?php echo esc_html( $client->post_title ); ?>
@@ -560,23 +560,23 @@ class Ndizi_Admin {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_project_start_date"><?php _e( 'Start Date', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_project_start_date"><?php _e( 'Start Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_project_start_date" id="ndizi_project_start_date" value="<?php echo esc_attr( $start_date ); ?>"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_project_end_date"><?php _e( 'End/Target Date', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_project_end_date"><?php _e( 'End/Target Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_project_end_date" id="ndizi_project_end_date" value="<?php echo esc_attr( $end_date ); ?>"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_project_budget"><?php _e( 'Budget ($)', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_project_budget"><?php _e( 'Budget ($)', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="number" step="0.01" name="ndizi_project_budget" id="ndizi_project_budget" value="<?php echo esc_attr( $budget ); ?>" class="small-text"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_project_status"><?php _e( 'Project Status', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_project_status"><?php _e( 'Project Status', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_project_status" id="ndizi_project_status">
-						<option value="active" <?php selected( $status, 'active' ); ?>><?php _e( 'Active', 'ndizi' ); ?></option>
-						<option value="archived" <?php selected( $status, 'archived' ); ?>><?php _e( 'Archived', 'ndizi' ); ?></option>
+						<option value="active" <?php selected( $status, 'active' ); ?>><?php _e( 'Active', 'ndizi-project-management' ); ?></option>
+						<option value="archived" <?php selected( $status, 'archived' ); ?>><?php _e( 'Archived', 'ndizi-project-management' ); ?></option>
 					</select>
 				</td>
 			</tr>
@@ -617,20 +617,20 @@ class Ndizi_Admin {
 		<div class="ndizi-tracker-wrapper">
 			<!-- Timer controls -->
 			<div class="ndizi-tracker-controls">
-				<h4><?php _e( 'Live Time Tracker', 'ndizi' ); ?></h4>
+				<h4><?php _e( 'Live Time Tracker', 'ndizi-project-management' ); ?></h4>
 				<div class="ndizi-timer-bar <?php echo $is_active_on_this ? 'ndizi-timer-running' : ''; ?>">
 					<div class="ndizi-timer-fields">
 						<select id="ndizi_tracker_task_id">
-							<option value="0"><?php _e( '-- Log general to project --', 'ndizi' ); ?></option>
+							<option value="0"><?php _e( '-- Log general to project --', 'ndizi-project-management' ); ?></option>
 							<?php foreach ( $tasks as $task ) : ?>
 								<option value="<?php echo esc_attr( $task->ID ); ?>">
 									<?php echo esc_html( $task->post_title ); ?>
 								</option>
 							<?php endforeach; ?>
 						</select>
-						<input type="text" id="ndizi_tracker_desc" placeholder="<?php esc_attr_e( 'What are you working on?', 'ndizi' ); ?>" class="regular-text">
+						<input type="text" id="ndizi_tracker_desc" placeholder="<?php esc_attr_e( 'What are you working on?', 'ndizi-project-management' ); ?>" class="regular-text">
 						<label class="ndizi-checkbox-label">
-							<input type="checkbox" id="ndizi_tracker_billable" value="1" checked> <?php _e( 'Billable', 'ndizi' ); ?>
+							<input type="checkbox" id="ndizi_tracker_billable" value="1" checked> <?php _e( 'Billable', 'ndizi-project-management' ); ?>
 						</label>
 					</div>
 
@@ -638,18 +638,18 @@ class Ndizi_Admin {
 						<span class="ndizi-live-clock">00:00:00</span>
 						<?php if ( $is_active_on_this ) : ?>
 							<button type="button" class="button button-primary ndizi-btn-stop" data-project-id="<?php echo esc_attr( $post->ID ); ?>">
-								<?php _e( 'Stop', 'ndizi' ); ?>
+								<?php _e( 'Stop', 'ndizi-project-management' ); ?>
 							</button>
 						<?php else : ?>
 							<button type="button" class="button button-primary ndizi-btn-start" data-project-id="<?php echo esc_attr( $post->ID ); ?>" <?php disabled( $active !== false ); ?>>
-								<?php _e( 'Start Timer', 'ndizi' ); ?>
+								<?php _e( 'Start Timer', 'ndizi-project-management' ); ?>
 							</button>
 						<?php endif; ?>
 					</div>
 				</div>
 				<?php if ( $active && ! $is_active_on_this ) : ?>
 					<p class="description error-message">
-						<?php _e( 'You already have an active timer running on another project. Stop it first to track here.', 'ndizi' ); ?>
+						<?php _e( 'You already have an active timer running on another project. Stop it first to track here.', 'ndizi-project-management' ); ?>
 					</p>
 				<?php endif; ?>
 			</div>
@@ -658,22 +658,22 @@ class Ndizi_Admin {
 
 			<!-- Log List -->
 			<div class="ndizi-tracker-logs">
-				<h4><?php _e( 'Recent Time Logs', 'ndizi' ); ?></h4>
+				<h4><?php _e( 'Recent Time Logs', 'ndizi-project-management' ); ?></h4>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
-							<th class="column-date"><?php _e( 'Date', 'ndizi' ); ?></th>
-							<th class="column-user"><?php _e( 'User', 'ndizi' ); ?></th>
-							<th class="column-task"><?php _e( 'Task', 'ndizi' ); ?></th>
-							<th class="column-desc"><?php _e( 'Description', 'ndizi' ); ?></th>
-							<th class="column-duration"><?php _e( 'Duration', 'ndizi' ); ?></th>
-							<th class="column-billable"><?php _e( 'Billable', 'ndizi' ); ?></th>
-							<th class="column-actions"><?php _e( 'Action', 'ndizi' ); ?></th>
+							<th class="column-date"><?php _e( 'Date', 'ndizi-project-management' ); ?></th>
+							<th class="column-user"><?php _e( 'User', 'ndizi-project-management' ); ?></th>
+							<th class="column-task"><?php _e( 'Task', 'ndizi-project-management' ); ?></th>
+							<th class="column-desc"><?php _e( 'Description', 'ndizi-project-management' ); ?></th>
+							<th class="column-duration"><?php _e( 'Duration', 'ndizi-project-management' ); ?></th>
+							<th class="column-billable"><?php _e( 'Billable', 'ndizi-project-management' ); ?></th>
+							<th class="column-actions"><?php _e( 'Action', 'ndizi-project-management' ); ?></th>
 						</tr>
 					</thead>
 					<tbody id="ndizi_logs_table_body">
 						<?php if ( empty( $logs ) ) : ?>
-							<tr class="no-items"><td colspan="7"><?php _e( 'No time logged yet on this project.', 'ndizi' ); ?></td></tr>
+							<tr class="no-items"><td colspan="7"><?php _e( 'No time logged yet on this project.', 'ndizi-project-management' ); ?></td></tr>
 						<?php else : ?>
 							<?php
 							foreach ( $logs as $log ) :
@@ -731,10 +731,10 @@ class Ndizi_Admin {
 		?>
 		<table class="form-table ndizi-meta-table">
 			<tr>
-				<th><label for="ndizi_project_id"><?php _e( 'Project', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_project_id"><?php _e( 'Project', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_project_id" id="ndizi_project_id" required>
-						<option value=""><?php _e( '-- Select Project --', 'ndizi' ); ?></option>
+						<option value=""><?php _e( '-- Select Project --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $projects as $project ) : ?>
 							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?>>
 								<?php echo esc_html( $project->post_title ); ?>
@@ -744,10 +744,10 @@ class Ndizi_Admin {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_assigned_user_id"><?php _e( 'Assigned To', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_assigned_user_id"><?php _e( 'Assigned To', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_assigned_user_id" id="ndizi_assigned_user_id">
-						<option value="0"><?php _e( 'Unassigned', 'ndizi' ); ?></option>
+						<option value="0"><?php _e( 'Unassigned', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $users as $u ) : ?>
 							<option value="<?php echo esc_attr( $u->ID ); ?>" <?php selected( $assignee_id, $u->ID ); ?>>
 								<?php echo esc_html( $u->display_name ); ?>
@@ -757,28 +757,28 @@ class Ndizi_Admin {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_task_status"><?php _e( 'Task Status', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_task_status"><?php _e( 'Task Status', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_task_status" id="ndizi_task_status">
-						<option value="open" <?php selected( $status, 'open' ); ?>><?php _e( 'Open', 'ndizi' ); ?></option>
-						<option value="in_progress" <?php selected( $status, 'in_progress' ); ?>><?php _e( 'In Progress', 'ndizi' ); ?></option>
-						<option value="completed" <?php selected( $status, 'completed' ); ?>><?php _e( 'Completed', 'ndizi' ); ?></option>
-						<option value="cancelled" <?php selected( $status, 'cancelled' ); ?>><?php _e( 'Cancelled', 'ndizi' ); ?></option>
+						<option value="open" <?php selected( $status, 'open' ); ?>><?php _e( 'Open', 'ndizi-project-management' ); ?></option>
+						<option value="in_progress" <?php selected( $status, 'in_progress' ); ?>><?php _e( 'In Progress', 'ndizi-project-management' ); ?></option>
+						<option value="completed" <?php selected( $status, 'completed' ); ?>><?php _e( 'Completed', 'ndizi-project-management' ); ?></option>
+						<option value="cancelled" <?php selected( $status, 'cancelled' ); ?>><?php _e( 'Cancelled', 'ndizi-project-management' ); ?></option>
 					</select>
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_task_priority"><?php _e( 'Priority', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_task_priority"><?php _e( 'Priority', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_task_priority" id="ndizi_task_priority">
-						<option value="low" <?php selected( $priority, 'low' ); ?>><?php _e( 'Low', 'ndizi' ); ?></option>
-						<option value="medium" <?php selected( $priority, 'medium' ); ?>><?php _e( 'Medium', 'ndizi' ); ?></option>
-						<option value="high" <?php selected( $priority, 'high' ); ?>><?php _e( 'High', 'ndizi' ); ?></option>
+						<option value="low" <?php selected( $priority, 'low' ); ?>><?php _e( 'Low', 'ndizi-project-management' ); ?></option>
+						<option value="medium" <?php selected( $priority, 'medium' ); ?>><?php _e( 'Medium', 'ndizi-project-management' ); ?></option>
+						<option value="high" <?php selected( $priority, 'high' ); ?>><?php _e( 'High', 'ndizi-project-management' ); ?></option>
 					</select>
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_task_due_date"><?php _e( 'Due Date', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_task_due_date"><?php _e( 'Due Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_task_due_date" id="ndizi_task_due_date" value="<?php echo esc_attr( $due_date ); ?>"></td>
 			</tr>
 		</table>
@@ -820,10 +820,10 @@ class Ndizi_Admin {
 		?>
 		<table class="form-table ndizi-meta-table">
 			<tr>
-				<th><label for="ndizi_invoice_project_id"><?php _e( 'Project', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_invoice_project_id"><?php _e( 'Project', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_project_id" id="ndizi_invoice_project_id" required>
-						<option value=""><?php _e( '-- Select Project --', 'ndizi' ); ?></option>
+						<option value=""><?php _e( '-- Select Project --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $projects as $project ) : ?>
 							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?>>
 								<?php echo esc_html( $project->post_title ); ?>
@@ -833,49 +833,49 @@ class Ndizi_Admin {
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_invoice_date"><?php _e( 'Invoice Date', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_invoice_date"><?php _e( 'Invoice Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_invoice_date" id="ndizi_invoice_date" value="<?php echo esc_attr( $invoice_date ); ?>"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_invoice_due_date"><?php _e( 'Due Date', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_invoice_due_date"><?php _e( 'Due Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_invoice_due_date" id="ndizi_invoice_due_date" value="<?php echo esc_attr( $due_date ); ?>"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_invoice_amount"><?php _e( 'Amount ($)', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_invoice_amount"><?php _e( 'Amount ($)', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<input type="number" step="0.01" name="ndizi_invoice_amount" id="ndizi_invoice_amount" value="<?php echo esc_attr( $amount ); ?>" class="small-text">
-					<p class="description"><?php _e( 'Total amount for this invoice. Can be manually overridden or aggregated from time entries below.', 'ndizi' ); ?></p>
+					<p class="description"><?php _e( 'Total amount for this invoice. Can be manually overridden or aggregated from time entries below.', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_invoice_status"><?php _e( 'Status', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_invoice_status"><?php _e( 'Status', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_invoice_status" id="ndizi_invoice_status">
-						<option value="draft" <?php selected( $status, 'draft' ); ?>><?php _e( 'Draft', 'ndizi' ); ?></option>
-						<option value="sent" <?php selected( $status, 'sent' ); ?>><?php _e( 'Sent', 'ndizi' ); ?></option>
-						<option value="paid" <?php selected( $status, 'paid' ); ?>><?php _e( 'Paid', 'ndizi' ); ?></option>
-						<option value="void" <?php selected( $status, 'void' ); ?>><?php _e( 'Void', 'ndizi' ); ?></option>
+						<option value="draft" <?php selected( $status, 'draft' ); ?>><?php _e( 'Draft', 'ndizi-project-management' ); ?></option>
+						<option value="sent" <?php selected( $status, 'sent' ); ?>><?php _e( 'Sent', 'ndizi-project-management' ); ?></option>
+						<option value="paid" <?php selected( $status, 'paid' ); ?>><?php _e( 'Paid', 'ndizi-project-management' ); ?></option>
+						<option value="void" <?php selected( $status, 'void' ); ?>><?php _e( 'Void', 'ndizi-project-management' ); ?></option>
 					</select>
 				</td>
 			</tr>
 			<?php if ( $project_id ) : ?>
 				<tr>
-					<th><?php _e( 'Aggregate Time Entries', 'ndizi' ); ?></th>
+					<th><?php _e( 'Aggregate Time Entries', 'ndizi-project-management' ); ?></th>
 					<td>
 						<div class="ndizi-invoice-time-picker">
-							<p class="description"><?php _e( 'Select the billable time entries to include on this invoice:', 'ndizi' ); ?></p>
+							<p class="description"><?php _e( 'Select the billable time entries to include on this invoice:', 'ndizi-project-management' ); ?></p>
 							<div class="ndizi-invoice-time-scroll">
 								<?php if ( empty( $time_entries ) ) : ?>
-									<p><em><?php _e( 'No uninvoiced billable time entries found for this project.', 'ndizi' ); ?></em></p>
+									<p><em><?php _e( 'No uninvoiced billable time entries found for this project.', 'ndizi-project-management' ); ?></em></p>
 								<?php else : ?>
 									<table class="widefat striped">
 										<thead>
 											<tr>
 												<th><input type="checkbox" id="ndizi_select_all_invoice_time"></th>
-												<th><?php _e( 'Date', 'ndizi' ); ?></th>
-												<th><?php _e( 'User', 'ndizi' ); ?></th>
-												<th><?php _e( 'Description', 'ndizi' ); ?></th>
-												<th><?php _e( 'Hours', 'ndizi' ); ?></th>
+												<th><?php _e( 'Date', 'ndizi-project-management' ); ?></th>
+												<th><?php _e( 'User', 'ndizi-project-management' ); ?></th>
+												<th><?php _e( 'Description', 'ndizi-project-management' ); ?></th>
+												<th><?php _e( 'Hours', 'ndizi-project-management' ); ?></th>
 											</tr>
 										</thead>
 										<tbody>
@@ -897,8 +897,8 @@ class Ndizi_Admin {
 										</tbody>
 									</table>
 									<div style="margin-top: 10px;">
-										<input type="number" id="ndizi_hourly_rate" placeholder="<?php esc_attr_e( 'Rate ($/hour)', 'ndizi' ); ?>" style="width: 100px;">
-										<button type="button" class="button" id="ndizi_btn_calc_invoice"><?php _e( 'Calculate & Apply Amount', 'ndizi' ); ?></button>
+										<input type="number" id="ndizi_hourly_rate" placeholder="<?php esc_attr_e( 'Rate ($/hour)', 'ndizi-project-management' ); ?>" style="width: 100px;">
+										<button type="button" class="button" id="ndizi_btn_calc_invoice"><?php _e( 'Calculate & Apply Amount', 'ndizi-project-management' ); ?></button>
 									</div>
 								<?php endif; ?>
 							</div>
@@ -907,8 +907,8 @@ class Ndizi_Admin {
 				</tr>
 			<?php else : ?>
 				<tr>
-					<th><?php _e( 'Time Entries', 'ndizi' ); ?></th>
-					<td><p class="description"><?php _e( 'Select a Project and save/update the invoice first to see eligible time entries.', 'ndizi' ); ?></p></td>
+					<th><?php _e( 'Time Entries', 'ndizi-project-management' ); ?></th>
+					<td><p class="description"><?php _e( 'Select a Project and save/update the invoice first to see eligible time entries.', 'ndizi-project-management' ); ?></p></td>
 				</tr>
 			<?php endif; ?>
 		</table>
@@ -939,19 +939,19 @@ class Ndizi_Admin {
 		?>
 		<table class="form-table ndizi-meta-table">
 			<tr>
-				<th><label for="ndizi_contact_email"><?php _e( 'Email Address', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_contact_email"><?php _e( 'Email Address', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="email" name="ndizi_contact_email" id="ndizi_contact_email" value="<?php echo esc_attr( $email ); ?>" class="regular-text"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_contact_phone"><?php _e( 'Phone Number', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_contact_phone"><?php _e( 'Phone Number', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="text" name="ndizi_contact_phone" id="ndizi_contact_phone" value="<?php echo esc_attr( $phone ); ?>" class="regular-text"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_contact_role"><?php _e( 'Role / Title', 'ndizi' ); ?></label></th>
+				<th><label for="ndizi_contact_role"><?php _e( 'Role / Title', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="text" name="ndizi_contact_role" id="ndizi_contact_role" value="<?php echo esc_attr( $role ); ?>" class="regular-text" placeholder="e.g. Project Manager, Billing Contact"></td>
 			</tr>
 			<tr>
-				<th><label><?php _e( 'Associated Clients', 'ndizi' ); ?></label></th>
+				<th><label><?php _e( 'Associated Clients', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<div class="ndizi-checkbox-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff;">
 						<?php foreach ( $clients as $client ) : ?>
@@ -1096,7 +1096,7 @@ class Ndizi_Admin {
 		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
 
 		if ( ! current_user_can( 'ndizi_manage_invoices' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
 		$invoice_id = isset( $_POST['invoice_id'] ) ? intval( $_POST['invoice_id'] ) : 0;
@@ -1104,7 +1104,7 @@ class Ndizi_Admin {
 		$rate       = isset( $_POST['hourly_rate'] ) ? floatval( $_POST['hourly_rate'] ) : 0;
 
 		if ( ! $invoice_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid Invoice ID.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid Invoice ID.', 'ndizi-project-management' ) ) );
 		}
 
 		global $wpdb;
@@ -1141,7 +1141,7 @@ class Ndizi_Admin {
 		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
 
 		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
 		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
@@ -1150,14 +1150,14 @@ class Ndizi_Admin {
 		$billable    = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
 
 		if ( ! $project_id ) {
-			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi-project-management' ) ) );
 		}
 
 		$user_id  = get_current_user_id();
 		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
 
 		if ( ! $timer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to start timer.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to start timer.', 'ndizi-project-management' ) ) );
 		}
 
 		wp_send_json_success( array( 'timer_id' => $timer_id ) );
@@ -1170,14 +1170,14 @@ class Ndizi_Admin {
 		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
 
 		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
 		$user_id = get_current_user_id();
 		$stopped = Ndizi_DB::stop_timer( $user_id );
 
 		if ( ! $stopped ) {
-			wp_send_json_error( array( 'message' => __( 'No active timer found or failed to stop.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No active timer found or failed to stop.', 'ndizi-project-management' ) ) );
 		}
 
 		wp_send_json_success( array( 'timer' => $stopped ) );
@@ -1191,25 +1191,25 @@ class Ndizi_Admin {
 
 		$log_id = isset( $_POST['log_id'] ) ? intval( $_POST['log_id'] ) : 0;
 		if ( ! $log_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid log ID.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid log ID.', 'ndizi-project-management' ) ) );
 		}
 
 		$log     = Ndizi_DB::get_time_entry( $log_id );
 		$user_id = get_current_user_id();
 
 		if ( ! $log ) {
-			wp_send_json_error( array( 'message' => __( 'Log not found.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Log not found.', 'ndizi-project-management' ) ) );
 		}
 
 		// Authorization
 		if ( $log->user_id !== $user_id && ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
 		$deleted = Ndizi_DB::delete_time_entry( $log_id );
 
 		if ( ! $deleted ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to delete log.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to delete log.', 'ndizi-project-management' ) ) );
 		}
 
 		wp_send_json_success();
@@ -1249,7 +1249,7 @@ class Ndizi_Admin {
 
 		$project_id = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
 		if ( ! $project_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid project ID.', 'ndizi' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid project ID.', 'ndizi-project-management' ) ) );
 		}
 
 		$logs = Ndizi_DB::get_time_entries(
@@ -1261,7 +1261,7 @@ class Ndizi_Admin {
 
 		ob_start();
 		if ( empty( $logs ) ) {
-			echo '<tr class="no-items"><td colspan="7">' . esc_html__( 'No time logged yet on this project.', 'ndizi' ) . '</td></tr>';
+			echo '<tr class="no-items"><td colspan="7">' . esc_html__( 'No time logged yet on this project.', 'ndizi-project-management' ) . '</td></tr>';
 		} else {
 			foreach ( $logs as $log ) {
 				$log_user = get_userdata( $log->user_id );
@@ -1342,7 +1342,7 @@ class Ndizi_Admin {
 		$billable_percentage    = $overall_hours > 0 ? round( ( $overall_billable_hours / $overall_hours ) * 100 ) : 0;
 		?>
 		<div class="wrap ndizi-reports-page">
-			<h1 class="wp-heading-inline"><?php _e( 'Ndizi Time Reports', 'ndizi' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php _e( 'Ndizi Time Reports', 'ndizi-project-management' ); ?></h1>
 			<hr class="wp-header-end">
 
 			<!-- Reports filter header -->
@@ -1353,9 +1353,9 @@ class Ndizi_Admin {
 
 					<div class="ndizi-filter-row">
 						<div class="ndizi-filter-col">
-							<label for="project_id"><?php _e( 'Project', 'ndizi' ); ?></label>
+							<label for="project_id"><?php _e( 'Project', 'ndizi-project-management' ); ?></label>
 							<select name="project_id" id="project_id">
-								<option value="0"><?php _e( 'All Projects', 'ndizi' ); ?></option>
+								<option value="0"><?php _e( 'All Projects', 'ndizi-project-management' ); ?></option>
 								<?php foreach ( $projects as $proj ) : ?>
 									<option value="<?php echo esc_attr( $proj->ID ); ?>" <?php selected( $project_id, $proj->ID ); ?>>
 										<?php echo esc_html( $proj->post_title ); ?>
@@ -1365,9 +1365,9 @@ class Ndizi_Admin {
 						</div>
 
 						<div class="ndizi-filter-col">
-							<label for="user_id"><?php _e( 'Team Member', 'ndizi' ); ?></label>
+							<label for="user_id"><?php _e( 'Team Member', 'ndizi-project-management' ); ?></label>
 							<select name="user_id" id="user_id">
-								<option value="0"><?php _e( 'All Members', 'ndizi' ); ?></option>
+								<option value="0"><?php _e( 'All Members', 'ndizi-project-management' ); ?></option>
 								<?php foreach ( $users as $u ) : ?>
 									<option value="<?php echo esc_attr( $u->ID ); ?>" <?php selected( $user_id, $u->ID ); ?>>
 										<?php echo esc_html( $u->display_name ); ?>
@@ -1377,18 +1377,18 @@ class Ndizi_Admin {
 						</div>
 
 						<div class="ndizi-filter-col">
-							<label for="start_date"><?php _e( 'Start Date', 'ndizi' ); ?></label>
+							<label for="start_date"><?php _e( 'Start Date', 'ndizi-project-management' ); ?></label>
 							<input type="date" name="start_date" id="start_date" value="<?php echo esc_attr( $start_date ); ?>">
 						</div>
 
 						<div class="ndizi-filter-col">
-							<label for="end_date"><?php _e( 'End Date', 'ndizi' ); ?></label>
+							<label for="end_date"><?php _e( 'End Date', 'ndizi-project-management' ); ?></label>
 							<input type="date" name="end_date" id="end_date" value="<?php echo esc_attr( $end_date ); ?>">
 						</div>
 
 						<div class="ndizi-filter-col filter-actions">
-							<button type="submit" class="button button-primary"><?php _e( 'Filter Report', 'ndizi' ); ?></button>
-							<a href="edit.php?post_type=ndizi_project&page=ndizi-reports" class="button button-secondary"><?php _e( 'Reset', 'ndizi' ); ?></a>
+							<button type="submit" class="button button-primary"><?php _e( 'Filter Report', 'ndizi-project-management' ); ?></button>
+							<a href="edit.php?post_type=ndizi_project&page=ndizi-reports" class="button button-secondary"><?php _e( 'Reset', 'ndizi-project-management' ); ?></a>
 						</div>
 					</div>
 				</form>
@@ -1397,15 +1397,15 @@ class Ndizi_Admin {
 			<!-- KPI Cards -->
 			<div class="ndizi-kpi-grid">
 				<div class="ndizi-kpi-card">
-					<span class="ndizi-kpi-title"><?php _e( 'Total Hours Tracked', 'ndizi' ); ?></span>
+					<span class="ndizi-kpi-title"><?php _e( 'Total Hours Tracked', 'ndizi-project-management' ); ?></span>
 					<span class="ndizi-kpi-val"><?php echo esc_html( $overall_hours ); ?>h</span>
 				</div>
 				<div class="ndizi-kpi-card">
-					<span class="ndizi-kpi-title"><?php _e( 'Billable Hours', 'ndizi' ); ?></span>
+					<span class="ndizi-kpi-title"><?php _e( 'Billable Hours', 'ndizi-project-management' ); ?></span>
 					<span class="ndizi-kpi-val ndizi-kpi-billable"><?php echo esc_html( $overall_billable_hours ); ?>h</span>
 				</div>
 				<div class="ndizi-kpi-card">
-					<span class="ndizi-kpi-title"><?php _e( 'Billable Ratio', 'ndizi' ); ?></span>
+					<span class="ndizi-kpi-title"><?php _e( 'Billable Ratio', 'ndizi-project-management' ); ?></span>
 					<span class="ndizi-kpi-val"><?php echo esc_html( $billable_percentage ); ?>%</span>
 					<div class="ndizi-ratio-bar"><div class="ndizi-ratio-fill" style="width: <?php echo esc_attr( $billable_percentage ); ?>%"></div></div>
 				</div>
@@ -1415,9 +1415,9 @@ class Ndizi_Admin {
 			<div class="ndizi-charts-grid">
 				<!-- Project Hours Chart -->
 				<div class="ndizi-chart-card">
-					<h3><?php _e( 'Hours by Project', 'ndizi' ); ?></h3>
+					<h3><?php _e( 'Hours by Project', 'ndizi-project-management' ); ?></h3>
 					<?php if ( empty( $project_totals ) ) : ?>
-						<p class="no-data-msg"><?php _e( 'No log data available for this range.', 'ndizi' ); ?></p>
+						<p class="no-data-msg"><?php _e( 'No log data available for this range.', 'ndizi-project-management' ); ?></p>
 						<?php
 					else :
 						// Find max total to scale widths relative to maximum
@@ -1456,9 +1456,9 @@ class Ndizi_Admin {
 
 				<!-- Team Member Hours Chart -->
 				<div class="ndizi-chart-card">
-					<h3><?php _e( 'Hours by Team Member', 'ndizi' ); ?></h3>
+					<h3><?php _e( 'Hours by Team Member', 'ndizi-project-management' ); ?></h3>
 					<?php if ( empty( $user_totals ) ) : ?>
-						<p class="no-data-msg"><?php _e( 'No log data available for this range.', 'ndizi' ); ?></p>
+						<p class="no-data-msg"><?php _e( 'No log data available for this range.', 'ndizi-project-management' ); ?></p>
 						<?php
 					else :
 						$max_u_total = 1;
@@ -1600,17 +1600,17 @@ class Ndizi_Admin {
 		}
 		?>
 		<div class="wrap ndizi-gantt-page">
-			<h1><?php _e( 'Project Gantt Timelines', 'ndizi' ); ?></h1>
-			<p class="description"><?php _e( 'Visualizing schedule timelines and task completion rates across active client projects.', 'ndizi' ); ?></p>
+			<h1><?php _e( 'Project Gantt Timelines', 'ndizi-project-management' ); ?></h1>
+			<p class="description"><?php _e( 'Visualizing schedule timelines and task completion rates across active client projects.', 'ndizi-project-management' ); ?></p>
 			<hr class="wp-header-end">
 
 			<?php if ( empty( $timeline_data ) ) : ?>
-				<div class="notice notice-warning inline"><p><?php _e( 'No active projects with both Start and End Dates populated were found to plot in the Gantt chart.', 'ndizi' ); ?></p></div>
+				<div class="notice notice-warning inline"><p><?php _e( 'No active projects with both Start and End Dates populated were found to plot in the Gantt chart.', 'ndizi-project-management' ); ?></p></div>
 			<?php else : ?>
 				<div class="ndizi-gantt-container">
 					<!-- Gantt Header (Months) -->
 					<div class="ndizi-gantt-header-row">
-						<div class="ndizi-gantt-label-col"><strong><?php _e( 'Project Name', 'ndizi' ); ?></strong></div>
+						<div class="ndizi-gantt-label-col"><strong><?php _e( 'Project Name', 'ndizi-project-management' ); ?></strong></div>
 						<div class="ndizi-gantt-timeline-col">
 							<div class="ndizi-gantt-ticks">
 								<?php
@@ -1643,7 +1643,7 @@ class Ndizi_Admin {
 										<a href="<?php echo esc_url( get_edit_post_link( $project['id'] ) ); ?>"><?php echo esc_html( $project['title'] ); ?></a>
 									</span>
 									<span class="ndizi-gantt-project-meta">
-										<?php echo esc_html( $project['completed'] ); ?>/<?php echo esc_html( $project['total_tasks'] ); ?> <?php _e( 'Tasks', 'ndizi' ); ?> (<?php echo esc_html( $project['progress'] ); ?>%)
+										<?php echo esc_html( $project['completed'] ); ?>/<?php echo esc_html( $project['total_tasks'] ); ?> <?php _e( 'Tasks', 'ndizi-project-management' ); ?> (<?php echo esc_html( $project['progress'] ); ?>%)
 									</span>
 								</div>
 								<div class="ndizi-gantt-timeline-col">

@@ -41,8 +41,8 @@ class Ndizi_Roles {
 		);
 
 		// Add custom roles
-		add_role( 'ndizi_manager', __( 'Ndizi Manager', 'ndizi' ), $manager_caps );
-		add_role( 'ndizi_team_member', __( 'Ndizi Team Member', 'ndizi' ), $team_member_caps );
+		add_role( 'ndizi_manager', __( 'Ndizi Manager', 'ndizi-project-management' ), $manager_caps );
+		add_role( 'ndizi_team_member', __( 'Ndizi Team Member', 'ndizi-project-management' ), $team_member_caps );
 
 		// Give all capabilities to Administrator
 		$admin = get_role( 'administrator' );

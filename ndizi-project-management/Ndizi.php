@@ -1,11 +1,16 @@
 <?php
 /*
 Plugin Name: Ndizi Project Management
-Plugin URI: http://wordpress.org/extend/plugins/ndizi-project-management/
+Plugin URI: https://wordpress.org/plugins/ndizi-project-management/
 Description: Ndizi Project Management adds a complete project management system to WordPress.
 Author: George Stephanis
 Author URI: https://georgestephanis.wordpress.com
-Version: 1.0
+Version: 1.0.0
+Requires at least: 6.0
+Requires PHP: 7.4
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: ndizi-project-management
 */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin constants
 define( 'NDIZI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NDIZI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'NDIZI_VERSION', '1.0' );
+define( 'NDIZI_VERSION', '1.0.0' );
 
 /**
  * Main Plugin Class
@@ -86,6 +91,9 @@ class Ndizi_Project_Management {
 	 * Bootstrap hooks for loaded components
 	 */
 	public static function bootstrap() {
+		// Load translations (kept for older WP targets; wp.org auto-loads when slug matches the text domain).
+		load_plugin_textdomain( 'ndizi-project-management', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();
 

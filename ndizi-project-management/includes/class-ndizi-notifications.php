@@ -30,7 +30,7 @@ class Ndizi_Notifications {
 
 		$to = get_option( 'admin_email' );
 		/* translators: %s: client name */
-		$subject = sprintf( __( '[Ndizi PM] New Task Request from %s', 'ndizi' ), $client->post_title );
+		$subject = sprintf( __( '[Ndizi PM] New Task Request from %s', 'ndizi-project-management' ), $client->post_title );
 
 		// Build a clean, styled HTML message body
 		$message  = '<html><body>';

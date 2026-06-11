@@ -322,7 +322,7 @@ class Ndizi_REST {
 		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
 
 		if ( ! $timer_id ) {
-			return new WP_REST_Response( array( 'error' => __( 'Failed to start timer', 'ndizi' ) ), 500 );
+			return new WP_REST_Response( array( 'error' => __( 'Failed to start timer', 'ndizi-project-management' ) ), 500 );
 		}
 
 		$timer = Ndizi_DB::get_time_entry( $timer_id );
@@ -343,7 +343,7 @@ class Ndizi_REST {
 		$stopped = Ndizi_DB::stop_timer( $user_id );
 
 		if ( ! $stopped ) {
-			return new WP_REST_Response( array( 'error' => __( 'No active timer found', 'ndizi' ) ), 400 );
+			return new WP_REST_Response( array( 'error' => __( 'No active timer found', 'ndizi-project-management' ) ), 400 );
 		}
 
 		return new WP_REST_Response(
@@ -370,7 +370,7 @@ class Ndizi_REST {
 		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time );
 
 		if ( ! $entry_id ) {
-			return new WP_REST_Response( array( 'error' => __( 'Failed to log time', 'ndizi' ) ), 500 );
+			return new WP_REST_Response( array( 'error' => __( 'Failed to log time', 'ndizi-project-management' ) ), 500 );
 		}
 
 		$timer = Ndizi_DB::get_time_entry( $entry_id );
@@ -403,7 +403,7 @@ class Ndizi_REST {
 		// Include titles for easier visualization in external apps
 		foreach ( $logs as $log ) {
 			$project           = get_post( $log->project_id );
-			$log->project_name = $project ? $project->post_title : __( 'Deleted Project', 'ndizi' );
+			$log->project_name = $project ? $project->post_title : __( 'Deleted Project', 'ndizi-project-management' );
 
 			if ( $log->task_id ) {
 				$task           = get_post( $log->task_id );
@@ -425,12 +425,12 @@ class Ndizi_REST {
 		$log     = Ndizi_DB::get_time_entry( $id );
 
 		if ( ! $log ) {
-			return new WP_REST_Response( array( 'error' => __( 'Time entry not found', 'ndizi' ) ), 404 );
+			return new WP_REST_Response( array( 'error' => __( 'Time entry not found', 'ndizi-project-management' ) ), 404 );
 		}
 
 		// Users can only edit their own logs, unless they are managers/admins
 		if ( $log->user_id !== $user_id && ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
-			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to edit this entry', 'ndizi' ) ), 403 );
+			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to edit this entry', 'ndizi-project-management' ) ), 403 );
 		}
 
 		// Build data list from params
@@ -446,7 +446,7 @@ class Ndizi_REST {
 		$updated = Ndizi_DB::update_time_entry( $id, $data );
 
 		if ( ! $updated ) {
-			return new WP_REST_Response( array( 'error' => __( 'Failed to update time entry', 'ndizi' ) ), 500 );
+			return new WP_REST_Response( array( 'error' => __( 'Failed to update time entry', 'ndizi-project-management' ) ), 500 );
 		}
 
 		return new WP_REST_Response(
@@ -467,18 +467,18 @@ class Ndizi_REST {
 		$log     = Ndizi_DB::get_time_entry( $id );
 
 		if ( ! $log ) {
-			return new WP_REST_Response( array( 'error' => __( 'Time entry not found', 'ndizi' ) ), 404 );
+			return new WP_REST_Response( array( 'error' => __( 'Time entry not found', 'ndizi-project-management' ) ), 404 );
 		}
 
 		// Users can only delete their own logs, unless they are managers/admins
 		if ( $log->user_id !== $user_id && ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
-			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to delete this entry', 'ndizi' ) ), 403 );
+			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to delete this entry', 'ndizi-project-management' ) ), 403 );
 		}
 
 		$deleted = Ndizi_DB::delete_time_entry( $id );
 
 		if ( ! $deleted ) {
-			return new WP_REST_Response( array( 'error' => __( 'Failed to delete time entry', 'ndizi' ) ), 500 );
+			return new WP_REST_Response( array( 'error' => __( 'Failed to delete time entry', 'ndizi-project-management' ) ), 500 );
 		}
 
 		return new WP_REST_Response( array( 'success' => true ), 200 );
