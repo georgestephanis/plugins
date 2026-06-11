@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices, gantt
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,7 +60,7 @@ Yes! Fully authenticated REST routes are exposed under `/wp-json/ndizi/v1/time` 
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.0.0-alpha =
 *   Initial release.
 *   Decoupled SQL schema database initializations.
 *   Custom Post Types and taxonomy metadata setups.
