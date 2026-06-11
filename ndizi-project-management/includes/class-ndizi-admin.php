@@ -55,17 +55,19 @@ class Ndizi_Admin {
 
 		// Check if we are viewing tasks in the admin list
 		if ( 'ndizi_task' === $query->get( 'post_type' ) ) {
-			// If Team Member (and not manager/admin), restrict to assigned tasks
-			if ( ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
-				$query->set(
-					'meta_query',
-					array(
-						array(
-							'key'   => '_ndizi_assigned_user_id',
-							'value' => get_current_user_id(),
-						),
-					)
+			// If Team Member (i.e. cannot manage tasks), restrict to assigned tasks.
+			if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_tasks' ) ) {
+				// Merge into any existing meta_query rather than overwriting it,
+				// so we don't clobber core/other-plugin list filters.
+				$meta_query = $query->get( 'meta_query' );
+				if ( ! is_array( $meta_query ) ) {
+					$meta_query = array();
+				}
+				$meta_query[] = array(
+					'key'   => '_ndizi_assigned_user_id',
+					'value' => get_current_user_id(),
 				);
+				$query->set( 'meta_query', $meta_query );
 			}
 		}
 	}

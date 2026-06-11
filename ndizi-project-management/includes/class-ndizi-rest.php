@@ -191,23 +191,68 @@ class Ndizi_REST {
 	}
 
 	/**
-	 * Get list of active projects
+	 * Get the IDs of projects the current user is involved in.
+	 *
+	 * "Involved in" means the project contains at least one task assigned to the
+	 * user. Used to scope project/task visibility for non-manager team members.
+	 *
+	 * @return int[] List of project post IDs (may be empty).
 	 */
-	public static function get_projects() {
-		$projects = get_posts(
+	private static function get_current_user_project_ids() {
+		$tasks = get_posts(
 			array(
-				'post_type'      => 'ndizi_project',
+				'post_type'      => 'ndizi_task',
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
+				'fields'         => 'ids',
 				'meta_query'     => array(
 					array(
-						'key'     => '_ndizi_project_status',
-						'value'   => 'active',
-						'compare' => '=',
+						'key'   => '_ndizi_assigned_user_id',
+						'value' => get_current_user_id(),
 					),
 				),
 			)
 		);
+
+		$project_ids = array();
+		foreach ( $tasks as $task_id ) {
+			$project_id = (int) get_post_meta( $task_id, '_ndizi_project_id', true );
+			if ( $project_id ) {
+				$project_ids[ $project_id ] = $project_id;
+			}
+		}
+
+		return array_values( $project_ids );
+	}
+
+	/**
+	 * Get list of active projects
+	 */
+	public static function get_projects() {
+		$args = array(
+			'post_type'      => 'ndizi_project',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'meta_query'     => array(
+				array(
+					'key'     => '_ndizi_project_status',
+					'value'   => 'active',
+					'compare' => '=',
+				),
+			),
+		);
+
+		// Team members (who cannot manage projects) only see projects they are
+		// involved in, i.e. projects containing a task assigned to them.
+		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
+			$project_ids = self::get_current_user_project_ids();
+			if ( empty( $project_ids ) ) {
+				return new WP_REST_Response( array(), 200 );
+			}
+			$args['post__in'] = $project_ids;
+		}
+
+		$projects = get_posts( $args );
 
 		$response = array();
 		foreach ( $projects as $project ) {
@@ -250,15 +295,14 @@ class Ndizi_REST {
 			);
 		}
 
-		// Team members only see tasks assigned to them, or open tasks in projects they are involved in
-		if ( ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
-			$user_id = get_current_user_id();
+		// Team members (who cannot manage tasks) only see tasks assigned to them.
+		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_tasks' ) ) {
 			if ( ! isset( $args['meta_query'] ) ) {
 				$args['meta_query'] = array();
 			}
 			$args['meta_query'][] = array(
 				'key'   => '_ndizi_assigned_user_id',
-				'value' => $user_id,
+				'value' => get_current_user_id(),
 			);
 		}
 
@@ -428,8 +472,8 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Time entry not found', 'ndizi-project-management' ) ), 404 );
 		}
 
-		// Users can only edit their own logs, unless they are managers/admins
-		if ( $log->user_id !== $user_id && ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
+		// Users can only edit their own logs, unless they can manage all time.
+		if ( intval( $log->user_id ) !== $user_id && ! Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to edit this entry', 'ndizi-project-management' ) ), 403 );
 		}
 
@@ -470,8 +514,8 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Time entry not found', 'ndizi-project-management' ) ), 404 );
 		}
 
-		// Users can only delete their own logs, unless they are managers/admins
-		if ( $log->user_id !== $user_id && ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
+		// Users can only delete their own logs, unless they can manage all time.
+		if ( intval( $log->user_id ) !== $user_id && ! Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to delete this entry', 'ndizi-project-management' ) ), 403 );
 		}
 
