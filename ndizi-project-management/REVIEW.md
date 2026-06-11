@@ -1,8 +1,8 @@
 # Ndizi Project Management — Code Review
 
-Review date: 2026-06-10
-Reviewed version: `1.0` (plugin header) / `1.0.0` (readme `Stable tag`)
-Scope: full plugin (`Ndizi.php`, `includes/*`, `create-mock-data.php`, `readme.txt`)
+Review date: 2026-06-10 (original) · 2026-06-11 (PR #9 bot-review round, see addendum)
+Reviewed version: `1.0.0-alpha` (plugin header) / `1.0.0-alpha` (readme `Stable tag`)
+Scope: full plugin (`Ndizi.php`, `includes/*`, `playground/mock-data.php`, `readme.txt`)
 
 This document catalogs issues found during review, grouped by severity. Each item lists
 file/line references and a suggested remedy. Check items off as they are addressed.
@@ -21,14 +21,14 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 | 3 | Auth key exposed via REST | ✅ Fixed |
 | 4 | Meta-box saves missing capability check | ✅ Fixed |
 | 5 | Portal cookie not HttpOnly | ✅ Fixed |
-| 6 | Token-gated frontend uploads | ⬜ Open — see note below |
+| 6 | Token-gated frontend uploads | ✅ Fixed — MIME whitelist + 10 MB/file + max-5 limits (PR #9) |
 | 7 | `restrict_posts_query` clobbers meta_query | ✅ Fixed |
 | 8 | REST `get_projects` unscoped | ✅ Fixed |
 | 9 | Header version/metadata inconsistencies | ✅ Fixed |
 | 10 | No `uninstall.php`; roles removed on deactivate | ✅ Fixed |
 | 11 | Missing `wp_unslash`/sanitization | ✅ Fixed |
 | 12 | `is_main_query` guard | ✅ Verified OK (no change needed) |
-| 13 | `posts_per_page => -1` counts | ⬜ Open (performance) |
+| 13 | `posts_per_page => -1` counts | 🟨 Partial — dashboard counts now use `'fields' => 'ids'` (PR #9); column/Gantt/report/portal queries remain |
 | 14 | Output escaping gaps | ✅ Fixed |
 | 15 | Dead `_ndizi_client_wp_user_id` branch | ✅ Removed |
 | 16 | Token comparison / plaintext key | ✅ Fixed (kept retrievable per owner; REST exposure removed, `hash_equals` used) |
@@ -37,12 +37,12 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 | — | Bonus bugs found: `$log->user_id !== $user_id` type mismatch (edit/delete/AJAX), `comment_time()` misuse | ✅ Fixed |
 
 **Still open / intentionally deferred:**
-- **#1** — left in place pending Playground configuration.
-- **#6** — frontend portal uploads still rely on the client token + WordPress's
-  default MIME filtering. Explicit allowed-type/size/count limits were not added.
-- **#13** — the `posts_per_page => -1` count queries remain; a performance pass
-  (using `'fields' => 'ids'` / `found_posts`) is still worthwhile on large sites.
-- All 🔵 **Low** polish items below remain as-is unless marked otherwise.
+- **#13** — the dashboard stat counts now use `'fields' => 'ids'`, but the same
+  `posts_per_page => -1` pattern remains in list columns, the Gantt view, reports, and
+  the portal; a broader performance pass (`'fields' => 'ids'` / `found_posts`) is still
+  worthwhile on large sites.
+- The remaining 🔵 **Low** polish items below remain as-is unless marked otherwise
+  (CSV-injection hardening from that list was completed in PR #9).
 
 ---
 
@@ -117,12 +117,17 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 - **Remedy:** Pass `httponly = true`. Prefer storing a hashed/opaque session identifier instead
   of the raw key. Consider the `samesite` attribute (use the array form of `setcookie()` on PHP 7.3+).
 
-### 6. Frontend portal allows file uploads gated only by the client token
-- [includes/class-ndizi-portal.php:517-549](includes/class-ndizi-portal.php#L517) calls
-  `media_handle_upload()` for anonymous (token-authenticated) portal users.
+### 6. Frontend portal allows file uploads gated only by the client token — ✅ RESOLVED (PR #9)
+- **Resolution:** The upload loop now enforces an explicit MIME whitelist (images, PDF,
+  common office docs, txt/csv), a 10 MB per-file size cap, and a maximum of 5 files per
+  submission, passing those limits to `media_handle_upload()` via the `mimes` override.
+- Original finding below for history. The portal still auto-approves the associated comment
+  (`comment_approved => 1`); revisit if that is not acceptable for your threat model.
+- [includes/class-ndizi-portal.php](includes/class-ndizi-portal.php) calls
+  `media_handle_upload()` for token-authenticated portal users.
 - While WordPress restricts MIME types for users without `unfiltered_upload`, this still lets any
   holder of a client token write to the Media Library, and comments are auto-approved
-  (`comment_approved => 1`, [:510](includes/class-ndizi-portal.php#L510)).
+  (`comment_approved => 1`).
 - **Remedy:** Restrict allowed file types explicitly, cap file size/count, consider not
   auto-approving, and confirm uploads are acceptable for your threat model. Validate
   `$_FILES` structure defensively.
@@ -241,8 +246,9 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 - **`number_format()` without locale** for currency throughout (e.g.
   [includes/class-ndizi-admin.php:350](includes/class-ndizi-admin.php#L350)); consider
   `number_format_i18n()` and a configurable currency symbol (currently hardcoded `$`).
-- **`fputcsv` raw output** ([includes/class-ndizi-integrations.php:438-468](includes/class-ndizi-integrations.php#L438)):
-  fine, but consider CSV injection hardening (prefix cells starting with `=`, `+`, `-`, `@`).
+- **`fputcsv` raw output** — ✅ Fixed (PR #9): `Ndizi_Integrations::escape_csv_field()` now
+  prefixes a single quote to any cell starting with `=`, `+`, `-`, `@`, tab, or CR before it is
+  written, neutralizing spreadsheet formula injection.
 - **Mixed line-item source of truth:** invoice `amount` is a free-form meta that can drift from
   the linked time entries; the print/export shows logged hours next to a manual total. Document
   this intentional decoupling for users.
@@ -274,5 +280,31 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 4. Add capability checks to meta-box saves (#4).
 5. Add `uninstall.php` and move role cleanup off deactivation (#10).
 6. Address query merging (#7), REST scoping (#8), and the remaining WPCS/i18n items.
-</content>
-</invoke>
+
+---
+
+## Addendum — 2026-06-11 PR #9 bot-review round
+
+The full plugin rebuild was opened as [PR #9](https://github.com/georgestephanis/plugins/pull/9)
+and reviewed by Gemini Code Assist and GitHub Copilot. All findings were resolved:
+
+| Source | Finding | Resolution |
+|--------|---------|------------|
+| Gemini | `save_meta_boxes` saved metadata without verifying the post type | Each save block now guards on `get_post_type( $post_id )` so a nonce from one CPT can't write to another |
+| Gemini | Portal uploads unrestricted (item #6 above) | MIME whitelist + 10 MB/file + max-5 limits via `media_handle_upload()` overrides |
+| Gemini | Invoice relinking ran one `UPDATE` per entry | Single bulk `UPDATE … WHERE id IN (…)` query |
+| Gemini | Dashboard counts hydrated full post objects (item #13) | `'fields' => 'ids'` on the count queries |
+| Gemini | Print-invoice `href` contained embedded whitespace/newlines | URL built into a variable and echoed inline (also keeps WPCS array formatting) |
+| Gemini | Shortcode didn't enqueue portal assets | `render_portal_shortcode()` registers + enqueues the portal style/script directly |
+| Gemini | CSV export vulnerable to formula injection | `escape_csv_field()` prefixes `'` to cells starting with `= + - @` / tab / CR |
+| Gemini | `/time/<id>` REST routes lacked `args`/`sanitize_callback` | EDITABLE and DELETABLE routes now register sanitized args |
+| Copilot | `$wpdb->insert()` format array passed `null` for `end_time` | Uses `'%s'`; SQL `NULL` still inserted via the data array |
+| Copilot | Manual time derivation mixed `current_time()` with `gmdate()` | Single site-local timestamp basis formatted with `gmdate()` |
+| Copilot | `DROP TABLE` table name not quoted | Backtick-quoted in `uninstall.php` |
+| Copilot | Client auth key generated with `Math.random()` | Uses `window.crypto.getRandomValues()` |
+| Copilot | Portal AJAX relied on `wp.ajax` (needs `wp-util`/`ajaxurl`) | Uses jQuery against the localized `ndizi_portal.ajax_url`, handling the `wp_send_json_*` envelope |
+| Copilot | Block JS/`block.json` used text domain `ndizi` | Uses the declared `ndizi-project-management` throughout |
+
+Also fixed while addressing the above: the generated `build/block/` metadata
+(`block.json` + `render.php`), which `register_portal_block()` registers from, was missing
+from the tree and is now committed.

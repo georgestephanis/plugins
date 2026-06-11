@@ -9,6 +9,7 @@ Ndizi Project Management is a native WordPress project management and time track
 ### Codebase Directory Layout
 
 - `Ndizi.php` — Main bootstrap file. Handles hooks setup, table upgrades, and component initializations.
+- `uninstall.php` — Removes the custom `wp_ndizi_time_entries` table and the plugin's roles/caps on uninstall (deactivation no longer tears down roles).
 - `composer.json` / `composer.lock` — PHPCS quality controls and local WordPress standards configuration.
 - `package.json` / `package-lock.json` — Asset bundler scripts powered by `@wordpress/scripts`.
 - `webpack.config.js` — Webpack bundle settings compiling separate CSS and JS for Admin and Client Portal.
@@ -24,8 +25,11 @@ Ndizi Project Management is a native WordPress project management and time track
     - `class-ndizi-roles.php` — Registers custom capabilities and workspace roles.
 - `src/`
     - `admin/` — Admin tracker controls, Gantt interactive scripts, and admin stylesheet modules.
-    - `portal/` — Tab controllers, attachment upload fields, and portal dark-mode stylesheet modules.
-- `build/` — Generated CSS/JS output from `@wordpress/scripts`.
+    - `portal/` — Tab controllers, attachment upload fields, and portal stylesheet modules.
+    - `block/` — The `ndizi/client-portal` editor block (`block.json`, `index.js` edit UI, `render.php` dynamic frontend render) wrapping the portal.
+- `build/` — Generated CSS/JS output from `@wordpress/scripts`, including `build/block/` (the copied `block.json` + `render.php` that `Ndizi_Portal::register_portal_block()` registers from). Committed to the repo so no build step is needed at install time.
+- `playground/` — Dev-only WordPress Playground blueprint and `mock-data.php` seeder. Excluded from the shipped package via `.distignore`; see `playground/README.md`.
+- `languages/` — Destination for `.po`/`.mo`/`.json` translation files; `Ndizi.php` calls `load_plugin_textdomain( 'ndizi-project-management', …, '…/languages' )` for non-WP.org installs.
 
 ---
 
@@ -113,12 +117,28 @@ composer run format
 
 ### PHPCS Ruleset Overrides (`phpcs.xml`)
 
-Due to the nature of custom table queries and the frontend client portal, specific sniffs have been tuned or ignored:
+The ruleset extends `WordPress` and runs against `Ndizi.php` and `includes/`. The
+**`WordPress.Security` sniffs (escaping, nonce, sanitization) are intentionally left
+enabled** — `vendor/bin/phpcs --standard=phpcs.xml` passes clean with them on, and
+new code is expected to keep it that way. Where a security sniff is a genuine false
+positive (e.g. an already-`esc_url()`'d value echoed inline), use a narrowly scoped
+inline `// phpcs:ignore` with a reason rather than excluding the sniff globally.
 
-- `WordPress.Files.FileName` — Ignored to support the main `Ndizi.php` file format.
-- `WordPress.PHP.YodaConditions` — Disabled for readable conditional structures.
-- `WordPress.DB.DirectDatabaseQuery` / `WordPress.DB.PreparedSQL` — Ignored since querying the custom SQL table directly using `$wpdb` is standard.
-- `WordPress.DB.PreparedSQLPlaceholders` — Excluded to support dynamic SQL preparation loops (e.g. `IN()` lists).
-- `WordPress.WP.AlternativeFunctions` — Excluded to allow standard file operations (e.g. `fclose()`, `fputcsv()`) required for browser CSV streaming.
-- `Squiz.Commenting` — Severities disabled to prevent bloated inline parameter/class/file doc block warnings.
-- `Universal.Operators.DisallowShortTernary` — Excluded to allow clean inline ternary structures.
+Only the following are tuned, due to the custom table and CSV streaming:
+
+- `WordPress.Files.FileName` — Excluded to support the main `Ndizi.php` bootstrap filename.
+- `WordPress.PHP.YodaConditions` — Excluded for readable conditional structures.
+- `WordPress.DB.DirectDatabaseQuery`, `WordPress.DB.PreparedSQL`,
+  `WordPress.DB.PreparedSQLPlaceholders`, `WordPress.DB.SlowDBQuery` — Excluded because
+  querying the custom `wp_ndizi_time_entries` table directly via `$wpdb` (including
+  dynamic `IN()` placeholder lists) is inherent; individual queries still carry inline
+  `phpcs:ignore` annotations where needed.
+- `WordPress.WP.AlternativeFunctions` — Excluded to allow `fopen()`/`fputcsv()`/`fclose()`
+  to `php://output` for browser CSV streaming.
+- `Squiz.Commenting.FileComment` / `ClassComment` / `FunctionComment` / `InlineComment`
+  — Severity set to `0` to avoid verbose doc-block warnings.
+- `Universal.Operators.DisallowShortTernary` — Severity `0` to allow short ternaries.
+
+Additionally, the ruleset registers the plugin's custom capabilities with
+`WordPress.WP.Capabilities` (so capability checks like `ndizi_manage_time` aren't flagged
+as typos) and sets `minimum_supported_wp_version` to `6.0`.
