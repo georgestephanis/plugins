@@ -363,7 +363,35 @@ class Ndizi_Portal {
 	}
 
 	/**
+	 * Set (or clear) the portal token cookie with hardened flags.
+	 *
+	 * The cookie is HttpOnly (not readable by JavaScript), Secure on HTTPS, and
+	 * SameSite=Lax to limit cross-site sending. Uses the options-array signature
+	 * of setcookie() available since PHP 7.3.
+	 *
+	 * @param string $token   Token value to store ('' to clear).
+	 * @param int    $expires Expiry timestamp.
+	 */
+	private static function set_token_cookie( $token, $expires ) {
+		setcookie(
+			'ndizi_client_token',
+			$token,
+			array(
+				'expires'  => $expires,
+				'path'     => COOKIEPATH,
+				'domain'   => COOKIE_DOMAIN,
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			)
+		);
+	}
+
+	/**
 	 * Helper: Query client by auth key
+	 *
+	 * @param string $token Portal auth key supplied by the visitor.
+	 * @return int|false Client post ID, or false if not found.
 	 */
 	private static function get_client_id_by_token( $token ) {
 		if ( empty( $token ) ) {
@@ -395,8 +423,8 @@ class Ndizi_Portal {
 			$token     = sanitize_text_field( $_GET['ndizi_token'] );
 			$client_id = self::get_client_id_by_token( $token );
 			if ( $client_id ) {
-				// Set cookie for 30 days
-				setcookie( 'ndizi_client_token', $token, time() + ( 30 * DAY_IN_SECONDS ), COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+				// Set cookie for 30 days.
+				self::set_token_cookie( $token, time() + ( 30 * DAY_IN_SECONDS ) );
 				// Clean URL parameters
 				$redirect_url = remove_query_arg( 'ndizi_token' );
 				wp_safe_redirect( $redirect_url );
@@ -409,7 +437,7 @@ class Ndizi_Portal {
 			$token     = sanitize_text_field( $_POST['ndizi_portal_key'] );
 			$client_id = self::get_client_id_by_token( $token );
 			if ( $client_id ) {
-				setcookie( 'ndizi_client_token', $token, time() + ( 30 * DAY_IN_SECONDS ), COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+				self::set_token_cookie( $token, time() + ( 30 * DAY_IN_SECONDS ) );
 				wp_safe_redirect( get_permalink() );
 				exit;
 			} else {
@@ -420,7 +448,7 @@ class Ndizi_Portal {
 
 		// 3. Logout
 		if ( isset( $_GET['ndizi_logout'] ) ) {
-			setcookie( 'ndizi_client_token', '', time() - YEAR_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl() );
+			self::set_token_cookie( '', time() - YEAR_IN_SECONDS );
 			wp_safe_redirect( remove_query_arg( 'ndizi_logout', get_permalink() ) );
 			exit;
 		}
