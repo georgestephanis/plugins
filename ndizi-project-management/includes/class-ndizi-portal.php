@@ -130,6 +130,10 @@ class Ndizi_Portal {
 						'type'    => 'string',
 						'default' => '#4f46e5',
 					),
+					'linkColor'       => array(
+						'type'    => 'string',
+						'default' => '#818cf8',
+					),
 				),
 				'render_callback' => array( __CLASS__, 'render_portal_block_html' ),
 			)
@@ -150,6 +154,7 @@ class Ndizi_Portal {
 		$bg_color     = isset( $attributes['backgroundColor'] ) ? $attributes['backgroundColor'] : '#f8fafc';
 		$text_color   = isset( $attributes['textColor'] ) ? $attributes['textColor'] : '#0f172a';
 		$button_color = isset( $attributes['buttonColor'] ) ? $attributes['buttonColor'] : '#4f46e5';
+		$link_color   = isset( $attributes['linkColor'] ) ? $attributes['linkColor'] : '#818cf8';
 
 		// Generate a scoped unique ID for wrapper
 		$wrapper_id = 'ndizi-portal-' . wp_rand( 1000, 9999 );
@@ -208,6 +213,16 @@ class Ndizi_Portal {
 		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
 		$inline_css .= "}\n";
 
+		// Fix completed/in_progress task titles being hardcoded to white (causing low contrast in light mode)
+		$inline_css .= "#{$wrapper_id} .ndizi-task-title {\n";
+		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Fix project description details having low contrast
+		$inline_css .= "#{$wrapper_id} .ndizi-project-details-text {\n";
+		$inline_css .= '  color: ' . esc_attr( $text_muted ) . " !important;\n";
+		$inline_css .= "}\n";
+
 		// Form controls background, border, text
 		$inline_css .= "#{$wrapper_id} input[type=text],\n";
 		$inline_css .= "#{$wrapper_id} input[type=password],\n";
@@ -218,22 +233,29 @@ class Ndizi_Portal {
 		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
 		$inline_css .= "}\n";
 
-		// Buttons and primary accents
+		// Buttons and primary accents (solid backgrounds)
 		$inline_css .= "#{$wrapper_id} .ndizi-portal-btn,\n";
 		$inline_css .= "#{$wrapper_id} .ndizi-btn-comment-dialog,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-btn-sm,\n";
 		$inline_css .= "#{$wrapper_id} .ndizi-portal-tabs a.ndizi-active-tab {\n";
 		$inline_css .= '  background-color: ' . esc_attr( $button_color ) . " !important;\n";
 		$inline_css .= '  border-color: ' . esc_attr( $button_color ) . " !important;\n";
 		$inline_css .= "  color: #ffffff !important;\n";
 		$inline_css .= "}\n";
 
-		// Link hovers
+		// Links and text highlights
 		$inline_css .= "#{$wrapper_id} a {\n";
-		$inline_css .= '  color: ' . esc_attr( $button_color ) . ";\n";
+		$inline_css .= '  color: ' . esc_attr( $link_color ) . ";\n";
 		$inline_css .= "}\n";
 		$inline_css .= "#{$wrapper_id} a:hover {\n";
-		$inline_css .= '  color: ' . esc_attr( $button_color ) . " !important;\n";
+		$inline_css .= '  color: ' . esc_attr( $link_color ) . " !important;\n";
 		$inline_css .= "  opacity: 0.85;\n";
+		$inline_css .= "}\n";
+
+		// Accordion card header text highlights
+		$inline_css .= "#{$wrapper_id} .ndizi-project-card-header:hover h3,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-meta-hours strong {\n";
+		$inline_css .= '  color: ' . esc_attr( $link_color ) . " !important;\n";
 		$inline_css .= "}\n";
 
 		// Tasks and comment items

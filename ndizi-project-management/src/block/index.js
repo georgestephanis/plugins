@@ -15,7 +15,7 @@ import { __ } from '@wordpress/i18n';
  * @return {Element} Element to render.
  */
 const Edit = ( { attributes, setAttributes } ) => {
-	const { backgroundColor, textColor, buttonColor } = attributes;
+	const { backgroundColor, textColor, buttonColor, linkColor } = attributes;
 
 	const blockProps = useBlockProps( {
 		style: {
@@ -59,7 +59,15 @@ const Edit = ( { attributes, setAttributes } ) => {
 								setAttributes( {
 									buttonColor: value || '#4f46e5',
 								} ),
-							label: __( 'Link & Button Color', 'ndizi' ),
+							label: __( 'Primary Button Color', 'ndizi' ),
+						},
+						{
+							value: linkColor,
+							onChange: ( value ) =>
+								setAttributes( {
+									linkColor: value || '#818cf8',
+								} ),
+							label: __( 'Link & Accent Color', 'ndizi' ),
 						},
 					] }
 				/>
@@ -87,7 +95,14 @@ const Edit = ( { attributes, setAttributes } ) => {
 						'ndizi'
 					) }
 				</p>
-				<div style={ { display: 'inline-block' } }>
+				<div
+					style={ {
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						gap: '20px',
+					} }
+				>
 					<button
 						type="button"
 						style={ {
@@ -100,8 +115,19 @@ const Edit = ( { attributes, setAttributes } ) => {
 							cursor: 'default',
 						} }
 					>
-						{ __( 'Sample Action Button', 'ndizi' ) }
+						{ __( 'Action Button', 'ndizi' ) }
 					</button>
+					<span
+						style={ {
+							color: linkColor,
+							textDecoration: 'underline',
+							fontWeight: '600',
+							cursor: 'default',
+							fontSize: '14px',
+						} }
+					>
+						{ __( 'Sample Link Accent', 'ndizi' ) }
+					</span>
 				</div>
 			</div>
 		</>
@@ -133,6 +159,10 @@ registerBlockType( 'ndizi/client-portal', {
 		buttonColor: {
 			type: 'string',
 			default: '#4f46e5',
+		},
+		linkColor: {
+			type: 'string',
+			default: '#818cf8',
 		},
 	},
 	edit: Edit,
