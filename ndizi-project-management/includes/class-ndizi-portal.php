@@ -14,7 +14,7 @@ class Ndizi_Portal {
 	 */
 	public static function init() {
 		add_shortcode( 'ndizi_client_portal', array( __CLASS__, 'render_portal_shortcode' ) );
-		add_action( 'init', array( __CLASS__, 'handle_portal_actions' ) );
+		self::handle_portal_actions();
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );
 		add_action( 'wp_ajax_nopriv_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );

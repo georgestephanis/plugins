@@ -13,8 +13,8 @@ class Ndizi_CPTs {
 	 * Initialize custom post types and taxonomies
 	 */
 	public static function init() {
-		add_action( 'init', array( __CLASS__, 'register_post_types' ) );
-		add_action( 'init', array( __CLASS__, 'register_metadata' ) );
+		self::register_post_types();
+		self::register_metadata();
 	}
 
 	/**
