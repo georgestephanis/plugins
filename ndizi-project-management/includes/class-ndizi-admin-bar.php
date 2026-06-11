@@ -435,7 +435,38 @@ class Ndizi_Admin_Bar {
 			wp_send_json_error( array( 'message' => __( 'Duration must be greater than zero.', 'ndizi-project-management' ) ) );
 		}
 
-		$user_id  = get_current_user_id();
+		$user_id = get_current_user_id();
+
+		// Team members (non-managers) may only log time against projects they are assigned to.
+		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
+			$assigned_tasks = get_posts(
+				array(
+					'post_type'      => 'ndizi_task',
+					'post_status'    => 'publish',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'meta_query'     => array(
+						array(
+							'key'   => '_ndizi_assigned_user_id',
+							'value' => $user_id,
+						),
+					),
+				)
+			);
+
+			$allowed_project_ids = array();
+			foreach ( $assigned_tasks as $assigned_task_id ) {
+				$p_id = (int) get_post_meta( $assigned_task_id, '_ndizi_project_id', true );
+				if ( $p_id ) {
+					$allowed_project_ids[ $p_id ] = $p_id;
+				}
+			}
+
+			if ( ! isset( $allowed_project_ids[ $project_id ] ) ) {
+				wp_send_json_error( array( 'message' => __( 'You do not have permission to log time for this project.', 'ndizi-project-management' ) ) );
+			}
+		}
+
 		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable );
 
 		if ( ! $entry_id ) {
