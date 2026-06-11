@@ -342,10 +342,38 @@ class Ndizi_Portal {
 						$files          = $_FILES['ndizi_attachments'];
 						$attachment_ids = array();
 
+						// Portal uploads come from token-authenticated clients, not WP
+						// users, so enforce explicit limits to mitigate storage
+						// exhaustion / DoS and restrict the allowed file types.
+						$max_files     = 5;
+						$max_file_size = 10 * MB_IN_BYTES; // 10 MB per file.
+						$allowed_mimes = array(
+							'jpg|jpeg|jpe' => 'image/jpeg',
+							'gif'          => 'image/gif',
+							'png'          => 'image/png',
+							'webp'         => 'image/webp',
+							'pdf'          => 'application/pdf',
+							'doc'          => 'application/msword',
+							'docx'         => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+							'xls'          => 'application/vnd.ms-excel',
+							'xlsx'         => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+							'txt'          => 'text/plain',
+							'csv'          => 'text/csv',
+						);
+
 						// Loop through multiple files
 						if ( is_array( $files['name'] ) ) {
+							$processed = 0;
 							foreach ( $files['name'] as $key => $value ) {
+								if ( $processed >= $max_files ) {
+									break;
+								}
 								if ( $files['name'][ $key ] ) {
+									// Skip files that exceed the per-file size cap.
+									if ( (int) $files['size'][ $key ] > $max_file_size ) {
+										continue;
+									}
+
 									$file = array(
 										'name'     => $files['name'][ $key ],
 										'type'     => $files['type'][ $key ],
@@ -355,10 +383,21 @@ class Ndizi_Portal {
 									);
 
 									$_FILES['ndizi_temp_upload'] = $file;
-									// Upload and associate with project/task post
-									$attach_id = media_handle_upload( 'ndizi_temp_upload', $post_id );
+									// Upload and associate with project/task post. The
+									// mimes override restricts uploads to the safe list
+									// above regardless of the current user's caps.
+									$attach_id = media_handle_upload(
+										'ndizi_temp_upload',
+										$post_id,
+										array(),
+										array(
+											'test_form' => false,
+											'mimes'     => $allowed_mimes,
+										)
+									);
 									if ( ! is_wp_error( $attach_id ) ) {
 										$attachment_ids[] = $attach_id;
+										++$processed;
 									}
 								}
 							}
@@ -381,6 +420,36 @@ class Ndizi_Portal {
 	 */
 	public static function render_portal_shortcode() {
 		$client_id = self::get_authenticated_client_id();
+
+		// Ensure the portal assets are enqueued even when the shortcode is rendered
+		// in a context where the global $post-based enqueue check did not fire
+		// (widgets, block templates, do_shortcode() calls, etc.).
+		if ( ! wp_style_is( 'ndizi-portal-style', 'registered' ) ) {
+			wp_register_style(
+				'ndizi-portal-style',
+				NDIZI_PLUGIN_URL . 'build/portal.css',
+				array(),
+				NDIZI_VERSION
+			);
+		}
+		if ( ! wp_script_is( 'ndizi-portal-script', 'registered' ) ) {
+			wp_register_script(
+				'ndizi-portal-script',
+				NDIZI_PLUGIN_URL . 'build/portal.js',
+				array( 'jquery' ),
+				NDIZI_VERSION,
+				true
+			);
+			wp_localize_script(
+				'ndizi-portal-script',
+				'ndizi_portal',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+				)
+			);
+		}
+		wp_enqueue_style( 'ndizi-portal-style' );
+		wp_enqueue_script( 'ndizi-portal-script' );
 
 		ob_start();
 		?>
@@ -598,19 +667,7 @@ class Ndizi_Portal {
 																<td><span class="ndizi-badge ndizi-invoice-<?php echo esc_attr( $inv_status ); ?>"><?php echo esc_html( $inv_status ); ?></span></td>
 																<td>
 																	<!-- Printable invoice URL linking to portal printing action -->
-																	<a href="
-																	<?php
-																	echo esc_url(
-																		add_query_arg(
-																			array(
-																				'ndizi_print_invoice' => $inv->ID,
-																				'ndizi_token' => get_post_meta( $client_id, '_ndizi_client_auth_key', true ),
-																			),
-																			home_url()
-																		)
-																	);
-																	?>
-																				" target="_blank" class="ndizi-portal-btn-table">
+																	<a href="<?php echo esc_url( add_query_arg( array( 'ndizi_print_invoice' => $inv->ID, 'ndizi_token' => get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ), home_url() ) ); ?>" target="_blank" class="ndizi-portal-btn-table">
 																		<span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print/PDF', 'ndizi-project-management' ); ?>
 																	</a>
 																</td>
