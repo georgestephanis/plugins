@@ -120,6 +120,5 @@ Due to the nature of custom table queries and the frontend client portal, specif
 - `WordPress.DB.DirectDatabaseQuery` / `WordPress.DB.PreparedSQL` — Ignored since querying the custom SQL table directly using `$wpdb` is standard.
 - `WordPress.DB.PreparedSQLPlaceholders` — Excluded to support dynamic SQL preparation loops (e.g. `IN()` lists).
 - `WordPress.WP.AlternativeFunctions` — Excluded to allow standard file operations (e.g. `fclose()`, `fputcsv()`) required for browser CSV streaming.
-- `WordPress.Security` (escaping/nonces) — Excluded from strict automated checking since security checks are implemented contextually (e.g. in REST token checks, shortcode key verifications, and custom dashboard handlers).
 - `Squiz.Commenting` — Severities disabled to prevent bloated inline parameter/class/file doc block warnings.
 - `Universal.Operators.DisallowShortTernary` — Excluded to allow clean inline ternary structures.
