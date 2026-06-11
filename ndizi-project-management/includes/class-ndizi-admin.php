@@ -30,8 +30,12 @@ class Ndizi_Admin {
 		add_filter( 'manage_ndizi_invoice_posts_columns', array( __CLASS__, 'add_invoice_columns' ) );
 		add_action( 'manage_ndizi_invoice_posts_custom_column', array( __CLASS__, 'render_invoice_columns' ), 10, 2 );
 
-		// Admin menus
-		add_action( 'admin_menu', array( __CLASS__, 'register_admin_pages' ) );
+		// Admin menus.
+		// Priority 9 so the top-level menu and its Dashboard submenu are registered
+		// before core's _add_post_type_submenus() (admin_menu, priority 10) appends
+		// the CPT submenus; otherwise the first CPT (clients) becomes the top-level
+		// menu's click target instead of the dashboard.
+		add_action( 'admin_menu', array( __CLASS__, 'register_admin_pages' ), 9 );
 
 		// Hook time entries update via invoice aggregation save
 		add_action( 'wp_ajax_ndizi_aggregate_invoice_time', array( __CLASS__, 'ajax_aggregate_invoice_time' ) );
