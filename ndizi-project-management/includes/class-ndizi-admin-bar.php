@@ -403,7 +403,7 @@ class Ndizi_Admin_Bar {
 				'id'           => $project->ID,
 				'title'        => $project->post_title,
 				'client_name'  => $client_name,
-				'budget'       => $budget ? floatval( $budget ) : null,
+				'budget'       => '' !== $budget ? floatval( $budget ) : null,
 				'total_logged' => $project_logged_sec,
 				'tasks'        => $response_tasks,
 			);

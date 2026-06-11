@@ -440,7 +440,7 @@ import './adminbar-style.scss';
 		$( '#ndizi-ab-stat-logged' ).text( hours + 'h (' + label + ')' );
 
 		const $budgetRow = $( '#ndizi-ab-stat-budget-row' );
-		if ( selectedProject.budget ) {
+		if ( selectedProject.budget !== null && selectedProject.budget !== undefined ) {
 			$( '#ndizi-ab-stat-budget' ).text(
 				'$' +
 					selectedProject.budget.toLocaleString( undefined, {
