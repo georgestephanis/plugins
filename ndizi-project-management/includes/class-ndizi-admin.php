@@ -154,6 +154,7 @@ class Ndizi_Admin {
 				array(
 					'post_type'      => 'ndizi_project',
 					'posts_per_page' => -1,
+					'fields'         => 'ids',
 					'meta_key'       => '_ndizi_project_status',
 					'meta_value'     => 'active',
 				)
@@ -165,6 +166,7 @@ class Ndizi_Admin {
 				array(
 					'post_type'      => 'ndizi_task',
 					'posts_per_page' => -1,
+					'fields'         => 'ids',
 					'meta_query'     => array(
 						array(
 							'key'     => '_ndizi_task_status',
@@ -186,6 +188,7 @@ class Ndizi_Admin {
 				array(
 					'post_type'      => 'ndizi_invoice',
 					'posts_per_page' => -1,
+					'fields'         => 'ids',
 					'meta_query'     => array(
 						array(
 							'key'     => '_ndizi_invoice_status',
@@ -987,8 +990,12 @@ class Ndizi_Admin {
 			return;
 		}
 
+		// Verify the post type before each save block so a nonce from one post type
+		// cannot write metadata onto a post of another type.
+		$post_type = get_post_type( $post_id );
+
 		// 1. Client Save
-		if ( isset( $_POST['ndizi_client_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_client_nonce'] ) ), 'ndizi_save_client' ) ) {
+		if ( 'ndizi_client' === $post_type && isset( $_POST['ndizi_client_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_client_nonce'] ) ), 'ndizi_save_client' ) ) {
 			if ( isset( $_POST['ndizi_client_website'] ) ) {
 				update_post_meta( $post_id, '_ndizi_client_website', esc_url_raw( wp_unslash( $_POST['ndizi_client_website'] ) ) );
 			}
@@ -1004,7 +1011,7 @@ class Ndizi_Admin {
 		}
 
 		// 2. Project Save
-		if ( isset( $_POST['ndizi_project_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_project_nonce'] ) ), 'ndizi_save_project' ) ) {
+		if ( 'ndizi_project' === $post_type && isset( $_POST['ndizi_project_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_project_nonce'] ) ), 'ndizi_save_project' ) ) {
 			if ( isset( $_POST['ndizi_client_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_client_id', intval( $_POST['ndizi_client_id'] ) );
 			}
@@ -1023,7 +1030,7 @@ class Ndizi_Admin {
 		}
 
 		// 3. Task Save
-		if ( isset( $_POST['ndizi_task_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_task_nonce'] ) ), 'ndizi_save_task' ) ) {
+		if ( 'ndizi_task' === $post_type && isset( $_POST['ndizi_task_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_task_nonce'] ) ), 'ndizi_save_task' ) ) {
 			if ( isset( $_POST['ndizi_project_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_id', intval( $_POST['ndizi_project_id'] ) );
 			}
@@ -1042,7 +1049,7 @@ class Ndizi_Admin {
 		}
 
 		// 4. Invoice Save
-		if ( isset( $_POST['ndizi_invoice_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_nonce'] ) ), 'ndizi_save_invoice' ) ) {
+		if ( 'ndizi_invoice' === $post_type && isset( $_POST['ndizi_invoice_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_nonce'] ) ), 'ndizi_save_invoice' ) ) {
 			if ( isset( $_POST['ndizi_project_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_id', intval( $_POST['ndizi_project_id'] ) );
 			}
@@ -1072,20 +1079,22 @@ class Ndizi_Admin {
 
 			if ( isset( $_POST['ndizi_invoice_time_entries'] ) && is_array( $_POST['ndizi_invoice_time_entries'] ) ) {
 				$selected_entry_ids = array_map( 'intval', wp_unslash( $_POST['ndizi_invoice_time_entries'] ) );
-				foreach ( $selected_entry_ids as $entry_id ) {
-					$wpdb->update(
-						$table_name,
-						array( 'invoice_id' => $post_id ),
-						array( 'id' => intval( $entry_id ) ),
-						array( '%d' ),
-						array( '%d' )
+				if ( ! empty( $selected_entry_ids ) ) {
+					// Relink all selected entries in a single bulk query rather than one query per entry.
+					$placeholders = implode( ',', array_fill( 0, count( $selected_entry_ids ), '%d' ) );
+					$wpdb->query(
+						$wpdb->prepare(
+							// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table_name and $placeholders are built from trusted internal values.
+							"UPDATE $table_name SET invoice_id = %d WHERE id IN ($placeholders)",
+							array_merge( array( $post_id ), $selected_entry_ids )
+						)
 					);
 				}
 			}
 		}
 
 		// 5. Contact Save
-		if ( isset( $_POST['ndizi_contact_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_contact_nonce'] ) ), 'ndizi_save_contact' ) ) {
+		if ( 'ndizi_contact' === $post_type && isset( $_POST['ndizi_contact_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_contact_nonce'] ) ), 'ndizi_save_contact' ) ) {
 			if ( isset( $_POST['ndizi_contact_email'] ) ) {
 				update_post_meta( $post_id, '_ndizi_contact_email', sanitize_email( wp_unslash( $_POST['ndizi_contact_email'] ) ) );
 			}
