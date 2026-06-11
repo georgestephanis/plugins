@@ -666,8 +666,19 @@ class Ndizi_Portal {
 																<td><?php echo $inv_amount ? '$' . esc_html( number_format( $inv_amount, 2 ) ) : '-'; ?></td>
 																<td><span class="ndizi-badge ndizi-invoice-<?php echo esc_attr( $inv_status ); ?>"><?php echo esc_html( $inv_status ); ?></span></td>
 																<td>
-																	<!-- Printable invoice URL linking to portal printing action -->
-																	<a href="<?php echo esc_url( add_query_arg( array( 'ndizi_print_invoice' => $inv->ID, 'ndizi_token' => get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ), home_url() ) ); ?>" target="_blank" class="ndizi-portal-btn-table">
+																	<?php
+																	// Printable invoice URL linking to portal printing action.
+																	$ndizi_print_url = esc_url(
+																		add_query_arg(
+																			array(
+																				'ndizi_print_invoice' => $inv->ID,
+																				'ndizi_token'         => get_post_meta( $client_id, '_ndizi_client_auth_key', true ),
+																			),
+																			home_url()
+																		)
+																	);
+																	?>
+																	<a href="<?php echo $ndizi_print_url; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url() applied above. ?>" target="_blank" class="ndizi-portal-btn-table">
 																		<span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print/PDF', 'ndizi-project-management' ); ?>
 																	</a>
 																</td>
