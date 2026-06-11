@@ -971,8 +971,14 @@ class Ndizi_Admin {
 	 * Save Meta Box Submissions
 	 */
 	public static function save_meta_boxes( $post_id ) {
-		// Avoid autosave or bulk edit saves
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		// Avoid autosave, revision, and bulk edit saves.
+		if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		// Authorization: the current user must be able to edit this specific post.
+		// (Nonces below guard against CSRF; this guards against privilege escalation.)
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
 
