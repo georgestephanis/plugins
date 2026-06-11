@@ -370,9 +370,20 @@
 			}
 
 			.ndizi-ab-icon-svg {
-				fill: currentcolor;
 				vertical-align: middle;
 				display: inline-block;
+
+				&.ndizi-ab-icon-punch {
+					fill: currentcolor;
+				}
+
+				&.ndizi-ab-icon-banana,
+				&.ndizi-ab-icon-clock,
+				&.ndizi-ab-icon-hourglass {
+					fill: none;
+					stroke: currentcolor;
+					stroke-width: 2px;
+				}
 			}
 		}
 

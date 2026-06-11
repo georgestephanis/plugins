@@ -95,13 +95,13 @@ class Ndizi_Admin_Bar {
 
 			$title = sprintf(
 				'<span class="ndizi-ab-icon-wrapper"><span class="ndizi-ab-pulse"></span>%s</span><span class="ndizi-ab-label">%s</span>',
-				'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>',
+				self::get_admin_bar_icon_svg(),
 				esc_html( $active_duration_str )
 			);
 		} else {
 			$title = sprintf(
 				'<span class="ndizi-ab-icon-wrapper">%s</span><span class="ndizi-ab-label screen-reader-text">%s</span>',
-				'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>',
+				self::get_admin_bar_icon_svg(),
 				esc_html__( 'Log Time', 'ndizi-project-management' )
 			);
 		}
@@ -432,5 +432,24 @@ class Ndizi_Admin_Bar {
 		}
 
 		wp_send_json_success( array( 'entry_id' => $entry_id ) );
+	}
+
+	/**
+	 * Get the selected SVG icon markup for the admin bar
+	 */
+	public static function get_admin_bar_icon_svg() {
+		$selected = get_option( 'ndizi_adminbar_icon', 'banana' );
+
+		switch ( $selected ) {
+			case 'clock':
+				return '<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg ndizi-ab-icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+			case 'punch_clock':
+				return '<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg ndizi-ab-icon-punch" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>';
+			case 'hourglass':
+				return '<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg ndizi-ab-icon-hourglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0 -.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></svg>';
+			case 'banana':
+			default:
+				return '<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg ndizi-ab-icon-banana" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v-2a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v2a9.09 9.09 0 0 1 -4 8.08c-2 1.31 -5 1.57 -7 1.59a2 2 0 0 0 -2 2a2 2 0 0 0 1.16 1.81c2.69 1.2 9.46 3.44 14.35 -1.66c4.49 -4.74 1.49 -11.82 1.49 -11.82" /></svg>';
+		}
 	}
 }

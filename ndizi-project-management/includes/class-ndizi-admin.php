@@ -14,6 +14,7 @@ class Ndizi_Admin {
 	 */
 	public static function init() {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+		add_action( 'admin_init', array( __CLASS__, 'save_settings_page' ) );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
 
@@ -47,6 +48,25 @@ class Ndizi_Admin {
 
 		// Restrict task list view for team members
 		add_filter( 'pre_get_posts', array( __CLASS__, 'restrict_posts_query' ) );
+	}
+
+	/**
+	 * Intercept settings save on admin_init hook to run before admin bar is rendered
+	 */
+	public static function save_settings_page() {
+		if ( isset( $_POST['ndizi_save_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_save_settings_nonce'] ) ), 'ndizi_save_settings' ) ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
+			}
+			if ( isset( $_POST['ndizi_adminbar_icon'] ) ) {
+				$icon = sanitize_key( $_POST['ndizi_adminbar_icon'] );
+				if ( in_array( $icon, array( 'banana', 'clock', 'punch_clock', 'hourglass' ), true ) ) {
+					update_option( 'ndizi_adminbar_icon', $icon );
+					wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
+					exit;
+				}
+			}
+		}
 	}
 
 	/**
@@ -145,6 +165,16 @@ class Ndizi_Admin {
 			'ndizi_view_projects',
 			'ndizi-gantt',
 			array( __CLASS__, 'render_gantt_page' )
+		);
+
+		// Submenu: Settings
+		add_submenu_page(
+			'ndizi-pm',
+			__( 'Ndizi Settings', 'ndizi-project-management' ),
+			__( 'Settings', 'ndizi-project-management' ),
+			'manage_options',
+			'ndizi-settings',
+			array( __CLASS__, 'render_settings_page' )
 		);
 	}
 
@@ -1696,6 +1726,126 @@ class Ndizi_Admin {
 					</div>
 				</div>
 			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the Ndizi PM Settings Page
+	 */
+	public static function render_settings_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
+		}
+
+		// Show Success Notice
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['settings-updated'] ) && 'true' === $_GET['settings-updated'] ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved successfully!', 'ndizi-project-management' ) . '</p></div>';
+		}
+
+		$current_icon = get_option( 'ndizi_adminbar_icon', 'banana' );
+
+		// Enqueue styles for preview
+		wp_enqueue_style( 'ndizi-adminbar-style' );
+		?>
+		<div class="wrap ndizi-settings-wrap" style="max-width: 800px; margin: 30px auto 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;">
+			<h1 style="font-size: 28px; font-weight: 700; color: #0f172a; margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
+				<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+				<?php esc_html_e( 'Ndizi PM Settings', 'ndizi-project-management' ); ?>
+			</h1>
+
+			<div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+				<form method="post" action="">
+					<?php wp_nonce_field( 'ndizi_save_settings', 'ndizi_save_settings_nonce' ); ?>
+					
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 0 0 8px 0;"><?php esc_html_e( 'Admin Bar Icon', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Choose which icon should display for the time tracker in the WP Admin Bar.', 'ndizi-project-management' ); ?></p>
+					
+					<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 30px;">
+						
+						<!-- Option: Banana -->
+						<label style="cursor: pointer; display: block; position: relative;">
+							<input type="radio" name="ndizi_adminbar_icon" value="banana" <?php checked( $current_icon, 'banana' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
+							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'banana' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'banana' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
+								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'banana' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v-2a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v2a9.09 9.09 0 0 1 -4 8.08c-2 1.31 -5 1.57 -7 1.59a2 2 0 0 0 -2 2a2 2 0 0 0 1.16 1.81c2.69 1.2 9.46 3.44 14.35 -1.66c4.49 -4.74 1.49 -11.82 1.49 -11.82" /></svg>
+								</div>
+								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Banana', 'ndizi-project-management' ); ?></span>
+							</div>
+						</label>
+
+						<!-- Option: Clock -->
+						<label style="cursor: pointer; display: block; position: relative;">
+							<input type="radio" name="ndizi_adminbar_icon" value="clock" <?php checked( $current_icon, 'clock' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
+							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'clock' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'clock' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
+								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'clock' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+								</div>
+								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Clock', 'ndizi-project-management' ); ?></span>
+							</div>
+						</label>
+
+						<!-- Option: Punch Clock -->
+						<label style="cursor: pointer; display: block; position: relative;">
+							<input type="radio" name="ndizi_adminbar_icon" value="punch_clock" <?php checked( $current_icon, 'punch_clock' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
+							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'punch_clock' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'punch_clock' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
+								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'punch_clock' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>
+								</div>
+								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Punch Clock', 'ndizi-project-management' ); ?></span>
+							</div>
+						</label>
+
+						<!-- Option: Hourglass -->
+						<label style="cursor: pointer; display: block; position: relative;">
+							<input type="radio" name="ndizi_adminbar_icon" value="hourglass" <?php checked( $current_icon, 'hourglass' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
+							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'hourglass' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'hourglass' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
+								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'hourglass' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0 -.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></svg>
+								</div>
+								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Hourglass', 'ndizi-project-management' ); ?></span>
+							</div>
+						</label>
+
+					</div>
+
+					<button type="submit" class="button button-primary" style="background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; padding: 0 24px !important; height: 40px !important; font-size: 14px !important; border-radius: 6px !important; font-weight: 600 !important; cursor: pointer; transition: background 0.2s;">
+						<?php esc_html_e( 'Save Changes', 'ndizi-project-management' ); ?>
+					</button>
+				</form>
+			</div>
+			
+			<script>
+				jQuery(document).ready(function($) {
+					$('input[name="ndizi_adminbar_icon"]').on('change', function() {
+						$('input[name="ndizi_adminbar_icon"]').next('.ndizi-icon-card').css({
+							'border-color': '#e2e8f0',
+							'background': '#fff'
+						}).find('div').css('color', '#64748b');
+						
+						if($(this).is(':checked')) {
+							$(this).next('.ndizi-icon-card').css({
+								'border-color': '#4f46e5',
+								'background': '#f5f3ff'
+							}).find('div').css('color', '#4f46e5');
+
+							// Swap the SVG in the admin bar live!
+							var iconVal = $(this).val();
+							var iconClass = iconVal === 'punch_clock' ? 'punch' : iconVal;
+							var $newSvg = $(this).next('.ndizi-icon-card').find('svg').clone();
+							$newSvg.attr('class', 'ndizi-ab-icon-svg ndizi-ab-icon-' + iconClass);
+							$newSvg.attr('width', '16');
+							$newSvg.attr('height', '16');
+
+							var $iconWrapper = $('#wp-admin-bar-ndizi-time-tracker .ndizi-ab-icon-wrapper');
+							if ($iconWrapper.length) {
+								$iconWrapper.find('svg').replaceWith($newSvg);
+							}
+						}
+					});
+				});
+			</script>
 		</div>
 		<?php
 	}
