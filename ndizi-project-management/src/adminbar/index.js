@@ -101,7 +101,10 @@ import './adminbar-style.scss';
 				$taskGroup.hide();
 			}
 
-			$startBtn.prop( 'disabled', false );
+			const isManualOpen = $( '#ndizi-ab-manual-log-panel' ).is(
+				':visible'
+			);
+			$startBtn.prop( 'disabled', isManualOpen );
 			selectedTask = null;
 			updateStatsCard();
 		} );
@@ -123,7 +126,22 @@ import './adminbar-style.scss';
 		// Toggle manual entry fields
 		$( '#ndizi-ab-btn-toggle-manual' ).on( 'click', function ( e ) {
 			e.preventDefault();
-			$( '#ndizi-ab-manual-log-panel' ).slideToggle( 200 );
+			const $manualPanel = $( '#ndizi-ab-manual-log-panel' );
+			const $startBtn = $( '#ndizi-ab-btn-start' );
+			const willOpen = $manualPanel.is( ':hidden' );
+
+			$manualPanel.slideToggle( 200 );
+
+			if ( willOpen ) {
+				$startBtn.prop( 'disabled', true );
+			} else {
+				// Restore to correct state based on whether project is selected
+				const projectId = parseInt(
+					$( '#ndizi-ab-project-select' ).val(),
+					10
+				);
+				$startBtn.prop( 'disabled', ! projectId );
+			}
 		} );
 
 		// Start Timer Event
