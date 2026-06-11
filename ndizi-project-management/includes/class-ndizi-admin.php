@@ -198,6 +198,12 @@ class Ndizi_Admin {
 	 * Render the main Ndizi PM Dashboard Page
 	 */
 	public static function render_dashboard_page() {
+		// Read-only, bookmarkable report filters from the query string
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
+		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
 		// Calculate stats
 		$active_projects = count(
 			get_posts(
@@ -229,8 +235,26 @@ class Ndizi_Admin {
 		);
 
 		global $wpdb;
-		$table_name  = Ndizi_DB::get_table_name();
-		$total_sec   = $wpdb->get_var( "SELECT SUM(duration) FROM $table_name" );
+		$table_name = Ndizi_DB::get_table_name();
+
+		$query      = "SELECT SUM(duration) FROM $table_name WHERE 1=1";
+		$query_args = array();
+
+		if ( ! empty( $start_date ) ) {
+			$query       .= ' AND start_time >= %s';
+			$query_args[] = $start_date . ' 00:00:00';
+		}
+		if ( ! empty( $end_date ) ) {
+			$query       .= ' AND start_time <= %s';
+			$query_args[] = $end_date . ' 23:59:59';
+		}
+
+		if ( ! empty( $query_args ) ) {
+			$total_sec = $wpdb->get_var( $wpdb->prepare( $query, $query_args ) );
+		} else {
+			$total_sec = $wpdb->get_var( $query );
+		}
+
 		$total_hours = $total_sec ? round( $total_sec / 3600, 1 ) : 0;
 
 		$pending_invoices = count(
@@ -258,6 +282,26 @@ class Ndizi_Admin {
 				<p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;"><?php esc_html_e( 'Native WordPress tracking for clients, projects, tasks, timesheets, and invoices.', 'ndizi-project-management' ); ?></p>
 			</div>
 
+			<!-- Date Range Filter -->
+			<div style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; margin-bottom: 30px;">
+				<form method="get" action="admin.php" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin: 0;">
+					<input type="hidden" name="page" value="ndizi-pm">
+					
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<label for="ndizi_start_date" style="font-weight: 600; color: #475569; font-size: 13px;"><?php esc_html_e( 'From:', 'ndizi-project-management' ); ?></label>
+						<input type="date" name="start_date" id="ndizi_start_date" value="<?php echo esc_attr( $start_date ); ?>" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+					</div>
+					
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<label for="ndizi_end_date" style="font-weight: 600; color: #475569; font-size: 13px;"><?php esc_html_e( 'To:', 'ndizi-project-management' ); ?></label>
+						<input type="date" name="end_date" id="ndizi_end_date" value="<?php echo esc_attr( $end_date ); ?>" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+					</div>
+					
+					<button type="submit" class="button button-primary" style="background: #4f46e5; border-color: #4f46e5; height: 32px; line-height: 30px; padding: 0 16px; font-weight: 600;"><?php esc_html_e( 'Filter', 'ndizi-project-management' ); ?></button>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-pm' ) ); ?>" class="button button-secondary" style="height: 32px; line-height: 30px; padding: 0 16px; font-weight: 600;"><?php esc_html_e( 'Clear', 'ndizi-project-management' ); ?></a>
+				</form>
+			</div>
+
 			<!-- Stats Grid -->
 			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #4f46e5;">
@@ -269,7 +313,14 @@ class Ndizi_Admin {
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $open_tasks ); ?></div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #10b981;">
-					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Total Hours Logged', 'ndizi-project-management' ); ?></h3>
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">
+						<?php esc_html_e( 'Total Hours Logged', 'ndizi-project-management' ); ?>
+						<?php if ( ! empty( $start_date ) || ! empty( $end_date ) ) : ?>
+							<span style="font-size: 11px; text-transform: none; display: block; margin-top: 4px; color: #4f46e5; font-weight: 500;">
+								(<?php echo esc_html( $start_date ? $start_date : '...' ); ?> &ndash; <?php echo esc_html( $end_date ? $end_date : '...' ); ?>)
+							</span>
+						<?php endif; ?>
+					</h3>
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo esc_html( $total_hours ); ?>h</div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #ec4899;">

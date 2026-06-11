@@ -46,7 +46,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
   (time cost vs. project budget) is a natural next step.
 - [ ] **Exportable time reports** — a CSV/PDF export of filtered time entries (by date range,
   project, user, billable flag) is expected by accountants and clients.
-- [ ] **Date-range filtering in the admin dashboard** — currently reports appear to be all-time; a
+- [x] **Date-range filtering in the admin dashboard** — currently reports appear to be all-time; a
   selectable time window (this week / this month / custom) is table-stakes for billing workflows.
 
 ---
