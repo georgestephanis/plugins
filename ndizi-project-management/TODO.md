@@ -55,7 +55,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 - [ ] **Approval workflow for time entries** — Clockify (Pro plan) requires manager sign-off before
   time is locked for invoicing. Useful for agencies to catch errors before billing.
-- [ ] **Time entry locking / period close** — prevent edits to time logged before a given date
+- [x] **Time entry locking / period close** — prevent edits to time logged before a given date
   (after an invoice is issued or a pay period closes).
 - [ ] **Time-off / absence tracking** — not covered by any surveyed tool natively but commonly
   requested alongside time tracking for small agencies.

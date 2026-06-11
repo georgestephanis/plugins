@@ -64,13 +64,26 @@ class Ndizi_Admin {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
 			}
+
+			$updated = false;
+
 			if ( isset( $_POST['ndizi_adminbar_icon'] ) ) {
 				$icon = sanitize_key( wp_unslash( $_POST['ndizi_adminbar_icon'] ) );
 				if ( in_array( $icon, array( 'banana', 'clock', 'punch_clock', 'hourglass' ), true ) ) {
 					update_option( 'ndizi_adminbar_icon', $icon );
-					wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
-					exit;
+					$updated = true;
 				}
+			}
+
+			if ( isset( $_POST['ndizi_lock_date'] ) ) {
+				$lock_date = sanitize_text_field( wp_unslash( $_POST['ndizi_lock_date'] ) );
+				update_option( 'ndizi_lock_date', $lock_date );
+				$updated = true;
+			}
+
+			if ( $updated ) {
+				wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
+				exit;
 			}
 		}
 	}
@@ -1296,14 +1309,15 @@ class Ndizi_Admin {
 		);
 	}
 
-	/**
-	 * AJAX logic to start a timer
-	 */
 	public static function ajax_start_timer() {
 		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
 
 		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
+		}
+
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ) );
 		}
 
 		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
@@ -1319,7 +1333,7 @@ class Ndizi_Admin {
 		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
 
 		if ( ! $timer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to start timer.', 'ndizi-project-management' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to start timer. The date may be locked or another error occurred.', 'ndizi-project-management' ) ) );
 		}
 
 		wp_send_json_success( array( 'timer_id' => $timer_id ) );
@@ -1336,6 +1350,12 @@ class Ndizi_Admin {
 		}
 
 		$user_id = get_current_user_id();
+
+		$active = Ndizi_DB::get_active_timer( $user_id );
+		if ( $active && Ndizi_DB::is_date_locked( $active->start_time ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot stop timer. The timer start time falls in a locked period.', 'ndizi-project-management' ) ) );
+		}
+
 		$stopped = Ndizi_DB::stop_timer( $user_id );
 
 		if ( ! $stopped ) {
@@ -1366,6 +1386,10 @@ class Ndizi_Admin {
 		// Authorization: own logs, or users who can manage all time.
 		if ( intval( $log->user_id ) !== $user_id && ! Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
+		}
+
+		if ( Ndizi_DB::is_date_locked( $log->start_time ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot delete log. The time entry is in a locked period.', 'ndizi-project-management' ) ) );
 		}
 
 		$deleted = Ndizi_DB::delete_time_entry( $log_id );
@@ -1915,6 +1939,16 @@ class Ndizi_Admin {
 							</div>
 						</label>
 
+					</div>
+
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Time Entry Locking', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Prevent users from adding, modifying, or deleting time entries logged on or before this date.', 'ndizi-project-management' ); ?></p>
+					
+					<div style="margin-bottom: 30px;">
+						<?php $lock_date = get_option( 'ndizi_lock_date', '' ); ?>
+						<label for="ndizi_lock_date" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Lock Date', 'ndizi-project-management' ); ?></label>
+						<input type="date" name="ndizi_lock_date" id="ndizi_lock_date" value="<?php echo esc_attr( $lock_date ); ?>" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
 					</div>
 
 					<button type="submit" class="button button-primary" style="background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; padding: 0 24px !important; height: 40px !important; font-size: 14px !important; border-radius: 6px !important; font-weight: 600 !important; cursor: pointer; transition: background 0.2s;">
