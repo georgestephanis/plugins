@@ -5,6 +5,7 @@ import {
 	PanelColorSettings,
 } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
+import metadata from './block.json';
 
 /**
  * Edit component for the block.
@@ -134,39 +135,9 @@ const Edit = ( { attributes, setAttributes } ) => {
 	);
 };
 
-registerBlockType( 'ndizi/client-portal', {
-	title: __( 'Ndizi Client Portal', 'ndizi' ),
-	description: __(
-		'Embeds the Ndizi Client Portal for tracking projects, tasks, and invoices.',
-		'ndizi'
-	),
-	category: 'widgets',
-	icon: 'portfolio',
-	keywords: [
-		__( 'ndizi', 'ndizi' ),
-		__( 'portal', 'ndizi' ),
-		__( 'client', 'ndizi' ),
-	],
-	attributes: {
-		backgroundColor: {
-			type: 'string',
-			default: '#f8fafc',
-		},
-		textColor: {
-			type: 'string',
-			default: '#0f172a',
-		},
-		buttonColor: {
-			type: 'string',
-			default: '#4f46e5',
-		},
-		linkColor: {
-			type: 'string',
-			default: '#818cf8',
-		},
-	},
+registerBlockType( metadata, {
 	edit: Edit,
 	save() {
-		return null; // Dynamic rendering via PHP
+		return null;
 	},
 } );
