@@ -59,7 +59,7 @@ class Ndizi_Admin {
 				wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
 			}
 			if ( isset( $_POST['ndizi_adminbar_icon'] ) ) {
-				$icon = sanitize_key( $_POST['ndizi_adminbar_icon'] );
+				$icon = sanitize_key( wp_unslash( $_POST['ndizi_adminbar_icon'] ) );
 				if ( in_array( $icon, array( 'banana', 'clock', 'punch_clock', 'hourglass' ), true ) ) {
 					update_option( 'ndizi_adminbar_icon', $icon );
 					wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
