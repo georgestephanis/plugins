@@ -91,7 +91,7 @@ class Ndizi_DB {
 				'created_at'  => $now,
 				'updated_at'  => $now,
 			),
-			array( '%d', '%d', '%d', '%s', '%s', null, '%d', '%d', '%d', '%s', '%s' )
+			array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' )
 		);
 
 		if ( $result ) {
@@ -143,13 +143,16 @@ class Ndizi_DB {
 	public static function log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time = '', $end_time = '' ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
-		$now        = current_time( 'mysql' );
+		// Use a single site-local timestamp basis so every derived datetime
+		// below is in the same timezone convention as $now and the values
+		// stored elsewhere via current_time( 'mysql' ).
+		$now_ts = strtotime( current_time( 'mysql' ) );
+		$now    = gmdate( 'Y-m-d H:i:s', $now_ts );
 
 		// If start/end times aren't provided, estimate them based on duration
 		if ( empty( $start_time ) ) {
 			$duration_sec = intval( $duration );
-			$start_ts     = strtotime( $now ) - $duration_sec;
-			$start_time   = gmdate( 'Y-m-d H:i:s', $start_ts );
+			$start_time   = gmdate( 'Y-m-d H:i:s', $now_ts - $duration_sec );
 			$end_time     = $now;
 		} elseif ( empty( $end_time ) ) {
 			$duration_sec = intval( $duration );
