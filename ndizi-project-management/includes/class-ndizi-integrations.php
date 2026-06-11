@@ -30,10 +30,10 @@ class Ndizi_Integrations {
 		$json_url = wp_nonce_url( admin_url( 'admin.php?ndizi_export_invoice=json&invoice_id=' . $post->ID ), 'ndizi_export_nonce' );
 		?>
 		<div class="misc-pub-section ndizi-export-section" style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
-			<strong><?php _e( 'Exports:', 'ndizi-project-management' ); ?></strong>
+			<strong><?php esc_html_e( 'Exports:', 'ndizi-project-management' ); ?></strong>
 			<div style="margin-top: 5px;">
-				<a href="<?php echo esc_url( $csv_url ); ?>" class="button button-secondary button-small"><?php _e( 'Export CSV', 'ndizi-project-management' ); ?></a>
-				<a href="<?php echo esc_url( $json_url ); ?>" class="button button-secondary button-small"><?php _e( 'Export JSON', 'ndizi-project-management' ); ?></a>
+				<a href="<?php echo esc_url( $csv_url ); ?>" class="button button-secondary button-small"><?php esc_html_e( 'Export CSV', 'ndizi-project-management' ); ?></a>
+				<a href="<?php echo esc_url( $json_url ); ?>" class="button button-secondary button-small"><?php esc_html_e( 'Export JSON', 'ndizi-project-management' ); ?></a>
 			</div>
 		</div>
 		<?php
@@ -43,6 +43,9 @@ class Ndizi_Integrations {
 	 * Intercept print invoice template request
 	 */
 	public static function handle_invoice_print_request() {
+		// This is a public, bookmarkable print view authorized below by capability
+		// or by the client auth token (hash_equals), not by a nonce.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_GET['ndizi_print_invoice'] ) ) {
 			return;
 		}
@@ -51,20 +54,20 @@ class Ndizi_Integrations {
 		$invoice    = get_post( $invoice_id );
 
 		if ( ! $invoice || 'ndizi_invoice' !== $invoice->post_type ) {
-			wp_die( __( 'Invalid Invoice.', 'ndizi-project-management' ) );
+			wp_die( esc_html__( 'Invalid Invoice.', 'ndizi-project-management' ) );
 		}
 
 		// Perform authorization:
 		// Either user has capabilities, or URL contains valid client auth key parameter
 		$authorized = false;
-		if ( current_user_can( 'ndizi_manage_invoices' ) || current_user_can( 'administrator' ) ) {
+		if ( current_user_can( 'ndizi_manage_invoices' ) || current_user_can( 'manage_options' ) ) {
 			$authorized = true;
 		} else {
 			// Check key match
 			$project_id    = get_post_meta( $invoice_id, '_ndizi_project_id', true );
 			$client_id     = get_post_meta( $project_id, '_ndizi_client_id', true );
 			$client_key    = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
-			$request_token = isset( $_GET['ndizi_token'] ) ? sanitize_text_field( $_GET['ndizi_token'] ) : '';
+			$request_token = isset( $_GET['ndizi_token'] ) ? sanitize_text_field( wp_unslash( $_GET['ndizi_token'] ) ) : '';
 
 			if ( ! empty( $client_key ) && hash_equals( $client_key, $request_token ) ) {
 				$authorized = true;
@@ -72,8 +75,9 @@ class Ndizi_Integrations {
 		}
 
 		if ( ! $authorized ) {
-			wp_die( __( 'You are not authorized to view this invoice.', 'ndizi-project-management' ) );
+			wp_die( esc_html__( 'You are not authorized to view this invoice.', 'ndizi-project-management' ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Pull related details
 		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
@@ -265,8 +269,8 @@ class Ndizi_Integrations {
 			<div class="invoice-wrapper">
 				<!-- Print Toolbar -->
 				<div class="print-controls">
-					<span><?php _e( 'Print or save this invoice as a PDF file.', 'ndizi-project-management' ); ?></span>
-					<button class="print-btn" onclick="window.print();"><?php _e( 'Print Invoice', 'ndizi-project-management' ); ?></button>
+					<span><?php esc_html_e( 'Print or save this invoice as a PDF file.', 'ndizi-project-management' ); ?></span>
+					<button class="print-btn" onclick="window.print();"><?php esc_html_e( 'Print Invoice', 'ndizi-project-management' ); ?></button>
 				</div>
 
 				<header class="invoice-header">
@@ -283,7 +287,7 @@ class Ndizi_Integrations {
 
 				<div class="invoice-details-grid">
 					<div class="details-col">
-						<h3><?php _e( 'Billed To', 'ndizi-project-management' ); ?></h3>
+						<h3><?php esc_html_e( 'Billed To', 'ndizi-project-management' ); ?></h3>
 						<p><strong><?php echo esc_html( $client->post_title ); ?></strong></p>
 						<?php if ( get_post_meta( $client_id, '_ndizi_client_address', true ) ) : ?>
 							<p><?php echo nl2br( esc_html( get_post_meta( $client_id, '_ndizi_client_address', true ) ) ); ?></p>
@@ -293,10 +297,10 @@ class Ndizi_Integrations {
 						<?php endif; ?>
 					</div>
 					<div class="details-col" style="text-align: right;">
-						<h3><?php _e( 'Invoice Details', 'ndizi-project-management' ); ?></h3>
-						<p><strong><?php _e( 'Date:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $invoice_date ); ?></p>
-						<p><strong><?php _e( 'Due Date:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $due_date ); ?></p>
-						<p><strong><?php _e( 'Project:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $project->post_title ); ?></p>
+						<h3><?php esc_html_e( 'Invoice Details', 'ndizi-project-management' ); ?></h3>
+						<p><strong><?php esc_html_e( 'Date:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $invoice_date ); ?></p>
+						<p><strong><?php esc_html_e( 'Due Date:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $due_date ); ?></p>
+						<p><strong><?php esc_html_e( 'Project:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $project->post_title ); ?></p>
 					</div>
 				</div>
 
@@ -304,17 +308,17 @@ class Ndizi_Integrations {
 				<table class="invoice-table">
 					<thead>
 						<tr>
-							<th style="width: 15%;"><?php _e( 'Date', 'ndizi-project-management' ); ?></th>
-							<th style="width: 20%;"><?php _e( 'Team Member', 'ndizi-project-management' ); ?></th>
-							<th style="width: 50%;"><?php _e( 'Description', 'ndizi-project-management' ); ?></th>
-							<th style="width: 15%; text-align: right;"><?php _e( 'Hours', 'ndizi-project-management' ); ?></th>
+							<th style="width: 15%;"><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
+							<th style="width: 20%;"><?php esc_html_e( 'Team Member', 'ndizi-project-management' ); ?></th>
+							<th style="width: 50%;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
+							<th style="width: 15%; text-align: right;"><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $time_entries ) ) : ?>
 							<tr>
 								<td colspan="4" style="text-align: center; color: #64748b;">
-									<em><?php _e( 'No detailed time entries linked. Showing summary amount only.', 'ndizi-project-management' ); ?></em>
+									<em><?php esc_html_e( 'No detailed time entries linked. Showing summary amount only.', 'ndizi-project-management' ); ?></em>
 								</td>
 							</tr>
 						<?php else : ?>
@@ -335,19 +339,19 @@ class Ndizi_Integrations {
 
 				<div class="invoice-totals">
 					<div class="totals-row">
-						<span><?php _e( 'Total Logged Hours:', 'ndizi-project-management' ); ?></span>
+						<span><?php esc_html_e( 'Total Logged Hours:', 'ndizi-project-management' ); ?></span>
 						<span><strong><?php echo esc_html( $total_hours ); ?>h</strong></span>
 					</div>
 					<div class="totals-row totals-row-grand">
-						<span><?php _e( 'Total Due:', 'ndizi-project-management' ); ?></span>
+						<span><?php esc_html_e( 'Total Due:', 'ndizi-project-management' ); ?></span>
 						<span>$<?php echo esc_html( number_format( $amount, 2 ) ); ?></span>
 					</div>
 				</div>
 
 				<?php if ( ! empty( $invoice->post_content ) ) : ?>
 					<div class="invoice-notes">
-						<strong><?php _e( 'Notes & Payment Terms:', 'ndizi-project-management' ); ?></strong>
-						<?php echo wpautop( esc_html( $invoice->post_content ) ); ?>
+						<strong><?php esc_html_e( 'Notes & Payment Terms:', 'ndizi-project-management' ); ?></strong>
+						<?php echo wp_kses_post( wpautop( esc_html( $invoice->post_content ) ) ); ?>
 					</div>
 				<?php endif; ?>
 			</div>
@@ -368,17 +372,17 @@ class Ndizi_Integrations {
 		check_admin_referer( 'ndizi_export_nonce' );
 
 		if ( ! current_user_can( 'ndizi_manage_invoices' ) ) {
-			wp_die( __( 'Insufficient permissions.', 'ndizi-project-management' ) );
+			wp_die( esc_html__( 'Insufficient permissions.', 'ndizi-project-management' ) );
 		}
 
 		$invoice_id = intval( $_GET['invoice_id'] );
 		$invoice    = get_post( $invoice_id );
 
 		if ( ! $invoice || 'ndizi_invoice' !== $invoice->post_type ) {
-			wp_die( __( 'Invalid Invoice.', 'ndizi-project-management' ) );
+			wp_die( esc_html__( 'Invalid Invoice.', 'ndizi-project-management' ) );
 		}
 
-		$format = sanitize_text_field( $_GET['ndizi_export_invoice'] );
+		$format = sanitize_text_field( wp_unslash( $_GET['ndizi_export_invoice'] ) );
 
 		// Compile export array structure
 		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
@@ -469,6 +473,6 @@ class Ndizi_Integrations {
 			exit;
 		}
 
-		wp_die( __( 'Invalid export format.', 'ndizi-project-management' ) );
+		wp_die( esc_html__( 'Invalid export format.', 'ndizi-project-management' ) );
 	}
 }

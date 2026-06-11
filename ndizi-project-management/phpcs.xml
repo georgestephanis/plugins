@@ -14,36 +14,40 @@
     <rule ref="WordPress">
         <!-- Exclude filename checks since the main plugin bootstrap is Ndizi.php -->
         <exclude name="WordPress.Files.FileName" />
-        
+
         <!-- Exclude Yoda conditions for readability -->
         <exclude name="WordPress.PHP.YodaConditions" />
-        
-        <!-- Exclude direct database query warnings since we use a custom table -->
+
+        <!-- Direct database queries and table-name interpolation are inherent to the
+             custom wp_ndizi_time_entries table; individual queries carry inline
+             phpcs:ignore annotations where needed. -->
         <exclude name="WordPress.DB.DirectDatabaseQuery" />
-        
-        <!-- Exclude prepared SQL warnings for table name interpolation -->
         <exclude name="WordPress.DB.PreparedSQL" />
-        
-        <!-- Exclude prepared SQL placeholders checks for dynamic IN list preparation -->
         <exclude name="WordPress.DB.PreparedSQLPlaceholders" />
-        
-        <!-- Exclude output escaping checks since text escaping is handled globally/via standard methods -->
-        <exclude name="WordPress.Security.EscapeOutput" />
-        
-        <!-- Exclude nonce verification warning since they are checked globally or in custom request routing -->
-        <exclude name="WordPress.Security.NonceVerification" />
-        
-        <!-- Exclude sanitization warnings that are handled globally or in API controllers -->
-        <exclude name="WordPress.Security.ValidatedSanitizedInput" />
-        
-        <!-- Exclude custom capabilities checks since we define our own capabilities -->
-        <exclude name="WordPress.WP.Capabilities" />
-        
-        <!-- Exclude slow DB query checks since meta queries are required for custom post type relations -->
         <exclude name="WordPress.DB.SlowDBQuery" />
-        
-        <!-- Exclude file operations checks since direct fopen/fclose are required for memory streaming exports -->
+
+        <!-- fopen/fputcsv/fclose to php://output are required for streaming CSV
+             exports; annotated inline in the integrations exporter. -->
         <exclude name="WordPress.WP.AlternativeFunctions" />
+    </rule>
+
+    <!-- Teach WPCS about the plugin's custom capabilities so capability checks
+         don't flag them as typos. -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="ndizi_manage_clients" />
+                <element value="ndizi_manage_projects" />
+                <element value="ndizi_manage_tasks" />
+                <element value="ndizi_manage_invoices" />
+                <element value="ndizi_manage_contacts" />
+                <element value="ndizi_manage_time" />
+                <element value="ndizi_view_reports" />
+                <element value="ndizi_view_projects" />
+                <element value="ndizi_view_tasks" />
+                <element value="ndizi_log_time" />
+            </property>
+        </properties>
     </rule>
 
     <!-- Exclude Squiz commenting checks which are overly verbose -->
