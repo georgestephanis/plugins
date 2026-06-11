@@ -176,6 +176,16 @@ class Ndizi_Admin {
 			'ndizi-settings',
 			array( __CLASS__, 'render_settings_page' )
 		);
+
+		// Submenu: Standalone Tracker
+		add_submenu_page(
+			'ndizi-pm',
+			__( 'Standalone Tracker', 'ndizi-project-management' ),
+			__( 'Standalone Tracker', 'ndizi-project-management' ),
+			'ndizi_log_time',
+			'ndizi-tracker-standalone',
+			array( 'Ndizi_Standalone_Tracker', 'render_standalone_tracker_page' )
+		);
 	}
 
 	/**
@@ -291,6 +301,10 @@ class Ndizi_Admin {
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
 					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi-project-management' ); ?></h2>
 					<div style="display: flex; flex-direction: column; gap: 10px;">
+						<a href="#" onclick="window.open('<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>', 'ndizi_tracker', 'width=380,height=640,resizable=yes,scrollbars=yes'); return false;" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);" onmouseover="this.style.background='#ca8a04';" onmouseout="this.style.background='#eab308';">
+							<span class="dashicons dashicons-external" style="margin-right: 6px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; color: #0f172a;"></span>
+							<?php esc_html_e( 'Launch Standalone Tracker', 'ndizi-project-management' ); ?>
+						</a>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-reports' ) ); ?>" style="display: block; background: #4f46e5; color: #fff; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#4338ca';" onmouseout="this.style.background='#4f46e5';">
 							<?php esc_html_e( 'View Productivity Reports', 'ndizi-project-management' ); ?>
 						</a>
