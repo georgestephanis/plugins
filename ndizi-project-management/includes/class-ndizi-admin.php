@@ -184,7 +184,7 @@ class Ndizi_Admin {
 			__( 'Standalone Tracker', 'ndizi-project-management' ),
 			'ndizi_log_time',
 			'ndizi-tracker-standalone',
-			array( 'Ndizi_Standalone_Tracker', 'render_standalone_tracker_page' )
+			array( 'Ndizi_Standalone_Tracker', 'render_standalone_page' )
 		);
 	}
 

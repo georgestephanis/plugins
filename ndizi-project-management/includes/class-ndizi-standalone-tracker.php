@@ -181,7 +181,7 @@ class Ndizi_Standalone_Tracker {
 	/**
 	 * Output the standalone PWA tracker HTML page
 	 */
-	private static function render_standalone_page() {
+	public static function render_standalone_page() {
 		$user_id      = get_current_user_id();
 		$active_timer = Ndizi_DB::get_active_timer( $user_id );
 		$duration_sec = 0;
