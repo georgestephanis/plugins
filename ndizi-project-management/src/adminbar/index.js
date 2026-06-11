@@ -160,7 +160,9 @@ import './adminbar-style.scss';
 				? 1
 				: 0;
 
-			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_starting );
+			$btn.prop( 'disabled', true ).text(
+				ndizi_adminbar.labels.btn_starting
+			);
 
 			wp.ajax
 				.post( 'ndizi_start_timer_action', {
@@ -198,7 +200,9 @@ import './adminbar-style.scss';
 					window.alert(
 						err.message || ndizi_adminbar.labels.error_general
 					);
-					$btn.prop( 'disabled', false ).text( ndizi_adminbar.labels.btn_start_timer );
+					$btn.prop( 'disabled', false ).text(
+						ndizi_adminbar.labels.btn_start_timer
+					);
 				} );
 		} );
 
@@ -206,7 +210,9 @@ import './adminbar-style.scss';
 		$( '#ndizi-ab-btn-stop' ).on( 'click', function ( e ) {
 			e.preventDefault();
 			const $btn = $( this );
-			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_stopping );
+			$btn.prop( 'disabled', true ).text(
+				ndizi_adminbar.labels.btn_stopping
+			);
 
 			wp.ajax
 				.post( 'ndizi_stop_timer_action', {
@@ -281,7 +287,9 @@ import './adminbar-style.scss';
 				? 1
 				: 0;
 
-			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_saving );
+			$btn.prop( 'disabled', true ).text(
+				ndizi_adminbar.labels.btn_saving
+			);
 
 			wp.ajax
 				.post( 'ndizi_log_time_manual_action', {
@@ -373,7 +381,9 @@ import './adminbar-style.scss';
 
 		if ( projectsData.length === 0 ) {
 			$select.append(
-				$( '<option>' ).val( '' ).text( ndizi_adminbar.labels.no_active_projects )
+				$( '<option>' )
+					.val( '' )
+					.text( ndizi_adminbar.labels.no_active_projects )
 			);
 			return;
 		}
@@ -387,7 +397,8 @@ import './adminbar-style.scss';
 		// Group projects by client_name
 		const groups = {};
 		projectsData.forEach( function ( project ) {
-			const clientName = project.client_name || ndizi_adminbar.labels.internal_client;
+			const clientName =
+				project.client_name || ndizi_adminbar.labels.internal_client;
 			if ( ! groups[ clientName ] ) {
 				groups[ clientName ] = [];
 			}
@@ -440,7 +451,10 @@ import './adminbar-style.scss';
 		$( '#ndizi-ab-stat-logged' ).text( hours + 'h (' + label + ')' );
 
 		const $budgetRow = $( '#ndizi-ab-stat-budget-row' );
-		if ( selectedProject.budget !== null && selectedProject.budget !== undefined ) {
+		if (
+			selectedProject.budget !== null &&
+			selectedProject.budget !== undefined
+		) {
 			$( '#ndizi-ab-stat-budget' ).text(
 				'$' +
 					selectedProject.budget.toLocaleString( undefined, {

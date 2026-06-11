@@ -256,6 +256,15 @@ class Ndizi_CPTs {
 				'default'      => 'active', // active, archived
 			)
 		);
+		register_post_meta(
+			'ndizi_project',
+			'_ndizi_project_hourly_rate',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'number',
+			)
+		);
 
 		// Task Meta
 		register_post_meta(
@@ -303,6 +312,15 @@ class Ndizi_CPTs {
 				'show_in_rest' => true,
 				'single'       => true,
 				'type'         => 'string',
+			)
+		);
+		register_post_meta(
+			'ndizi_task',
+			'_ndizi_task_hourly_rate',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'number',
 			)
 		);
 

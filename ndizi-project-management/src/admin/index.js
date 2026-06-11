@@ -294,20 +294,29 @@ import './admin-style.scss';
 			);
 		} );
 
+		// Update hourly rate fallback input on project change
+		$( '#ndizi_invoice_project_id' ).on( 'change', function () {
+			const selectedOption = $( this ).find( 'option:selected' );
+			const rate = selectedOption.attr( 'data-rate' ) || '';
+			$( '#ndizi_hourly_rate' ).val( rate );
+		} );
+
 		// Calculate invoice amount
 		$( '#ndizi_btn_calc_invoice' ).on( 'click', function ( e ) {
 			e.preventDefault();
-			let totalSec = 0;
-			const rate = parseFloat( $( '#ndizi_hourly_rate' ).val() ) || 0;
+			let totalAmount = 0;
+			const defaultRate =
+				parseFloat( $( '#ndizi_hourly_rate' ).val() ) || 0;
 
 			$( '.ndizi-invoice-time-checkbox:checked' ).each( function () {
-				totalSec += parseInt( $( this ).data( 'duration' ) ) || 0;
+				const duration = parseInt( $( this ).data( 'duration' ) ) || 0;
+				const entryRate =
+					parseFloat( $( this ).attr( 'data-rate' ) ) || 0;
+				const rate = entryRate > 0 ? entryRate : defaultRate;
+				totalAmount += ( duration / 3600 ) * rate;
 			} );
 
-			const hours = totalSec / 3600;
-			const amount = hours * rate;
-
-			$( '#ndizi_invoice_amount' ).val( amount.toFixed( 2 ) );
+			$( '#ndizi_invoice_amount' ).val( totalAmount.toFixed( 2 ) );
 		} );
 	}
 } )( window.jQuery );

@@ -8,9 +8,9 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ## Billing & Invoicing
 
-- [ ] **Hourly rate configuration** — per-project and/or per-user billing rates, so invoices can be
+- [x] **Hourly rate configuration** — per-project and/or per-user billing rates, so invoices can be
   auto-calculated from tracked hours rather than requiring a manually entered total.
-- [ ] **Invoice total auto-calculation** — once rates exist, compute the invoice amount from
+- [x] **Invoice total auto-calculation** — once rates exist, compute the invoice amount from
   `billable_duration × hourly_rate` and populate the invoice automatically.
 - [ ] **Payment processing / payment links** — mark invoices paid after online payment (Stripe,
   PayPal, etc.). None of the surveyed SaaS tools offer this either, but it is a common ask.

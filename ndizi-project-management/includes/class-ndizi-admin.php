@@ -18,6 +18,12 @@ class Ndizi_Admin {
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
 
+		// User profile billing rate fields
+		add_action( 'show_user_profile', array( __CLASS__, 'render_user_profile_fields' ) );
+		add_action( 'edit_user_profile', array( __CLASS__, 'render_user_profile_fields' ) );
+		add_action( 'personal_options_update', array( __CLASS__, 'save_user_profile_fields' ) );
+		add_action( 'edit_user_profile_update', array( __CLASS__, 'save_user_profile_fields' ) );
+
 		// Custom columns in listings
 		add_filter( 'manage_ndizi_client_posts_columns', array( __CLASS__, 'add_client_columns' ) );
 		add_action( 'manage_ndizi_client_posts_custom_column', array( __CLASS__, 'render_client_columns' ), 10, 2 );
@@ -588,11 +594,12 @@ class Ndizi_Admin {
 	public static function render_project_meta_box( $post ) {
 		wp_nonce_field( 'ndizi_save_project', 'ndizi_project_nonce' );
 
-		$client_id  = get_post_meta( $post->ID, '_ndizi_client_id', true );
-		$start_date = get_post_meta( $post->ID, '_ndizi_project_start_date', true );
-		$end_date   = get_post_meta( $post->ID, '_ndizi_project_end_date', true );
-		$budget     = get_post_meta( $post->ID, '_ndizi_project_budget', true );
-		$status     = get_post_meta( $post->ID, '_ndizi_project_status', true );
+		$client_id   = get_post_meta( $post->ID, '_ndizi_client_id', true );
+		$start_date  = get_post_meta( $post->ID, '_ndizi_project_start_date', true );
+		$end_date    = get_post_meta( $post->ID, '_ndizi_project_end_date', true );
+		$budget      = get_post_meta( $post->ID, '_ndizi_project_budget', true );
+		$hourly_rate = get_post_meta( $post->ID, '_ndizi_project_hourly_rate', true );
+		$status      = get_post_meta( $post->ID, '_ndizi_project_status', true );
 
 		$clients = get_posts(
 			array(
@@ -626,6 +633,10 @@ class Ndizi_Admin {
 			<tr>
 				<th><label for="ndizi_project_budget"><?php esc_html_e( 'Budget ($)', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="number" step="0.01" name="ndizi_project_budget" id="ndizi_project_budget" value="<?php echo esc_attr( $budget ); ?>" class="small-text"></td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_project_hourly_rate"><?php esc_html_e( 'Default Hourly Rate ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td><input type="number" step="0.01" name="ndizi_project_hourly_rate" id="ndizi_project_hourly_rate" value="<?php echo esc_attr( $hourly_rate ); ?>" class="small-text"></td>
 			</tr>
 			<tr>
 				<th><label for="ndizi_project_status"><?php esc_html_e( 'Project Status', 'ndizi-project-management' ); ?></label></th>
@@ -766,11 +777,12 @@ class Ndizi_Admin {
 	public static function render_task_meta_box( $post ) {
 		wp_nonce_field( 'ndizi_save_task', 'ndizi_task_nonce' );
 
-		$project_id  = get_post_meta( $post->ID, '_ndizi_project_id', true );
-		$assignee_id = get_post_meta( $post->ID, '_ndizi_assigned_user_id', true );
-		$status      = get_post_meta( $post->ID, '_ndizi_task_status', true );
-		$priority    = get_post_meta( $post->ID, '_ndizi_task_priority', true );
-		$due_date    = get_post_meta( $post->ID, '_ndizi_task_due_date', true );
+		$project_id       = get_post_meta( $post->ID, '_ndizi_project_id', true );
+		$assignee_id      = get_post_meta( $post->ID, '_ndizi_assigned_user_id', true );
+		$status           = get_post_meta( $post->ID, '_ndizi_task_status', true );
+		$priority         = get_post_meta( $post->ID, '_ndizi_task_priority', true );
+		$due_date         = get_post_meta( $post->ID, '_ndizi_task_due_date', true );
+		$task_hourly_rate = get_post_meta( $post->ID, '_ndizi_task_hourly_rate', true );
 
 		$projects = get_posts(
 			array(
@@ -837,6 +849,10 @@ class Ndizi_Admin {
 				<th><label for="ndizi_task_due_date"><?php esc_html_e( 'Due Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_task_due_date" id="ndizi_task_due_date" value="<?php echo esc_attr( $due_date ); ?>"></td>
 			</tr>
+			<tr>
+				<th><label for="ndizi_task_hourly_rate"><?php esc_html_e( 'Hourly Rate Override ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td><input type="number" step="0.01" name="ndizi_task_hourly_rate" id="ndizi_task_hourly_rate" value="<?php echo esc_attr( $task_hourly_rate ); ?>" class="small-text"></td>
+			</tr>
 		</table>
 		<?php
 	}
@@ -881,7 +897,8 @@ class Ndizi_Admin {
 					<select name="ndizi_project_id" id="ndizi_invoice_project_id" required>
 						<option value=""><?php esc_html_e( '-- Select Project --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $projects as $project ) : ?>
-							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?>>
+							<?php $proj_rate = get_post_meta( $project->ID, '_ndizi_project_hourly_rate', true ); ?>
+							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?> data-rate="<?php echo esc_attr( $proj_rate ); ?>">
 								<?php echo esc_html( $project->post_title ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -932,6 +949,8 @@ class Ndizi_Admin {
 												<th><?php esc_html_e( 'User', 'ndizi-project-management' ); ?></th>
 												<th><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
 												<th><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
+												<th><?php esc_html_e( 'Rate ($/h)', 'ndizi-project-management' ); ?></th>
+												<th><?php esc_html_e( 'Subtotal ($)', 'ndizi-project-management' ); ?></th>
 											</tr>
 										</thead>
 										<tbody>
@@ -939,21 +958,38 @@ class Ndizi_Admin {
 											foreach ( $time_entries as $entry ) :
 												$entry_user = get_userdata( $entry->user_id );
 												$is_linked  = ( intval( $entry->invoice_id ) === $post->ID );
+
+												// Resolve the billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
+												$resolved_rate = 0;
+												if ( $entry->task_id ) {
+													$resolved_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+												}
+												if ( ! $resolved_rate && $entry->user_id ) {
+													$resolved_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+												}
+												if ( ! $resolved_rate && $entry->project_id ) {
+													$resolved_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+												}
+												$resolved_rate = floatval( $resolved_rate );
+												$subtotal      = round( ( $entry->duration / 3600 ) * $resolved_rate, 2 );
 												?>
 												<tr>
 													<td>
-														<input type="checkbox" name="ndizi_invoice_time_entries[]" value="<?php echo esc_attr( $entry->id ); ?>" <?php checked( $is_linked ); ?> class="ndizi-invoice-time-checkbox" data-duration="<?php echo esc_attr( $entry->duration ); ?>">
+														<input type="checkbox" name="ndizi_invoice_time_entries[]" value="<?php echo esc_attr( $entry->id ); ?>" <?php checked( $is_linked ); ?> class="ndizi-invoice-time-checkbox" data-duration="<?php echo esc_attr( $entry->duration ); ?>" data-rate="<?php echo esc_attr( $resolved_rate ); ?>">
 													</td>
 													<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $entry->start_time ) ) ); ?></td>
 													<td><?php echo $entry_user ? esc_html( $entry_user->display_name ) : '-'; ?></td>
 													<td><?php echo esc_html( $entry->description ); ?></td>
 													<td><strong><?php echo esc_html( round( $entry->duration / 3600, 2 ) ); ?>h</strong></td>
+													<td><?php echo $resolved_rate ? '$' . esc_html( number_format( $resolved_rate, 2 ) ) : '-'; ?></td>
+													<td><?php echo $resolved_rate ? '$' . esc_html( number_format( $subtotal, 2 ) ) : '-'; ?></td>
 												</tr>
 											<?php endforeach; ?>
 										</tbody>
 									</table>
 									<div style="margin-top: 10px;">
-										<input type="number" id="ndizi_hourly_rate" placeholder="<?php esc_attr_e( 'Rate ($/hour)', 'ndizi-project-management' ); ?>" style="width: 100px;">
+										<?php $project_hourly_rate = get_post_meta( $project_id, '_ndizi_project_hourly_rate', true ); ?>
+										<input type="number" id="ndizi_hourly_rate" placeholder="<?php esc_attr_e( 'Rate ($/hour)', 'ndizi-project-management' ); ?>" style="width: 100px;" value="<?php echo esc_attr( $project_hourly_rate ); ?>">
 										<button type="button" class="button" id="ndizi_btn_calc_invoice"><?php esc_html_e( 'Calculate & Apply Amount', 'ndizi-project-management' ); ?></button>
 									</div>
 								<?php endif; ?>
@@ -1072,6 +1108,9 @@ class Ndizi_Admin {
 			if ( isset( $_POST['ndizi_project_budget'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_budget', floatval( $_POST['ndizi_project_budget'] ) );
 			}
+			if ( isset( $_POST['ndizi_project_hourly_rate'] ) ) {
+				update_post_meta( $post_id, '_ndizi_project_hourly_rate', floatval( $_POST['ndizi_project_hourly_rate'] ) );
+			}
 			if ( isset( $_POST['ndizi_project_status'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_status', sanitize_text_field( wp_unslash( $_POST['ndizi_project_status'] ) ) );
 			}
@@ -1093,6 +1132,9 @@ class Ndizi_Admin {
 			}
 			if ( isset( $_POST['ndizi_task_due_date'] ) ) {
 				update_post_meta( $post_id, '_ndizi_task_due_date', sanitize_text_field( wp_unslash( $_POST['ndizi_task_due_date'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_task_hourly_rate'] ) ) {
+				update_post_meta( $post_id, '_ndizi_task_hourly_rate', floatval( $_POST['ndizi_task_hourly_rate'] ) );
 			}
 		}
 
@@ -1862,5 +1904,47 @@ class Ndizi_Admin {
 			</script>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Add Ndizi Billing Rate to the user profile page.
+	 */
+	public static function render_user_profile_fields( $user ) {
+		if ( ! current_user_can( 'ndizi_manage_time' ) && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$billing_rate = get_user_meta( $user->ID, '_ndizi_user_billing_rate', true );
+		?>
+		<h2><?php esc_html_e( 'Ndizi Project Management Settings', 'ndizi-project-management' ); ?></h2>
+		<table class="form-table">
+			<tr>
+				<th><label for="ndizi_user_billing_rate"><?php esc_html_e( 'Billing Rate ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="number" name="ndizi_user_billing_rate" id="ndizi_user_billing_rate" value="<?php echo esc_attr( $billing_rate ); ?>" class="regular-text" step="0.01" min="0">
+					<p class="description"><?php esc_html_e( 'The hourly billing rate for this user. Used to auto-calculate invoice amounts if no task rate is set.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+	}
+
+	/**
+	 * Save Ndizi Billing Rate user profile field.
+	 */
+	public static function save_user_profile_fields( $user_id ) {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'ndizi_manage_time' ) && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+		if ( isset( $_POST['ndizi_user_billing_rate'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+			update_user_meta( $user_id, '_ndizi_user_billing_rate', floatval( $_POST['ndizi_user_billing_rate'] ) );
+		}
 	}
 }
