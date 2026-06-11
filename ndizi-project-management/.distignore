@@ -1,0 +1,27 @@
+# Files and directories that should never ship in the WordPress.org package.
+# Honored by the 10up WordPress.org deploy action; for the manual rsync→SVN
+# flow add matching --exclude entries.
+
+# Playground / mock-data dev tooling
+/playground
+
+# Build sources (only the compiled /build is shipped)
+/src
+/node_modules
+webpack.config.js
+package.json
+package-lock.json
+
+# PHP dev tooling
+/vendor
+composer.json
+composer.lock
+phpcs.xml
+
+# Repo meta
+/.wordpress-org
+.gitignore
+.distignore
+AGENTS.md
+README.md
+REVIEW.md

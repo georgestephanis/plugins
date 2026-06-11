@@ -1,18 +1,117 @@
 <?php
 /*
 Plugin Name: Ndizi Project Management
-Plugin URI: http://wordpress.org/extend/plugins/ndizi-project-management/
+Plugin URI: https://wordpress.org/plugins/ndizi-project-management/
 Description: Ndizi Project Management adds a complete project management system to WordPress.
 Author: George Stephanis
 Author URI: https://georgestephanis.wordpress.com
-Version: 0.9.7.0
+Version: 1.0.0-alpha
+Requires at least: 6.0
+Requires PHP: 7.4
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: ndizi-project-management
 */
 
-require_once( 'Ndizi.class.php' );
-
-if( class_exists( 'Ndizi' ) ) {
-	$ndizi = new Ndizi();
-	register_activation_hook	(	__FILE__,				Array( &$ndizi, 'on_activate' )				);
-	register_deactivation_hook	(	__FILE__,				Array( &$ndizi, 'on_deactivate' )			);
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
+// Define plugin constants
+define( 'NDIZI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'NDIZI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'NDIZI_VERSION', '1.0.0-alpha' );
+
+/**
+ * Main Plugin Class
+ */
+class Ndizi_Project_Management {
+
+	/**
+	 * Initialize the plugin
+	 */
+	public static function init() {
+		// Include all core files
+		self::includes();
+
+		// Hook activation/deactivation
+		register_activation_hook( __FILE__, array( __CLASS__, 'activate' ) );
+		register_deactivation_hook( __FILE__, array( __CLASS__, 'deactivate' ) );
+
+		// Run core hooks
+		add_action( 'init', array( __CLASS__, 'bootstrap' ) );
+	}
+
+	/**
+	 * Include plugin dependencies
+	 */
+	private static function includes() {
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cpts.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-portal.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-notifications.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
+	}
+
+	/**
+	 * Run on plugin activation
+	 */
+	public static function activate() {
+		// Include DB class in case it hasn't been loaded yet
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+
+		// Create database tables
+		Ndizi_DB::create_table();
+
+		// Add custom roles & capabilities
+		Ndizi_Roles::add_roles();
+
+		// Flush rewrite rules
+		flush_rewrite_rules();
+	}
+
+	/**
+	 * Run on plugin deactivation
+	 */
+	public static function deactivate() {
+		// Only flush rewrite rules on deactivation. Roles, capabilities, and the
+		// custom table are destructive to remove and would punish a temporary
+		// deactivation, so that cleanup lives in uninstall.php instead.
+		flush_rewrite_rules();
+	}
+
+	/**
+	 * Bootstrap hooks for loaded components
+	 */
+	public static function bootstrap() {
+		// Load translations (kept for older WP targets; wp.org auto-loads when slug matches the text domain).
+		load_plugin_textdomain( 'ndizi-project-management', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
+		// Initialize Custom Post Types & Meta
+		Ndizi_CPTs::init();
+
+		// Initialize REST API Routes
+		Ndizi_REST::init();
+
+		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
+		if ( is_admin() ) {
+			Ndizi_Admin::init();
+		}
+
+		// Initialize Client Frontend Portal
+		Ndizi_Portal::init();
+
+		// Initialize Notifications
+		Ndizi_Notifications::init();
+
+		// Initialize Integrations
+		Ndizi_Integrations::init();
+	}
+}
+
+// Start the plugin
+Ndizi_Project_Management::init();

@@ -1,0 +1,19 @@
+{
+	"name": "ndizi-project-management",
+	"version": "1.0.0",
+	"description": "Ndizi Project Management builds a complete project management system in WordPress.",
+	"license": "GPL-2.0-or-later",
+	"main": "build/index.js",
+	"scripts": {
+		"start": "wp-scripts start",
+		"build": "wp-scripts build",
+		"lint:js": "wp-scripts lint-js",
+		"lint:style": "wp-scripts lint-style",
+		"lint:md": "wp-scripts lint-md-docs README.md",
+		"format": "wp-scripts format",
+		"lint": "npm run lint:js && npm run lint:style && npm run lint:md"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^27.0.0"
+	}
+}
