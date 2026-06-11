@@ -64,9 +64,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ## Notifications
 
-- [ ] **Email notifications for more events** — currently only fires on client task submission.
-  Useful additions: task assignment, task status change, invoice sent / paid, timer idle warning
-  (running timer left open overnight).
+- [x] **Email notifications for more events** — added task assignment and task status change notifications.
 - [ ] **Idle timer detection** — prompt user when a timer has been running for an unusually long
   period (e.g. > 8 hours), which is a common data-quality issue.
 
