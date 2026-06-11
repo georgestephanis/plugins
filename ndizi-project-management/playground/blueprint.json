@@ -24,7 +24,8 @@
 				"path": "ndizi-project-management"
 			},
 			"options": {
-				"activate": true
+				"activate": true,
+				"targetFolderName": "ndizi-project-management"
 			}
 		},
 		{
