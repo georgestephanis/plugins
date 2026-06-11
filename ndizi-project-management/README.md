@@ -2,6 +2,14 @@
 
 Ndizi Project Management is a native WordPress plugin for freelancers and small agencies, providing a complete system to track clients, projects, tasks, time, and invoices. It is designed to combine WordPress's relational capability (Custom Post Types) with high-efficiency custom database structures, resulting in a scalable project tracker that won't bloat your database.
 
+## 🚀 Try it live
+
+Spin up a disposable WordPress with Ndizi PM installed and seeded with demo data — no install required:
+
+**[▶ Launch in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/ndizi-project-management/playground/blueprint.json)**
+
+The [blueprint](playground/blueprint.json) installs only this plugin from the monorepo via the `git:directory` resource and seeds sample clients, projects, tasks, invoices, and time entries. See [playground/README.md](playground/README.md) for details and local-iteration commands.
+
 ---
 
 ## Key Features

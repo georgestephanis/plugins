@@ -26,7 +26,7 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 | [google-tag-manager](google-tag-manager/) | — | Adds a GTM ID field to Settings → General and outputs the GTM snippet. |
 | [hugh](hugh/) | — | Personal color consultant widget that can also follow peer pressure. |
 | [legacy-jetpack-custom-css-editor](legacy-jetpack-custom-css-editor/) | [georgestephanis/legacy-jetpack-custom-css-editor](https://github.com/georgestephanis/legacy-jetpack-custom-css-editor) ¹ | Restores the full-page Custom CSS admin editor removed from Jetpack. |
-| [ndizi-project-management](ndizi-project-management/) | — | Basecamp-style project management built on WordPress. |
+| [ndizi-project-management](ndizi-project-management/) | — | Basecamp-style project management built on WordPress. [▶ Playground demo](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/ndizi-project-management/playground/blueprint.json) |
 | [omnisearch](omnisearch/) | [georgestephanis/omnisearch](https://github.com/georgestephanis/omnisearch) ¹ | Unified search across all WordPress admin search providers. |
 | [press-this-v2](press-this-v2/) | — | Rewrite of the Press This bookmarklet functionality from Core. |
 | [random-blocks](random-blocks/) | [georgestephanis/random-blocks](https://github.com/georgestephanis/random-blocks) ¹ | Additional blocks for the WordPress block editor. |

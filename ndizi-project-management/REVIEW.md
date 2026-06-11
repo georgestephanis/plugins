@@ -16,7 +16,7 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | Destructive `create-mock-data.php` shipped | ⏭️ Deferred — to be handled via WordPress Playground config (per owner) |
+| 1 | Destructive `create-mock-data.php` shipped | ✅ Fixed — moved to `playground/mock-data.php` and excluded from the package via `.distignore` |
 | 2 | Text domain mismatch / not loaded | ✅ Fixed |
 | 3 | Auth key exposed via REST | ✅ Fixed |
 | 4 | Meta-box saves missing capability check | ✅ Fixed |
@@ -57,8 +57,12 @@ now passes clean (exit 0) with the previously-excluded security sniffs re-enable
 
 ## 🔴 Blockers
 
-### 1. `create-mock-data.php` is shipped in the plugin and is destructive
-- File: [create-mock-data.php](create-mock-data.php) (lines 10–24 run at file load).
+### 1. `create-mock-data.php` is shipped in the plugin and is destructive — ✅ RESOLVED
+- **Resolution:** Relocated to [playground/mock-data.php](playground/mock-data.php) and excluded
+  from the distributed package via [.distignore](.distignore). It now only runs as part of the
+  WordPress Playground blueprint ([playground/blueprint.json](playground/blueprint.json)) against
+  throwaway installs. Original finding below for history.
+- File: `create-mock-data.php` (lines 10–24 run at file load).
 - It is not wrapped in a function or a capability/nonce check — merely including the file
   **deletes every `ndizi_*` post (`post_status => any`, `force_delete = true`)** and then seeds
   data with hardcoded portal tokens (e.g. `'acme-token-123'` at line 40).
