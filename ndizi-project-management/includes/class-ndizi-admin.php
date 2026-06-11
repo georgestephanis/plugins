@@ -633,7 +633,7 @@ class Ndizi_Admin {
 				<div class="ndizi-timer-bar <?php echo $is_active_on_this ? 'ndizi-timer-running' : ''; ?>">
 					<div class="ndizi-timer-fields">
 						<select id="ndizi_tracker_task_id">
-							<option value="0"><?php esc_html_e( '-- Log general to project --', 'ndizi-project-management' ); ?></option>
+							<option value="0"><?php esc_html_e( '-- General --', 'ndizi-project-management' ); ?></option>
 							<?php foreach ( $tasks as $task ) : ?>
 								<option value="<?php echo esc_attr( $task->ID ); ?>">
 									<?php echo esc_html( $task->post_title ); ?>

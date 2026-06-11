@@ -13,8 +13,7 @@ class Ndizi_Admin_Bar {
 	 * Initialize the Admin Bar module hooks
 	 */
 	public static function init() {
-		// Only hook if the user is logged in and is authorized to log time
-		add_action( 'init', array( __CLASS__, 'hook_user_authorized_actions' ) );
+		self::hook_user_authorized_actions();
 	}
 
 	/**
@@ -45,12 +44,12 @@ class Ndizi_Admin_Bar {
 	 * Enqueue frontend/backend scripts & stylesheets
 	 */
 	public static function enqueue_assets() {
-		if ( ! is_admin_bar_showing() ) {
+		if ( ! is_admin() && ! is_admin_bar_showing() ) {
 			return;
 		}
 
 		wp_enqueue_style( 'ndizi-adminbar-style', NDIZI_PLUGIN_URL . 'build/adminbar.css', array(), NDIZI_VERSION );
-		wp_enqueue_script( 'ndizi-adminbar-script', NDIZI_PLUGIN_URL . 'build/adminbar.js', array( 'jquery', 'wp-ajax' ), NDIZI_VERSION, true );
+		wp_enqueue_script( 'ndizi-adminbar-script', NDIZI_PLUGIN_URL . 'build/adminbar.js', array( 'jquery', 'wp-util' ), NDIZI_VERSION, true );
 
 		wp_localize_script(
 			'ndizi-adminbar-script',
@@ -61,7 +60,7 @@ class Ndizi_Admin_Bar {
 				'labels'   => array(
 					'loading_projects' => __( 'Loading projects...', 'ndizi-project-management' ),
 					'select_project'   => __( '-- Select Project --', 'ndizi-project-management' ),
-					'select_task'      => __( '-- General to Project --', 'ndizi-project-management' ),
+					'select_task'      => __( '-- General --', 'ndizi-project-management' ),
 					'timer_started'    => __( 'Timer started!', 'ndizi-project-management' ),
 					'timer_stopped'    => __( 'Timer stopped!', 'ndizi-project-management' ),
 					'entry_logged'     => __( 'Time entry logged!', 'ndizi-project-management' ),
@@ -95,12 +94,14 @@ class Ndizi_Admin_Bar {
 			$active_duration_str = sprintf( '%02d:%02d:%02d', $h, $m, $s );
 
 			$title = sprintf(
-				'<span class="ndizi-ab-icon-wrapper"><span class="ndizi-ab-pulse"></span><span class="dashicons dashicons-clock"></span></span><span class="ndizi-ab-label">%s</span>',
+				'<span class="ndizi-ab-icon-wrapper"><span class="ndizi-ab-pulse"></span>%s</span><span class="ndizi-ab-label">%s</span>',
+				'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>',
 				esc_html( $active_duration_str )
 			);
 		} else {
 			$title = sprintf(
-				'<span class="ndizi-ab-icon-wrapper"><span class="dashicons dashicons-clock"></span></span><span class="ndizi-ab-label">%s</span>',
+				'<span class="ndizi-ab-icon-wrapper">%s</span><span class="ndizi-ab-label screen-reader-text">%s</span>',
+				'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-icon-svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>',
 				esc_html__( 'Log Time', 'ndizi-project-management' )
 			);
 		}
@@ -180,7 +181,7 @@ class Ndizi_Admin_Bar {
 
 				<div class="ndizi-ab-actions">
 					<button type="button" class="button ndizi-ab-btn-stop" id="ndizi-ab-btn-stop">
-						<span class="dashicons dashicons-controls-pause"></span> 
+						<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> 
 						<?php
 						esc_html_e( 'Stop Timer', 'ndizi-project-management' );
 						?>
@@ -200,7 +201,7 @@ class Ndizi_Admin_Bar {
 
 				<div class="ndizi-ab-form-group" id="ndizi-ab-task-select-group" style="display: none;">
 					<select id="ndizi-ab-task-select" class="ndizi-ab-select">
-						<option value="0"><?php esc_html_e( '-- General to Project --', 'ndizi-project-management' ); ?></option>
+						<option value="0"><?php esc_html_e( '-- General --', 'ndizi-project-management' ); ?></option>
 					</select>
 				</div>
 
@@ -230,11 +231,11 @@ class Ndizi_Admin_Bar {
 				<!-- Action Buttons -->
 				<div class="ndizi-ab-actions-grid">
 					<button type="button" class="button button-primary ndizi-ab-btn-start" id="ndizi-ab-btn-start" disabled>
-						<span class="dashicons dashicons-controls-play"></span> <?php esc_html_e( 'Start Timer', 'ndizi-project-management' ); ?>
+						<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> <?php esc_html_e( 'Start Timer', 'ndizi-project-management' ); ?>
 					</button>
 
 					<button type="button" class="button ndizi-ab-btn-toggle-manual" id="ndizi-ab-btn-toggle-manual">
-						<span class="dashicons dashicons-edit"></span> <?php esc_html_e( 'Log Manual Entry', 'ndizi-project-management' ); ?>
+						<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> <?php esc_html_e( 'Log Manual Entry', 'ndizi-project-management' ); ?>
 					</button>
 				</div>
 
@@ -253,7 +254,7 @@ class Ndizi_Admin_Bar {
 					</div>
 					
 					<button type="button" class="button button-secondary ndizi-ab-btn-save-manual" id="ndizi-ab-btn-save-manual">
-						<span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Log Entry', 'ndizi-project-management' ); ?>
+						<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> <?php esc_html_e( 'Log Entry', 'ndizi-project-management' ); ?>
 					</button>
 				</div>
 			</div>
@@ -375,9 +376,22 @@ class Ndizi_Admin_Bar {
 				);
 			}
 
+			$client_id   = get_post_meta( $project->ID, '_ndizi_client_id', true );
+			$client_name = '';
+			if ( $client_id ) {
+				$client = get_post( $client_id );
+				if ( $client ) {
+					$client_name = $client->post_title;
+				}
+			}
+			if ( empty( $client_name ) ) {
+				$client_name = __( 'Internal', 'ndizi-project-management' );
+			}
+
 			$response_projects[] = array(
 				'id'           => $project->ID,
 				'title'        => $project->post_title,
+				'client_name'  => $client_name,
 				'budget'       => $budget ? floatval( $budget ) : null,
 				'total_logged' => $project_logged_sec,
 				'tasks'        => $response_tasks,

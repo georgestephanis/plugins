@@ -201,15 +201,19 @@ import './adminbar-style.scss';
 					$node.removeClass( 'ndizi-timer-active' );
 					$node
 						.find( '.ndizi-ab-label' )
+						.removeClass( 'screen-reader-text' )
 						.text( ndizi_adminbar.labels.timer_stopped );
 
 					setTimeout( function () {
-						$node.find( '.ndizi-ab-label' ).text( 'Log Time' );
+						$node
+							.find( '.ndizi-ab-label' )
+							.addClass( 'screen-reader-text' )
+							.text( 'Log Time' );
 					}, 3000 );
 
 					$panel.removeClass( 'ndizi-timer-running' );
 					$btn.prop( 'disabled', false ).html(
-						'<span class="dashicons dashicons-controls-pause"></span> Stop Timer'
+						'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Stop Timer'
 					);
 
 					// Reset inputs & cache
@@ -227,7 +231,7 @@ import './adminbar-style.scss';
 						err.message || ndizi_adminbar.labels.error_general
 					);
 					$btn.prop( 'disabled', false ).html(
-						'<span class="dashicons dashicons-controls-pause"></span> Stop Timer'
+						'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Stop Timer'
 					);
 				} );
 		} );
@@ -272,16 +276,20 @@ import './adminbar-style.scss';
 				} )
 				.done( function () {
 					$btn.prop( 'disabled', false ).html(
-						'<span class="dashicons dashicons-yes"></span> Log Entry'
+						'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Log Entry'
 					);
 
 					const $node = $( '#wp-admin-bar-ndizi-time-tracker' );
 					$node
 						.find( '.ndizi-ab-label' )
+						.removeClass( 'screen-reader-text' )
 						.text( ndizi_adminbar.labels.entry_logged );
 
 					setTimeout( function () {
-						$node.find( '.ndizi-ab-label' ).text( 'Log Time' );
+						$node
+							.find( '.ndizi-ab-label' )
+							.addClass( 'screen-reader-text' )
+							.text( 'Log Time' );
 					}, 3000 );
 
 					// Reset inputs & cache
@@ -303,7 +311,7 @@ import './adminbar-style.scss';
 						err.message || ndizi_adminbar.labels.error_general
 					);
 					$btn.prop( 'disabled', false ).html(
-						'<span class="dashicons dashicons-yes"></span> Log Entry'
+						'<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Log Entry'
 					);
 				} );
 		} );
@@ -357,10 +365,36 @@ import './adminbar-style.scss';
 				.val( '' )
 				.text( ndizi_adminbar.labels.select_project )
 		);
+
+		// Group projects by client_name
+		const groups = {};
 		projectsData.forEach( function ( project ) {
-			$select.append(
-				$( '<option>' ).val( project.id ).text( project.title )
-			);
+			const clientName = project.client_name || 'Internal';
+			if ( ! groups[ clientName ] ) {
+				groups[ clientName ] = [];
+			}
+			groups[ clientName ].push( project );
+		} );
+
+		// Sort client names, keeping 'Internal' at the bottom
+		const clientNames = Object.keys( groups ).sort( function ( a, b ) {
+			if ( a === 'Internal' ) {
+				return 1;
+			}
+			if ( b === 'Internal' ) {
+				return -1;
+			}
+			return a.localeCompare( b );
+		} );
+
+		clientNames.forEach( function ( clientName ) {
+			const $optgroup = $( '<optgroup>' ).attr( 'label', clientName );
+			groups[ clientName ].forEach( function ( project ) {
+				$optgroup.append(
+					$( '<option>' ).val( project.id ).text( project.title )
+				);
+			} );
+			$select.append( $optgroup );
 		} );
 	}
 
@@ -428,6 +462,7 @@ import './adminbar-style.scss';
 			$( '#ndizi-ab-ticker-clock' ).text( formatted );
 			$( '#wp-admin-bar-ndizi-time-tracker' )
 				.find( '.ndizi-ab-label' )
+				.removeClass( 'screen-reader-text' )
 				.text( formatted );
 		};
 
