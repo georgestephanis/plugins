@@ -104,11 +104,23 @@ class Ndizi_Admin {
 	}
 
 	/**
-	 * Register Reports & Gantt chart menus under Projects CPT menu
+	 * Register Ndizi PM top-level menu and submenus
 	 */
 	public static function register_admin_pages() {
+		// Top level menu
+		add_menu_page(
+			__( 'Ndizi PM', 'ndizi' ),
+			__( 'Ndizi PM', 'ndizi' ),
+			'ndizi_view_projects',
+			'ndizi-pm',
+			array( __CLASS__, 'render_dashboard_page' ),
+			'dashicons-portfolio',
+			30
+		);
+
+		// Submenu: Reports
 		add_submenu_page(
-			'edit.php?post_type=ndizi_project',
+			'ndizi-pm',
 			__( 'Ndizi Reports', 'ndizi' ),
 			__( 'Reports', 'ndizi' ),
 			'ndizi_view_reports',
@@ -116,14 +128,138 @@ class Ndizi_Admin {
 			array( __CLASS__, 'render_reports_page' )
 		);
 
+		// Submenu: Gantt Chart
 		add_submenu_page(
-			'edit.php?post_type=ndizi_project',
+			'ndizi-pm',
 			__( 'Ndizi Gantt Chart', 'ndizi' ),
 			__( 'Gantt Chart', 'ndizi' ),
 			'ndizi_view_projects',
 			'ndizi-gantt',
 			array( __CLASS__, 'render_gantt_page' )
 		);
+	}
+
+	/**
+	 * Render the main Ndizi PM Dashboard Page
+	 */
+	public static function render_dashboard_page() {
+		// Calculate stats
+		$active_projects = count(
+			get_posts(
+				array(
+					'post_type'      => 'ndizi_project',
+					'posts_per_page' => -1,
+					'meta_key'       => '_ndizi_project_status',
+					'meta_value'     => 'active',
+				)
+			)
+		);
+
+		$open_tasks = count(
+			get_posts(
+				array(
+					'post_type'      => 'ndizi_task',
+					'posts_per_page' => -1,
+					'meta_query'     => array(
+						array(
+							'key'     => '_ndizi_task_status',
+							'value'   => array( 'open', 'in_progress' ),
+							'compare' => 'IN',
+						),
+					),
+				)
+			)
+		);
+
+		global $wpdb;
+		$table_name  = Ndizi_DB::get_table_name();
+		$total_sec   = $wpdb->get_var( "SELECT SUM(duration) FROM $table_name" );
+		$total_hours = $total_sec ? round( $total_sec / 3600, 1 ) : 0;
+
+		$pending_invoices = count(
+			get_posts(
+				array(
+					'post_type'      => 'ndizi_invoice',
+					'posts_per_page' => -1,
+					'meta_query'     => array(
+						array(
+							'key'     => '_ndizi_invoice_status',
+							'value'   => array( 'draft', 'sent' ),
+							'compare' => 'IN',
+						),
+					),
+				)
+			)
+		);
+
+		// Render page
+		?>
+		<div class="wrap ndizi-dashboard-page" style="max-width: 1200px; margin: 20px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+			<div style="background: linear-gradient(135deg, #4f46e5, #3b82f6); padding: 40px; border-radius: 12px; color: #fff; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);">
+				<h1 style="margin: 0; font-size: 32px; font-weight: 800; color: #fff;"><?php esc_html_e( 'Welcome to Ndizi Project Management', 'ndizi' ); ?></h1>
+				<p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;"><?php esc_html_e( 'Native WordPress tracking for clients, projects, tasks, timesheets, and invoices.', 'ndizi' ); ?></p>
+			</div>
+
+			<!-- Stats Grid -->
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
+				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #4f46e5;">
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Active Projects', 'ndizi' ); ?></h3>
+					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $active_projects ); ?></div>
+				</div>
+				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #f59e0b;">
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Open Tasks', 'ndizi' ); ?></h3>
+					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $open_tasks ); ?></div>
+				</div>
+				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #10b981;">
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Total Hours Logged', 'ndizi' ); ?></h3>
+					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo esc_html( $total_hours ); ?>h</div>
+				</div>
+				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #ec4899;">
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Pending Invoices', 'ndizi' ); ?></h3>
+					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $pending_invoices ); ?></div>
+				</div>
+			</div>
+
+			<!-- Actions & Quicklinks -->
+			<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start;">
+				<!-- Quick Actions -->
+				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
+					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Quick Action Workspace', 'ndizi' ); ?></h2>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_client' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+							<span class="dashicons dashicons-networking" style="margin-right: 10px; color: #4f46e5;"></span>
+							<?php esc_html_e( 'Add New Client', 'ndizi' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_project' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+							<span class="dashicons dashicons-portfolio" style="margin-right: 10px; color: #4f46e5;"></span>
+							<?php esc_html_e( 'Create New Project', 'ndizi' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_task' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+							<span class="dashicons dashicons-yes" style="margin-right: 10px; color: #4f46e5;"></span>
+							<?php esc_html_e( 'Create New Task', 'ndizi' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_invoice' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+							<span class="dashicons dashicons-analytics" style="margin-right: 10px; color: #4f46e5;"></span>
+							<?php esc_html_e( 'Generate Invoice', 'ndizi' ); ?>
+						</a>
+					</div>
+				</div>
+
+				<!-- Navigation Quick Links -->
+				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
+					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi' ); ?></h2>
+					<div style="display: flex; flex-direction: column; gap: 10px;">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-reports' ) ); ?>" style="display: block; background: #4f46e5; color: #fff; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#4338ca';" onmouseout="this.style.background='#4f46e5';">
+							<?php esc_html_e( 'View Productivity Reports', 'ndizi' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-gantt' ) ); ?>" style="display: block; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f8fafc';">
+							<?php esc_html_e( 'View Gantt Charts', 'ndizi' ); ?>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**

@@ -6,6 +6,7 @@ module.exports = {
 	entry: {
 		admin: './src/admin/index.js',
 		portal: './src/portal/index.js',
+		block: './src/block/index.js',
 	},
 	output: {
 		path: path.resolve( __dirname, 'build' ),

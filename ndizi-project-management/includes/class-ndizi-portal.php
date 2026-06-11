@@ -15,6 +15,7 @@ class Ndizi_Portal {
 	public static function init() {
 		add_shortcode( 'ndizi_client_portal', array( __CLASS__, 'render_portal_shortcode' ) );
 		self::handle_portal_actions();
+		self::register_portal_block();
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );
 		add_action( 'wp_ajax_nopriv_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );
@@ -25,18 +26,276 @@ class Ndizi_Portal {
 	 */
 	public static function enqueue_assets() {
 		global $post;
-		if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'ndizi_client_portal' ) ) {
-			wp_enqueue_style( 'ndizi-portal-style', NDIZI_PLUGIN_URL . 'build/portal.css', array(), NDIZI_VERSION );
-			wp_enqueue_script( 'ndizi-portal-script', NDIZI_PLUGIN_URL . 'build/portal.js', array( 'jquery' ), NDIZI_VERSION, true );
+		if ( is_a( $post, 'WP_Post' ) ) {
+			$has_shortcode = has_shortcode( $post->post_content, 'ndizi_client_portal' );
+			$has_block     = has_block( 'ndizi/client-portal', $post->post_content );
 
-			wp_localize_script(
-				'ndizi-portal-script',
-				'ndizi_portal',
-				array(
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-				)
-			);
+			if ( $has_shortcode || $has_block ) {
+				// Make sure style is registered
+				if ( ! wp_style_is( 'ndizi-portal-style', 'registered' ) ) {
+					wp_register_style(
+						'ndizi-portal-style',
+						NDIZI_PLUGIN_URL . 'build/portal.css',
+						array(),
+						NDIZI_VERSION
+					);
+				}
+				// Make sure script is registered
+				if ( ! wp_script_is( 'ndizi-portal-script', 'registered' ) ) {
+					wp_register_script(
+						'ndizi-portal-script',
+						NDIZI_PLUGIN_URL . 'build/portal.js',
+						array( 'jquery' ),
+						NDIZI_VERSION,
+						true
+					);
+					wp_localize_script(
+						'ndizi-portal-script',
+						'ndizi_portal',
+						array(
+							'ajax_url' => admin_url( 'admin-ajax.php' ),
+						)
+					);
+				}
+
+				wp_enqueue_style( 'ndizi-portal-style' );
+				wp_enqueue_script( 'ndizi-portal-script' );
+			}
 		}
+	}
+
+	/**
+	 * Register the Gutenberg Client Portal block
+	 */
+	public static function register_portal_block() {
+		// Register the block editor script
+		$asset_file   = NDIZI_PLUGIN_DIR . 'build/block.asset.php';
+		$dependencies = array( 'wp-blocks', 'wp-element', 'wp-i18n' );
+		$version      = NDIZI_VERSION;
+
+		if ( file_exists( $asset_file ) ) {
+			$assets       = include $asset_file;
+			$dependencies = isset( $assets['dependencies'] ) ? $assets['dependencies'] : $dependencies;
+			$version      = isset( $assets['version'] ) ? $assets['version'] : $version;
+		}
+
+		wp_register_script(
+			'ndizi-block-script',
+			NDIZI_PLUGIN_URL . 'build/block.js',
+			$dependencies,
+			$version,
+			true
+		);
+
+		// Register frontend script and style
+		wp_register_style(
+			'ndizi-portal-style',
+			NDIZI_PLUGIN_URL . 'build/portal.css',
+			array(),
+			NDIZI_VERSION
+		);
+
+		wp_register_script(
+			'ndizi-portal-script',
+			NDIZI_PLUGIN_URL . 'build/portal.js',
+			array( 'jquery' ),
+			NDIZI_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'ndizi-portal-script',
+			'ndizi_portal',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+			)
+		);
+
+		register_block_type(
+			'ndizi/client-portal',
+			array(
+				'editor_script'   => 'ndizi-block-script',
+				'script'          => 'ndizi-portal-script',
+				'style'           => 'ndizi-portal-style',
+				'attributes'      => array(
+					'backgroundColor' => array(
+						'type'    => 'string',
+						'default' => '#f8fafc',
+					),
+					'textColor'       => array(
+						'type'    => 'string',
+						'default' => '#0f172a',
+					),
+					'buttonColor'     => array(
+						'type'    => 'string',
+						'default' => '#4f46e5',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_portal_block_html' ),
+			)
+		);
+	}
+
+	/**
+	 * Render portal main block HTML
+	 *
+	 * @param array $attributes Block attributes.
+	 */
+	public static function render_portal_block_html( $attributes ) {
+		// Explicitly enqueue localized assets as a fallback
+		wp_enqueue_style( 'ndizi-portal-style' );
+		wp_enqueue_script( 'ndizi-portal-script' );
+
+		// Parse colors from attributes (with fallbacks)
+		$bg_color     = isset( $attributes['backgroundColor'] ) ? $attributes['backgroundColor'] : '#f8fafc';
+		$text_color   = isset( $attributes['textColor'] ) ? $attributes['textColor'] : '#0f172a';
+		$button_color = isset( $attributes['buttonColor'] ) ? $attributes['buttonColor'] : '#4f46e5';
+
+		// Generate a scoped unique ID for wrapper
+		$wrapper_id = 'ndizi-portal-' . wp_rand( 1000, 9999 );
+
+		// Check if chosen background is a light color
+		$is_light = self::is_color_light( $bg_color );
+
+		// Configure secondary design colors and border widths/opacities dynamically based on luminance
+		$card_bg      = $is_light ? '#ffffff' : 'rgba(30, 41, 59, 0.7)';
+		$border_color = $is_light ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)';
+		$text_muted   = $is_light ? '#475569' : '#94a3b8';
+		$input_bg     = $is_light ? '#ffffff' : 'rgba(15, 23, 42, 0.6)';
+		$input_border = $is_light ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+		$item_bg      = $is_light ? 'rgba(0, 0, 0, 0.02)' : 'rgba(15, 23, 42, 0.4)';
+		$item_border  = $is_light ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)';
+
+		// Build scoped styles
+		$inline_css  = "<style>\n";
+		$inline_css .= "#{$wrapper_id} {\n";
+		$inline_css .= '  --ndizi-bg-main: ' . esc_attr( $bg_color ) . " !important;\n";
+		$inline_css .= '  --ndizi-bg-card: ' . esc_attr( $card_bg ) . " !important;\n";
+		$inline_css .= '  --ndizi-border-color: ' . esc_attr( $border_color ) . " !important;\n";
+		$inline_css .= '  --ndizi-text-main: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= '  --ndizi-text-muted: ' . esc_attr( $text_muted ) . " !important;\n";
+		$inline_css .= '  --ndizi-primary: ' . esc_attr( $button_color ) . " !important;\n";
+		$inline_css .= '  --ndizi-primary-hover: ' . esc_attr( $button_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Override outer portal container
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-container {\n";
+		$inline_css .= '  background-color: ' . esc_attr( $bg_color ) . " !important;\n";
+		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Fix company name / header h1 invisibility by overriding transparency
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-header h1 {\n";
+		$inline_css .= "  background: none !important;\n";
+		$inline_css .= '  -webkit-text-fill-color: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Apply card background and borders
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-login-card,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-card,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-project-card,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-modal-content {\n";
+		$inline_css .= '  background-color: ' . esc_attr( $card_bg ) . " !important;\n";
+		$inline_css .= '  border-color: ' . esc_attr( $border_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Subtitles and headings
+		$inline_css .= "#{$wrapper_id} h2,\n";
+		$inline_css .= "#{$wrapper_id} h3,\n";
+		$inline_css .= "#{$wrapper_id} h4,\n";
+		$inline_css .= "#{$wrapper_id} label {\n";
+		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Form controls background, border, text
+		$inline_css .= "#{$wrapper_id} input[type=text],\n";
+		$inline_css .= "#{$wrapper_id} input[type=password],\n";
+		$inline_css .= "#{$wrapper_id} select,\n";
+		$inline_css .= "#{$wrapper_id} textarea {\n";
+		$inline_css .= '  background-color: ' . esc_attr( $input_bg ) . " !important;\n";
+		$inline_css .= '  border-color: ' . esc_attr( $input_border ) . " !important;\n";
+		$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Buttons and primary accents
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-btn,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-btn-comment-dialog,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-tabs a.ndizi-active-tab {\n";
+		$inline_css .= '  background-color: ' . esc_attr( $button_color ) . " !important;\n";
+		$inline_css .= '  border-color: ' . esc_attr( $button_color ) . " !important;\n";
+		$inline_css .= "  color: #ffffff !important;\n";
+		$inline_css .= "}\n";
+
+		// Link hovers
+		$inline_css .= "#{$wrapper_id} a {\n";
+		$inline_css .= '  color: ' . esc_attr( $button_color ) . ";\n";
+		$inline_css .= "}\n";
+		$inline_css .= "#{$wrapper_id} a:hover {\n";
+		$inline_css .= '  color: ' . esc_attr( $button_color ) . " !important;\n";
+		$inline_css .= "  opacity: 0.85;\n";
+		$inline_css .= "}\n";
+
+		// Tasks and comment items
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-task-item,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-comment-item {\n";
+		$inline_css .= '  background-color: ' . esc_attr( $item_bg ) . " !important;\n";
+		$inline_css .= '  border-color: ' . esc_attr( $item_border ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		// Secondary buttons (Sign Out, File uploads)
+		$inline_css .= "#{$wrapper_id} .ndizi-portal-btn-secondary,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-file-upload-label {\n";
+		if ( $is_light ) {
+			$inline_css .= "  background-color: #ffffff !important;\n";
+			$inline_css .= "  border-color: rgba(0, 0, 0, 0.15) !important;\n";
+			$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		} else {
+			$inline_css .= "  background-color: transparent !important;\n";
+			$inline_css .= "  border-color: rgba(255, 255, 255, 0.15) !important;\n";
+			$inline_css .= '  color: ' . esc_attr( $text_color ) . " !important;\n";
+		}
+		$inline_css .= "}\n";
+
+		// Muted texts
+		$inline_css .= "#{$wrapper_id} .subtitle,\n";
+		$inline_css .= "#{$wrapper_id} .desc,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-task-due,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-project-summary-meta,\n";
+		$inline_css .= "#{$wrapper_id} .ndizi-comment-date,\n";
+		$inline_css .= "#{$wrapper_id} .no-items {\n";
+		$inline_css .= '  color: ' . esc_attr( $text_muted ) . " !important;\n";
+		$inline_css .= "}\n";
+
+		$inline_css .= "</style>\n";
+
+		$portal_content = self::render_portal_shortcode();
+
+		return $inline_css . '<div id="' . esc_attr( $wrapper_id ) . '" class="ndizi-custom-branded-portal">' . $portal_content . '</div>';
+	}
+
+	/**
+	 * Check if a hex color is light or dark based on relative luminance
+	 *
+	 * @param string $hex Hex color string.
+	 * @return bool True if light, false if dark.
+	 */
+	private static function is_color_light( $hex ) {
+		$hex = str_replace( '#', '', $hex );
+		if ( 3 === strlen( $hex ) ) {
+			$r = hexdec( substr( $hex, 0, 1 ) . substr( $hex, 0, 1 ) );
+			$g = hexdec( substr( $hex, 1, 1 ) . substr( $hex, 1, 1 ) );
+			$b = hexdec( substr( $hex, 2, 1 ) . substr( $hex, 2, 1 ) );
+		} elseif ( 6 === strlen( $hex ) ) {
+			$r = hexdec( substr( $hex, 0, 2 ) );
+			$g = hexdec( substr( $hex, 2, 2 ) );
+			$b = hexdec( substr( $hex, 4, 2 ) );
+		} else {
+			return false;
+		}
+		// Calculate relative luminance
+		$luminance = ( 0.2126 * $r + 0.7152 * $g + 0.0722 * $b ) / 255;
+		return $luminance > 0.5;
 	}
 
 	/**

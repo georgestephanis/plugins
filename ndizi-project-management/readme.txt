@@ -32,7 +32,7 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 1.  Upload the `ndizi-project-management` folder to the `/wp-content/plugins/` directory, or install it directly via the WordPress Admin Plugins dashboard.
 2.  Activate the plugin. The database table `wp_ndizi_time_entries` and custom roles will be initialized automatically.
 3.  Create a new WordPress Page for your client dashboard and embed the `[ndizi_client_portal]` shortcode.
-4.  Navigate to **Projects** -> **Clients** in your admin panel, register a new client, and generate a portal access key.
+4.  Navigate to **Ndizi PM** -> **Clients** in your admin panel, register a new client, and generate a portal access key.
 
 == Frequently Asked Questions ==
 
