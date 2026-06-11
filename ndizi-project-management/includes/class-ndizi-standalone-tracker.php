@@ -63,12 +63,12 @@ class Ndizi_Standalone_Tracker {
 			'theme_color'      => '#4f46e5',
 			'icons'            => array(
 				array(
-					'src'   => plugins_url( 'build/icon-192.png', __DIR__ ),
+					'src'   => NDIZI_PLUGIN_URL . 'build/icon-192.png',
 					'sizes' => '192x192',
 					'type'  => 'image/png',
 				),
 				array(
-					'src'   => plugins_url( 'build/icon-512.png', __DIR__ ),
+					'src'   => NDIZI_PLUGIN_URL . 'build/icon-512.png',
 					'sizes' => '512x512',
 					'type'  => 'image/png',
 				),
@@ -1223,7 +1223,7 @@ class Ndizi_Standalone_Tracker {
 
 					// Delete Entry Click
 					$(document).on('click', '.btn-delete', function() {
-						if (!confirm('<?php esc_html_e( 'Are you sure you want to delete this time entry?', 'ndizi-project-management' ); ?>')) {
+						if (!confirm('<?php echo esc_js( __( 'Are you sure you want to delete this time entry?', 'ndizi-project-management' ) ); ?>')) {
 							return;
 						}
 						const $item = $(this).closest('.log-item');
