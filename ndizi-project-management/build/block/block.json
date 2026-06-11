@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ndizi/client-portal",
+  "title": "Ndizi Client Portal",
+  "description": "Embeds the Ndizi Client Portal for tracking projects, tasks, and invoices.",
+  "category": "widgets",
+  "icon": "portfolio",
+  "keywords": [
+    "ndizi",
+    "portal",
+    "client"
+  ],
+  "textdomain": "ndizi-project-management",
+  "render": "file:./render.php",
+  "editorScript": "file:../block.js",
+  "viewScript": "ndizi-portal-script",
+  "style": "ndizi-portal-style",
+  "attributes": {
+    "backgroundColor": {
+      "type": "string",
+      "default": "#f8fafc"
+    },
+    "textColor": {
+      "type": "string",
+      "default": "#0f172a"
+    },
+    "buttonColor": {
+      "type": "string",
+      "default": "#4f46e5"
+    },
+    "linkColor": {
+      "type": "string",
+      "default": "#818cf8"
+    }
+  }
+}

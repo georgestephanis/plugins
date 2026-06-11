@@ -28,11 +28,14 @@ import './admin-style.scss';
 			e.preventDefault();
 			const chars =
 				'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+			// Use the Web Crypto API for a cryptographically secure token; this
+			// value is an authentication credential, so Math.random() (which is
+			// not suitable for secrets) must not be used.
 			let key = 'ndizi_';
-			for ( let i = 0; i < 16; i++ ) {
-				key += chars.charAt(
-					Math.floor( Math.random() * chars.length )
-				);
+			const randomValues = new Uint32Array( 16 );
+			window.crypto.getRandomValues( randomValues );
+			for ( let i = 0; i < randomValues.length; i++ ) {
+				key += chars.charAt( randomValues[ i ] % chars.length );
 			}
 			$( '#ndizi_client_auth_key' ).val( key );
 		} );

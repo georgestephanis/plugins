@@ -54,15 +54,27 @@ import './portal-style.scss';
 
 			$modal.show();
 
-			// Fetch discussion HTML via AJAX
-			wp.ajax
-				.post( 'ndizi_load_task_discussion', {
-					task_id: taskId,
-				} )
+			// Fetch discussion HTML via AJAX. Use jQuery against the localized
+			// admin-ajax URL rather than wp.ajax, which depends on wp-util and a
+			// global ajaxurl that are not guaranteed to exist on the frontend.
+			const ajaxUrl =
+				typeof window.ndizi_portal !== 'undefined' &&
+				window.ndizi_portal.ajax_url
+					? window.ndizi_portal.ajax_url
+					: '/wp-admin/admin-ajax.php';
+
+			$.post( ajaxUrl, {
+				action: 'ndizi_load_task_discussion',
+				task_id: taskId,
+			} )
 				.done( function ( response ) {
-					if ( response.html ) {
+					if ( response && response.success && response.data.html ) {
 						$( '#ndizi_modal_discussion_container' ).html(
-							response.html
+							response.data.html
+						);
+					} else {
+						$( '#ndizi_modal_discussion_container' ).html(
+							'<div class="ndizi-portal-alert alert-error">Error loading discussion thread.</div>'
 						);
 					}
 				} )

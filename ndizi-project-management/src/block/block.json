@@ -7,7 +7,7 @@
 	"category": "widgets",
 	"icon": "portfolio",
 	"keywords": [ "ndizi", "portal", "client" ],
-	"textdomain": "ndizi",
+	"textdomain": "ndizi-project-management",
 	"render": "file:./render.php",
 	"editorScript": "file:../block.js",
 	"viewScript": "ndizi-portal-script",

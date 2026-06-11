@@ -35,7 +35,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 		<>
 			<InspectorControls>
 				<PanelColorSettings
-					title={ __( 'Portal Colors', 'ndizi' ) }
+					title={ __( 'Portal Colors', 'ndizi-project-management' ) }
 					initialOpen={ true }
 					colorSettings={ [
 						{
@@ -44,7 +44,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 								setAttributes( {
 									backgroundColor: value || '#f8fafc',
 								} ),
-							label: __( 'Background Color', 'ndizi' ),
+							label: __(
+								'Background Color',
+								'ndizi-project-management'
+							),
 						},
 						{
 							value: textColor,
@@ -52,7 +55,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 								setAttributes( {
 									textColor: value || '#0f172a',
 								} ),
-							label: __( 'Text Color', 'ndizi' ),
+							label: __(
+								'Text Color',
+								'ndizi-project-management'
+							),
 						},
 						{
 							value: buttonColor,
@@ -60,7 +66,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 								setAttributes( {
 									buttonColor: value || '#4f46e5',
 								} ),
-							label: __( 'Primary Button Color', 'ndizi' ),
+							label: __(
+								'Primary Button Color',
+								'ndizi-project-management'
+							),
 						},
 						{
 							value: linkColor,
@@ -68,7 +77,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 								setAttributes( {
 									linkColor: value || '#818cf8',
 								} ),
-							label: __( 'Link & Accent Color', 'ndizi' ),
+							label: __(
+								'Link & Accent Color',
+								'ndizi-project-management'
+							),
 						},
 					] }
 				/>
@@ -82,7 +94,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 						color: textColor,
 					} }
 				>
-					{ __( 'Ndizi Client Portal', 'ndizi' ) }
+					{ __( 'Ndizi Client Portal', 'ndizi-project-management' ) }
 				</h3>
 				<p
 					style={ {
@@ -93,7 +105,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 				>
 					{ __(
 						'This block renders the interactive client portal with custom brand styles.',
-						'ndizi'
+						'ndizi-project-management'
 					) }
 				</p>
 				<div
@@ -116,7 +128,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 							cursor: 'default',
 						} }
 					>
-						{ __( 'Action Button', 'ndizi' ) }
+						{ __( 'Action Button', 'ndizi-project-management' ) }
 					</button>
 					<span
 						style={ {
@@ -127,7 +139,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 							fontSize: '14px',
 						} }
 					>
-						{ __( 'Sample Link Accent', 'ndizi' ) }
+						{ __(
+							'Sample Link Accent',
+							'ndizi-project-management'
+						) }
 					</span>
 				</div>
 			</div>
