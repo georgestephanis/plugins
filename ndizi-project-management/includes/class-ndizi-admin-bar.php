@@ -358,16 +358,27 @@ class Ndizi_Admin_Bar {
 			$tasks          = get_posts( $task_args );
 			$response_tasks = array();
 
-			foreach ( $tasks as $task ) {
-				// Query duration total directly to avoid bloated query loop
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-				$task_logged_sec = $wpdb->get_var(
+			// Fetch all task duration totals in one query instead of one per task.
+			$task_durations = array();
+			if ( ! empty( $tasks ) ) {
+				$task_ids     = wp_list_pluck( $tasks, 'ID' );
+				$placeholders = implode( ',', array_fill( 0, count( $task_ids ), '%d' ) );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				$duration_rows = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT SUM(duration) FROM $time_table WHERE task_id = %d",
-						$task->ID
+						"SELECT task_id, SUM(duration) AS total_duration FROM $time_table WHERE task_id IN ($placeholders) GROUP BY task_id",
+						$task_ids
 					)
 				);
-				$task_logged_sec = $task_logged_sec ? intval( $task_logged_sec ) : 0;
+				if ( $duration_rows ) {
+					foreach ( $duration_rows as $row ) {
+						$task_durations[ (int) $row->task_id ] = intval( $row->total_duration );
+					}
+				}
+			}
+
+			foreach ( $tasks as $task ) {
+				$task_logged_sec = isset( $task_durations[ $task->ID ] ) ? $task_durations[ $task->ID ] : 0;
 
 				$response_tasks[] = array(
 					'id'           => $task->ID,
