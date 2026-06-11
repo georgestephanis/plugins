@@ -14,7 +14,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
   `billable_duration × hourly_rate` and populate the invoice automatically.
 - [ ] **Payment processing / payment links** — mark invoices paid after online payment (Stripe,
   PayPal, etc.). None of the surveyed SaaS tools offer this either, but it is a common ask.
-- [ ] **PDF invoice export** — Clockify and Toggl export print-ready PDFs; Ndizi currently exports
+- [x] **PDF invoice export** — Clockify and Toggl export print-ready PDFs; Ndizi currently exports
   CSV and JSON only. A generated PDF (or print-stylesheet polish) would be a direct gap.
 
 ---
