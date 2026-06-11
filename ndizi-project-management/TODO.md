@@ -81,7 +81,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ## Infrastructure
 
-- [ ] **CLI / WP-CLI commands** — `wp ndizi time start --project=X`, `wp ndizi time stop`, etc.,
+- [x] **CLI / WP-CLI commands** — `wp ndizi time start --project=X`, `wp ndizi time stop`, etc.,
   for developers or automated environments.
 - [ ] **Application Password scope documentation** — the REST API supports Application Passwords,
   but there is no documented example of authenticating external tools against it.

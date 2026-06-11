@@ -56,6 +56,7 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin-bar.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-standalone-tracker.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 	}
 
 	/**
@@ -95,6 +96,11 @@ class Ndizi_Project_Management {
 
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();
+
+		// Initialize CLI Commands
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			Ndizi_CLI::init();
+		}
 
 		// Initialize REST API Routes
 		Ndizi_REST::init();
