@@ -335,28 +335,8 @@ class Ndizi_Portal {
 
 		// 2. Check cookie token
 		if ( isset( $_COOKIE['ndizi_client_token'] ) ) {
-			$token = sanitize_text_field( $_COOKIE['ndizi_client_token'] );
+			$token = sanitize_text_field( wp_unslash( $_COOKIE['ndizi_client_token'] ) );
 			return self::get_client_id_by_token( $token );
-		}
-
-		// 3. Fallback: Check if current WP user has a client linked (using meta)
-		if ( is_user_logged_in() ) {
-			$user_id = get_current_user_id();
-			$clients = get_posts(
-				array(
-					'post_type'      => 'ndizi_client',
-					'posts_per_page' => 1,
-					'meta_query'     => array(
-						array(
-							'key'   => '_ndizi_client_wp_user_id',
-							'value' => $user_id,
-						),
-					),
-				)
-			);
-			if ( ! empty( $clients ) ) {
-				return $clients[0]->ID;
-			}
 		}
 
 		return false;
@@ -524,9 +504,13 @@ class Ndizi_Portal {
 			}
 
 			if ( ! empty( $content ) ) {
-				// Bypass WP restrictions for anonymous comments by setting author parameters
-				$comment_author       = get_the_title( $client_id ) . ' (' . __( 'Client', 'ndizi-project-management' ) . ')';
-				$comment_author_email = get_post_meta( $client_id, '_ndizi_client_website', true ) ?: 'client@portal.local';
+				// Portal clients are not WP users, so synthesize valid author fields.
+				// Use a per-client address at the site's own domain (a URL is not a
+				// valid email, which the previous fallback incorrectly used).
+				$comment_author = get_the_title( $client_id ) . ' (' . __( 'Client', 'ndizi-project-management' ) . ')';
+				$site_host      = wp_parse_url( home_url(), PHP_URL_HOST );
+				$site_host      = $site_host ? $site_host : 'localhost';
+				$comment_author_email = 'client-' . absint( $client_id ) . '@' . $site_host;
 
 				$comment_id = wp_insert_comment(
 					array(
@@ -913,7 +897,7 @@ class Ndizi_Portal {
 						<li class="ndizi-comment-item">
 							<div class="ndizi-comment-meta">
 								<strong class="ndizi-comment-author"><?php echo esc_html( $comment->comment_author ); ?></strong>
-								<span class="ndizi-comment-date"><?php echo esc_html( comment_time( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), false, false, $comment ) ); ?></span>
+								<span class="ndizi-comment-date"><?php echo esc_html( get_comment_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $comment ) ); ?></span>
 							</div>
 							<div class="ndizi-comment-text">
 								<?php echo wpautop( esc_html( $comment->comment_content ) ); ?>

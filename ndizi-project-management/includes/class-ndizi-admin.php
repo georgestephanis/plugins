@@ -1209,8 +1209,8 @@ class Ndizi_Admin {
 			wp_send_json_error( array( 'message' => __( 'Log not found.', 'ndizi-project-management' ) ) );
 		}
 
-		// Authorization
-		if ( $log->user_id !== $user_id && ! current_user_can( 'administrator' ) && ! current_user_can( 'ndizi_manager' ) ) {
+		// Authorization: own logs, or users who can manage all time.
+		if ( intval( $log->user_id ) !== $user_id && ! Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
