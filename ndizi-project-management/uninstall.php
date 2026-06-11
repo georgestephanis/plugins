@@ -31,4 +31,4 @@ $ndizi_table = Ndizi_DB::get_table_name();
 // Table name is derived from $wpdb->prefix and a fixed suffix; it cannot be
 // parameterized via prepare(). This runs once, only during uninstall.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
-$wpdb->query( "DROP TABLE IF EXISTS {$ndizi_table}" );
+$wpdb->query( "DROP TABLE IF EXISTS `{$ndizi_table}`" );
