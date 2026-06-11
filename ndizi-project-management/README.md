@@ -17,7 +17,7 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 ### 💎 Premium Responsive Design
 
 - **Admin Dashboards**: Gorgeous, CSS-only reports and responsive visualizations representing team productivity, billable time distributions, and project health.
-- **Client Portal**: A premium, glassmorphic client-facing interface utilizing CSS transitions, visual progress bars, and responsive layouts.
+- **Client Portal**: A premium, glassmorphic client-facing interface utilizing CSS transitions, visual progress bars, and responsive layouts. Embed it with the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`).
 - **Gantt Charts**: A custom CSS Grid and SVG-based Gantt chart system to render project timelines without loading bloated, slow third-party chart libraries.
 
 ### 📅 Relational Data Model
@@ -103,7 +103,7 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 
 ### 3. Custom REST API Routes
 
-The plugin exposes WordPress Application Password authenticated endpoints under `/wp-json/ndizi/v1`:
+The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each route's `permission_callback` checks an Ndizi capability (e.g. `ndizi_view_projects`, `ndizi_log_time`), so they work with any standard WordPress authentication — cookie + nonce for in-browser requests, or Application Passwords for external clients:
 
 | Method | Route | Description |
 | :--- | :--- | :--- |
@@ -112,7 +112,7 @@ The plugin exposes WordPress Application Password authenticated endpoints under 
 | `GET` | `/time/active` | Get the currently running timer for the authenticated user. |
 | `POST` | `/time/start` | Start a new active timer (payload: `project_id`, `task_id`, `description`, `billable`). |
 | `POST` | `/time/stop` | Stop the active timer (calculates duration and updates SQL). |
-| `POST` | `/time/log` | Manually log a completed time entry (payload: `project_id`, `task_id`, `description`, `duration`, `billable`, `start_time`). |
+| `POST` | `/time/log` | Manually log a completed time entry (payload: `project_id`, `task_id`, `description`, `duration`, `billable`, optional `start_time` / `end_time`). |
 | `GET` | `/time` | List history logs for the current user. |
 | `PUT` | `/time/<id>` | Edit a specific historical time log. |
 | `DELETE` | `/time/<id>` | Delete a specific historical time log. |

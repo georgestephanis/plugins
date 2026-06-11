@@ -1,10 +1,10 @@
 === Ndizi Project Management ===
 Contributors: georgestephanis
-Tags: project management, time tracking, clients, tasks, invoices, gantt
+Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.0
-Tested up to: 6.5
+Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: trunk
+Stable tag: 1.0.0-alpha
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 *   **Premium Dashboards**: Interactive, responsive HTML/CSS dashboards for managers to analyze team time allocations, billable totals, and status rates.
 *   **Gantt Timelines**: Custom CSS Grid and SVG-based Gantt charts directly in your admin dashboard to visualize project schedules.
 *   **Decoupled Time Tracker**: Start, stop, and log timesheets directly in the admin bar or task meta boxes.
-*   **Glassmorphic Client Portal**: A premium front-end experience using the `[ndizi_client_portal]` shortcode. Clients can review their projects, verify tasks, download invoices, and submit new requests.
+*   **Glassmorphic Client Portal**: A premium front-end experience available as the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`) in the block editor. Clients can review their projects, verify tasks, download invoices, and submit new requests.
 *   **Secure Passwordless Portal Auth**: Authorize client portal sessions using unique, secure client authentication keys (e.g. `?ndizi_token=...`), avoiding the need for clients to create standard WordPress user accounts.
 *   **Collaborative Discussions**: Task and project comment boxes are filtered and embedded into the Client Portal, allowing team members and clients to exchange feedback and upload file attachments.
 *   **Invoice Generation & Exports**: Automatically aggregate un-invoiced billable hours into detailed project invoices. Export invoice logs to CSV or JSON formats, or print/save them using our clean, professional print stylesheet.
@@ -31,7 +31,7 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 
 1.  Upload the `ndizi-project-management` folder to the `/wp-content/plugins/` directory, or install it directly via the WordPress Admin Plugins dashboard.
 2.  Activate the plugin. The database table `wp_ndizi_time_entries` and custom roles will be initialized automatically.
-3.  Create a new WordPress Page for your client dashboard and embed the `[ndizi_client_portal]` shortcode.
+3.  Create a new WordPress Page for your client dashboard and add the **Ndizi Client Portal** block, or embed the `[ndizi_client_portal]` shortcode.
 4.  Navigate to **Ndizi PM** -> **Clients** in your admin panel, register a new client, and generate a portal access key.
 
 == Frequently Asked Questions ==
@@ -66,6 +66,7 @@ Yes! Fully authenticated REST routes are exposed under `/wp-json/ndizi/v1/time` 
 *   Custom Post Types and taxonomy metadata setups.
 *   Integrated admin bar active timers.
 *   Gantt charts and dashboard report enqueues.
-*   Shortcode-driven frontend portal with passwordless tokens.
+*   Shortcode- and block-driven frontend portal with passwordless tokens.
 *   CSV/JSON invoice exports and printable layouts.
 *   REST API controller for desktop integration.
+*   Hardening: per-post-type verification on meta-box saves, MIME/size/count limits on portal uploads, CSV formula-injection escaping on exports, sanitize callbacks on the time-entry REST routes, and a cryptographically secure client auth-key generator.
