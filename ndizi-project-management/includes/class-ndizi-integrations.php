@@ -441,15 +441,16 @@ class Ndizi_Integrations {
 
 			$output = fopen( 'php://output', 'w' );
 
-			// Write invoice metadata headers
+			// Write invoice metadata headers. User-controlled cells are run through
+			// self::escape_csv_field() to neutralize spreadsheet formula injection.
 			fputcsv( $output, array( 'Invoice Export Summary' ) );
-			fputcsv( $output, array( 'Invoice #', $export_data['invoice_number'] ) );
-			fputcsv( $output, array( 'Client', $export_data['client_name'] ) );
-			fputcsv( $output, array( 'Project', $export_data['project_name'] ) );
-			fputcsv( $output, array( 'Invoice Date', $export_data['invoice_date'] ) );
-			fputcsv( $output, array( 'Due Date', $export_data['due_date'] ) );
+			fputcsv( $output, array( 'Invoice #', self::escape_csv_field( $export_data['invoice_number'] ) ) );
+			fputcsv( $output, array( 'Client', self::escape_csv_field( $export_data['client_name'] ) ) );
+			fputcsv( $output, array( 'Project', self::escape_csv_field( $export_data['project_name'] ) ) );
+			fputcsv( $output, array( 'Invoice Date', self::escape_csv_field( $export_data['invoice_date'] ) ) );
+			fputcsv( $output, array( 'Due Date', self::escape_csv_field( $export_data['due_date'] ) ) );
 			fputcsv( $output, array( 'Total Amount', '$' . number_format( $export_data['amount'], 2 ) ) );
-			fputcsv( $output, array( 'Status', $export_data['status'] ) );
+			fputcsv( $output, array( 'Status', self::escape_csv_field( $export_data['status'] ) ) );
 			fputcsv( $output, array() ); // Empty spacer line
 
 			// Write detailed time log line items
@@ -460,10 +461,10 @@ class Ndizi_Integrations {
 				fputcsv(
 					$output,
 					array(
-						$item['date'],
-						$item['team_member'],
-						$item['description'],
-						$item['hours'],
+						self::escape_csv_field( $item['date'] ),
+						self::escape_csv_field( $item['team_member'] ),
+						self::escape_csv_field( $item['description'] ),
+						self::escape_csv_field( $item['hours'] ),
 					)
 				);
 			}
@@ -474,5 +475,25 @@ class Ndizi_Integrations {
 		}
 
 		wp_die( esc_html__( 'Invalid export format.', 'ndizi-project-management' ) );
+	}
+
+	/**
+	 * Neutralize CSV/spreadsheet formula injection for a single field.
+	 *
+	 * Spreadsheet applications treat cells beginning with =, +, -, @, or a
+	 * leading tab / carriage return as formulas. Prefixing such values with a
+	 * single quote forces them to be treated as plain text.
+	 *
+	 * @param mixed $value The cell value to sanitize.
+	 * @return string The safe cell value.
+	 */
+	private static function escape_csv_field( $value ) {
+		$value = (string) $value;
+
+		if ( '' !== $value && in_array( $value[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+			$value = "'" . $value;
+		}
+
+		return $value;
 	}
 }

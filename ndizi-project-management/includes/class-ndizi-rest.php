@@ -159,11 +159,42 @@ class Ndizi_REST {
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( __CLASS__, 'update_time_log' ),
 					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
+					'args'                => array(
+						'id'          => array(
+							'sanitize_callback' => 'absint',
+						),
+						'project_id'  => array(
+							'sanitize_callback' => 'absint',
+						),
+						'task_id'     => array(
+							'sanitize_callback' => 'absint',
+						),
+						'description' => array(
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'start_time'  => array(
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'end_time'    => array(
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'duration'    => array(
+							'sanitize_callback' => 'absint',
+						),
+						'billable'    => array(
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( __CLASS__, 'delete_time_log' ),
 					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
+					'args'                => array(
+						'id' => array(
+							'sanitize_callback' => 'absint',
+						),
+					),
 				),
 			)
 		);
