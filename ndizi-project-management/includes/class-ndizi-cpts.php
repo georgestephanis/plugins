@@ -56,9 +56,6 @@ class Ndizi_CPTs {
 				'menu_icon'       => 'dashicons-networking',
 				'capability_type' => 'post',
 				'capabilities'    => array(
-					'edit_post'              => 'ndizi_manage_clients',
-					'read_post'              => 'read',
-					'delete_post'            => 'ndizi_manage_clients',
 					'edit_posts'             => 'ndizi_manage_clients',
 					'edit_others_posts'      => 'ndizi_manage_clients',
 					'publish_posts'          => 'ndizi_manage_clients',
@@ -101,9 +98,6 @@ class Ndizi_CPTs {
 				'menu_icon'       => 'dashicons-portfolio',
 				'capability_type' => 'post',
 				'capabilities'    => array(
-					'edit_post'              => 'ndizi_manage_projects',
-					'read_post'              => 'read',
-					'delete_post'            => 'ndizi_manage_projects',
 					'edit_posts'             => 'ndizi_manage_projects',
 					'edit_others_posts'      => 'ndizi_manage_projects',
 					'publish_posts'          => 'ndizi_manage_projects',
@@ -146,9 +140,6 @@ class Ndizi_CPTs {
 				'menu_icon'       => 'dashicons-yes',
 				'capability_type' => 'post',
 				'capabilities'    => array(
-					'edit_post'              => 'ndizi_manage_tasks',
-					'read_post'              => 'read',
-					'delete_post'            => 'ndizi_manage_tasks',
 					'edit_posts'             => 'ndizi_manage_tasks',
 					'edit_others_posts'      => 'ndizi_manage_tasks',
 					'publish_posts'          => 'ndizi_manage_tasks',
@@ -192,9 +183,6 @@ class Ndizi_CPTs {
 					'menu_icon'       => 'dashicons-analytics',
 					'capability_type' => 'post',
 					'capabilities'    => array(
-						'edit_post'              => 'ndizi_manage_invoices',
-						'read_post'              => 'read',
-						'delete_post'            => 'ndizi_manage_invoices',
 						'edit_posts'             => 'ndizi_manage_invoices',
 						'edit_others_posts'      => 'ndizi_manage_invoices',
 						'publish_posts'          => 'ndizi_manage_invoices',
@@ -238,9 +226,6 @@ class Ndizi_CPTs {
 				'menu_icon'       => 'dashicons-businessman',
 				'capability_type' => 'post',
 				'capabilities'    => array(
-					'edit_post'              => 'ndizi_manage_contacts',
-					'read_post'              => 'read',
-					'delete_post'            => 'ndizi_manage_contacts',
 					'edit_posts'             => 'ndizi_manage_contacts',
 					'edit_others_posts'      => 'ndizi_manage_contacts',
 					'publish_posts'          => 'ndizi_manage_contacts',
@@ -283,9 +268,6 @@ class Ndizi_CPTs {
 				'menu_icon'       => 'dashicons-calendar-alt',
 				'capability_type' => 'post',
 				'capabilities'    => array(
-					'edit_post'              => 'ndizi_manage_time',
-					'read_post'              => 'read',
-					'delete_post'            => 'ndizi_manage_time',
 					'edit_posts'             => 'ndizi_manage_time',
 					'edit_others_posts'      => 'ndizi_manage_time',
 					'publish_posts'          => 'ndizi_manage_time',
