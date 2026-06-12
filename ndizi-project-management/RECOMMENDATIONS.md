@@ -131,12 +131,12 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   but add sane defaults/pagination on REST endpoints before the API is documented as
   stable.
 
-- [ ] **Outbound webhooks: add timeout, logging, and basic SSRF guard.**
-  `Ndizi_Webhooks::dispatch()` is fire-and-forget (`blocking => false`) with no timeout
-  and only `FILTER_VALIDATE_URL` on admin-entered URLs
-  ([class-ndizi-webhooks.php:62-107](includes/class-ndizi-webhooks.php#L62-L107)).
-  Use `wp_http_validate_url()` (rejects loopback/private ranges), set an explicit short
-  timeout, and log failures so silent drops are diagnosable. Retries can wait.
+- [x] **Outbound webhooks: add timeout, logging, and basic SSRF guard.**
+  Replaced `filter_var(..., FILTER_VALIDATE_URL)` with `wp_http_validate_url()` on both
+  custom webhook and Slack URLs — rejects loopback/private-range targets. Timeout (5 s)
+  was already present. Added `error_log()` when a URL is blocked so silent drops are
+  diagnosable. (Non-blocking fire-and-forget is preserved; retries remain P2.)
+  ([class-ndizi-webhooks.php](includes/class-ndizi-webhooks.php)) _(branch: ndizi/fable-review)_
 
 - [ ] **Duplicate event fan-out between Notifications and Webhooks.** Both classes hook
   the same meta-update events independently; confirm the intended matrix (email vs Slack

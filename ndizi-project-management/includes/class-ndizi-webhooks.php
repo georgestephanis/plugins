@@ -69,8 +69,9 @@ class Ndizi_Webhooks {
 			'data'      => $data,
 		);
 
-		// Trigger webhook POST request (non-blocking)
-		if ( ! empty( $webhook_url ) && filter_var( $webhook_url, FILTER_VALIDATE_URL ) ) {
+		// Trigger webhook POST request (non-blocking).
+		// wp_http_validate_url() rejects loopback and private-range targets (SSRF guard).
+		if ( ! empty( $webhook_url ) && wp_http_validate_url( $webhook_url ) ) {
 			wp_remote_post(
 				$webhook_url,
 				array(
@@ -85,10 +86,12 @@ class Ndizi_Webhooks {
 					'body'        => wp_json_encode( $payload ),
 				)
 			);
+		} elseif ( ! empty( $webhook_url ) ) {
+			error_log( 'Ndizi: outbound webhook URL blocked by SSRF guard: ' . $webhook_url );
 		}
 
-		// Trigger Slack webhook POST request (non-blocking)
-		if ( ! empty( $slack_webhook_url ) && filter_var( $slack_webhook_url, FILTER_VALIDATE_URL ) && ! empty( $slack_message ) ) {
+		// Trigger Slack webhook POST request (non-blocking).
+		if ( ! empty( $slack_webhook_url ) && wp_http_validate_url( $slack_webhook_url ) && ! empty( $slack_message ) ) {
 			wp_remote_post(
 				$slack_webhook_url,
 				array(
@@ -103,6 +106,8 @@ class Ndizi_Webhooks {
 					'body'        => wp_json_encode( array( 'text' => $slack_message ) ),
 				)
 			);
+		} elseif ( ! empty( $slack_webhook_url ) && ! empty( $slack_message ) ) {
+			error_log( 'Ndizi: Slack webhook URL blocked by SSRF guard: ' . $slack_webhook_url );
 		}
 	}
 
