@@ -30,6 +30,16 @@ class Ndizi_REST {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_projects' ),
 				'permission_callback' => array( __CLASS__, 'check_view_projects_permission' ),
+				'args'                => array(
+					'per_page' => array(
+						'default'           => 100,
+						'sanitize_callback' => 'absint',
+					),
+					'page'     => array(
+						'default'           => 1,
+						'sanitize_callback' => 'absint',
+					),
+				),
 			)
 		);
 
@@ -41,6 +51,20 @@ class Ndizi_REST {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_tasks' ),
 				'permission_callback' => array( __CLASS__, 'check_view_tasks_permission' ),
+				'args'                => array(
+					'per_page'   => array(
+						'default'           => 100,
+						'sanitize_callback' => 'absint',
+					),
+					'page'       => array(
+						'default'           => 1,
+						'sanitize_callback' => 'absint',
+					),
+					'project_id' => array(
+						'default'           => 0,
+						'sanitize_callback' => 'absint',
+					),
+				),
 			)
 		);
 
@@ -354,11 +378,15 @@ class Ndizi_REST {
 	/**
 	 * Get list of active projects
 	 */
-	public static function get_projects() {
+	public static function get_projects( $request ) {
+		$per_page = min( absint( $request->get_param( 'per_page' ) ?: 100 ), 200 );
+		$page     = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
+
 		$args = array(
 			'post_type'      => 'ndizi_project',
 			'post_status'    => 'publish',
-			'posts_per_page' => -1,
+			'posts_per_page' => $per_page,
+			'paged'          => $page,
 			'meta_query'     => array(
 				array(
 					'key'     => '_ndizi_project_status',
@@ -377,6 +405,12 @@ class Ndizi_REST {
 			}
 			$args['post__in'] = $project_ids;
 		}
+
+		$count_args                    = $args;
+		$count_args['posts_per_page'] = -1;
+		$count_args['fields']         = 'ids';
+		$total                        = count( get_posts( $count_args ) );
+		$total_pages                  = $per_page > 0 ? (int) ceil( $total / $per_page ) : 1;
 
 		$projects = get_posts( $args );
 
@@ -416,19 +450,25 @@ class Ndizi_REST {
 			);
 		}
 
-		return new WP_REST_Response( $response, 200 );
+		$rest_response = new WP_REST_Response( $response, 200 );
+		$rest_response->header( 'X-WP-Total', $total );
+		$rest_response->header( 'X-WP-TotalPages', $total_pages );
+		return $rest_response;
 	}
 
 	/**
 	 * Get list of active tasks
 	 */
 	public static function get_tasks( $request ) {
+		$per_page   = min( absint( $request->get_param( 'per_page' ) ?: 100 ), 200 );
+		$page       = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
 		$project_id = $request->get_param( 'project_id' );
 
 		$args = array(
 			'post_type'      => 'ndizi_task',
 			'post_status'    => 'publish',
-			'posts_per_page' => -1,
+			'posts_per_page' => $per_page,
+			'paged'          => $page,
 		);
 
 		if ( $project_id ) {
@@ -472,6 +512,12 @@ class Ndizi_REST {
 			}
 		}
 
+		$count_args                    = $args;
+		$count_args['posts_per_page'] = -1;
+		$count_args['fields']         = 'ids';
+		$total                        = count( get_posts( $count_args ) );
+		$total_pages                  = $per_page > 0 ? (int) ceil( $total / $per_page ) : 1;
+
 		$response = array();
 		foreach ( $tasks as $task ) {
 			$p_id    = get_post_meta( $task->ID, '_ndizi_project_id', true );
@@ -489,7 +535,10 @@ class Ndizi_REST {
 			);
 		}
 
-		return new WP_REST_Response( $response, 200 );
+		$rest_response = new WP_REST_Response( $response, 200 );
+		$rest_response->header( 'X-WP-Total', $total );
+		$rest_response->header( 'X-WP-TotalPages', $total_pages );
+		return $rest_response;
 	}
 
 	/**

@@ -134,11 +134,14 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   ([class-ndizi-rest.php](includes/class-ndizi-rest.php), [class-ndizi-admin-bar.php](includes/class-ndizi-admin-bar.php))
   _(branch: ndizi/fable-review)_
 
-- [ ] **Unbounded queries.** `posts_per_page => -1` throughout REST/iCal, and
-  `Ndizi_DB::get_time_entries()` defaults to `number => -1`
-  ([class-ndizi-db.php:360](includes/class-ndizi-db.php#L360)). Fine at boutique scale,
-  but add sane defaults/pagination on REST endpoints before the API is documented as
-  stable.
+- [x] **Unbounded queries.** Added `per_page` (default 100, max 200) and `page` params
+  to the `/projects` and `/tasks` REST routes; responses now include `X-WP-Total` and
+  `X-WP-TotalPages` headers. The iCal feed and internal permission-check queries remain
+  unbounded (they must fetch all records). `Ndizi_DB::get_time_entries()` default
+  changed from `-1` to `500`; callers that legitimately need all entries (invoice CSV
+  export) already pass `number => -1` explicitly.
+  ([class-ndizi-rest.php](includes/class-ndizi-rest.php), [class-ndizi-db.php](includes/class-ndizi-db.php))
+  _(branch: ndizi/fable-review)_
 
 - [x] **Outbound webhooks: add timeout, logging, and basic SSRF guard.**
   Replaced `filter_var(..., FILTER_VALIDATE_URL)` with `wp_http_validate_url()` on both

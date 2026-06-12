@@ -357,7 +357,7 @@ class Ndizi_DB {
 			'approved'   => null,
 			'orderby'    => 'start_time',
 			'order'      => 'DESC',
-			'number'     => -1,
+			'number'     => 500,
 			'offset'     => 0,
 		);
 
