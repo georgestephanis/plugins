@@ -185,12 +185,27 @@ class Ndizi_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Invalid project ID.', 'ndizi-project-management' ) ) );
 		}
 
-		$logs = Ndizi_DB::get_time_entries(
-			array(
-				'project_id' => $project_id,
-				'number'     => 15,
-			)
+		$user_id = get_current_user_id();
+
+		// Validate project access for non-managers
+		if ( ! current_user_can( 'ndizi_manage_projects' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
+			$access = Ndizi_Time_Service::validate_time_project_access( $project_id, 0, $user_id );
+			if ( is_wp_error( $access ) ) {
+				wp_send_json_error( array( 'message' => $access->get_error_message() ) );
+			}
+		}
+
+		$query_args = array(
+			'project_id' => $project_id,
+			'number'     => 15,
 		);
+
+		// Restrict non-managers to their own entries
+		if ( ! current_user_can( 'ndizi_manage_time' ) ) {
+			$query_args['user_id'] = $user_id;
+		}
+
+		$logs = Ndizi_DB::get_time_entries( $query_args );
 
 		ob_start();
 		if ( empty( $logs ) ) {

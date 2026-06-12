@@ -183,10 +183,10 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			.done( function ( response ) {
 				if ( response.active ) {
 					const timerData = response.timer;
-					const timerProjId = parseInt( timerData.project_id );
+					const timerProjId = parseInt( timerData.project_id, 10 );
 
 					// Disable start buttons on other projects, enable stop button on active project
-					if ( timerProjId === parseInt( projectId ) ) {
+					if ( timerProjId === parseInt( projectId, 10 ) ) {
 						$( '.ndizi-timer-bar' ).addClass(
 							'ndizi-timer-running'
 						);
@@ -200,7 +200,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 						$( '#ndizi_tracker_desc' ).val( timerData.description );
 						$( '#ndizi_tracker_billable' ).prop(
 							'checked',
-							parseInt( timerData.billable ) === 1
+							parseInt( timerData.billable, 10 ) === 1
 						);
 
 						// Sync live timer ticker offset
@@ -271,7 +271,8 @@ import { formatTime, createTimer } from '../shared/timer.js';
 				parseFloat( $( '#ndizi_hourly_rate' ).val() ) || 0;
 
 			$( '.ndizi-invoice-time-checkbox:checked' ).each( function () {
-				const duration = parseInt( $( this ).data( 'duration' ) ) || 0;
+				const duration =
+					parseInt( $( this ).data( 'duration' ), 10 ) || 0;
 				const entryRateAttr = $( this ).attr( 'data-rate' );
 				const rate =
 					entryRateAttr !== undefined && entryRateAttr !== ''

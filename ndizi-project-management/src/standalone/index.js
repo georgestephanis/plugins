@@ -125,7 +125,7 @@ jQuery( document ).ready( function ( $ ) {
 	}
 
 	$( '#project-select' ).on( 'change', function () {
-		const projectId = parseInt( $( this ).val() );
+		const projectId = parseInt( $( this ).val(), 10 );
 		const $taskGroup = $( '#task-select-group' );
 		const $taskSelect = $( '#task-select' );
 
@@ -266,8 +266,8 @@ jQuery( document ).ready( function ( $ ) {
 			return;
 		}
 
-		const h = parseInt( $( '#manual-hours' ).val() ) || 0;
-		const m = parseInt( $( '#manual-minutes' ).val() ) || 0;
+		const h = parseInt( $( '#manual-hours' ).val(), 10 ) || 0;
+		const m = parseInt( $( '#manual-minutes' ).val(), 10 ) || 0;
 		const durationSeconds = h * 3600 + m * 60;
 		if ( durationSeconds <= 0 ) {
 			window.alert( cfg.labels.please_enter_duration );
