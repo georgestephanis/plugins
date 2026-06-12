@@ -1371,8 +1371,7 @@ class Ndizi_Standalone_Tracker {
 							if (!idleNotificationSent) {
 								if ('Notification' in window && Notification.permission === 'granted') {
 									new Notification('Ndizi Idle Timer Warning', {
-										body: 'Your timer has been running for over 8 hours. Please check in or stop your timer.',
-										icon: 'images/icon.png'
+										body: 'Your timer has been running for over 8 hours. Please check in or stop your timer.'
 									});
 									idleNotificationSent = true;
 								}

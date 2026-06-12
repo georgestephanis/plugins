@@ -96,7 +96,7 @@ class Ndizi_Calendar {
 			// If task no longer has a due date but has a synced event, delete it.
 			if ( $event_id ) {
 				wp_remote_request(
-					'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . $event_id,
+					'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . rawurlencode( $event_id ),
 					array(
 						'method'  => 'DELETE',
 						'headers' => array(
@@ -137,7 +137,7 @@ class Ndizi_Calendar {
 		);
 
 		if ( $event_id ) {
-			$url    = 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . $event_id;
+			$url    = 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . rawurlencode( $event_id );
 			$method = 'PUT';
 		} else {
 			$url    = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
@@ -220,7 +220,7 @@ class Ndizi_Calendar {
 		);
 
 		if ( $event_id ) {
-			$url    = 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . $event_id;
+			$url    = 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . rawurlencode( $event_id );
 			$method = 'PUT';
 		} else {
 			$url    = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
@@ -242,7 +242,12 @@ class Ndizi_Calendar {
 		if ( ! is_wp_error( $response ) ) {
 			$res_body = json_decode( wp_remote_retrieve_body( $response ), true );
 			if ( isset( $res_body['id'] ) ) {
-				update_option( 'ndizi_gcal_time_entry_' . $entry_id, $res_body['id'] );
+				$option_name = 'ndizi_gcal_time_entry_' . $entry_id;
+				if ( false === get_option( $option_name, false ) ) {
+					add_option( $option_name, $res_body['id'], '', 'no' );
+				} else {
+					update_option( $option_name, $res_body['id'] );
+				}
 			}
 		}
 	}
@@ -264,7 +269,7 @@ class Ndizi_Calendar {
 		}
 
 		wp_remote_request(
-			'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . $event_id,
+			'https://www.googleapis.com/calendar/v3/calendars/primary/events/' . rawurlencode( $event_id ),
 			array(
 				'method'  => 'DELETE',
 				'headers' => array(

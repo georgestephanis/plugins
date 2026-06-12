@@ -222,7 +222,7 @@ class Ndizi_DB {
 		}
 
 		$updating_other_fields = false;
-		foreach ( $data as $key => $val ) {
+		foreach ( array_keys( $data ) as $key ) {
 			if ( 'approved' !== $key && 'approved_by' !== $key ) {
 				$updating_other_fields = true;
 				break;
@@ -235,6 +235,10 @@ class Ndizi_DB {
 				return false;
 			}
 			if ( self::is_date_locked( $existing->start_time ) ) {
+				return false;
+			}
+			// Also reject if the caller is trying to move the entry into a locked period.
+			if ( isset( $data['start_time'] ) && self::is_date_locked( $data['start_time'] ) ) {
 				return false;
 			}
 		}

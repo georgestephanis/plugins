@@ -674,21 +674,30 @@ class Ndizi_REST {
 			return new WP_Error( 'stripe_not_configured', __( 'Stripe is not configured on this site.', 'ndizi-project-management' ), array( 'status' => 500 ) );
 		}
 
-		$amount        = get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
-		$project_id    = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+		$amount     = (float) get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
+		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+
+		if ( $amount <= 0 ) {
+			return new WP_Error( 'invalid_amount', __( 'Invoice has no valid amount to charge.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
 		$project_title = get_the_title( $project_id );
+
+		// Store the long-lived portal token in a short-lived transient so Stripe URLs
+		// only carry a one-time reference key, not the credential itself.
+		$payment_ref = wp_generate_uuid4();
+		set_transient( 'ndizi_stripe_ref_' . $payment_ref, $token, HOUR_IN_SECONDS );
 
 		$success_url = add_query_arg(
 			array(
-				'ndizi_payment' => 'success',
-				'ndizi_token'   => $token,
+				'ndizi_payment'     => 'success',
+				'ndizi_payment_ref' => $payment_ref,
 			),
 			get_permalink( $project_id )
 		);
 		$cancel_url  = add_query_arg(
 			array(
-				'ndizi_payment' => 'cancel',
-				'ndizi_token'   => $token,
+				'ndizi_payment'     => 'cancel',
+				'ndizi_payment_ref' => $payment_ref,
 			),
 			get_permalink( $project_id )
 		);
@@ -812,8 +821,8 @@ class Ndizi_REST {
 			return new WP_Error( 'invalid_json', __( 'Invalid JSON payload.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
 
-		if ( 'checkout.session.completed' === $event['type'] ) {
-			$session    = $event['data']['object'];
+		if ( isset( $event['type'] ) && 'checkout.session.completed' === $event['type'] ) {
+			$session    = $event['data']['object'] ?? array();
 			$invoice_id = isset( $session['client_reference_id'] ) ? intval( $session['client_reference_id'] ) : 0;
 
 			if ( $invoice_id && 'ndizi_invoice' === get_post_type( $invoice_id ) ) {

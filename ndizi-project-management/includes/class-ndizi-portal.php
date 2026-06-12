@@ -203,7 +203,26 @@ class Ndizi_Portal {
 	 * Handle Portal Actions (Login, Submit Task, Submit Message/Comment, Uploads)
 	 */
 	public static function handle_portal_actions() {
+		// 0. Stripe payment redirect — exchange short-lived transient ref for real token.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['ndizi_payment_ref'] ) ) {
+			$payment_ref = sanitize_text_field( wp_unslash( $_GET['ndizi_payment_ref'] ) );
+			$ref_token   = get_transient( 'ndizi_stripe_ref_' . $payment_ref );
+			if ( $ref_token ) {
+				delete_transient( 'ndizi_stripe_ref_' . $payment_ref );
+				$client_id = self::get_client_id_by_token( $ref_token );
+				if ( $client_id ) {
+					self::set_token_cookie( $ref_token, time() + ( 30 * DAY_IN_SECONDS ) );
+				}
+			}
+			// Always remove the ref from the URL (leave ndizi_payment for the success/cancel message).
+			$redirect_url = remove_query_arg( 'ndizi_payment_ref' );
+			wp_safe_redirect( $redirect_url );
+			exit;
+		}
+
 		// 1. Token validation from URL
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['ndizi_token'] ) ) {
 			$token     = sanitize_text_field( wp_unslash( $_GET['ndizi_token'] ) );
 			$client_id = self::get_client_id_by_token( $token );
@@ -297,7 +316,7 @@ class Ndizi_Portal {
 				array(
 					'post_title'   => sprintf( 'Time Off Request: %s (%s - %s)', get_the_title( $client_id ), $start_date, $end_date ),
 					'post_content' => $reason,
-					'post_status'  => 'publish',
+					'post_status'  => 'pending',
 					'post_type'    => 'ndizi_time_off',
 				)
 			);

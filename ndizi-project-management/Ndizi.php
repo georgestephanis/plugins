@@ -138,8 +138,11 @@ class Ndizi_Project_Management {
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();
 
-		// Automated DB schema upgrade check
-		if ( get_option( 'ndizi_db_version' ) !== NDIZI_VERSION ) {
+		// Automated DB schema upgrade check — skip on anonymous front-end requests to avoid
+		// running dbDelta() on every page load during an upgrade window.
+		if ( get_option( 'ndizi_db_version' ) !== NDIZI_VERSION
+			&& ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) )
+		) {
 			Ndizi_DB::create_table();
 			update_option( 'ndizi_db_version', NDIZI_VERSION );
 		}
