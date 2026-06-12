@@ -293,7 +293,7 @@ class Ndizi_REST {
 		}
 
 		if ( 'active' !== get_post_meta( $project_id, '_ndizi_project_status', true ) ) {
-			return new WP_Error( 'project_not_active', __( 'Cannot log time on an inactive project.', 'ndizi-project-management' ) );
+			return new WP_Error( 'project_not_active', __( 'Cannot track time on an inactive project.', 'ndizi-project-management' ) );
 		}
 
 		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
