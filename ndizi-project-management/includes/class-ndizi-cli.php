@@ -77,11 +77,6 @@ class Ndizi_CLI {
 			}
 		}
 
-		// Check if active timer is running.
-		if ( Ndizi_DB::get_active_timer( $user_id ) ) {
-			WP_CLI::line( 'Stopping already active timer first...' );
-		}
-
 		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable ? 1 : 0 );
 		if ( is_wp_error( $timer_id ) ) {
 			WP_CLI::error( $timer_id->get_error_message() );

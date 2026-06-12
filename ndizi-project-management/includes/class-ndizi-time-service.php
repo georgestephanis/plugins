@@ -93,6 +93,14 @@ class Ndizi_Time_Service {
 			return new WP_Error( 'date_locked', __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) );
 		}
 
+		$active = Ndizi_DB::get_active_timer( $user_id );
+		if ( $active ) {
+			if ( Ndizi_DB::is_date_locked( $active->start_time ) ) {
+				return new WP_Error( 'active_timer_locked', __( 'Cannot switch tasks. Your active timer started in a locked period and must be stopped manually.', 'ndizi-project-management' ) );
+			}
+			Ndizi_DB::stop_timer( $user_id );
+		}
+
 		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
 		if ( ! $timer_id ) {
 			return new WP_Error( 'db_error', __( 'Failed to start timer.', 'ndizi-project-management' ) );
