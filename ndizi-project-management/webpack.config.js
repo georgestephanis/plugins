@@ -30,6 +30,7 @@ module.exports = {
 		portal: './src/portal/index.js',
 		block: './src/block/index.js',
 		adminbar: './src/adminbar/index.js',
+		standalone: './src/standalone/index.js',
 	},
 	output: {
 		path: path.resolve( __dirname, 'build' ),

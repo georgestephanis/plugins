@@ -540,25 +540,9 @@ class Ndizi_Abilities {
 		$description = isset( $input['description'] ) ? sanitize_text_field( $input['description'] ) : '';
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 
-		$access = Ndizi_REST::validate_time_project_access( $project_id, $task_id, $user_id );
-		if ( is_wp_error( $access ) ) {
-			return $access;
-		}
-
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
-			return new WP_Error(
-				'date_locked',
-				__( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' )
-			);
-		}
-
-		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable ? 1 : 0 );
-
-		if ( ! $timer_id ) {
-			return new WP_Error(
-				'db_error',
-				__( 'Failed to start timer in database.', 'ndizi-project-management' )
-			);
+		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable ? 1 : 0 );
+		if ( is_wp_error( $timer_id ) ) {
+			return $timer_id;
 		}
 
 		$timer = Ndizi_DB::get_time_entry( $timer_id );
@@ -583,30 +567,10 @@ class Ndizi_Abilities {
 	 */
 	public static function stop_timer( $input = null ) {
 		unset( $input );
-		$user_id = get_current_user_id();
-		$active  = Ndizi_DB::get_active_timer( $user_id );
 
-		if ( ! $active ) {
-			return new WP_Error(
-				'no_active_timer',
-				__( 'No active timer found.', 'ndizi-project-management' )
-			);
-		}
-
-		if ( Ndizi_DB::is_date_locked( $active->start_time ) ) {
-			return new WP_Error(
-				'date_locked',
-				__( 'Cannot stop timer. The timer start time falls in a locked period.', 'ndizi-project-management' )
-			);
-		}
-
-		$stopped = Ndizi_DB::stop_timer( $user_id );
-
-		if ( ! $stopped ) {
-			return new WP_Error(
-				'db_error',
-				__( 'Failed to stop timer in database.', 'ndizi-project-management' )
-			);
+		$stopped = Ndizi_Time_Service::stop_timer( get_current_user_id() );
+		if ( is_wp_error( $stopped ) ) {
+			return $stopped;
 		}
 
 		return array(
@@ -639,34 +603,9 @@ class Ndizi_Abilities {
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 		$start_time  = isset( $input['start_time'] ) ? sanitize_text_field( $input['start_time'] ) : '';
 
-		$access = Ndizi_REST::validate_time_project_access( $project_id, $task_id, $user_id );
-		if ( is_wp_error( $access ) ) {
-			return $access;
-		}
-
-		// Validate duration.
-		if ( $duration <= 0 ) {
-			return new WP_Error(
-				'invalid_duration',
-				__( 'Duration must be greater than zero.', 'ndizi-project-management' )
-			);
-		}
-
-		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
-		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
-			return new WP_Error(
-				'date_locked',
-				__( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' )
-			);
-		}
-
-		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable ? 1 : 0, $start_time );
-
-		if ( ! $entry_id ) {
-			return new WP_Error(
-				'db_error',
-				__( 'Failed to log time manually in database.', 'ndizi-project-management' )
-			);
+		$entry_id = Ndizi_Time_Service::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable ? 1 : 0, $start_time );
+		if ( is_wp_error( $entry_id ) ) {
+			return $entry_id;
 		}
 
 		$timer = Ndizi_DB::get_time_entry( $entry_id );

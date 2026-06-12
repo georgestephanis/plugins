@@ -77,18 +77,12 @@ class Ndizi_CLI {
 			}
 		}
 
-		// Check if active timer is running.
-		$active = Ndizi_DB::get_active_timer( $user_id );
-		if ( $active ) {
-			WP_CLI::line( 'Stopping already active timer first...' );
+		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable ? 1 : 0 );
+		if ( is_wp_error( $timer_id ) ) {
+			WP_CLI::error( $timer_id->get_error_message() );
 		}
 
-		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
-		if ( $timer_id ) {
-			WP_CLI::success( sprintf( 'Timer started for project ID %d (Timer Entry ID: %d).', $project_id, $timer_id ) );
-		} else {
-			WP_CLI::error( 'Failed to start timer.' );
-		}
+		WP_CLI::success( sprintf( 'Timer started for project ID %d (Timer Entry ID: %d).', $project_id, $timer_id ) );
 	}
 
 	/**
@@ -120,19 +114,17 @@ class Ndizi_CLI {
 			}
 		}
 
-		$active = Ndizi_DB::get_active_timer( $user_id );
-		if ( ! $active ) {
-			WP_CLI::warning( 'No active timer running for this user.' );
-			return;
+		$stopped = Ndizi_Time_Service::stop_timer( $user_id );
+		if ( is_wp_error( $stopped ) ) {
+			if ( 'no_active_timer' === $stopped->get_error_code() ) {
+				WP_CLI::warning( 'No active timer running for this user.' );
+				return;
+			}
+			WP_CLI::error( $stopped->get_error_message() );
 		}
 
-		$stopped = Ndizi_DB::stop_timer( $user_id );
-		if ( $stopped ) {
-			$hours = round( $stopped->duration / 3600, 2 );
-			WP_CLI::success( sprintf( 'Timer stopped. Total duration: %s hours (%d seconds).', $hours, $stopped->duration ) );
-		} else {
-			WP_CLI::error( 'Failed to stop timer.' );
-		}
+		$hours = round( $stopped->duration / 3600, 2 );
+		WP_CLI::success( sprintf( 'Timer stopped. Total duration: %s hours (%d seconds).', $hours, $stopped->duration ) );
 	}
 
 	/**

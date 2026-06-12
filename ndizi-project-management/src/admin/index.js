@@ -1,4 +1,5 @@
 import './admin-style.scss';
+import { formatTime, createTimer } from '../shared/timer.js';
 
 /* global ndizi_admin */
 /* eslint-disable camelcase, no-alert */
@@ -11,8 +12,10 @@ import './admin-style.scss';
 ( function ( $ ) {
 	'use strict';
 
-	let timerInterval = null;
-	let timerStartTs = 0;
+	const clock = createTimer(
+		( elapsed ) => $( '.ndizi-live-clock' ).text( formatTime( elapsed ) ),
+		() => $( '.ndizi-live-clock' ).text( '00:00:00' )
+	);
 
 	$( document ).ready( function () {
 		initAuthKeyRegen();
@@ -88,8 +91,7 @@ import './admin-style.scss';
 						.prop( 'disabled', false );
 
 					// Set ticker
-					timerStartTs = Math.floor( Date.now() / 1000 );
-					startClockTicker( 0 );
+					clock.start( 0 );
 
 					refreshLogsTable( projectId );
 				} )
@@ -111,7 +113,7 @@ import './admin-style.scss';
 				} )
 				.done( function () {
 					// Reset ticker
-					stopClockTicker();
+					clock.stop();
 					$( '.ndizi-timer-bar' ).removeClass(
 						'ndizi-timer-running'
 					);
@@ -180,11 +182,11 @@ import './admin-style.scss';
 			} )
 			.done( function ( response ) {
 				if ( response.active ) {
-					const timer = response.timer;
-					const timerProjId = parseInt( timer.project_id );
+					const timerData = response.timer;
+					const timerProjId = parseInt( timerData.project_id, 10 );
 
 					// Disable start buttons on other projects, enable stop button on active project
-					if ( timerProjId === parseInt( projectId ) ) {
+					if ( timerProjId === parseInt( projectId, 10 ) ) {
 						$( '.ndizi-timer-bar' ).addClass(
 							'ndizi-timer-running'
 						);
@@ -194,76 +196,34 @@ import './admin-style.scss';
 							.text( 'Stop' )
 							.prop( 'disabled', false );
 
-						$( '#ndizi_tracker_task_id' ).val( timer.task_id );
-						$( '#ndizi_tracker_desc' ).val( timer.description );
+						$( '#ndizi_tracker_task_id' ).val( timerData.task_id );
+						$( '#ndizi_tracker_desc' ).val( timerData.description );
 						$( '#ndizi_tracker_billable' ).prop(
 							'checked',
-							parseInt( timer.billable ) === 1
+							parseInt( timerData.billable, 10 ) === 1
 						);
 
 						// Sync live timer ticker offset
 						const startTs = Math.floor(
 							new Date(
-								timer.start_time.replace( /-/g, '/' )
+								timerData.start_time.replace( /-/g, '/' )
 							).getTime() / 1000
 						);
 						// Fallback to live_duration if browser timezone mismatches SQL timezone
 						const offset =
-							timer.live_duration ||
+							timerData.live_duration ||
 							Math.max(
 								0,
 								Math.floor( Date.now() / 1000 ) - startTs
 							);
 
-						timerStartTs = Math.floor( Date.now() / 1000 ) - offset;
-						startClockTicker( offset );
+						clock.start( offset );
 					} else {
 						// Timer running on another project, disable start buttons here
 						$( '.ndizi-btn-start' ).prop( 'disabled', true );
 					}
 				}
 			} );
-	}
-
-	/**
-	 * Clock ticking incrementer
-	 *
-	 * @param {number} startOffset Start Offset in seconds.
-	 */
-	function startClockTicker( startOffset ) {
-		stopClockTicker();
-
-		const formatTime = function ( sec ) {
-			const h = Math.floor( sec / 3600 );
-			const m = Math.floor( ( sec % 3600 ) / 60 );
-			const s = sec % 60;
-			return (
-				( h < 10 ? '0' + h : h ) +
-				':' +
-				( m < 10 ? '0' + m : m ) +
-				':' +
-				( s < 10 ? '0' + s : s )
-			);
-		};
-
-		$( '.ndizi-live-clock' ).text( formatTime( startOffset ) );
-
-		timerInterval = setInterval( function () {
-			const now = Math.floor( Date.now() / 1000 );
-			const diff = now - timerStartTs;
-			$( '.ndizi-live-clock' ).text( formatTime( diff ) );
-		}, 1000 );
-	}
-
-	/**
-	 * Stop clock ticking interval
-	 */
-	function stopClockTicker() {
-		if ( timerInterval ) {
-			clearInterval( timerInterval );
-			timerInterval = null;
-		}
-		$( '.ndizi-live-clock' ).text( '00:00:00' );
 	}
 
 	/**
@@ -311,7 +271,8 @@ import './admin-style.scss';
 				parseFloat( $( '#ndizi_hourly_rate' ).val() ) || 0;
 
 			$( '.ndizi-invoice-time-checkbox:checked' ).each( function () {
-				const duration = parseInt( $( this ).data( 'duration' ) ) || 0;
+				const duration =
+					parseInt( $( this ).data( 'duration' ), 10 ) || 0;
 				const entryRateAttr = $( this ).attr( 'data-rate' );
 				const rate =
 					entryRateAttr !== undefined && entryRateAttr !== ''

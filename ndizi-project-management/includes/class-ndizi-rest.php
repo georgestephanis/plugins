@@ -298,65 +298,6 @@ class Ndizi_REST {
 	}
 
 	/**
-	 * Validate that a user can log time against a given project and optional task.
-	 * Shared by REST and Abilities write paths so enforcement stays consistent.
-	 *
-	 * @param int $project_id Project post ID.
-	 * @param int $task_id    Task post ID, or 0 if none.
-	 * @param int $user_id    User performing the action.
-	 * @return true|WP_Error
-	 */
-	public static function validate_time_project_access( $project_id, $task_id, $user_id ) {
-		if ( ! $project_id || 'ndizi_project' !== get_post_type( $project_id ) ) {
-			return new WP_Error( 'invalid_project', __( 'Invalid project ID.', 'ndizi-project-management' ) );
-		}
-
-		if ( 'active' !== get_post_meta( $project_id, '_ndizi_project_status', true ) ) {
-			return new WP_Error( 'project_not_active', __( 'Cannot track time on an inactive project.', 'ndizi-project-management' ) );
-		}
-
-		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
-			$user_tasks = get_posts(
-				array(
-					'post_type'      => 'ndizi_task',
-					'post_status'    => 'publish',
-					'posts_per_page' => 1,
-					'fields'         => 'ids',
-					'no_found_rows'  => true,
-					'meta_query'     => array(
-						array(
-							'key'   => '_ndizi_project_id',
-							'value' => $project_id,
-						),
-						array(
-							'key'   => '_ndizi_assigned_user_id',
-							'value' => $user_id,
-						),
-					),
-				)
-			);
-			if ( empty( $user_tasks ) ) {
-				return new WP_Error( 'project_not_assigned', __( 'You must be assigned to tasks in this project to track time.', 'ndizi-project-management' ) );
-			}
-		}
-
-		if ( $task_id ) {
-			if ( 'ndizi_task' !== get_post_type( $task_id ) || (int) get_post_meta( $task_id, '_ndizi_project_id', true ) !== $project_id ) {
-				return new WP_Error( 'invalid_task', __( 'Invalid task ID or task does not belong to the specified project.', 'ndizi-project-management' ) );
-			}
-
-			if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_tasks' ) ) {
-				$assigned_user = (int) get_post_meta( $task_id, '_ndizi_assigned_user_id', true );
-				if ( $assigned_user !== $user_id ) {
-					return new WP_Error( 'task_not_assigned', __( 'You are not assigned to this task.', 'ndizi-project-management' ) );
-				}
-			}
-		}
-
-		return true;
-	}
-
-	/**
 	 * Get the IDs of projects the current user is involved in.
 	 *
 	 * "Involved in" means the project contains at least one task assigned to the
@@ -590,20 +531,11 @@ class Ndizi_REST {
 		$description = $request->get_param( 'description' );
 		$billable    = $request->get_param( 'billable' );
 
-		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
-		if ( is_wp_error( $access ) ) {
-			$status_code = in_array( $access->get_error_code(), array( 'invalid_project', 'invalid_task' ), true ) ? 400 : 403;
-			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), $status_code );
-		}
-
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
-			return new WP_REST_Response( array( 'error' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ), 400 );
-		}
-
-		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
-
-		if ( ! $timer_id ) {
-			return new WP_REST_Response( array( 'error' => __( 'Failed to start timer', 'ndizi-project-management' ) ), 500 );
+		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable );
+		if ( is_wp_error( $timer_id ) ) {
+			$code        = $timer_id->get_error_code();
+			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
+			return new WP_REST_Response( array( 'error' => $timer_id->get_error_message() ), $status_code );
 		}
 
 		$timer = Ndizi_DB::get_time_entry( $timer_id );
@@ -620,17 +552,10 @@ class Ndizi_REST {
 	 * Stop active timer
 	 */
 	public static function stop_timer() {
-		$user_id = get_current_user_id();
-
-		$active = Ndizi_DB::get_active_timer( $user_id );
-		if ( $active && Ndizi_DB::is_date_locked( $active->start_time ) ) {
-			return new WP_REST_Response( array( 'error' => __( 'Cannot stop timer. The timer start time falls in a locked period.', 'ndizi-project-management' ) ), 400 );
-		}
-
-		$stopped = Ndizi_DB::stop_timer( $user_id );
-
-		if ( ! $stopped ) {
-			return new WP_REST_Response( array( 'error' => __( 'No active timer found', 'ndizi-project-management' ) ), 400 );
+		$stopped = Ndizi_Time_Service::stop_timer( get_current_user_id() );
+		if ( is_wp_error( $stopped ) ) {
+			$status_code = 'db_error' === $stopped->get_error_code() ? 500 : 400;
+			return new WP_REST_Response( array( 'error' => $stopped->get_error_message() ), $status_code );
 		}
 
 		return new WP_REST_Response(
@@ -654,21 +579,11 @@ class Ndizi_REST {
 		$billable    = $request->get_param( 'billable' );
 		$start_time  = $request->get_param( 'start_time' );
 
-		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
-		if ( is_wp_error( $access ) ) {
-			$status_code = in_array( $access->get_error_code(), array( 'invalid_project', 'invalid_task' ), true ) ? 400 : 403;
-			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), $status_code );
-		}
-
-		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
-		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
-			return new WP_REST_Response( array( 'error' => __( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' ) ), 400 );
-		}
-
-		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time );
-
-		if ( ! $entry_id ) {
-			return new WP_REST_Response( array( 'error' => __( 'Failed to log time', 'ndizi-project-management' ) ), 500 );
+		$entry_id = Ndizi_Time_Service::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time );
+		if ( is_wp_error( $entry_id ) ) {
+			$code        = $entry_id->get_error_code();
+			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'invalid_duration', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
+			return new WP_REST_Response( array( 'error' => $entry_id->get_error_message() ), $status_code );
 		}
 
 		$timer = Ndizi_DB::get_time_entry( $entry_id );

@@ -162,7 +162,13 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cpts.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-time-service.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-settings.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-meta-boxes.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-list-tables.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-ajax.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-reports.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
@@ -222,6 +228,12 @@ class Ndizi_Project_Management {
 			&& ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) )
 		) {
 			Ndizi_DB::create_table();
+
+			// Re-run role/cap grants on every version bump so that newly-added
+			// capabilities (e.g. ndizi_manage_clients) are picked up by existing
+			// installs that were activated before those caps were introduced.
+			// add_role() no-ops if the role already exists; add_cap() is additive.
+			Ndizi_Roles::add_roles();
 
 			// Activate any registry modules not yet in the stored option so new
 			// modules (e.g. 'calendar') default to on for existing installs.

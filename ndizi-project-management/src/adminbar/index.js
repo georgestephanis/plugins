@@ -1,4 +1,5 @@
 import './adminbar-style.scss';
+import { formatTime, createTimer } from '../shared/timer.js';
 
 /* global ndizi_adminbar */
 /* eslint-disable camelcase, no-alert */
@@ -11,12 +12,44 @@ import './adminbar-style.scss';
 ( function ( $ ) {
 	'use strict';
 
-	let timerInterval = null;
-	let timerStartTs = 0;
 	let projectsData = [];
 	let selectedProject = null;
 	let selectedTask = null;
 	let hasLoadedData = false;
+
+	const clock = createTimer( function ( elapsed ) {
+		const formatted = formatTime( elapsed );
+		$( '#ndizi-ab-ticker-clock' ).text( formatted );
+		$( '#wp-admin-bar-ndizi-time-tracker' )
+			.find( '.ndizi-ab-label' )
+			.removeClass( 'screen-reader-text' )
+			.text( formatted );
+
+		if ( elapsed > 28800 ) {
+			const $panel = $( '#ndizi-ab-panel' );
+			if ( ! $panel.find( '.ndizi-ab-warning-banner' ).length ) {
+				const $icon = $(
+					'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+				);
+				const $banner = $(
+					'<div class="ndizi-ab-warning-banner"></div>'
+				)
+					.append( $icon )
+					.append(
+						$( '<span></span>' ).text(
+							ndizi_adminbar.labels.idle_warning
+						)
+					);
+				$panel
+					.find( '.ndizi-ab-active-timer-view' )
+					.find( '.ndizi-ab-section-title' )
+					.after( $banner );
+			}
+			$( '#wp-admin-bar-ndizi-time-tracker' ).addClass(
+				'ndizi-timer-idle-warning'
+			);
+		}
+	} );
 
 	$( document ).ready( function () {
 		init();
@@ -39,8 +72,7 @@ import './adminbar-style.scss';
 		// Check if timer is active on load
 		if ( $panel.hasClass( 'ndizi-timer-running' ) ) {
 			const offset = parseInt( $panel.data( 'duration' ), 10 ) || 0;
-			timerStartTs = Math.floor( Date.now() / 1000 ) - offset;
-			startClockTicker( offset );
+			clock.start( offset );
 		}
 
 		// Fetch project data when hovering or clicking the admin bar node for the first time
@@ -193,8 +225,7 @@ import './adminbar-style.scss';
 					);
 
 					// Start local ticking
-					timerStartTs = Math.floor( Date.now() / 1000 );
-					startClockTicker( 0 );
+					clock.start( 0 );
 				} )
 				.fail( function ( err ) {
 					window.alert(
@@ -219,7 +250,7 @@ import './adminbar-style.scss';
 					nonce: ndizi_adminbar.nonce,
 				} )
 				.done( function () {
-					stopClockTicker();
+					clock.stop();
 
 					const $node = $( '#wp-admin-bar-ndizi-time-tracker' );
 					$node.removeClass(
@@ -469,81 +500,6 @@ import './adminbar-style.scss';
 			$budgetRow.show();
 		} else {
 			$budgetRow.hide();
-		}
-	}
-
-	/**
-	 * Starts the localized timer clock ticker in the browser DOM
-	 *
-	 * @param {number} startOffset Current seconds value to start at.
-	 */
-	function startClockTicker( startOffset ) {
-		stopClockTicker();
-
-		const formatTime = function ( sec ) {
-			const h = Math.floor( sec / 3600 );
-			const m = Math.floor( ( sec % 3600 ) / 60 );
-			const s = sec % 60;
-			return (
-				( h < 10 ? '0' + h : h ) +
-				':' +
-				( m < 10 ? '0' + m : m ) +
-				':' +
-				( s < 10 ? '0' + s : s )
-			);
-		};
-
-		const updateTime = function ( diff ) {
-			const formatted = formatTime( diff );
-			$( '#ndizi-ab-ticker-clock' ).text( formatted );
-			$( '#wp-admin-bar-ndizi-time-tracker' )
-				.find( '.ndizi-ab-label' )
-				.removeClass( 'screen-reader-text' )
-				.text( formatted );
-
-			// Check for 8 hours warning (8 * 3600 = 28800 seconds)
-			if ( diff > 28800 ) {
-				const $panel = $( '#ndizi-ab-panel' );
-				if ( ! $panel.find( '.ndizi-ab-warning-banner' ).length ) {
-					const $icon = $(
-						'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-					);
-					const $banner = $(
-						'<div class="ndizi-ab-warning-banner"></div>'
-					)
-						.append( $icon )
-						.append(
-							$( '<span></span>' ).text(
-								ndizi_adminbar.labels.idle_warning
-							)
-						);
-					$panel
-						.find( '.ndizi-ab-active-timer-view' )
-						.find( '.ndizi-ab-section-title' )
-						.after( $banner );
-				}
-				$( '#wp-admin-bar-ndizi-time-tracker' ).addClass(
-					'ndizi-timer-idle-warning'
-				);
-			}
-		};
-
-		updateTime( startOffset );
-
-		timerInterval = setInterval( function () {
-			const now = Math.floor( Date.now() / 1000 );
-			const diff = now - timerStartTs;
-			updateTime( diff );
-		}, 1000 );
-	}
-
-	/**
-	 * Stops the localized timer interval
-	 */
-	function stopClockTicker() {
-		if ( timerInterval ) {
-			clearInterval( timerInterval );
-			timerInterval = null;
 		}
 	}
 } )( window.jQuery );
