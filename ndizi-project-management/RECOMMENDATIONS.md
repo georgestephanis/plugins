@@ -10,19 +10,14 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
 
 ## P2 — Architecture (do these while the plugin is still pre-1.0)
 
-- [ ] **Introduce a shared service/validation layer for time operations.** There are four
-  write paths today — REST, Abilities, admin AJAX, CLI — each implementing (or omitting)
-  its own validation and authorization on top of `Ndizi_DB`, which is pure persistence.
-  This is the root cause of the P1 REST-validation gap and the duplicated permission
-  logic the Abilities class borrows from `Ndizi_REST`. Extract a `Ndizi_Time_Service`
-  (validate project active / user assignment / lock date / approval state, then call
-  `Ndizi_DB`) and make all four entry points thin adapters over it.
+- [x] **Introduce a shared service/validation layer for time operations.** Resolved in
+  commit e2d8ab7 — `Ndizi_Time_Service` extracts validate/start/stop/log; REST, Admin
+  AJAX, Admin Bar AJAX, Abilities, and CLI are all thin adapters. Admin AJAX gained the
+  missing project-assignment check; CLI gained the missing date-lock guard on stop.
 
-- [ ] **Split `Ndizi_Admin` (2,766 lines, ~8 responsibilities).** It currently owns
-  settings + Google OAuth, list-table columns for 4 CPTs, six meta boxes and their save
-  logic, 8+ AJAX handlers, dashboard/reports/gantt rendering, and query scoping. Natural
-  seams: `Ndizi_Settings` (incl. OAuth), `Ndizi_Meta_Boxes`, `Ndizi_List_Tables`,
-  `Ndizi_Ajax` (or fold timer AJAX into the time service), `Ndizi_Reports`.
+- [x] **Split `Ndizi_Admin` (2,766 lines, ~8 responsibilities).** Resolved in commit
+  5046bb0 — extracted into `Ndizi_Settings`, `Ndizi_Meta_Boxes`, `Ndizi_List_Tables`,
+  `Ndizi_Ajax`, and `Ndizi_Reports`; `Ndizi_Admin` is now a 26-line coordinator.
 
 - [ ] **Move the standalone tracker out of inline heredocs.** `Ndizi_Standalone_Tracker`
   embeds ~1,200 lines of HTML/CSS/JS (including the service worker) directly in PHP
