@@ -304,18 +304,20 @@ class Ndizi_CPTs {
 			'ndizi_client',
 			'_ndizi_client_website',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'esc_url_raw',
 			)
 		);
 		register_post_meta(
 			'ndizi_client',
 			'_ndizi_client_address',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		// The auth key is a portal access credential and is intentionally NOT exposed via REST.
@@ -323,10 +325,11 @@ class Ndizi_CPTs {
 			'ndizi_client',
 			'_ndizi_client_auth_key',
 			array(
-				'show_in_rest'  => false,
-				'single'        => true,
-				'type'          => 'string',
-				'auth_callback' => function () {
+				'show_in_rest'      => false,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => function () {
 					return current_user_can( 'ndizi_manage_clients' );
 				},
 			)
@@ -335,10 +338,11 @@ class Ndizi_CPTs {
 			'ndizi_client',
 			'_ndizi_client_status',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-				'default'      => 'active', // active, archived
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'default'           => 'active', // active, archived
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 
@@ -347,55 +351,61 @@ class Ndizi_CPTs {
 			'ndizi_project',
 			'_ndizi_client_id',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'integer',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
 			)
 		);
 		register_post_meta(
 			'ndizi_project',
 			'_ndizi_project_start_date',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_project',
 			'_ndizi_project_end_date',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_project',
 			'_ndizi_project_budget',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'number',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'number',
+				'sanitize_callback' => 'floatval',
 			)
 		);
 		register_post_meta(
 			'ndizi_project',
 			'_ndizi_project_status',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-				'default'      => 'active', // active, archived
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'default'           => 'active', // active, archived
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_project',
 			'_ndizi_project_hourly_rate',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'number',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'number',
+				'sanitize_callback' => 'floatval',
 			)
 		);
 
@@ -404,56 +414,62 @@ class Ndizi_CPTs {
 			'ndizi_task',
 			'_ndizi_project_id',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'integer',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
 			)
 		);
 		register_post_meta(
 			'ndizi_task',
 			'_ndizi_assigned_user_id',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'integer',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
 			)
 		);
 		register_post_meta(
 			'ndizi_task',
 			'_ndizi_task_status',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-				'default'      => 'open', // open, in_progress, completed, cancelled
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'default'           => 'open', // open, in_progress, completed, cancelled
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_task',
 			'_ndizi_task_priority',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-				'default'      => 'medium', // low, medium, high
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'default'           => 'medium', // low, medium, high
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_task',
 			'_ndizi_task_due_date',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_task',
 			'_ndizi_task_hourly_rate',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'number',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'number',
+				'sanitize_callback' => 'floatval',
 			)
 		);
 
@@ -463,46 +479,51 @@ class Ndizi_CPTs {
 				'ndizi_invoice',
 				'_ndizi_project_id',
 				array(
-					'show_in_rest' => true,
-					'single'       => true,
-					'type'         => 'integer',
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'integer',
+					'sanitize_callback' => 'absint',
 				)
 			);
 			register_post_meta(
 				'ndizi_invoice',
 				'_ndizi_invoice_date',
 				array(
-					'show_in_rest' => true,
-					'single'       => true,
-					'type'         => 'string',
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
 				)
 			);
 			register_post_meta(
 				'ndizi_invoice',
 				'_ndizi_invoice_due_date',
 				array(
-					'show_in_rest' => true,
-					'single'       => true,
-					'type'         => 'string',
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
 				)
 			);
 			register_post_meta(
 				'ndizi_invoice',
 				'_ndizi_invoice_amount',
 				array(
-					'show_in_rest' => true,
-					'single'       => true,
-					'type'         => 'number',
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'number',
+					'sanitize_callback' => 'floatval',
 				)
 			);
 			register_post_meta(
 				'ndizi_invoice',
 				'_ndizi_invoice_status',
 				array(
-					'show_in_rest' => true,
-					'single'       => true,
-					'type'         => 'string',
-					'default'      => 'draft', // draft, sent, paid, void
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'default'           => 'draft', // draft, sent, paid, void
+					'sanitize_callback' => 'sanitize_text_field',
 				)
 			);
 		}
@@ -512,34 +533,37 @@ class Ndizi_CPTs {
 			'ndizi_contact',
 			'_ndizi_contact_email',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_email',
 			)
 		);
 		register_post_meta(
 			'ndizi_contact',
 			'_ndizi_contact_phone',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_contact',
 			'_ndizi_contact_role',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_contact',
 			'_ndizi_associated_clients',
 			array(
-				'show_in_rest' => array(
+				'show_in_rest'      => array(
 					'schema' => array(
 						'type'  => 'array',
 						'items' => array(
@@ -547,8 +571,11 @@ class Ndizi_CPTs {
 						),
 					),
 				),
-				'single'       => true,
-				'type'         => 'array',
+				'single'            => true,
+				'type'              => 'array',
+				'sanitize_callback' => function ( $value ) {
+					return array_map( 'absint', (array) $value );
+				},
 			)
 		);
 
@@ -557,45 +584,50 @@ class Ndizi_CPTs {
 			'ndizi_time_off',
 			'_ndizi_time_off_start_date',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_time_off',
 			'_ndizi_time_off_end_date',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_time_off',
 			'_ndizi_time_off_type',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_time_off',
 			'_ndizi_time_off_status',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 		register_post_meta(
 			'ndizi_time_off',
 			'_ndizi_time_off_user_id',
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'integer',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
 			)
 		);
 	}

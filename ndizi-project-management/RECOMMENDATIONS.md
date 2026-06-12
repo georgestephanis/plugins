@@ -25,10 +25,11 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   ([class-ndizi-rest.php](includes/class-ndizi-rest.php), [class-ndizi-abilities.php](includes/class-ndizi-abilities.php))
   _(branch: ndizi/fable-review)_
 
-- [ ] **No sanitize callbacks on any `register_post_meta()` call.**
-  Zero `sanitize_callback` arguments in [class-ndizi-cpts.php](includes/class-ndizi-cpts.php).
-  Add `sanitize_text_field` / `absint` / `floatval` per field so meta is safe regardless
-  of which entry point writes it.
+- [x] **No sanitize callbacks on any `register_post_meta()` call.**
+  Added per-type callbacks: `esc_url_raw` (website), `sanitize_email` (contact email),
+  `absint` (integer IDs), `floatval` (budget/rates/amounts), `sanitize_text_field`
+  (all other strings), array map of `absint` (associated clients).
+  ([class-ndizi-cpts.php](includes/class-ndizi-cpts.php)) _(branch: ndizi/fable-review)_
 
 - [ ] **Stripe webhook: check `payment_status` and add idempotency.**
   `handle_stripe_webhook()` ([class-ndizi-rest.php:824-832](includes/class-ndizi-rest.php#L824-L832))
