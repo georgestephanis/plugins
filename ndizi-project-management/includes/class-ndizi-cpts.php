@@ -15,6 +15,7 @@ class Ndizi_CPTs {
 	public static function init() {
 		self::register_post_types();
 		self::register_metadata();
+		add_filter( 'use_block_editor_for_post_type', array( __CLASS__, 'disable_block_editor' ), 10, 2 );
 	}
 
 	/**
@@ -420,5 +421,28 @@ class Ndizi_CPTs {
 				'type'         => 'array',
 			)
 		);
+	}
+
+	/**
+	 * Disable Gutenberg block editor for Ndizi post types.
+	 *
+	 * @param bool   $use_block_editor Whether to use the block editor.
+	 * @param string $post_type        The post type slug.
+	 * @return bool
+	 */
+	public static function disable_block_editor( $use_block_editor, $post_type ) {
+		$ndizi_post_types = array(
+			'ndizi_client',
+			'ndizi_project',
+			'ndizi_task',
+			'ndizi_invoice',
+			'ndizi_contact',
+		);
+
+		if ( in_array( $post_type, $ndizi_post_types, true ) ) {
+			return false;
+		}
+
+		return $use_block_editor;
 	}
 }
