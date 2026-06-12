@@ -10,9 +10,103 @@ if ( ! defined( 'ABSPATH' ) || ! class_exists( 'Ndizi_Project_Management' ) ) {
 // Get the current user to assign tasks and time to.
 $user_id = get_current_user_id();
 if ( ! $user_id ) {
-	echo "Error: Could not determine the current user. Please run this as a logged-in user.\n";
+	// Fallback to user ID 1, or the first administrator if 1 doesn't exist.
+	$user_id = 1;
+	if ( ! get_userdata( $user_id ) ) {
+		$admin_users = get_users(
+			array(
+				'role'   => 'administrator',
+				'number' => 1,
+			)
+		);
+		if ( ! empty( $admin_users ) ) {
+			$user_id = $admin_users[0]->ID;
+		}
+	}
+}
+
+// If we still don't have a valid user, we must exit.
+if ( ! get_userdata( $user_id ) ) {
+	echo "Error: Could not determine or fallback to a valid administrator user.\n";
 	exit;
 }
+
+// Ensure the primary user has billing and salary rates set so their time logs resolve correctly in reports
+if ( ! get_user_meta( $user_id, '_ndizi_user_billing_rate', true ) ) {
+	update_user_meta( $user_id, '_ndizi_user_billing_rate', '100.00' );
+}
+if ( ! get_user_meta( $user_id, '_ndizi_user_salary_rate', true ) ) {
+	update_user_meta( $user_id, '_ndizi_user_salary_rate', '50.00' );
+}
+
+// Define mock user accounts to create a multi-user simulated workspace
+$mock_users_definition = array(
+	'alice_manager'    => array(
+		'user_login'   => 'alice_manager',
+		'user_pass'    => 'password123',
+		'user_email'   => 'alice@example.com',
+		'first_name'   => 'Alice',
+		'last_name'    => 'Manager',
+		'role'         => 'ndizi_manager',
+		'billing_rate' => 150.00,
+		'salary_rate'  => 80.00,
+	),
+	'bob_dev'          => array(
+		'user_login'   => 'bob_dev',
+		'user_pass'    => 'password123',
+		'user_email'   => 'bob@example.com',
+		'first_name'   => 'Bob',
+		'last_name'    => 'Developer',
+		'role'         => 'ndizi_team_member',
+		'billing_rate' => 120.00,
+		'salary_rate'  => 60.00,
+	),
+	'charlie_designer' => array(
+		'user_login'   => 'charlie_designer',
+		'user_pass'    => 'password123',
+		'user_email'   => 'charlie@example.com',
+		'first_name'   => 'Charlie',
+		'last_name'    => 'Designer',
+		'role'         => 'ndizi_team_member',
+		'billing_rate' => 100.00,
+		'salary_rate'  => 50.00,
+	),
+);
+
+$mock_users = array();
+foreach ( $mock_users_definition as $slug => $data ) {
+	$existing_user = get_user_by( 'login', $data['user_login'] );
+	if ( $existing_user ) {
+		$u_id = $existing_user->ID;
+		echo "Found existing user: {$data['first_name']} {$data['last_name']} (ID: $u_id)\n";
+	} else {
+		$u_id = wp_insert_user(
+			array(
+				'user_login' => $data['user_login'],
+				'user_pass'  => $data['user_pass'],
+				'user_email' => $data['user_email'],
+				'first_name' => $data['first_name'],
+				'last_name'  => $data['last_name'],
+				'role'       => $data['role'],
+			)
+		);
+		if ( is_wp_error( $u_id ) ) {
+			echo "Error creating user {$data['user_login']}: " . $u_id->get_error_message() . "\n";
+			continue;
+		}
+		echo "Created User: {$data['first_name']} {$data['last_name']} (ID: $u_id)\n";
+	}
+
+	// Update billing/salary rates
+	update_user_meta( $u_id, '_ndizi_user_billing_rate', number_format( $data['billing_rate'], 2, '.', '' ) );
+	update_user_meta( $u_id, '_ndizi_user_salary_rate', number_format( $data['salary_rate'], 2, '.', '' ) );
+
+	$mock_users[ $slug ] = $u_id;
+}
+
+$alice_id   = isset( $mock_users['alice_manager'] ) ? $mock_users['alice_manager'] : $user_id;
+$bob_id     = isset( $mock_users['bob_dev'] ) ? $mock_users['bob_dev'] : $user_id;
+$charlie_id = isset( $mock_users['charlie_designer'] ) ? $mock_users['charlie_designer'] : $user_id;
 
 // 1. Clear existing posts of all Ndizi post types to ensure a clean reset
 $post_types = array( 'ndizi_client', 'ndizi_project', 'ndizi_task', 'ndizi_invoice', 'ndizi_contact', 'ndizi_time_off' );
@@ -254,7 +348,7 @@ $task1_id = wp_insert_post(
 );
 if ( $task1_id ) {
 	update_post_meta( $task1_id, '_ndizi_project_id', $proj1_id );
-	update_post_meta( $task1_id, '_ndizi_assigned_user_id', $user_id );
+	update_post_meta( $task1_id, '_ndizi_assigned_user_id', $charlie_id );
 	update_post_meta( $task1_id, '_ndizi_task_status', 'in_progress' );
 	update_post_meta( $task1_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task1_id, '_ndizi_task_due_date', '2026-06-15' );
@@ -306,7 +400,7 @@ $task4_id = wp_insert_post(
 );
 if ( $task4_id ) {
 	update_post_meta( $task4_id, '_ndizi_project_id', $proj2_id );
-	update_post_meta( $task4_id, '_ndizi_assigned_user_id', $user_id );
+	update_post_meta( $task4_id, '_ndizi_assigned_user_id', $bob_id );
 	update_post_meta( $task4_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task4_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task4_id, '_ndizi_task_due_date', '2026-07-10' );
@@ -323,7 +417,7 @@ $task5_id = wp_insert_post(
 );
 if ( $task5_id ) {
 	update_post_meta( $task5_id, '_ndizi_project_id', $proj2_id );
-	update_post_meta( $task5_id, '_ndizi_assigned_user_id', $user_id );
+	update_post_meta( $task5_id, '_ndizi_assigned_user_id', $alice_id );
 	update_post_meta( $task5_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task5_id, '_ndizi_task_priority', 'low' );
 	update_post_meta( $task5_id, '_ndizi_task_due_date', '2026-07-28' );
@@ -341,7 +435,7 @@ $task6_id = wp_insert_post(
 );
 if ( $task6_id ) {
 	update_post_meta( $task6_id, '_ndizi_project_id', $proj3_id );
-	update_post_meta( $task6_id, '_ndizi_assigned_user_id', $user_id );
+	update_post_meta( $task6_id, '_ndizi_assigned_user_id', $bob_id );
 	update_post_meta( $task6_id, '_ndizi_task_status', 'in_progress' );
 	update_post_meta( $task6_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task6_id, '_ndizi_task_due_date', '2026-07-15' );
@@ -358,7 +452,7 @@ $task7_id = wp_insert_post(
 );
 if ( $task7_id ) {
 	update_post_meta( $task7_id, '_ndizi_project_id', $proj3_id );
-	update_post_meta( $task7_id, '_ndizi_assigned_user_id', $user_id );
+	update_post_meta( $task7_id, '_ndizi_assigned_user_id', $charlie_id );
 	update_post_meta( $task7_id, '_ndizi_task_status', 'completed' );
 	update_post_meta( $task7_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task7_id, '_ndizi_task_due_date', '2026-06-05' );
@@ -451,7 +545,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task1_id,
-		'user_id'     => $user_id,
+		'user_id'     => $charlie_id,
 		'description' => 'Initial Layout Mockup Design and feedback cycles',
 		'start_time'  => '2026-06-03 09:00:00',
 		'end_time'    => '2026-06-03 14:00:00',
@@ -461,7 +555,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task1_id,
-		'user_id'     => $user_id,
+		'user_id'     => $charlie_id,
 		'description' => 'Home Page wireframe corrections and client sync',
 		'start_time'  => '2026-06-04 10:00:00',
 		'end_time'    => '2026-06-04 13:00:00',
@@ -504,7 +598,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj2_id,
 		'task_id'     => $task4_id,
-		'user_id'     => $user_id,
+		'user_id'     => $bob_id,
 		'description' => 'Setup Firebase project console and export google-services plist config',
 		'start_time'  => '2026-06-10 11:00:00',
 		'end_time'    => '2026-06-10 14:00:00',
@@ -515,7 +609,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj2_id,
 		'task_id'     => $task5_id,
-		'user_id'     => $user_id,
+		'user_id'     => $alice_id,
 		'description' => 'App store developer account review and documentation lookup',
 		'start_time'  => '2026-06-10 15:00:00',
 		'end_time'    => '2026-06-10 16:30:00',
@@ -526,7 +620,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj3_id,
 		'task_id'     => $task7_id,
-		'user_id'     => $user_id,
+		'user_id'     => $charlie_id,
 		'description' => 'Run disperse containment integrity testing scans',
 		'start_time'  => '2026-06-02 08:00:00',
 		'end_time'    => '2026-06-02 18:00:00',
@@ -537,7 +631,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj3_id,
 		'task_id'     => $task6_id,
-		'user_id'     => $user_id,
+		'user_id'     => $bob_id,
 		'description' => 'Render core Canvas container component and test updates latency',
 		'start_time'  => '2026-06-08 09:00:00',
 		'end_time'    => '2026-06-08 17:00:00',
@@ -548,7 +642,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj4_id,
 		'task_id'     => 0,
-		'user_id'     => $user_id,
+		'user_id'     => $alice_id,
 		'description' => 'Scoped grids route overlays and timelines outline',
 		'start_time'  => '2026-05-15 10:00:00',
 		'end_time'    => '2026-05-15 15:30:00',
@@ -559,7 +653,7 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj5_id,
 		'task_id'     => 0,
-		'user_id'     => $user_id,
+		'user_id'     => $alice_id,
 		'description' => 'Scanned server ports and audited mainframe logins frequencies',
 		'start_time'  => '2026-04-20 22:00:00',
 		'end_time'    => '2026-04-21 02:00:00',
