@@ -222,7 +222,10 @@ import './adminbar-style.scss';
 					stopClockTicker();
 
 					const $node = $( '#wp-admin-bar-ndizi-time-tracker' );
-					$node.removeClass( 'ndizi-timer-active' );
+					$node.removeClass(
+						'ndizi-timer-active ndizi-timer-idle-warning'
+					);
+					$panel.find( '.ndizi-ab-warning-banner' ).remove();
 					$node
 						.find( '.ndizi-ab-label' )
 						.removeClass( 'screen-reader-text' )
@@ -496,6 +499,25 @@ import './adminbar-style.scss';
 				.find( '.ndizi-ab-label' )
 				.removeClass( 'screen-reader-text' )
 				.text( formatted );
+
+			// Check for 8 hours warning (8 * 3600 = 28800 seconds)
+			if ( diff > 28800 ) {
+				const $panel = $( '#ndizi-ab-panel' );
+				if ( ! $panel.find( '.ndizi-ab-warning-banner' ).length ) {
+					const warningHtml =
+						'<div class="ndizi-ab-warning-banner" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; line-height: 1.4; text-align: left;">' +
+						'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+						'<span>Warning: Your timer has been running for over 8 hours. Please verify your logged time.</span>' +
+						'</div>';
+					$panel
+						.find( '.ndizi-ab-active-timer-view' )
+						.find( '.ndizi-ab-section-title' )
+						.after( warningHtml );
+				}
+				$( '#wp-admin-bar-ndizi-time-tracker' ).addClass(
+					'ndizi-timer-idle-warning'
+				);
+			}
 		};
 
 		updateTime( startOffset );

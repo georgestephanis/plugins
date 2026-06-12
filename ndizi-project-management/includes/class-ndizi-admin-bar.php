@@ -100,6 +100,10 @@ class Ndizi_Admin_Bar {
 			$now_ts       = strtotime( current_time( 'mysql' ) );
 			$duration_sec = max( 0, $now_ts - $start_ts );
 
+			if ( $duration_sec > 8 * 3600 ) {
+				$node_class .= ' ndizi-timer-idle-warning';
+			}
+
 			$h                   = floor( $duration_sec / 3600 );
 			$m                   = floor( ( $duration_sec % 3600 ) / 60 );
 			$s                   = $duration_sec % 60;
@@ -180,6 +184,13 @@ class Ndizi_Admin_Bar {
 			<!-- ACTIVE TIMER STATE -->
 			<div class="ndizi-ab-active-timer-view">
 				<div class="ndizi-ab-section-title"><?php esc_html_e( 'Running Tracker', 'ndizi-project-management' ); ?></div>
+				
+				<?php if ( $duration_sec > 8 * 3600 ) : ?>
+					<div class="ndizi-ab-warning-banner" style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; line-height: 1.4; text-align: left;">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+						<span><?php esc_html_e( 'Warning: Your timer has been running for over 8 hours. Please verify your logged time.', 'ndizi-project-management' ); ?></span>
+					</div>
+				<?php endif; ?>
 				
 				<div class="ndizi-ab-running-details">
 					<div class="ndizi-ab-proj-tag" id="ndizi-ab-active-project"><?php echo esc_html( $project_title ); ?></div>
