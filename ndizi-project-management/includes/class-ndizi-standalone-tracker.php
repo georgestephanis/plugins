@@ -13,15 +13,17 @@ class Ndizi_Standalone_Tracker {
 	 * Initialize hooks
 	 */
 	public static function init() {
-		add_action( 'admin_menu', array( __CLASS__, 'register_submenu' ) );
-		add_action( 'admin_init', array( __CLASS__, 'handle_requests' ) );
-		add_action( 'wp_ajax_ndizi_get_recent_user_logs', array( __CLASS__, 'ajax_get_recent_user_logs' ) );
+		if ( is_admin() ) {
+			add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+			add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+		}
+		add_action( 'wp_ajax_ndizi_push_notification', array( __CLASS__, 'push_notification' ) );
 	}
 
 	/**
 	 * Register Standalone Tracker submenu page under Ndizi PM
 	 */
-	public static function register_submenu() {
+	public static function register_page() {
 		add_submenu_page(
 			'ndizi-pm',
 			__( 'Standalone Tracker', 'ndizi-project-management' ),
