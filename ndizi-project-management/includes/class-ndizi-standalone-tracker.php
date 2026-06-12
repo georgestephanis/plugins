@@ -13,8 +13,25 @@ class Ndizi_Standalone_Tracker {
 	 * Initialize hooks
 	 */
 	public static function init() {
-		add_action( 'admin_init', array( __CLASS__, 'handle_requests' ) );
+		if ( is_admin() ) {
+			add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+			add_action( 'admin_init', array( __CLASS__, 'handle_requests' ) );
+		}
 		add_action( 'wp_ajax_ndizi_get_recent_user_logs', array( __CLASS__, 'ajax_get_recent_user_logs' ) );
+	}
+
+	/**
+	 * Register Standalone Tracker submenu page under Ndizi PM
+	 */
+	public static function register_page() {
+		add_submenu_page(
+			'ndizi-pm',
+			__( 'Standalone Tracker', 'ndizi-project-management' ),
+			__( 'Standalone Tracker', 'ndizi-project-management' ),
+			'ndizi_log_time',
+			'ndizi-tracker-standalone',
+			array( __CLASS__, 'render_standalone_page' )
+		);
 	}
 
 	/**

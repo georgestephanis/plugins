@@ -79,12 +79,13 @@ Features are independently toggleable from the Settings page (`admin.php?page=nd
 
 | Module slug | What it controls |
 | :--- | :--- |
-| `invoicing` | Invoice CPT, printable invoice template, invoice CSV/JSON exports, QuickBooks report CSV |
+| `invoicing` | Invoice CPT, printable invoice template, invoice CSV/JSON exports, QuickBooks report CSV, Stripe payment routes |
 | `portal` | Client Portal shortcode/block, passwordless token auth, discussion boards |
 | `tracker` | Admin bar quick-timer, standalone PWA tracker page |
 | `notifications` | Email notifications for task assignment and status changes |
 | `gantt` | Gantt chart timeline views in the admin |
 | `integrations` | Outbound webhooks and Slack alerts |
+| `calendar` | Google Calendar sync for tasks and time entries, iCal subscription feed |
 
 All modules default to **active** on a fresh install; no configuration required to use the full feature set.
 
@@ -164,7 +165,7 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 
 Options configured in the settings dashboard:
 
-- `ndizi_active_modules` (array of strings) — List of active module slugs (`invoicing`, `portal`, `tracker`, `notifications`, `gantt`, `integrations`). Defaults to all modules active when not set.
+- `ndizi_active_modules` (array of strings) — List of active module slugs (`invoicing`, `portal`, `tracker`, `notifications`, `gantt`, `integrations`, `calendar`). Defaults to all modules active when not set.
 - `ndizi_adminbar_icon` (string) — Admin bar quick-timer icon (`banana`, `clock`, `punch_clock`, `hourglass`).
 - `ndizi_lock_date` (string) — Date string; time entries on or before this date are locked and cannot be created, edited, or deleted.
 - `ndizi_webhook_url` (string) — Endpoint URL for outbound event payload POST requests.
@@ -189,9 +190,9 @@ The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each ro
 | `GET` | `/time` | List time log history for the current user. |
 | `PUT` | `/time/<id>` | Edit a specific historical time entry. |
 | `DELETE` | `/time/<id>` | Delete a specific historical time entry. |
-| `POST` | `/invoices/<id>/pay` | Create a Stripe Checkout session for an invoice (authenticated user or valid `token` param). |
-| `POST` | `/stripe/webhook` | Stripe webhook receiver — marks invoice paid on `checkout.session.completed` (public). |
-| `GET` | `/calendar/ical` | Returns an iCal (`.ics`) feed of tasks and time entries (public). |
+| `POST` | `/invoices/<id>/pay` | Create a Stripe Checkout session for an invoice (authenticated user or valid `token` param). Registered only when the `invoicing` module is active. |
+| `POST` | `/stripe/webhook` | Stripe webhook receiver — marks invoice paid on `checkout.session.completed` (public). Registered only when the `invoicing` module is active. |
+| `GET` | `/calendar/ical` | Returns an iCal (`.ics`) feed of tasks and time entries (public). Registered only when the `calendar` module is active. |
 
 ### 5. WP-CLI Commands
 
@@ -322,4 +323,4 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 - **Lock date**: A lock date setting prevents modifications to any time entry dated on or before that date, protecting closed billing periods site-wide.
 - **Mobile**: The standalone tracker is a PWA optimized for desktop use. There is no dedicated native mobile app.
 - **Integrations**: Includes outbound webhooks (event callbacks on timer CRUD, CPT status transitions, and metadata changes), a Slack incoming webhook integration, and a QuickBooks-compatible CSV report exporter.
-- **Modular Architecture**: Features like Invoicing & Billing, Client Portal, Admin Bar Tracker, Email Notifications, Gantt charts, and Webhooks can be toggled on/off on the settings page to optimize performance.
+- **Modular Architecture**: Features like Invoicing & Billing, Client Portal, Admin Bar Tracker, Email Notifications, Gantt charts, Webhooks, and Google Calendar sync can be toggled on/off on the settings page to optimize performance. The module list is driven by a single `get_module_registry()` declaration in `Ndizi.php`.

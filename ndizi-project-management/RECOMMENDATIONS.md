@@ -82,14 +82,22 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   seams: `Ndizi_Settings` (incl. OAuth), `Ndizi_Meta_Boxes`, `Ndizi_List_Tables`,
   `Ndizi_Ajax` (or fold timer AJAX into the time service), `Ndizi_Reports`.
 
-- [ ] **Make the module system own its pieces.** Module gating is currently scattered and
-  leaky: Stripe payment/webhook routes register unconditionally in the always-loaded
-  `Ndizi_REST` even when the `invoicing` module is off
-  ([class-ndizi-rest.php:202-233](includes/class-ndizi-rest.php#L202-L233)); the `gantt`
-  module flag exists but gantt code lives unconditionally in `Ndizi_Admin`;
-  `Ndizi_Calendar` (a Google integration) is always loaded. Define a small module
-  registry where each module registers its own includes, hooks, and REST routes, so
-  `is_module_active()` checks live in one place.
+- [x] **Make the module system own its pieces.** Introduced `get_module_registry()` as a
+  single declarative source of truth for all module metadata (`name`, `desc`, `includes`,
+  `init`, `rest_routes`). Dynamic loops in `includes()`, `bootstrap()`, and the new
+  `register_active_rest_routes()` replace the old chain of `is_module_active()` guards.
+  Stripe and iCal REST routes are now conditionally registered via `register_invoicing_routes()`
+  and `register_calendar_routes()`. Gantt init is extracted to `Ndizi_Admin::init_gantt()`.
+  `Ndizi_Calendar` is now a proper toggle (`calendar` module) rather than always-loaded.
+  `class_exists('Ndizi_Portal')` guards added to the two REST handlers that call into it.
+  Review of this branch also fixed: orphaned docblock above `get_module_registry()`;
+  `get_active_modules()` now auto-activates any registry key absent from a stored option,
+  preventing `calendar` (and any future new module) from silently breaking on upgrade;
+  `invoicing` module name restored to `'Invoicing & Billing'`.
+  ([Ndizi.php](Ndizi.php), [class-ndizi-rest.php](includes/class-ndizi-rest.php),
+  [class-ndizi-admin.php](includes/class-ndizi-admin.php),
+  [class-ndizi-standalone-tracker.php](includes/class-ndizi-standalone-tracker.php))
+  _(branch: ndizi/fable-review)_
 
 - [ ] **Move the standalone tracker out of inline heredocs.** `Ndizi_Standalone_Tracker`
   embeds ~1,200 lines of HTML/CSS/JS (including the service worker) directly in PHP
