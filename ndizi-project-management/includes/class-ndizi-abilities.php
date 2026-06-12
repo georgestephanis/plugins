@@ -24,13 +24,15 @@ class Ndizi_Abilities {
 	 * Register ability categories
 	 */
 	public static function register_categories() {
-		wp_register_ability_category(
-			'ndizi-pm',
-			array(
-				'label'       => __( 'Ndizi Project Management', 'ndizi-project-management' ),
-				'description' => __( 'Abilities for managing projects, tasks, and logging time.', 'ndizi-project-management' ),
-			)
-		);
+		if ( function_exists( 'wp_register_ability_category' ) ) {
+			wp_register_ability_category(
+				'ndizi-pm',
+				array(
+					'label'       => __( 'Ndizi Project Management', 'ndizi-project-management' ),
+					'description' => __( 'Abilities for managing projects, tasks, and logging time.', 'ndizi-project-management' ),
+				)
+			);
+		}
 	}
 
 	/**
@@ -387,6 +389,10 @@ class Ndizi_Abilities {
 				)
 			);
 
+			if ( ! empty( $tasks ) ) {
+				update_meta_cache( 'post', $tasks );
+			}
+
 			$project_ids = array();
 			foreach ( $tasks as $task_id ) {
 				$project_id = (int) get_post_meta( $task_id, '_ndizi_project_id', true );
@@ -526,6 +532,71 @@ class Ndizi_Abilities {
 		$description = isset( $input['description'] ) ? sanitize_text_field( $input['description'] ) : '';
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 
+		// Validate project existence and post type.
+		if ( ! $project_id || 'ndizi_project' !== get_post_type( $project_id ) ) {
+			return new WP_Error(
+				'invalid_project',
+				__( 'Invalid project ID.', 'ndizi-project-management' )
+			);
+		}
+
+		// Validate project is active.
+		if ( 'active' !== get_post_meta( $project_id, '_ndizi_project_status', true ) ) {
+			return new WP_Error(
+				'project_not_active',
+				__( 'Cannot start timer on an inactive project.', 'ndizi-project-management' )
+			);
+		}
+
+		// Team members (who cannot manage projects) must be assigned to tasks in the project.
+		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
+			$user_tasks = get_posts(
+				array(
+					'post_type'      => 'ndizi_task',
+					'post_status'    => 'publish',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'meta_query'     => array(
+						array(
+							'key'   => '_ndizi_project_id',
+							'value' => $project_id,
+						),
+						array(
+							'key'   => '_ndizi_assigned_user_id',
+							'value' => $user_id,
+						),
+					),
+				)
+			);
+			if ( empty( $user_tasks ) ) {
+				return new WP_Error(
+					'project_not_assigned',
+					__( 'You must be assigned to tasks in this project to start a timer.', 'ndizi-project-management' )
+				);
+			}
+		}
+
+		// Validate task if provided.
+		if ( $task_id ) {
+			if ( 'ndizi_task' !== get_post_type( $task_id ) || (int) get_post_meta( $task_id, '_ndizi_project_id', true ) !== $project_id ) {
+				return new WP_Error(
+					'invalid_task',
+					__( 'Invalid task ID or task does not belong to the specified project.', 'ndizi-project-management' )
+				);
+			}
+
+			// Verify assignment for team members.
+			if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_tasks' ) ) {
+				$assigned_user = (int) get_post_meta( $task_id, '_ndizi_assigned_user_id', true );
+				if ( $assigned_user !== $user_id ) {
+					return new WP_Error(
+						'task_not_assigned',
+						__( 'You are not assigned to this task.', 'ndizi-project-management' )
+					);
+				}
+			}
+		}
+
 		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
 			return new WP_Error(
 				'date_locked',
@@ -619,6 +690,79 @@ class Ndizi_Abilities {
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 		$start_time  = isset( $input['start_time'] ) ? sanitize_text_field( $input['start_time'] ) : '';
 
+		// Validate project existence and post type.
+		if ( ! $project_id || 'ndizi_project' !== get_post_type( $project_id ) ) {
+			return new WP_Error(
+				'invalid_project',
+				__( 'Invalid project ID.', 'ndizi-project-management' )
+			);
+		}
+
+		// Validate project is active.
+		if ( 'active' !== get_post_meta( $project_id, '_ndizi_project_status', true ) ) {
+			return new WP_Error(
+				'project_not_active',
+				__( 'Cannot log time on an inactive project.', 'ndizi-project-management' )
+			);
+		}
+
+		// Validate duration.
+		if ( $duration <= 0 ) {
+			return new WP_Error(
+				'invalid_duration',
+				__( 'Duration must be greater than zero.', 'ndizi-project-management' )
+			);
+		}
+
+		// Team members (who cannot manage projects) must be assigned to tasks in the project.
+		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
+			$user_tasks = get_posts(
+				array(
+					'post_type'      => 'ndizi_task',
+					'post_status'    => 'publish',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'meta_query'     => array(
+						array(
+							'key'   => '_ndizi_project_id',
+							'value' => $project_id,
+						),
+						array(
+							'key'   => '_ndizi_assigned_user_id',
+							'value' => $user_id,
+						),
+					),
+				)
+			);
+			if ( empty( $user_tasks ) ) {
+				return new WP_Error(
+					'project_not_assigned',
+					__( 'You must be assigned to tasks in this project to log time.', 'ndizi-project-management' )
+				);
+			}
+		}
+
+		// Validate task if provided.
+		if ( $task_id ) {
+			if ( 'ndizi_task' !== get_post_type( $task_id ) || (int) get_post_meta( $task_id, '_ndizi_project_id', true ) !== $project_id ) {
+				return new WP_Error(
+					'invalid_task',
+					__( 'Invalid task ID or task does not belong to the specified project.', 'ndizi-project-management' )
+				);
+			}
+
+			// Verify assignment for team members.
+			if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_tasks' ) ) {
+				$assigned_user = (int) get_post_meta( $task_id, '_ndizi_assigned_user_id', true );
+				if ( $assigned_user !== $user_id ) {
+					return new WP_Error(
+						'task_not_assigned',
+						__( 'You are not assigned to this task.', 'ndizi-project-management' )
+					);
+				}
+			}
+		}
+
 		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
 		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
 			return new WP_Error(
@@ -632,7 +776,7 @@ class Ndizi_Abilities {
 		if ( ! $entry_id ) {
 			return new WP_Error(
 				'db_error',
-				__( 'Failed to log time manual in database.', 'ndizi-project-management' )
+				__( 'Failed to log time manually in database.', 'ndizi-project-management' )
 			);
 		}
 
