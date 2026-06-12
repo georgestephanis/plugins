@@ -69,6 +69,23 @@ class Ndizi_Project_Management {
 	}
 
 	/**
+	 * Read a secret option, preferring a matching PHP constant when defined.
+	 *
+	 * Constant naming: upper-case the option name.
+	 * Example: `ndizi_stripe_secret_key` → `NDIZI_STRIPE_SECRET_KEY`.
+	 *
+	 * @param string $option_name The wp_options key (e.g. 'ndizi_stripe_secret_key').
+	 * @return string The value from the constant, or from wp_options, or '' if unset.
+	 */
+	public static function get_secret( $option_name ) {
+		$constant = strtoupper( $option_name );
+		if ( defined( $constant ) ) {
+			return (string) constant( $constant );
+		}
+		return (string) get_option( $option_name, '' );
+	}
+
+	/**
 	 * Include plugin dependencies
 	 */
 	private static function includes() {

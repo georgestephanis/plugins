@@ -111,11 +111,18 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   ([class-ndizi-portal.php](includes/class-ndizi-portal.php), [class-ndizi-rest.php](includes/class-ndizi-rest.php))
   _(branch: ndizi/fable-review)_
 
-- [ ] **Support defining secrets as constants.** Stripe secret/webhook keys and Google
-  client secret + refresh token live unencrypted in `wp_options`. Standard WP practice:
-  check `defined( 'NDIZI_STRIPE_SECRET_KEY' )` etc. before falling back to the option,
-  so security-conscious installs can keep secrets in `wp-config.php` out of the DB and
-  exports. Document it in API-AUTHENTICATION.md.
+- [x] **Support defining secrets as constants.** Added `Ndizi_Project_Management::get_secret()`
+  which checks `defined('NDIZI_<OPTION_NAME_UPPERCASED>')` before falling back to
+  `get_option()`. Wired it into all six secret reads: `ndizi_stripe_secret_key`,
+  `ndizi_stripe_publishable_key`, `ndizi_stripe_webhook_secret`,
+  `ndizi_google_client_id`, `ndizi_google_client_secret`, `ndizi_google_refresh_token`.
+  Settings UI shows a "Set via constant" notice (and hides the input) when a constant
+  is defined. Documented in API-AUTHENTICATION.md.
+  ([Ndizi.php](Ndizi.php), [class-ndizi-rest.php](includes/class-ndizi-rest.php),
+  [class-ndizi-calendar.php](includes/class-ndizi-calendar.php),
+  [class-ndizi-portal.php](includes/class-ndizi-portal.php),
+  [class-ndizi-admin.php](includes/class-ndizi-admin.php))
+  _(branch: ndizi/fable-review)_
 
 ## P3 — Code quality, performance, reliability
 

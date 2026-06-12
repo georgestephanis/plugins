@@ -745,7 +745,7 @@ class Ndizi_Portal {
 																		<span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print/PDF', 'ndizi-project-management' ); ?>
 																	</a>
 																	<?php
-																	$stripe_publishable = get_option( 'ndizi_stripe_publishable_key', '' );
+																	$stripe_publishable = Ndizi_Project_Management::get_secret( 'ndizi_stripe_publishable_key' );
 																	if ( $stripe_publishable && 'paid' !== $inv_status ) :
 																		?>
 																		<button type="button" class="ndizi-portal-btn-table ndizi-pay-invoice-btn" data-invoice-id="<?php echo esc_attr( $inv->ID ); ?>" data-token="<?php echo esc_attr( get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ); ?>">

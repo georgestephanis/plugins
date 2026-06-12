@@ -72,8 +72,8 @@ class Ndizi_Admin {
 			}
 
 			$code          = sanitize_text_field( wp_unslash( $_GET['code'] ) );
-			$client_id     = get_option( 'ndizi_google_client_id', '' );
-			$client_secret = get_option( 'ndizi_google_client_secret', '' );
+			$client_id     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+			$client_secret = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
 
 			if ( $client_id && $client_secret ) {
 				$response = wp_remote_post(
@@ -2547,22 +2547,39 @@ class Ndizi_Admin {
 						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Stripe Invoicing Settings', 'ndizi-project-management' ); ?></h2>
 						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Configure Stripe payment gateway integration to allow clients to pay invoices online.', 'ndizi-project-management' ); ?></p>
 						
+						<?php
+						$stripe_secret             = Ndizi_Project_Management::get_secret( 'ndizi_stripe_secret_key' );
+						$stripe_secret_locked      = defined( 'NDIZI_STRIPE_SECRET_KEY' );
+						$stripe_publishable        = Ndizi_Project_Management::get_secret( 'ndizi_stripe_publishable_key' );
+						$stripe_publishable_locked = defined( 'NDIZI_STRIPE_PUBLISHABLE_KEY' );
+						$stripe_webhook            = Ndizi_Project_Management::get_secret( 'ndizi_stripe_webhook_secret' );
+						$stripe_webhook_locked     = defined( 'NDIZI_STRIPE_WEBHOOK_SECRET' );
+						?>
 						<div style="margin-bottom: 20px;">
-							<?php $stripe_secret = get_option( 'ndizi_stripe_secret_key', '' ); ?>
 							<label for="ndizi_stripe_secret_key" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Stripe Secret Key', 'ndizi-project-management' ); ?></label>
-							<input type="password" name="ndizi_stripe_secret_key" id="ndizi_stripe_secret_key" value="<?php echo esc_attr( $stripe_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php if ( $stripe_secret_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_STRIPE_SECRET_KEY constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="password" name="ndizi_stripe_secret_key" id="ndizi_stripe_secret_key" value="<?php echo esc_attr( $stripe_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
 						</div>
 
 						<div style="margin-bottom: 20px;">
-							<?php $stripe_publishable = get_option( 'ndizi_stripe_publishable_key', '' ); ?>
 							<label for="ndizi_stripe_publishable_key" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Stripe Publishable Key', 'ndizi-project-management' ); ?></label>
-							<input type="text" name="ndizi_stripe_publishable_key" id="ndizi_stripe_publishable_key" value="<?php echo esc_attr( $stripe_publishable ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php if ( $stripe_publishable_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_STRIPE_PUBLISHABLE_KEY constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="text" name="ndizi_stripe_publishable_key" id="ndizi_stripe_publishable_key" value="<?php echo esc_attr( $stripe_publishable ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
 						</div>
 
 						<div style="margin-bottom: 30px;">
-							<?php $stripe_webhook = get_option( 'ndizi_stripe_webhook_secret', '' ); ?>
 							<label for="ndizi_stripe_webhook_secret" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Stripe Webhook Signing Secret', 'ndizi-project-management' ); ?></label>
-							<input type="password" name="ndizi_stripe_webhook_secret" id="ndizi_stripe_webhook_secret" value="<?php echo esc_attr( $stripe_webhook ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php if ( $stripe_webhook_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_STRIPE_WEBHOOK_SECRET constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="password" name="ndizi_stripe_webhook_secret" id="ndizi_stripe_webhook_secret" value="<?php echo esc_attr( $stripe_webhook ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
 							<p class="description" style="margin-top: 5px; color: #64748b;">
 								<?php esc_html_e( 'Webhook URL for Stripe Dashboard:', 'ndizi-project-management' ); ?>
 								<code><?php echo esc_url( home_url( '/wp-json/ndizi/v1/stripe/webhook' ) ); ?></code>
@@ -2572,17 +2589,29 @@ class Ndizi_Admin {
 
 					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Google Calendar Integration', 'ndizi-project-management' ); ?></h2>
 					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ); ?></p>
-					
+
+					<?php
+					$google_cid         = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+					$google_cid_locked  = defined( 'NDIZI_GOOGLE_CLIENT_ID' );
+					$google_secret      = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
+					$google_sec_locked  = defined( 'NDIZI_GOOGLE_CLIENT_SECRET' );
+					?>
 					<div style="margin-bottom: 20px;">
-						<?php $google_cid = get_option( 'ndizi_google_client_id', '' ); ?>
 						<label for="ndizi_google_client_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client ID', 'ndizi-project-management' ); ?></label>
-						<input type="text" name="ndizi_google_client_id" id="ndizi_google_client_id" value="<?php echo esc_attr( $google_cid ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php if ( $google_cid_locked ) : ?>
+							<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_ID constant.', 'ndizi-project-management' ); ?></p>
+						<?php else : ?>
+							<input type="text" name="ndizi_google_client_id" id="ndizi_google_client_id" value="<?php echo esc_attr( $google_cid ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php endif; ?>
 					</div>
 
 					<div style="margin-bottom: 20px;">
-						<?php $google_secret = get_option( 'ndizi_google_client_secret', '' ); ?>
 						<label for="ndizi_google_client_secret" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client Secret', 'ndizi-project-management' ); ?></label>
-						<input type="password" name="ndizi_google_client_secret" id="ndizi_google_client_secret" value="<?php echo esc_attr( $google_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php if ( $google_sec_locked ) : ?>
+							<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_SECRET constant.', 'ndizi-project-management' ); ?></p>
+						<?php else : ?>
+							<input type="password" name="ndizi_google_client_secret" id="ndizi_google_client_secret" value="<?php echo esc_attr( $google_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php endif; ?>
 						<p class="description" style="margin-top: 5px; color: #64748b;">
 							<?php esc_html_e( 'OAuth Redirect URI for Google Cloud Console:', 'ndizi-project-management' ); ?>
 							<code><?php echo esc_url( admin_url( 'admin.php?page=ndizi-settings' ) ); ?></code>
@@ -2591,7 +2620,7 @@ class Ndizi_Admin {
 
 					<div style="margin-bottom: 30px;">
 						<?php
-						$google_refresh_token = get_option( 'ndizi_google_refresh_token', '' );
+						$google_refresh_token = Ndizi_Project_Management::get_secret( 'ndizi_google_refresh_token' );
 						if ( $google_refresh_token ) :
 							?>
 							<p style="color: #16a34a; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px;">

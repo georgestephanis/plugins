@@ -26,7 +26,7 @@ class Ndizi_Calendar {
 	 * @return string|false Access token or false on failure.
 	 */
 	private static function get_access_token() {
-		$refresh_token = get_option( 'ndizi_google_refresh_token', '' );
+		$refresh_token = Ndizi_Project_Management::get_secret( 'ndizi_google_refresh_token' );
 		if ( ! $refresh_token ) {
 			return false;
 		}
@@ -38,8 +38,8 @@ class Ndizi_Calendar {
 			return $access_token;
 		}
 
-		$client_id     = get_option( 'ndizi_google_client_id', '' );
-		$client_secret = get_option( 'ndizi_google_client_secret', '' );
+		$client_id     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+		$client_secret = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
 
 		if ( ! $client_id || ! $client_secret ) {
 			return false;

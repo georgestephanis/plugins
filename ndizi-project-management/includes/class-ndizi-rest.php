@@ -773,7 +773,7 @@ class Ndizi_REST {
 		$invoice_id = $request->get_param( 'id' );
 		$token      = $request->get_param( 'token' );
 
-		$stripe_secret = get_option( 'ndizi_stripe_secret_key', '' );
+		$stripe_secret = Ndizi_Project_Management::get_secret( 'ndizi_stripe_secret_key' );
 		if ( ! $stripe_secret ) {
 			return new WP_Error( 'stripe_not_configured', __( 'Stripe is not configured on this site.', 'ndizi-project-management' ), array( 'status' => 500 ) );
 		}
@@ -874,7 +874,7 @@ class Ndizi_REST {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function handle_stripe_webhook( $request ) {
-		$stripe_webhook_secret = get_option( 'ndizi_stripe_webhook_secret', '' );
+		$stripe_webhook_secret = Ndizi_Project_Management::get_secret( 'ndizi_stripe_webhook_secret' );
 		$sig_header            = $request->get_header( 'stripe-signature' );
 		$payload               = $request->get_body();
 
