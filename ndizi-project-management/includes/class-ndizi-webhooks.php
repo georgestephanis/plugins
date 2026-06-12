@@ -9,6 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Ndizi_Webhooks {
 
+	/** @var array Stash of old meta values captured before update_post_meta writes. */
+	private static $prev_meta_values = array();
+
 	/**
 	 * Initialize webhook triggers
 	 */
@@ -25,7 +28,19 @@ class Ndizi_Webhooks {
 
 		// Meta updates (Assignments and Statuses)
 		add_action( 'added_post_meta', array( __CLASS__, 'handle_added_post_meta' ), 10, 4 );
+		// Fires before the DB write so get_post_meta() still returns the old value.
+		add_filter( 'update_post_metadata', array( __CLASS__, 'capture_old_task_meta' ), 10, 3 );
 		add_action( 'updated_post_meta', array( __CLASS__, 'handle_updated_post_meta' ), 10, 4 );
+	}
+
+	/**
+	 * Cache the current meta value before it is overwritten, for use in handle_updated_post_meta.
+	 */
+	public static function capture_old_task_meta( $null, $object_id, $meta_key ) {
+		if ( in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
+			self::$prev_meta_values[ $object_id . ':' . $meta_key ] = get_post_meta( $object_id, $meta_key, true );
+		}
+		return $null;
 	}
 
 	/**
@@ -294,18 +309,29 @@ class Ndizi_Webhooks {
 	/**
 	 * Handler for added_post_meta (Task Assignment, Statuses, Invoice Status)
 	 */
-	public static function handle_added_post_meta( $mid, $object_id, $meta_key, $_meta_value ) {
+	public static function handle_added_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
+		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
+			return;
+		}
 		self::handle_meta_change( $object_id, $meta_key, $_meta_value );
 	}
 
 	/**
 	 * Handler for updated_post_meta (Task Assignment, Statuses, Invoice Status)
 	 */
-	public static function handle_updated_post_meta( $mid, $object_id, $meta_key, $_meta_value, $_meta_value_prev = '' ) {
-		if ( $_meta_value === $_meta_value_prev ) {
+	public static function handle_updated_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
+		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
 			return;
 		}
-		self::handle_meta_change( $object_id, $meta_key, $_meta_value, $_meta_value_prev );
+
+		$cache_key = $object_id . ':' . $meta_key;
+		$old_value = isset( self::$prev_meta_values[ $cache_key ] ) ? self::$prev_meta_values[ $cache_key ] : '';
+		unset( self::$prev_meta_values[ $cache_key ] );
+
+		if ( $_meta_value === $old_value ) {
+			return;
+		}
+		self::handle_meta_change( $object_id, $meta_key, $_meta_value, $old_value );
 	}
 
 	/**
