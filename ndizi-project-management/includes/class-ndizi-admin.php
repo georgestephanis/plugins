@@ -2000,6 +2000,7 @@ class Ndizi_Admin {
 		}
 
 		$billing_rate = get_user_meta( $user->ID, '_ndizi_user_billing_rate', true );
+		$salary_rate  = get_user_meta( $user->ID, '_ndizi_user_salary_rate', true );
 		?>
 		<h2><?php esc_html_e( 'Ndizi Project Management Settings', 'ndizi-project-management' ); ?></h2>
 		<table class="form-table">
@@ -2008,6 +2009,13 @@ class Ndizi_Admin {
 				<td>
 					<input type="number" name="ndizi_user_billing_rate" id="ndizi_user_billing_rate" value="<?php echo esc_attr( $billing_rate ); ?>" class="regular-text" step="0.01" min="0">
 					<p class="description"><?php esc_html_e( 'The hourly billing rate for this user. Used to auto-calculate invoice amounts if no task rate is set.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_user_salary_rate"><?php esc_html_e( 'Salary Rate ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="number" name="ndizi_user_salary_rate" id="ndizi_user_salary_rate" value="<?php echo esc_attr( $salary_rate ); ?>" class="regular-text" step="0.01" min="0">
+					<p class="description"><?php esc_html_e( 'The hourly salary rate (internal cost) for this user. Used to calculate internal costs and project margins.', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
 		</table>
@@ -2030,6 +2038,12 @@ class Ndizi_Admin {
 		if ( isset( $_POST['ndizi_user_billing_rate'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
 			update_user_meta( $user_id, '_ndizi_user_billing_rate', floatval( $_POST['ndizi_user_billing_rate'] ) );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+		if ( isset( $_POST['ndizi_user_salary_rate'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+			update_user_meta( $user_id, '_ndizi_user_salary_rate', floatval( $_POST['ndizi_user_salary_rate'] ) );
 		}
 	}
 }
