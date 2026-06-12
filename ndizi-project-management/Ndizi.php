@@ -162,6 +162,7 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cpts.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-time-service.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';

@@ -1538,10 +1538,6 @@ class Ndizi_Admin {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
-			wp_send_json_error( array( 'message' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ) );
-		}
-
 		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
 		$task_id     = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 		$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
@@ -1551,11 +1547,9 @@ class Ndizi_Admin {
 			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi-project-management' ) ) );
 		}
 
-		$user_id  = get_current_user_id();
-		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
-
-		if ( ! $timer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to start timer. The date may be locked or another error occurred.', 'ndizi-project-management' ) ) );
+		$timer_id = Ndizi_Time_Service::start_timer( get_current_user_id(), $project_id, $task_id, $description, $billable );
+		if ( is_wp_error( $timer_id ) ) {
+			wp_send_json_error( array( 'message' => $timer_id->get_error_message() ) );
 		}
 
 		wp_send_json_success( array( 'timer_id' => $timer_id ) );
@@ -1571,17 +1565,9 @@ class Ndizi_Admin {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
-		$user_id = get_current_user_id();
-
-		$active = Ndizi_DB::get_active_timer( $user_id );
-		if ( $active && Ndizi_DB::is_date_locked( $active->start_time ) ) {
-			wp_send_json_error( array( 'message' => __( 'Cannot stop timer. The timer start time falls in a locked period.', 'ndizi-project-management' ) ) );
-		}
-
-		$stopped = Ndizi_DB::stop_timer( $user_id );
-
-		if ( ! $stopped ) {
-			wp_send_json_error( array( 'message' => __( 'No active timer found or failed to stop.', 'ndizi-project-management' ) ) );
+		$stopped = Ndizi_Time_Service::stop_timer( get_current_user_id() );
+		if ( is_wp_error( $stopped ) ) {
+			wp_send_json_error( array( 'message' => $stopped->get_error_message() ) );
 		}
 
 		wp_send_json_success( array( 'timer' => $stopped ) );
