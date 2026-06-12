@@ -109,8 +109,8 @@ class Ndizi_Calendar {
 			return;
 		}
 
-		$start_date = gmdate( 'Y-m-d', strtotime( $due_date ) );
-		$end_date   = gmdate( 'Y-m-d', strtotime( $due_date ) + DAY_IN_SECONDS ); // Exclusive.
+		$start_date = $due_date;
+		$end_date   = date( 'Y-m-d', strtotime( $due_date . ' +1 day' ) ); // Exclusive.
 
 		$project_id    = get_post_meta( $post_id, '_ndizi_project_id', true );
 		$project_title = $project_id ? get_the_title( $project_id ) : '';
@@ -205,8 +205,8 @@ class Ndizi_Calendar {
 		$m     = floor( ( $entry->duration % 3600 ) / 60 );
 		$desc .= sprintf( 'Duration: %02d:%02d', $h, $m );
 
-		$start_iso = gmdate( 'c', strtotime( $entry->start_time ) );
-		$end_iso   = gmdate( 'c', strtotime( $entry->end_time ) );
+		$start_iso = get_gmt_from_date( $entry->start_time, 'c' );
+		$end_iso   = get_gmt_from_date( $entry->end_time, 'c' );
 
 		$body = array(
 			'summary'     => $summary,

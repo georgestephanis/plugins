@@ -221,16 +221,20 @@ class Ndizi_DB {
 			return false;
 		}
 
-		if ( $existing->approved ) {
-			// If approved, only allow updating 'approved' and 'approved_by' keys (to unapprove it).
-			$updating_other_fields = false;
-			foreach ( $data as $key => $val ) {
-				if ( 'approved' !== $key && 'approved_by' !== $key ) {
-					$updating_other_fields = true;
-					break;
-				}
+		$updating_other_fields = false;
+		foreach ( $data as $key => $val ) {
+			if ( 'approved' !== $key && 'approved_by' !== $key ) {
+				$updating_other_fields = true;
+				break;
 			}
-			if ( $updating_other_fields ) {
+		}
+
+		if ( $updating_other_fields ) {
+			// Block non-approval edits on approved entries or entries in a locked period.
+			if ( $existing->approved ) {
+				return false;
+			}
+			if ( self::is_date_locked( $existing->start_time ) ) {
 				return false;
 			}
 		}

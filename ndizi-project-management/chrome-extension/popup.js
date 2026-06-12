@@ -192,7 +192,7 @@
 			wpUrl = wpUrl.slice( 0, -1 );
 		}
 
-		const authHeader = 'Basic ' + btoa( username + ':' + appPassword );
+		const authHeader = 'Basic ' + btoa( unescape( encodeURIComponent( username + ':' + appPassword ) ) );
 
 		showLoader( 'Connecting to ' + wpUrl + '...' );
 		testAndLoadTracker( wpUrl, username, authHeader, true );
@@ -423,8 +423,7 @@
 	function updateTicker() {
 		if ( ! timerStartTime ) return;
 		const now = new Date();
-		// Google API times are UTC. Make sure timezone differences are handled correctly.
-		// Both now and timerStartTime should be compared in milliseconds.
+		// Compare both Date objects in milliseconds; both are local JS Dates so no timezone conversion needed.
 		const diffMs = now.getTime() - timerStartTime.getTime();
 		if ( diffMs < 0 ) {
 			timerDisplay.textContent = '00:00:00';

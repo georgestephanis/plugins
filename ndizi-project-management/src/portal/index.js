@@ -120,11 +120,11 @@ import './portal-style.scss';
 					: '/wp-json/ndizi/v1';
 
 			$.ajax( {
-				url: `${ restUrl }/invoices/${ invoiceId }/pay?token=${ encodeURIComponent(
-					token
-				) }`,
+				url: `${ restUrl }/invoices/${ invoiceId }/pay`,
 				method: 'POST',
 				dataType: 'json',
+				contentType: 'application/json',
+				data: JSON.stringify( { token } ),
 			} )
 				.done( function ( response ) {
 					if ( response && response.url ) {

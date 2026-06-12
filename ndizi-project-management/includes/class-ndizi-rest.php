@@ -739,8 +739,16 @@ class Ndizi_REST {
 
 		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
 
+		if ( ! is_array( $response_body ) ) {
+			return new WP_Error( 'stripe_api_error', __( 'Unexpected response from Stripe.', 'ndizi-project-management' ), array( 'status' => 502 ) );
+		}
+
 		if ( isset( $response_body['error'] ) ) {
 			return new WP_Error( 'stripe_api_error', $response_body['error']['message'], array( 'status' => 400 ) );
+		}
+
+		if ( empty( $response_body['url'] ) ) {
+			return new WP_Error( 'stripe_api_error', __( 'No checkout URL returned by Stripe.', 'ndizi-project-management' ), array( 'status' => 502 ) );
 		}
 
 		return new WP_REST_Response( array( 'url' => $response_body['url'] ), 200 );
@@ -761,17 +769,37 @@ class Ndizi_REST {
 			return new WP_Error( 'bad_request', __( 'Missing signature or webhook secret.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
 
-		parse_str( str_replace( ',', '&', $sig_header ), $sig_parts );
-		if ( ! isset( $sig_parts['t'] ) || ! isset( $sig_parts['v1'] ) ) {
+		// Parse the Stripe-Signature header manually to handle multiple v1= values.
+		$sig_parts = array();
+		foreach ( explode( ',', $sig_header ) as $part ) {
+			$kv = explode( '=', trim( $part ), 2 );
+			if ( 2 === count( $kv ) ) {
+				$key = trim( $kv[0] );
+				if ( 't' === $key ) {
+					$sig_parts['t'] = trim( $kv[1] );
+				} elseif ( 'v1' === $key ) {
+					$sig_parts['v1'][] = trim( $kv[1] );
+				}
+			}
+		}
+
+		if ( empty( $sig_parts['t'] ) || empty( $sig_parts['v1'] ) ) {
 			return new WP_Error( 'invalid_signature', __( 'Invalid signature header format.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
 
 		$timestamp      = $sig_parts['t'];
-		$expected_sig   = $sig_parts['v1'];
 		$signed_payload = $timestamp . '.' . $payload;
 		$calculated_sig = hash_hmac( 'sha256', $signed_payload, $stripe_webhook_secret );
 
-		if ( ! hash_equals( $calculated_sig, $expected_sig ) ) {
+		$sig_valid = false;
+		foreach ( $sig_parts['v1'] as $expected_sig ) {
+			if ( hash_equals( $calculated_sig, $expected_sig ) ) {
+				$sig_valid = true;
+				break;
+			}
+		}
+
+		if ( ! $sig_valid ) {
 			return new WP_Error( 'signature_mismatch', __( 'Webhook signature mismatch.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
 

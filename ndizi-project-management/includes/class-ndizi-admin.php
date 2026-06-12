@@ -61,10 +61,14 @@ class Ndizi_Admin {
 	 */
 	public static function save_settings_page() {
 		// Handle Google OAuth callback redirect first
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['page'] ) && 'ndizi-settings' === $_GET['page'] && isset( $_GET['code'] ) ) {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
+			}
+
+			// Verify state nonce to prevent CSRF / authorization-code injection.
+			if ( ! isset( $_GET['state'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['state'] ) ), 'ndizi_google_oauth_state' ) ) {
+				wp_die( esc_html__( 'Security check failed: invalid state parameter.', 'ndizi-project-management' ) );
 			}
 
 			$code          = sanitize_text_field( wp_unslash( $_GET['code'] ) );
@@ -1252,7 +1256,8 @@ class Ndizi_Admin {
 					</select>
 				<?php else : ?>
 					<input type="hidden" name="ndizi_time_off_user_id" value="<?php echo esc_attr( $user_id ); ?>">
-					<input type="text" readonly value="<?php echo esc_attr( get_userdata( $user_id )->display_name ); ?>" style="width: 100%; background: #f1f5f9;">
+					<?php $readonly_user = get_userdata( $user_id ); ?>
+					<input type="text" readonly value="<?php echo esc_attr( $readonly_user ? $readonly_user->display_name : __( 'Unknown User', 'ndizi-project-management' ) ); ?>" style="width: 100%; background: #f1f5f9;">
 				<?php endif; ?>
 			</div>
 
@@ -2601,6 +2606,7 @@ class Ndizi_Admin {
 										'scope'         => 'https://www.googleapis.com/auth/calendar',
 										'access_type'   => 'offline',
 										'prompt'        => 'consent',
+										'state'         => wp_create_nonce( 'ndizi_google_oauth_state' ),
 									),
 									'https://accounts.google.com/o/oauth2/v2/auth'
 								);
