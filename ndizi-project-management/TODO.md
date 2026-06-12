@@ -21,14 +21,14 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ## Integrations
 
-- [ ] **Webhooks** — outbound HTTP callbacks when time is logged, invoices change status, tasks are
+- [x] **Webhooks** — outbound HTTP callbacks when time is logged, invoices change status, tasks are
   created, etc. Clockify, Toggl, and Timely all offer webhooks on free or base plans. This would
   unlock Zapier/Make compatibility without a native connector.
 - [ ] **Zapier / Make connector** — Timely includes this on all plans; useful for connecting to
   tools like Slack, Notion, or accounting software without custom code.
-- [ ] **QuickBooks / accounting export** — Clockify (Standard+) and Toggl (Starter+) both sync to
+- [x] **QuickBooks / accounting export** — Clockify (Standard+) and Toggl (Starter+) both sync to
   QuickBooks. Even a structured CSV targeted at QuickBooks import format would narrow the gap.
-- [ ] **Slack notifications** — Toggl notifies on free/all plans. Task assignments, timer reminders,
+- [x] **Slack notifications** — Toggl notifies on free/all plans. Task assignments, timer reminders,
   or invoice state changes posted to a Slack channel are high-value for teams.
 - [ ] **Calendar sync (Google / iCal)** — Toggl Track and Timely both support calendar integration.
   Useful for comparing scheduled vs. actual time or pre-populating time entries from meetings.
@@ -66,7 +66,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 ## Notifications
 
 - [x] **Email notifications for more events** — added task assignment and task status change notifications.
-- [ ] **Idle timer detection** — prompt user when a timer has been running for an unusually long
+- [x] **Idle timer detection** — prompt user when a timer has been running for an unusually long
   period (e.g. > 8 hours), which is a common data-quality issue.
 
 ---
