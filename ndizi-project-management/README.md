@@ -79,6 +79,7 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 - `_ndizi_project_end_date` (string) — Target end date.
 - `_ndizi_project_budget` (number) — Budget amount.
 - `_ndizi_project_status` (string) — Status (`active`, `archived`).
+- `_ndizi_project_hourly_rate` (number) — Default project hourly billing rate.
 
 #### Task (`ndizi_task`)
 
@@ -87,6 +88,7 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 - `_ndizi_task_status` (string) — Status (`open`, `in_progress`, `completed`, `cancelled`).
 - `_ndizi_task_priority` (string) — Priority (`low`, `medium`, `high`).
 - `_ndizi_task_due_date` (string) — Task due date.
+- `_ndizi_task_hourly_rate` (number) — Override task hourly billing rate.
 
 #### Invoice (`ndizi_invoice`)
 
@@ -103,7 +105,22 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 - `_ndizi_contact_role` (string) — Role (e.g. "Primary Contact", "Billing").
 - `_ndizi_associated_clients` (array of integers) — List of client IDs.
 
-### 3. Custom REST API Routes
+#### User Profile Meta Keys
+
+- `_ndizi_user_billing_rate` (number) — User default billing hourly rate.
+- `_ndizi_user_salary_rate` (number) — User internal salary cost hourly rate.
+
+### 3. WordPress Database Options
+
+Options configured in the settings dashboard:
+
+- `ndizi_active_modules` (array of strings) — List of active module slugs (`invoicing`, `portal`, `tracker`, `notifications`, `gantt`, `integrations`).
+- `ndizi_adminbar_icon` (string) — Admin bar quick-timer icon (`banana`, `clock`, `punch_clock`, `hourglass`).
+- `ndizi_lock_date` (string) — Date string; prevent logs modifying entries on/before this date.
+- `ndizi_webhook_url` (string) — Endpoint URL for event payload POST requests.
+- `ndizi_slack_webhook_url` (string) — Target endpoint for formatted Slack notification alerts.
+
+### 4. Custom REST API Routes
 
 The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each route's `permission_callback` checks an Ndizi capability (e.g. `ndizi_view_projects`, `ndizi_log_time`), so they work with any standard WordPress authentication — cookie + nonce for in-browser requests, or Application Passwords for external clients:
 

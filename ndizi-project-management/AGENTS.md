@@ -16,13 +16,17 @@ Ndizi Project Management is a native WordPress project management and time track
 - `phpcs.xml` — Coding standard rules tuned for custom DB tables and WordPress standards.
 - `includes/`
     - `class-ndizi-admin.php` — Metabox layout fields, saving, admin report layouts, and Gantt charts.
+    - `class-ndizi-admin-bar.php` — Enqueues, registers, and renders the Admin Bar widget.
+    - `class-ndizi-cli.php` — Defines CLI commands for managing timers.
     - `class-ndizi-cpts.php` — Declares all post types and registers REST metadata schemas.
     - `class-ndizi-db.php` — Coordinates table operations on the custom SQL logging table.
     - `class-ndizi-integrations.php` — Compiles printable HTML invoice formats and prints CSV/JSON exports.
     - `class-ndizi-notifications.php` — Coordinates `wp_mail()` triage alerts for new tasks.
-    - `class-ndizi-portal.php` — Coordinates shortcode execution, URL authentication keys, client session security, and comments-discussion logs.
+    - `class-ndizi-portal.php` — Coordinates shortcode execution, client session security, and comments-discussion logs.
     - `class-ndizi-rest.php` — Handles API route registrations for external timekeepers.
     - `class-ndizi-roles.php` — Registers custom capabilities and workspace roles.
+    - `class-ndizi-standalone-tracker.php` — Operates the full PWA dark glassmorphic standalone tracker dashboard.
+    - `class-ndizi-webhooks.php` — Delivers event-driven outbound JSON webhooks and Slack incoming webhook alerts.
 - `src/`
     - `admin/` — Admin tracker controls, Gantt interactive scripts, and admin stylesheet modules.
     - `portal/` — Tab controllers, attachment upload fields, and portal stylesheet modules.
