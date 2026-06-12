@@ -198,6 +198,39 @@ class Ndizi_REST {
 				),
 			)
 		);
+
+		// Stripe Payment Endpoint
+		register_rest_route(
+			$namespace,
+			'/invoices/(?P<id>\d+)/pay',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'create_stripe_checkout_session' ),
+				'permission_callback' => array( __CLASS__, 'check_invoice_pay_permission' ),
+			)
+		);
+
+		// Stripe Webhook Endpoint
+		register_rest_route(
+			$namespace,
+			'/stripe/webhook',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_stripe_webhook' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		// Calendar iCal feed Endpoint
+		register_rest_route(
+			$namespace,
+			'/calendar/ical',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( __CLASS__, 'get_calendar_ical' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -591,5 +624,334 @@ class Ndizi_REST {
 		}
 
 		return new WP_REST_Response( array( 'success' => true ), 200 );
+	}
+
+	/**
+	 * Permission check: pay invoice
+	 *
+	 * @param WP_REST_Request $request REST Request.
+	 * @return bool
+	 */
+	public static function check_invoice_pay_permission( $request ) {
+		$invoice_id = $request->get_param( 'id' );
+		if ( ! $invoice_id || 'ndizi_invoice' !== get_post_type( $invoice_id ) ) {
+			return false;
+		}
+
+		if ( current_user_can( 'ndizi_view_reports' ) || current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$token = $request->get_param( 'token' );
+		if ( $token ) {
+			$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+			if ( $project_id ) {
+				$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
+				if ( $client_id ) {
+					$expected_token = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
+					if ( $expected_token && hash_equals( $expected_token, $token ) ) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Callback to generate a Stripe Checkout session
+	 *
+	 * @param WP_REST_Request $request REST Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function create_stripe_checkout_session( $request ) {
+		$invoice_id = $request->get_param( 'id' );
+		$token      = $request->get_param( 'token' );
+
+		$stripe_secret = get_option( 'ndizi_stripe_secret_key', '' );
+		if ( ! $stripe_secret ) {
+			return new WP_Error( 'stripe_not_configured', __( 'Stripe is not configured on this site.', 'ndizi-project-management' ), array( 'status' => 500 ) );
+		}
+
+		$amount        = get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
+		$project_id    = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+		$project_title = get_the_title( $project_id );
+
+		$success_url = add_query_arg(
+			array(
+				'ndizi_payment' => 'success',
+				'ndizi_token'   => $token,
+			),
+			get_permalink( $project_id )
+		);
+		$cancel_url  = add_query_arg(
+			array(
+				'ndizi_payment' => 'cancel',
+				'ndizi_token'   => $token,
+			),
+			get_permalink( $project_id )
+		);
+
+		$line_items = array(
+			array(
+				'price_data' => array(
+					'currency'     => 'usd',
+					'product_data' => array(
+						/* translators: 1: invoice ID, 2: project title */
+						'name'        => sprintf( __( 'Invoice #%1$d - Project: %2$s', 'ndizi-project-management' ), $invoice_id, $project_title ),
+						'description' => __( 'Project Management and Time Tracking Services', 'ndizi-project-management' ),
+					),
+					'unit_amount'  => round( $amount * 100 ),
+				),
+				'quantity'   => 1,
+			),
+		);
+
+		$body = array(
+			'payment_method_types' => array( 'card' ),
+			'line_items'           => $line_items,
+			'mode'                 => 'payment',
+			'success_url'          => $success_url,
+			'cancel_url'           => $cancel_url,
+			'client_reference_id'  => $invoice_id,
+			'metadata'             => array(
+				'invoice_id' => $invoice_id,
+			),
+		);
+
+		$stripe_payload = http_build_query( $body );
+
+		$response = wp_remote_post(
+			'https://api.stripe.com/v1/checkout/sessions',
+			array(
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $stripe_secret,
+					'Content-Type'  => 'application/x-www-form-urlencoded',
+				),
+				'body'    => $stripe_payload,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'stripe_api_error', $response->get_error_message(), array( 'status' => 500 ) );
+		}
+
+		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( isset( $response_body['error'] ) ) {
+			return new WP_Error( 'stripe_api_error', $response_body['error']['message'], array( 'status' => 400 ) );
+		}
+
+		return new WP_REST_Response( array( 'url' => $response_body['url'] ), 200 );
+	}
+
+	/**
+	 * Callback to handle Stripe webhooks
+	 *
+	 * @param WP_REST_Request $request REST Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function handle_stripe_webhook( $request ) {
+		$stripe_webhook_secret = get_option( 'ndizi_stripe_webhook_secret', '' );
+		$sig_header            = $request->get_header( 'stripe-signature' );
+		$payload               = $request->get_body();
+
+		if ( ! $sig_header || ! $stripe_webhook_secret ) {
+			return new WP_Error( 'bad_request', __( 'Missing signature or webhook secret.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
+		parse_str( str_replace( ',', '&', $sig_header ), $sig_parts );
+		if ( ! isset( $sig_parts['t'] ) || ! isset( $sig_parts['v1'] ) ) {
+			return new WP_Error( 'invalid_signature', __( 'Invalid signature header format.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
+		$timestamp      = $sig_parts['t'];
+		$expected_sig   = $sig_parts['v1'];
+		$signed_payload = $timestamp . '.' . $payload;
+		$calculated_sig = hash_hmac( 'sha256', $signed_payload, $stripe_webhook_secret );
+
+		if ( ! hash_equals( $calculated_sig, $expected_sig ) ) {
+			return new WP_Error( 'signature_mismatch', __( 'Webhook signature mismatch.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
+		if ( abs( time() - (int) $timestamp ) > 300 ) {
+			return new WP_Error( 'timestamp_expired', __( 'Webhook timestamp expired.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
+		$event = json_decode( $payload, true );
+		if ( ! $event ) {
+			return new WP_Error( 'invalid_json', __( 'Invalid JSON payload.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
+		if ( 'checkout.session.completed' === $event['type'] ) {
+			$session    = $event['data']['object'];
+			$invoice_id = isset( $session['client_reference_id'] ) ? intval( $session['client_reference_id'] ) : 0;
+
+			if ( $invoice_id && 'ndizi_invoice' === get_post_type( $invoice_id ) ) {
+				update_post_meta( $invoice_id, '_ndizi_invoice_status', 'paid' );
+				do_action( 'ndizi_invoice_paid', $invoice_id );
+			}
+		}
+
+		return new WP_REST_Response( array( 'received' => true ), 200 );
+	}
+
+	/**
+	 * Output public token-secured iCal feed
+	 *
+	 * @param WP_REST_Request $request REST Request.
+	 */
+	public static function get_calendar_ical( $request ) {
+		$token = $request->get_param( 'token' );
+		if ( empty( $token ) ) {
+			status_header( 403 );
+			echo 'Forbidden: Missing Token';
+			exit;
+		}
+
+		$is_admin_feed = false;
+		$client_id     = 0;
+
+		$global_token = get_option( 'ndizi_calendar_feed_token', '' );
+		if ( $global_token && hash_equals( $global_token, $token ) ) {
+			$is_admin_feed = true;
+		} else {
+			// Check if token matches a client.
+			$clients = get_posts(
+				array(
+					'post_type'      => 'ndizi_client',
+					'posts_per_page' => 1,
+					'meta_query'     => array(
+						array(
+							'key'   => '_ndizi_client_auth_key',
+							'value' => $token,
+						),
+					),
+				)
+			);
+			if ( ! empty( $clients ) ) {
+				$client_id = $clients[0]->ID;
+			}
+		}
+
+		if ( ! $is_admin_feed && ! $client_id ) {
+			status_header( 403 );
+			echo 'Forbidden: Invalid Token';
+			exit;
+		}
+
+		// Query projects.
+		$project_args = array(
+			'post_type'      => 'ndizi_project',
+			'posts_per_page' => -1,
+		);
+		if ( ! $is_admin_feed ) {
+			$project_args['meta_query'] = array(
+				array(
+					'key'   => '_ndizi_client_id',
+					'value' => $client_id,
+				),
+			);
+		}
+		$projects = get_posts( $project_args );
+
+		// Query tasks.
+		$task_args = array(
+			'post_type'      => 'ndizi_task',
+			'posts_per_page' => -1,
+		);
+		if ( ! $is_admin_feed ) {
+			if ( empty( $projects ) ) {
+				// No projects, so no tasks.
+				$tasks = array();
+			} else {
+				$project_ids             = wp_list_pluck( $projects, 'ID' );
+				$task_args['meta_query'] = array(
+					array(
+						'key'     => '_ndizi_project_id',
+						'value'   => $project_ids,
+						'compare' => 'IN',
+					),
+				);
+				$tasks                   = get_posts( $task_args );
+			}
+		} else {
+			$tasks = get_posts( $task_args );
+		}
+
+		// Helper to escape iCal values.
+		$esc_ical = function ( $str ) {
+			$str = str_replace( '\\', '\\\\', $str );
+			$str = str_replace( ',', '\\,', $str );
+			$str = str_replace( ';', '\\;', $str );
+			$str = str_replace( "\n", '\\n', $str );
+			$str = str_replace( "\r", '', $str );
+			return $str;
+		};
+
+		// Output iCal headers.
+		header( 'Content-Type: text/calendar; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="ndizi-calendar.ics"' );
+
+		echo "BEGIN:VCALENDAR\r\n";
+		echo "VERSION:2.0\r\n";
+		echo "PRODID:-//Ndizi Project Management//NONSGML v1.0//EN\r\n";
+		echo "CALSCALE:GREGORIAN\r\n";
+		echo "METHOD:PUBLISH\r\n";
+
+		// Add project end dates as events.
+		foreach ( $projects as $project ) {
+			$end_date = get_post_meta( $project->ID, '_ndizi_project_end_date', true );
+			if ( ! $end_date ) {
+				continue;
+			}
+			$ical_date = gmdate( 'Ymd', strtotime( $end_date ) );
+			$dtstamp   = gmdate( 'Ymd\THis\Z', get_post_modified_time( 'U', true, $project ) );
+			/* translators: %s: project title */
+			$title = sprintf( __( 'Project End: %s', 'ndizi-project-management' ), $project->post_title );
+			$desc  = $project->post_content;
+
+			echo "BEGIN:VEVENT\r\n";
+			echo 'UID:ndizi-project-' . intval( $project->ID ) . "\r\n";
+			echo 'DTSTAMP:' . esc_html( $dtstamp ) . "\r\n";
+			echo 'DTSTART;VALUE=DATE:' . esc_html( $ical_date ) . "\r\n";
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo 'SUMMARY:' . $esc_ical( $title ) . "\r\n";
+			if ( ! empty( $desc ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo 'DESCRIPTION:' . $esc_ical( $desc ) . "\r\n";
+			}
+			echo "END:VEVENT\r\n";
+		}
+
+		// Add task due dates as events.
+		foreach ( $tasks as $task ) {
+			$due_date = get_post_meta( $task->ID, '_ndizi_task_due_date', true );
+			if ( ! $due_date ) {
+				continue;
+			}
+			$ical_date = gmdate( 'Ymd', strtotime( $due_date ) );
+			$dtstamp   = gmdate( 'Ymd\THis\Z', get_post_modified_time( 'U', true, $task ) );
+			$status    = get_post_meta( $task->ID, '_ndizi_task_status', true );
+			/* translators: 1: task title, 2: task status */
+			$title = sprintf( __( 'Task Due: %1$s (%2$s)', 'ndizi-project-management' ), $task->post_title, $status );
+			$desc  = $task->post_content;
+
+			echo "BEGIN:VEVENT\r\n";
+			echo 'UID:ndizi-task-' . intval( $task->ID ) . "\r\n";
+			echo 'DTSTAMP:' . esc_html( $dtstamp ) . "\r\n";
+			echo 'DTSTART;VALUE=DATE:' . esc_html( $ical_date ) . "\r\n";
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo 'SUMMARY:' . $esc_ical( $title ) . "\r\n";
+			if ( ! empty( $desc ) ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo 'DESCRIPTION:' . $esc_ical( $desc ) . "\r\n";
+			}
+			echo "END:VEVENT\r\n";
+		}
+
+		echo "END:VCALENDAR\r\n";
+		exit;
 	}
 }

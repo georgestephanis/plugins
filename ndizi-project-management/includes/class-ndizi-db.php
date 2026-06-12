@@ -36,6 +36,8 @@ class Ndizi_DB {
   duration int(11) DEFAULT 0,
   billable tinyint(1) DEFAULT 1,
   invoice_id bigint(20) DEFAULT 0,
+  approved tinyint(1) NOT NULL DEFAULT 0,
+  approved_by bigint(20) NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY  (id),
@@ -219,12 +221,18 @@ class Ndizi_DB {
 			return false;
 		}
 
-		if ( self::is_date_locked( $existing->start_time ) ) {
-			return false;
-		}
-
-		if ( isset( $data['start_time'] ) && self::is_date_locked( $data['start_time'] ) ) {
-			return false;
+		if ( $existing->approved ) {
+			// If approved, only allow updating 'approved' and 'approved_by' keys (to unapprove it).
+			$updating_other_fields = false;
+			foreach ( $data as $key => $val ) {
+				if ( 'approved' !== $key && 'approved_by' !== $key ) {
+					$updating_other_fields = true;
+					break;
+				}
+			}
+			if ( $updating_other_fields ) {
+				return false;
+			}
 		}
 
 		$update_data = array();
@@ -239,6 +247,8 @@ class Ndizi_DB {
 			'duration'    => '%d',
 			'billable'    => '%d',
 			'invoice_id'  => '%d',
+			'approved'    => '%d',
+			'approved_by' => '%d',
 		);
 
 		foreach ( $allowed_keys as $key => $format ) {
@@ -300,7 +310,11 @@ class Ndizi_DB {
 		$table_name = self::get_table_name();
 
 		$existing = self::get_time_entry( $id );
-		if ( $existing && self::is_date_locked( $existing->start_time ) ) {
+		if ( ! $existing ) {
+			return false;
+		}
+
+		if ( self::is_date_locked( $existing->start_time ) || $existing->approved ) {
 			return false;
 		}
 
@@ -332,6 +346,7 @@ class Ndizi_DB {
 			'billable'   => null,
 			'start_date' => null,
 			'end_date'   => null,
+			'approved'   => null,
 			'orderby'    => 'start_time',
 			'order'      => 'DESC',
 			'number'     => -1,
@@ -366,6 +381,11 @@ class Ndizi_DB {
 		if ( null !== $args['billable'] ) {
 			$where[]      = 'billable = %d';
 			$query_args[] = $args['billable'] ? 1 : 0;
+		}
+
+		if ( null !== $args['approved'] ) {
+			$where[]      = 'approved = %d';
+			$query_args[] = $args['approved'] ? 1 : 0;
 		}
 
 		if ( ! empty( $args['start_date'] ) ) {

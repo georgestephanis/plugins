@@ -766,3 +766,17 @@
 	font-style: italic;
 	padding: 40px 0;
 }
+
+.ndizi-portal-btn-table.ndizi-pay-invoice-btn {
+	background: rgba(52, 211, 153, 0.1);
+	border: 1px solid rgba(52, 211, 153, 0.2);
+	color: var(--ndizi-success);
+	margin-left: 8px;
+	cursor: pointer;
+}
+
+.ndizi-portal-btn-table.ndizi-pay-invoice-btn:hover {
+	background: var(--ndizi-success);
+	color: #0f172a;
+	box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+}

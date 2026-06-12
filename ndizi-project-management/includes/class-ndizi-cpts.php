@@ -163,6 +163,34 @@ class Ndizi_CPTs {
 				'has_archive'     => false,
 			)
 		);
+
+		// Time Off Request
+		register_post_type(
+			'ndizi_time_off',
+			array(
+				'labels'          => array(
+					'name'               => __( 'Time Off Requests', 'ndizi-project-management' ),
+					'singular_name'      => __( 'Time Off Request', 'ndizi-project-management' ),
+					'add_new'            => __( 'Request Time Off', 'ndizi-project-management' ),
+					'add_new_item'       => __( 'Request Time Off', 'ndizi-project-management' ),
+					'edit_item'          => __( 'Edit Request', 'ndizi-project-management' ),
+					'new_item'           => __( 'New Request', 'ndizi-project-management' ),
+					'view_item'          => __( 'View Request', 'ndizi-project-management' ),
+					'search_items'       => __( 'Search Requests', 'ndizi-project-management' ),
+					'not_found'          => __( 'No requests found', 'ndizi-project-management' ),
+					'not_found_in_trash' => __( 'No requests found in Trash', 'ndizi-project-management' ),
+				),
+				'public'          => false,
+				'show_ui'         => true,
+				'show_in_menu'    => 'ndizi-pm',
+				'menu_icon'       => 'dashicons-calendar-alt',
+				'capability_type' => 'post',
+				'hierarchical'    => false,
+				'supports'        => array( 'title', 'editor' ),
+				'show_in_rest'    => true,
+				'has_archive'     => false,
+			)
+		);
 	}
 
 	/**
@@ -421,6 +449,53 @@ class Ndizi_CPTs {
 				'type'         => 'array',
 			)
 		);
+
+		// Time Off Meta
+		register_post_meta(
+			'ndizi_time_off',
+			'_ndizi_time_off_start_date',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+		register_post_meta(
+			'ndizi_time_off',
+			'_ndizi_time_off_end_date',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+		register_post_meta(
+			'ndizi_time_off',
+			'_ndizi_time_off_type',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+		register_post_meta(
+			'ndizi_time_off',
+			'_ndizi_time_off_status',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+		register_post_meta(
+			'ndizi_time_off',
+			'_ndizi_time_off_user_id',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'integer',
+			)
+		);
 	}
 
 	/**
@@ -437,6 +512,7 @@ class Ndizi_CPTs {
 			'ndizi_task',
 			'ndizi_invoice',
 			'ndizi_contact',
+			'ndizi_time_off',
 		);
 
 		if ( in_array( $post_type, $ndizi_post_types, true ) ) {

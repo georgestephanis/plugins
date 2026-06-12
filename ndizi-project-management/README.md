@@ -263,32 +263,32 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 | Feature | Ndizi PM | Clockify | Toggl Track | Timely |
 | :--- | :---: | :---: | :---: | :---: |
 | **Pricing** | Free (GPL, self-hosted) | Free–$14.99/seat/mo | Free–$20/seat/mo | $11–$28/seat/mo |
-| **Free tier** | ✅<br>(unlimited users) | ✅<br>(up to 5 users) | ✅<br>(up to 5 users) | ❌<br>(2-week trial only) |
+| **Free tier** | ✅ (unlimited users) | ✅ (up to 5 users) | ✅ (up to 5 users) | ❌ (2-week trial only) |
 | **Self-hosted / data ownership** | ✅ | ❌ | ❌ | ❌ |
 | **Timer-based time tracking** | ✅ | ✅ | ✅ | ✅ |
 | **Manual time entry** | ✅ | ✅ | ✅ | ✅ |
-| **Edit / delete past entries** | ✅<br>(REST API + admin UI) | ✅ | ✅ | ✅ |
+| **Edit / delete past entries** | ✅ (REST API + admin UI) | ✅ | ✅ | ✅ |
 | **Billable / non-billable flag per entry** | ✅ | ✅ | ✅ | ✅ |
 | **Lock date / protected billing periods** | ✅ | ❌ | ❌ | ❌ |
-| **Project & task hierarchy** | ✅<br>(client → project → task) | ✅ | ✅ | Add-on |
-| **Team roles / permissions** | ✅<br>(Manager, Team Member) | ✅ | ✅ | ✅ |
+| **Project & task hierarchy** | ✅ (client → project → task) | ✅ | ✅ | Add-on |
+| **Team roles / permissions** | ✅ (Manager, Team Member) | ✅ | ✅ | ✅ |
 | **Invoice creation** | ✅ | Standard plan+ | All plans | ❌ |
-| **Hierarchical billing rates** | ✅<br>(task → user → project) | ✅ | Starter plan+ | ✅ |
+| **Hierarchical billing rates** | ✅ (task → user → project) | ✅ | Starter plan+ | ✅ |
 | **Payment processing** | ❌ | ❌ | ❌ | ❌ |
 | **Invoice export (CSV / JSON)** | ✅ | CSV/PDF | PDF | N/A |
 | **Time report export (CSV)** | ✅ | ✅ | ✅ | ✅ |
 | **QuickBooks CSV export** | ✅ | Standard plan+ | Starter plan+ | Some plans |
 | **Date-range filtered reports** | ✅ | ✅ | ✅ | ✅ |
-| **Profitability / margin reports** | ✅<br>(salary cost tracking) | ✅ | ✅ | ✅ |
-| **Client-facing portal** | ✅<br>(shortcode/block) | ❌ | ❌ | ❌ |
+| **Profitability / margin reports** | ✅ (salary cost tracking) | ✅ | ✅ | ✅ |
+| **Client-facing portal** | ✅ (shortcode/block) | ❌ | ❌ | ❌ |
 | **Admin bar quick logger** | ✅ | ❌ | ❌ | ❌ |
 | **Standalone PWA tracker** | ✅ | Mobile apps | Mobile apps | Mobile apps |
-| **Gantt charts** | ✅<br>(CSS/SVG, no library) | ❌ | ❌ | ❌ |
+| **Gantt charts** | ✅ (CSS/SVG, no library) | ❌ | ❌ | ❌ |
 | **REST API** | ✅ | ✅ | ✅ | ✅ |
 | **WP-CLI** | ✅ | ❌ | ❌ | ❌ |
 | **Webhooks** | ✅ | All plans | All plans | All plans |
-| **Slack integration** | ✅<br>(webhooks) | ❌ | All plans | ❌ |
-| **Email notifications** | ✅<br>(assignment + status) | ✅ | ✅ | ✅ |
+| **Slack integration** | ✅ (webhooks) | ❌ | All plans | ❌ |
+| **Email notifications** | ✅ (assignment + status) | ✅ | ✅ | ✅ |
 | **Modular on/off toggles** | ✅ | ❌ | ❌ | ❌ |
 | **Zapier integration** | ❌ | ❌ | ❌ | All plans |
 | **Jira / Asana / project tool integrations** | ❌ | ❌ | Premium plan+ | Some plans |
@@ -297,7 +297,7 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 | **AI-assisted time tracking** | ❌ | ❌ | ❌ | ✅ |
 | **Employee monitoring (nannyware)** | ❌ | ❌ | ❌ | ✅ |
 | **Approval workflows** | ❌ | Pro plan+ | ❌ | ❌ |
-| **Mobile app** | ❌<br>(PWA only, desktop) | ✅ | ✅ | ✅ |
+| **Mobile app** | ❌ (PWA only, desktop) | ✅ | ✅ | ✅ |
 | **Requires WordPress** | ✅ | ❌ | ❌ | ❌ |
 
 ### Notes

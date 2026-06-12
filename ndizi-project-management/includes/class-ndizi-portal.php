@@ -54,6 +54,7 @@ class Ndizi_Portal {
 						'ndizi_portal',
 						array(
 							'ajax_url' => admin_url( 'admin-ajax.php' ),
+							'rest_url' => esc_url_raw( rest_url( 'ndizi/v1' ) ),
 						)
 					);
 				}
@@ -89,6 +90,7 @@ class Ndizi_Portal {
 			'ndizi_portal',
 			array(
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'rest_url' => esc_url_raw( rest_url( 'ndizi/v1' ) ),
 			)
 		);
 
@@ -282,6 +284,36 @@ class Ndizi_Portal {
 			}
 		}
 
+		// Submit Time-off Request
+		if ( isset( $_POST['ndizi_submit_time_off_portal'] ) && isset( $_POST['ndizi_time_off_start'] ) ) {
+			check_admin_referer( 'ndizi_portal_submit_time_off', '_wpnonce' );
+
+			$start_date = sanitize_text_field( wp_unslash( $_POST['ndizi_time_off_start'] ) );
+			$end_date   = isset( $_POST['ndizi_time_off_end'] ) ? sanitize_text_field( wp_unslash( $_POST['ndizi_time_off_end'] ) ) : '';
+			$type       = isset( $_POST['ndizi_time_off_type'] ) ? sanitize_text_field( wp_unslash( $_POST['ndizi_time_off_type'] ) ) : '';
+			$reason     = isset( $_POST['ndizi_time_off_reason'] ) ? sanitize_textarea_field( wp_unslash( $_POST['ndizi_time_off_reason'] ) ) : '';
+
+			$time_off_id = wp_insert_post(
+				array(
+					'post_title'   => sprintf( 'Time Off Request: %s (%s - %s)', get_the_title( $client_id ), $start_date, $end_date ),
+					'post_content' => $reason,
+					'post_status'  => 'publish',
+					'post_type'    => 'ndizi_time_off',
+				)
+			);
+
+			if ( $time_off_id ) {
+				update_post_meta( $time_off_id, '_ndizi_time_off_start_date', $start_date );
+				update_post_meta( $time_off_id, '_ndizi_time_off_end_date', $end_date );
+				update_post_meta( $time_off_id, '_ndizi_time_off_type', $type );
+				update_post_meta( $time_off_id, '_ndizi_time_off_status', 'pending' );
+				update_post_meta( $time_off_id, '_ndizi_time_off_client_id', $client_id );
+
+				wp_safe_redirect( add_query_arg( 'ndizi_time_off_success', '1', get_permalink() ) );
+				exit;
+			}
+		}
+
 		// 6. Submit a discussion Message (Comment)
 		if ( isset( $_POST['ndizi_submit_portal_comment'] ) && isset( $_POST['ndizi_comment_post_id'] ) ) {
 			check_admin_referer( 'ndizi_portal_submit_comment', '_wpnonce' );
@@ -445,6 +477,7 @@ class Ndizi_Portal {
 				'ndizi_portal',
 				array(
 					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'rest_url' => esc_url_raw( rest_url( 'ndizi/v1' ) ),
 				)
 			);
 		}
@@ -514,6 +547,8 @@ class Ndizi_Portal {
 		// Display-only flag set by our own post-redirect-get flow; not a form submission.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$task_success = isset( $_GET['ndizi_task_success'] );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$time_off_success = isset( $_GET['ndizi_time_off_success'] );
 		?>
 		<header class="ndizi-portal-header">
 			<div>
@@ -528,6 +563,12 @@ class Ndizi_Portal {
 		<?php if ( $task_success ) : ?>
 			<div class="ndizi-portal-alert alert-success">
 				<?php esc_html_e( 'Task successfully submitted! Our team has been notified and will review it shortly.', 'ndizi-project-management' ); ?>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( $time_off_success ) : ?>
+			<div class="ndizi-portal-alert alert-success">
+				<?php esc_html_e( 'Time-off request successfully submitted! Our team has been notified and will review it shortly.', 'ndizi-project-management' ); ?>
 			</div>
 		<?php endif; ?>
 
@@ -681,6 +722,14 @@ class Ndizi_Portal {
 																	<a href="<?php echo $ndizi_print_url; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url() applied above. ?>" target="_blank" class="ndizi-portal-btn-table">
 																		<span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print/PDF', 'ndizi-project-management' ); ?>
 																	</a>
+																	<?php
+																	$stripe_publishable = get_option( 'ndizi_stripe_publishable_key', '' );
+																	if ( $stripe_publishable && 'paid' !== $inv_status ) :
+																		?>
+																		<button type="button" class="ndizi-portal-btn-table ndizi-pay-invoice-btn" data-invoice-id="<?php echo esc_attr( $inv->ID ); ?>" data-token="<?php echo esc_attr( get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ); ?>">
+																			<span class="dashicons dashicons-cart"></span> <?php esc_html_e( 'Pay Online', 'ndizi-project-management' ); ?>
+																		</button>
+																	<?php endif; ?>
 																</td>
 															</tr>
 														<?php endforeach; ?>
@@ -733,6 +782,43 @@ class Ndizi_Portal {
 						</div>
 
 						<button type="submit" name="ndizi_submit_task_portal" class="ndizi-portal-btn"><?php esc_html_e( 'Submit Task', 'ndizi-project-management' ); ?></button>
+					</form>
+				</div>
+
+				<!-- Time-off Request Form -->
+				<div class="ndizi-portal-card ndizi-sidebar-form-card" style="margin-top: 20px;">
+					<h3><?php esc_html_e( 'Request Time Off / Absence', 'ndizi-project-management' ); ?></h3>
+					<p class="desc"><?php esc_html_e( 'Submit a time-off or absence window for our team to log capacity changes.', 'ndizi-project-management' ); ?></p>
+
+					<form method="post" action="">
+						<?php wp_nonce_field( 'ndizi_portal_submit_time_off' ); ?>
+						
+						<div class="ndizi-form-group">
+							<label for="ndizi_time_off_type"><?php esc_html_e( 'Type', 'ndizi-project-management' ); ?></label>
+							<select name="ndizi_time_off_type" id="ndizi_time_off_type" required>
+								<option value="vacation"><?php esc_html_e( 'Vacation', 'ndizi-project-management' ); ?></option>
+								<option value="sick_leave"><?php esc_html_e( 'Sick Leave', 'ndizi-project-management' ); ?></option>
+								<option value="personal"><?php esc_html_e( 'Personal Leave', 'ndizi-project-management' ); ?></option>
+								<option value="other"><?php esc_html_e( 'Other', 'ndizi-project-management' ); ?></option>
+							</select>
+						</div>
+
+						<div class="ndizi-form-group">
+							<label for="ndizi_time_off_start"><?php esc_html_e( 'Start Date', 'ndizi-project-management' ); ?></label>
+							<input type="date" name="ndizi_time_off_start" id="ndizi_time_off_start" required style="width: 100%;">
+						</div>
+
+						<div class="ndizi-form-group">
+							<label for="ndizi_time_off_end"><?php esc_html_e( 'End Date', 'ndizi-project-management' ); ?></label>
+							<input type="date" name="ndizi_time_off_end" id="ndizi_time_off_end" required style="width: 100%;">
+						</div>
+
+						<div class="ndizi-form-group">
+							<label for="ndizi_time_off_reason"><?php esc_html_e( 'Reason / Details', 'ndizi-project-management' ); ?></label>
+							<textarea name="ndizi_time_off_reason" id="ndizi_time_off_reason" rows="3" placeholder="<?php esc_attr_e( 'Describe why...', 'ndizi-project-management' ); ?>" required></textarea>
+						</div>
+
+						<button type="submit" name="ndizi_submit_time_off_portal" class="ndizi-portal-btn"><?php esc_html_e( 'Submit Request', 'ndizi-project-management' ); ?></button>
 					</form>
 				</div>
 			</div>

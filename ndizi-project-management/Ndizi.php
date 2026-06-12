@@ -79,6 +79,7 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-calendar.php';
 
 		// Conditional modules dependencies
 		if ( self::is_module_active( 'portal' ) ) {
@@ -137,6 +138,12 @@ class Ndizi_Project_Management {
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();
 
+		// Automated DB schema upgrade check
+		if ( get_option( 'ndizi_db_version' ) !== NDIZI_VERSION ) {
+			Ndizi_DB::create_table();
+			update_option( 'ndizi_db_version', NDIZI_VERSION );
+		}
+
 		// Initialize Abilities API support
 		Ndizi_Abilities::init();
 
@@ -147,6 +154,9 @@ class Ndizi_Project_Management {
 
 		// Initialize REST API Routes
 		Ndizi_REST::init();
+
+		// Initialize Google Calendar Integration
+		Ndizi_Calendar::init();
 
 		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
 		if ( is_admin() ) {

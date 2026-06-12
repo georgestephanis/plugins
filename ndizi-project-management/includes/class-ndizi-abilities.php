@@ -69,6 +69,7 @@ class Ndizi_Abilities {
 				),
 				'execute_callback'    => array( __CLASS__, 'get_projects' ),
 				'permission_callback' => function ( $input = null ) {
+					unset( $input );
 					return Ndizi_REST::check_view_projects_permission();
 				},
 				'meta'                => array(
@@ -115,6 +116,7 @@ class Ndizi_Abilities {
 				),
 				'execute_callback'    => array( __CLASS__, 'get_tasks' ),
 				'permission_callback' => function ( $input = null ) {
+					unset( $input );
 					return Ndizi_REST::check_view_tasks_permission();
 				},
 				'meta'                => array(
@@ -160,6 +162,7 @@ class Ndizi_Abilities {
 				),
 				'execute_callback'    => array( __CLASS__, 'get_active_timer' ),
 				'permission_callback' => function ( $input = null ) {
+					unset( $input );
 					return Ndizi_REST::check_time_log_permission();
 				},
 				'meta'                => array(
@@ -223,6 +226,7 @@ class Ndizi_Abilities {
 				),
 				'execute_callback'    => array( __CLASS__, 'start_timer' ),
 				'permission_callback' => function ( $input = null ) {
+					unset( $input );
 					return Ndizi_REST::check_time_log_permission();
 				},
 				'meta'                => array(
@@ -268,6 +272,7 @@ class Ndizi_Abilities {
 				),
 				'execute_callback'    => array( __CLASS__, 'stop_timer' ),
 				'permission_callback' => function ( $input = null ) {
+					unset( $input );
 					return Ndizi_REST::check_time_log_permission();
 				},
 				'meta'                => array(
@@ -341,6 +346,7 @@ class Ndizi_Abilities {
 				),
 				'execute_callback'    => array( __CLASS__, 'log_time_manual' ),
 				'permission_callback' => function ( $input = null ) {
+					unset( $input );
 					return Ndizi_REST::check_time_log_permission();
 				},
 				'meta'                => array(
@@ -360,6 +366,7 @@ class Ndizi_Abilities {
 	 * @return array
 	 */
 	public static function get_projects( $input = null ) {
+		unset( $input );
 		$args = array(
 			'post_type'      => 'ndizi_project',
 			'post_status'    => 'publish',
@@ -493,6 +500,7 @@ class Ndizi_Abilities {
 	 * @return array
 	 */
 	public static function get_active_timer( $input = null ) {
+		unset( $input );
 		$user_id = get_current_user_id();
 		$timer   = Ndizi_DB::get_active_timer( $user_id );
 
@@ -634,6 +642,7 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function stop_timer( $input = null ) {
+		unset( $input );
 		$user_id = get_current_user_id();
 		$active  = Ndizi_DB::get_active_timer( $user_id );
 

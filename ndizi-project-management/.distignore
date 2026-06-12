@@ -25,3 +25,4 @@ phpcs.xml
 AGENTS.md
 README.md
 REVIEW.md
+/chrome-extension
