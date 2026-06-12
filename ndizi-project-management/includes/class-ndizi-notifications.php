@@ -9,7 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Ndizi_Notifications {
 
-	/** @var array Stash of old meta values captured before update_post_meta writes. */
+	/**
+	 * Stash of old meta values captured before update_post_meta writes.
+	 *
+	 * @var array
+	 */
 	private static $prev_meta_values = array();
 
 	/**
@@ -25,12 +29,17 @@ class Ndizi_Notifications {
 
 	/**
 	 * Cache the current meta value before it is overwritten, for use in handle_updated_post_meta.
+	 *
+	 * @param mixed  $check      Whether to bypass filtering metadata.
+	 * @param int    $object_id  Object ID.
+	 * @param string $meta_key   Meta key.
+	 * @return mixed
 	 */
-	public static function capture_old_task_meta( $null, $object_id, $meta_key ) {
+	public static function capture_old_task_meta( $check, $object_id, $meta_key ) {
 		if ( in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status' ), true ) ) {
 			self::$prev_meta_values[ $object_id . ':' . $meta_key ] = get_post_meta( $object_id, $meta_key, true );
 		}
-		return $null;
+		return $check;
 	}
 
 	/**
