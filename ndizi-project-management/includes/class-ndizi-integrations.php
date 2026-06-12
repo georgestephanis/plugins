@@ -15,6 +15,7 @@ class Ndizi_Integrations {
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'handle_invoice_print_request' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_invoice_export_requests' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_report_export_requests' ) );
 		add_action( 'post_submitbox_misc_actions', array( __CLASS__, 'add_export_buttons_to_editor' ) );
 	}
 
@@ -596,6 +597,130 @@ class Ndizi_Integrations {
 		}
 
 		wp_die( esc_html__( 'Invalid export format.', 'ndizi-project-management' ) );
+	}
+
+	/**
+	 * Handle admin filtered time report CSV exports
+	 */
+	public static function handle_report_export_requests() {
+		if ( ! isset( $_GET['ndizi_export_report'] ) || 'csv' !== $_GET['ndizi_export_report'] ) {
+			return;
+		}
+
+		check_admin_referer( 'ndizi_export_report_nonce' );
+
+		if ( ! current_user_can( 'ndizi_view_reports' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'ndizi-project-management' ) );
+		}
+
+		$project_id = isset( $_GET['project_id'] ) ? intval( $_GET['project_id'] ) : 0;
+		$user_id    = isset( $_GET['user_id'] ) ? intval( $_GET['user_id'] ) : 0;
+		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
+		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+
+		// Query time entries matching filters
+		$time_entries = Ndizi_DB::get_time_entries(
+			array(
+				'project_id' => $project_id ? $project_id : null,
+				'user_id'    => $user_id ? $user_id : null,
+				'start_date' => $start_date,
+				'end_date'   => $end_date,
+				'number'     => -1,
+			)
+		);
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="ndizi_time_report_' . gmdate( 'Y-m-d' ) . '.csv"' );
+
+		$output = fopen( 'php://output', 'w' );
+
+		// Write CSV headers. User-controlled cells are run through self::escape_csv_field()
+		fputcsv( $output, array( 'Ndizi Time Report Export' ) );
+		if ( $project_id ) {
+			$proj = get_post( $project_id );
+			fputcsv( $output, array( 'Project Filter', $proj ? self::escape_csv_field( $proj->post_title ) : '' ) );
+		}
+		if ( $user_id ) {
+			$usr = get_userdata( $user_id );
+			fputcsv( $output, array( 'Team Member Filter', $usr ? self::escape_csv_field( $usr->display_name ) : '' ) );
+		}
+		if ( $start_date ) {
+			fputcsv( $output, array( 'Start Date', self::escape_csv_field( $start_date ) ) );
+		}
+		if ( $end_date ) {
+			fputcsv( $output, array( 'End Date', self::escape_csv_field( $end_date ) ) );
+		}
+		fputcsv( $output, array() ); // Spacer row
+
+		fputcsv(
+			$output,
+			array(
+				'Date',
+				'Project',
+				'Task',
+				'Team Member',
+				'Description',
+				'Hours',
+				'Billable',
+				'Billing Rate',
+				'Revenue',
+				'Salary Rate',
+				'Internal Cost',
+				'Margin',
+			)
+		);
+
+		foreach ( $time_entries as $entry ) {
+			$user = get_userdata( $entry->user_id );
+			$proj = get_post( $entry->project_id );
+			$task = $entry->task_id ? get_post( $entry->task_id ) : null;
+
+			// Resolve billing rate
+			$billing_rate = 0;
+			if ( $entry->task_id ) {
+				$billing_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+			}
+			if ( ! $billing_rate && $entry->user_id ) {
+				$billing_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+			}
+			if ( ! $billing_rate && $entry->project_id ) {
+				$billing_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+			}
+			$billing_rate  = floatval( $billing_rate );
+			$hours         = $entry->duration / 3600;
+			$entry_revenue = $entry->billable ? ( $hours * $billing_rate ) : 0;
+
+			// Resolve salary rate
+			$salary_rate = 0;
+			if ( $entry->user_id ) {
+				$salary_rate = get_user_meta( $entry->user_id, '_ndizi_user_salary_rate', true );
+			}
+			$salary_rate = floatval( $salary_rate );
+			$entry_cost  = $hours * $salary_rate;
+			$margin      = $entry_revenue - $entry_cost;
+
+			fputcsv(
+				$output,
+				array(
+					self::escape_csv_field( gmdate( 'Y-m-d', strtotime( $entry->start_time ) ) ),
+					self::escape_csv_field( $proj ? $proj->post_title : '' ),
+					self::escape_csv_field( $task ? $task->post_title : '' ),
+					self::escape_csv_field( $user ? $user->display_name : '' ),
+					self::escape_csv_field( $entry->description ),
+					self::escape_csv_field( round( $hours, 2 ) ),
+					self::escape_csv_field( $entry->billable ? 'Yes' : 'No' ),
+					self::escape_csv_field( '$' . number_format( $billing_rate, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $entry_revenue, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $salary_rate, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $entry_cost, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $margin, 2 ) ),
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+		fclose( $output );
+		exit;
 	}
 
 	/**

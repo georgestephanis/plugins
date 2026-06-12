@@ -45,7 +45,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 - [x] **Individual salary rates tracking** — track internal employee hourly salary rates to calculate project costs and margins.
 - [x] **Profitability reports** — once billing rates exist, a report comparing budget vs. actual
   (time cost vs. project budget) is a natural next step.
-- [ ] **Exportable time reports** — a CSV/PDF export of filtered time entries (by date range,
+- [x] **Exportable time reports** — a CSV/PDF export of filtered time entries (by date range,
   project, user, billable flag) is expected by accountants and clients.
 - [x] **Date-range filtering in the admin dashboard** — currently reports appear to be all-time; a
   selectable time window (this week / this month / custom) is table-stakes for billing workflows.
