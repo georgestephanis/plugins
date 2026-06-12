@@ -223,6 +223,12 @@ class Ndizi_Project_Management {
 		) {
 			Ndizi_DB::create_table();
 
+			// Re-run role/cap grants on every version bump so that newly-added
+			// capabilities (e.g. ndizi_manage_clients) are picked up by existing
+			// installs that were activated before those caps were introduced.
+			// add_role() no-ops if the role already exists; add_cap() is additive.
+			Ndizi_Roles::add_roles();
+
 			// Activate any registry modules not yet in the stored option so new
 			// modules (e.g. 'calendar') default to on for existing installs.
 			// Runs once per version bump; user toggles made after this are preserved.
