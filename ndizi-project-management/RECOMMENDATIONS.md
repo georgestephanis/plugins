@@ -140,10 +140,15 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   diagnosable. (Non-blocking fire-and-forget is preserved; retries remain P2.)
   ([class-ndizi-webhooks.php](includes/class-ndizi-webhooks.php)) _(branch: ndizi/fable-review)_
 
-- [ ] **Duplicate event fan-out between Notifications and Webhooks.** Both classes hook
-  the same meta-update events independently; confirm the intended matrix (email vs Slack
-  vs custom webhook per event) and centralize the event detection so a status change
-  fires one canonical `do_action()` both consume.
+- [x] **Duplicate event fan-out between Notifications and Webhooks.** After each webhook
+  dispatch in `handle_meta_change()`, `Ndizi_Webhooks` now fires canonical actions:
+  `ndizi_task_assigned($task_id, $assignee_id)` and
+  `ndizi_task_status_changed($task_id, $new_status_key, $old_status_key)`.
+  `Ndizi_Notifications` no longer hooks `added_post_meta`/`updated_post_meta` directly;
+  it listens to these canonical actions instead, eliminating the duplicate
+  old-value capture and meta-key detection.
+  ([class-ndizi-webhooks.php](includes/class-ndizi-webhooks.php), [class-ndizi-notifications.php](includes/class-ndizi-notifications.php))
+  _(branch: ndizi/fable-review)_
 
 - [x] **Replace deprecated `meta_key`/`meta_value` query args with `meta_query`**
   (~[class-ndizi-admin.php:318](includes/class-ndizi-admin.php#L318)) and remove inline

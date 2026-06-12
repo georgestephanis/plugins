@@ -378,6 +378,8 @@ class Ndizi_Webhooks {
 					);
 
 					self::dispatch( 'task_assigned', $data, $slack_message );
+
+					do_action( 'ndizi_task_assigned', $object_id, $assignee_id );
 				}
 			} elseif ( '_ndizi_task_status' === $meta_key ) {
 				$task          = get_post( $object_id );
@@ -407,6 +409,8 @@ class Ndizi_Webhooks {
 				);
 
 				self::dispatch( 'task_status_updated', $data, $slack_message );
+
+				do_action( 'ndizi_task_status_changed', $object_id, $new_val, $old_val );
 			}
 		} elseif ( 'ndizi_invoice' === $post_type ) {
 			if ( '_ndizi_invoice_status' === $meta_key ) {
