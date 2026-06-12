@@ -81,6 +81,18 @@ class Ndizi_Admin {
 				$updated = true;
 			}
 
+			if ( isset( $_POST['ndizi_webhook_url'] ) ) {
+				$webhook_url = esc_url_raw( wp_unslash( $_POST['ndizi_webhook_url'] ) );
+				update_option( 'ndizi_webhook_url', $webhook_url );
+				$updated = true;
+			}
+
+			if ( isset( $_POST['ndizi_slack_webhook_url'] ) ) {
+				$slack_webhook_url = esc_url_raw( wp_unslash( $_POST['ndizi_slack_webhook_url'] ) );
+				update_option( 'ndizi_slack_webhook_url', $slack_webhook_url );
+				$updated = true;
+			}
+
 			if ( isset( $_POST['ndizi_save_settings_nonce'] ) ) {
 				$modules = isset( $_POST['ndizi_active_modules'] ) && is_array( $_POST['ndizi_active_modules'] )
 					? array_map( 'sanitize_key', wp_unslash( $_POST['ndizi_active_modules'] ) )
@@ -1653,12 +1665,17 @@ class Ndizi_Admin {
 						<div class="ndizi-filter-col filter-actions">
 							<button type="submit" class="button button-primary"><?php esc_html_e( 'Filter Report', 'ndizi-project-management' ); ?></button>
 							<?php
-							$csv_export_url = wp_nonce_url(
+							$csv_export_url        = wp_nonce_url(
 								add_query_arg( 'ndizi_export_report', 'csv' ),
+								'ndizi_export_report_nonce'
+							);
+							$quickbooks_export_url = wp_nonce_url(
+								add_query_arg( 'ndizi_export_report', 'quickbooks_csv' ),
 								'ndizi_export_report_nonce'
 							);
 							?>
 							<a href="<?php echo esc_url( $csv_export_url ); ?>" class="button button-secondary" style="background: #10b981 !important; border-color: #10b981 !important; color: #fff !important; line-height: 36px; min-height: 38px;"><?php esc_html_e( 'Export CSV', 'ndizi-project-management' ); ?></a>
+							<a href="<?php echo esc_url( $quickbooks_export_url ); ?>" class="button button-secondary" style="background: #059669 !important; border-color: #059669 !important; color: #fff !important; line-height: 36px; min-height: 38px;"><?php esc_html_e( 'Export QuickBooks CSV', 'ndizi-project-management' ); ?></a>
 							<a href="edit.php?post_type=ndizi_project&page=ndizi-reports" class="button button-secondary"><?php esc_html_e( 'Reset', 'ndizi-project-management' ); ?></a>
 						</div>
 					</div>
@@ -2115,6 +2132,10 @@ class Ndizi_Admin {
 								'name' => __( 'Gantt Timeline Charts', 'ndizi-project-management' ),
 								'desc' => __( 'Provides interactive timelines for project scheduling and visually tracking completion status.', 'ndizi-project-management' ),
 							),
+							'integrations'  => array(
+								'name' => __( 'Webhooks & Slack Integrations', 'ndizi-project-management' ),
+								'desc' => __( 'Sends outbound JSON payloads and formatted Slack alerts when time is logged, tasks change, or invoices transition.', 'ndizi-project-management' ),
+							),
 						);
 
 						$active_modules = Ndizi_Project_Management::get_active_modules();
@@ -2140,6 +2161,25 @@ class Ndizi_Admin {
 						<input type="date" name="ndizi_lock_date" id="ndizi_lock_date" value="<?php echo esc_attr( $lock_date ); ?>" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
 					</div>
+
+					<?php if ( Ndizi_Project_Management::is_module_active( 'integrations' ) ) : ?>
+						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Webhooks & Slack Settings', 'ndizi-project-management' ); ?></h2>
+						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Configure outbound webhook endpoints to connect Ndizi with external systems or Slack.', 'ndizi-project-management' ); ?></p>
+						
+						<div style="margin-bottom: 20px;">
+							<?php $webhook_url = get_option( 'ndizi_webhook_url', '' ); ?>
+							<label for="ndizi_webhook_url" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Outbound Webhook URL', 'ndizi-project-management' ); ?></label>
+							<input type="url" name="ndizi_webhook_url" id="ndizi_webhook_url" value="<?php echo esc_url( $webhook_url ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'The URL where JSON payloads will be POSTed on events.', 'ndizi-project-management' ); ?></p>
+						</div>
+
+						<div style="margin-bottom: 30px;">
+							<?php $slack_webhook_url = get_option( 'ndizi_slack_webhook_url', '' ); ?>
+							<label for="ndizi_slack_webhook_url" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Slack Webhook URL', 'ndizi-project-management' ); ?></label>
+							<input type="url" name="ndizi_slack_webhook_url" id="ndizi_slack_webhook_url" value="<?php echo esc_url( $slack_webhook_url ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Your Slack incoming webhook URL for formatting alerts.', 'ndizi-project-management' ); ?></p>
+						</div>
+					<?php endif; ?>
 
 					<button type="submit" class="button button-primary" style="background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; padding: 0 24px !important; height: 40px !important; font-size: 14px !important; border-radius: 6px !important; font-weight: 600 !important; cursor: pointer; transition: background 0.2s;">
 						<?php esc_html_e( 'Save Changes', 'ndizi-project-management' ); ?>

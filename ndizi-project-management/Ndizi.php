@@ -48,7 +48,7 @@ class Ndizi_Project_Management {
 	 * @return array Slugs of active modules.
 	 */
 	public static function get_active_modules() {
-		$default_modules = array( 'invoicing', 'portal', 'tracker', 'notifications', 'gantt' );
+		$default_modules = array( 'invoicing', 'portal', 'tracker', 'notifications', 'gantt', 'integrations' );
 		$active          = get_option( 'ndizi_active_modules', null );
 
 		if ( null === $active ) {
@@ -92,6 +92,9 @@ class Ndizi_Project_Management {
 		if ( self::is_module_active( 'tracker' ) ) {
 			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin-bar.php';
 			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-standalone-tracker.php';
+		}
+		if ( self::is_module_active( 'integrations' ) ) {
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-webhooks.php';
 		}
 	}
 
@@ -162,6 +165,11 @@ class Ndizi_Project_Management {
 		// Initialize Integrations
 		if ( self::is_module_active( 'invoicing' ) ) {
 			Ndizi_Integrations::init();
+		}
+
+		// Initialize Webhooks & Slack
+		if ( self::is_module_active( 'integrations' ) ) {
+			Ndizi_Webhooks::init();
 		}
 
 		// Initialize Admin Bar Logger

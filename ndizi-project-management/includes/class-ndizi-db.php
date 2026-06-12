@@ -99,7 +99,9 @@ class Ndizi_DB {
 		);
 
 		if ( $result ) {
-			return $wpdb->insert_id;
+			$insert_id = $wpdb->insert_id;
+			do_action( 'ndizi_timer_started', $insert_id, $user_id, $project_id, $task_id, $description, $billable );
+			return $insert_id;
 		}
 
 		return false;
@@ -139,6 +141,7 @@ class Ndizi_DB {
 		);
 
 		if ( $result !== false ) {
+			do_action( 'ndizi_timer_stopped', $active_timer->id, $user_id, $duration );
 			return self::get_time_entry( $active_timer->id );
 		}
 
@@ -196,7 +199,9 @@ class Ndizi_DB {
 		);
 
 		if ( $result ) {
-			return $wpdb->insert_id;
+			$insert_id = $wpdb->insert_id;
+			do_action( 'ndizi_time_logged', $insert_id, $user_id, $project_id, $task_id, $description, $duration, $billable );
+			return $insert_id;
 		}
 
 		return false;
@@ -264,7 +269,12 @@ class Ndizi_DB {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		if ( $result !== false ) {
+			do_action( 'ndizi_time_entry_updated', $id, $update_data );
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -294,11 +304,17 @@ class Ndizi_DB {
 			return false;
 		}
 
-		return $wpdb->delete(
+		$result = $wpdb->delete(
 			$table_name,
 			array( 'id' => $id ),
 			array( '%d' )
 		);
+
+		if ( $result ) {
+			do_action( 'ndizi_time_entry_deleted', $id );
+		}
+
+		return $result;
 	}
 
 	/**
