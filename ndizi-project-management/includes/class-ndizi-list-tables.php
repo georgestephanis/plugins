@@ -78,9 +78,13 @@ class Ndizi_List_Tables {
 		if ( 'projects_count' === $column ) {
 			$projects = get_posts(
 				array(
-					'post_type'      => 'ndizi_project',
-					'posts_per_page' => -1,
-					'meta_query'     => array(
+					'post_type'              => 'ndizi_project',
+					'posts_per_page'         => -1,
+					'fields'                 => 'ids',
+					'no_found_rows'          => true,
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+					'meta_query'             => array(
 						array(
 							'key'   => '_ndizi_client_id',
 							'value' => $post_id,
@@ -134,9 +138,44 @@ class Ndizi_List_Tables {
 			$status_class = ( 'archived' === $status ) ? 'ndizi-badge-archived' : 'ndizi-badge-active';
 			echo '<span class="ndizi-badge ' . esc_attr( $status_class ) . '">' . esc_html( $status_label ) . '</span>';
 		} elseif ( 'project_time' === $column ) {
-			$totals = Ndizi_DB::get_time_totals( array( 'project_id' => $post_id ) );
-			$sec    = ! empty( $totals ) ? $totals[0]->total_duration : 0;
-			$hours  = round( $sec / 3600, 2 );
+			static $cached_totals = null;
+			if ( null === $cached_totals ) {
+				$cached_totals = array();
+				global $posts;
+				$project_ids = array();
+				if ( is_array( $posts ) ) {
+					foreach ( $posts as $p ) {
+						if ( isset( $p->post_type ) && 'ndizi_project' === $p->post_type ) {
+							$project_ids[] = (int) $p->ID;
+						}
+					}
+				}
+				if ( ! empty( $project_ids ) ) {
+					global $wpdb;
+					$table_name       = Ndizi_DB::get_table_name();
+					$ids_placeholders = implode( ',', array_fill( 0, count( $project_ids ), '%d' ) );
+					$results          = $wpdb->get_results(
+						$wpdb->prepare(
+							"SELECT project_id, SUM(duration) as total_duration FROM $table_name WHERE project_id IN ($ids_placeholders) GROUP BY project_id", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+							$project_ids
+						)
+					);
+					if ( is_array( $results ) ) {
+						foreach ( $results as $row ) {
+							$cached_totals[ (int) $row->project_id ] = (int) $row->total_duration;
+						}
+					}
+				}
+			}
+
+			if ( isset( $cached_totals[ $post_id ] ) ) {
+				$sec = $cached_totals[ $post_id ];
+			} else {
+				$totals                    = Ndizi_DB::get_time_totals( array( 'project_id' => $post_id ) );
+				$sec                       = ! empty( $totals ) ? $totals[0]->total_duration : 0;
+				$cached_totals[ $post_id ] = $sec;
+			}
+			$hours = round( $sec / 3600, 2 );
 			echo esc_html( $hours ) . 'h';
 		} elseif ( 'project_budget' === $column ) {
 			$budget = get_post_meta( $post_id, '_ndizi_project_budget', true );

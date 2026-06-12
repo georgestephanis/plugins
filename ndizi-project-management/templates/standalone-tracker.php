@@ -32,7 +32,7 @@ $standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
 	<link rel="stylesheet" href="<?php echo esc_url( $standalone_css_url ); ?>">
 </head>
-<body class="<?php echo $active_timer ? 'timer-running' : ''; ?>">
+<body class="<?php echo esc_attr( $active_timer ? 'timer-running' : '' ); ?>">
 
 	<div class="app-container">
 
@@ -56,7 +56,7 @@ $standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 		</div>
 
 		<!-- Running Tracker Panel -->
-		<div class="glass-card active-timer-section" id="active-timer-view" style="<?php echo $active_timer ? '' : 'display: none;'; ?>">
+		<div class="glass-card active-timer-section" id="active-timer-view" style="<?php echo esc_attr( $active_timer ? '' : 'display: none;' ); ?>">
 			<div class="active-panel">
 				<div class="active-header">
 					<div class="active-meta">
@@ -82,7 +82,7 @@ $standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 		</div>
 
 		<!-- Inactive Log Form Panel -->
-		<div class="glass-card new-timer-section" id="new-timer-view" style="<?php echo $active_timer ? 'display: none;' : ''; ?>">
+		<div class="glass-card new-timer-section" id="new-timer-view" style="<?php echo esc_attr( $active_timer ? 'display: none;' : '' ); ?>">
 
 			<!-- Tabs -->
 			<div class="mode-tabs">

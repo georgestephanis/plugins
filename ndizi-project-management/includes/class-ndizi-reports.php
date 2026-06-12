@@ -22,12 +22,13 @@ class Ndizi_Reports {
 			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
 		}
 
+		$success_message = '';
 		// Handle Approval Actions
 		if ( isset( $_POST['ndizi_approval_action'] ) && isset( $_POST['ndizi_time_entry_ids'] ) ) {
 			check_admin_referer( 'ndizi_reports_approval', 'ndizi_approval_nonce' );
 
 			$entry_ids       = array_map( 'absint', (array) $_POST['ndizi_time_entry_ids'] );
-			$action          = sanitize_key( $_POST['ndizi_approval_action'] );
+			$action          = sanitize_key( wp_unslash( $_POST['ndizi_approval_action'] ) );
 			$current_user_id = get_current_user_id();
 
 			if ( ! empty( $entry_ids ) ) {
@@ -50,7 +51,7 @@ class Ndizi_Reports {
 						);
 					}
 				}
-				echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Timesheet statuses updated successfully!', 'ndizi-project-management' ) . '</p></div>';
+				$success_message = __( 'Timesheet statuses updated successfully!', 'ndizi-project-management' );
 			}
 		}
 
@@ -176,6 +177,12 @@ class Ndizi_Reports {
 		<div class="wrap ndizi-reports-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Ndizi Time Reports', 'ndizi-project-management' ); ?></h1>
 			<hr class="wp-header-end">
+
+			<?php if ( ! empty( $success_message ) ) : ?>
+				<div class="notice notice-success is-dismissible">
+					<p><?php echo esc_html( $success_message ); ?></p>
+				</div>
+			<?php endif; ?>
 
 			<!-- Reports filter header -->
 			<div class="ndizi-reports-filter-card">

@@ -176,6 +176,10 @@ class Ndizi_Ajax {
 	public static function ajax_refresh_logs_table() {
 		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
 
+		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
+		}
+
 		$project_id = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
 		if ( ! $project_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid project ID.', 'ndizi-project-management' ) ) );

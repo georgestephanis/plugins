@@ -140,7 +140,9 @@ jQuery( document ).ready( function ( $ ) {
 			return;
 		}
 
-		const project = projectsData.find( ( p ) => p.id === projectId );
+		const project = projectsData.find(
+			( p ) => parseInt( p.id, 10 ) === projectId
+		);
 		if ( project && project.tasks && project.tasks.length > 0 ) {
 			project.tasks.forEach( function ( task ) {
 				$taskSelect.append(

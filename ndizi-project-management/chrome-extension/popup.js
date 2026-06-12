@@ -1,7 +1,7 @@
 ( function () {
 	'use strict';
 
-		// DOM Elements
+	// DOM Elements
 	const loader = document.getElementById( 'loader' );
 	const loaderText = document.getElementById( 'loader-text' );
 	const setupScreen = document.getElementById( 'setup-screen' );
@@ -70,9 +70,15 @@
 
 				// Migration of legacy single site credentials.
 				// Validate authHeader is a non-empty Basic token before migrating.
-				const legacyAuthHeader = typeof data.authHeader === 'string' ? data.authHeader.trim() : '';
+				const legacyAuthHeader =
+					typeof data.authHeader === 'string'
+						? data.authHeader.trim()
+						: '';
 				let isAuthHeaderValid = false;
-				if ( legacyAuthHeader && /^Basic [A-Za-z0-9+/]+=*$/.test( legacyAuthHeader ) ) {
+				if (
+					legacyAuthHeader &&
+					/^Basic [A-Za-z0-9+/]+=*$/.test( legacyAuthHeader )
+				) {
 					try {
 						const encodedCreds = legacyAuthHeader.substring( 6 );
 						const decodedCreds = atob( encodedCreds );
@@ -93,14 +99,14 @@
 					const legacySite = {
 						wpUrl: data.wpUrl,
 						username: data.username,
-						authHeader: legacyAuthHeader
+						authHeader: legacyAuthHeader,
 					};
 					currentSites.push( legacySite );
 					currentActiveSiteUrl = legacySite.wpUrl;
 
 					chrome.storage.local.set( {
 						sites: currentSites,
-						activeSiteUrl: currentActiveSiteUrl
+						activeSiteUrl: currentActiveSiteUrl,
 					} );
 				}
 
@@ -108,7 +114,9 @@
 				activeSiteUrl = currentActiveSiteUrl;
 
 				if ( sites.length > 0 && activeSiteUrl ) {
-					const activeSite = sites.find( s => s.wpUrl === activeSiteUrl );
+					const activeSite = sites.find(
+						( s ) => s.wpUrl === activeSiteUrl
+					);
 					if ( activeSite ) {
 						updateSiteSwitcherDropdown();
 						testAndLoadTracker(
@@ -118,13 +126,13 @@
 						);
 					} else {
 						// Fallback to first site if active is missing
-						activeSiteUrl = sites[0].wpUrl;
+						activeSiteUrl = sites[ 0 ].wpUrl;
 						chrome.storage.local.set( { activeSiteUrl } );
 						updateSiteSwitcherDropdown();
 						testAndLoadTracker(
-							sites[0].wpUrl,
-							sites[0].username,
-							sites[0].authHeader
+							sites[ 0 ].wpUrl,
+							sites[ 0 ].username,
+							sites[ 0 ].authHeader
 						);
 					}
 				} else {
@@ -155,7 +163,7 @@
 		const selectedUrl = siteSelect.value;
 		if ( ! selectedUrl || selectedUrl === activeSiteUrl ) return;
 
-		const targetSite = sites.find( s => s.wpUrl === selectedUrl );
+		const targetSite = sites.find( ( s ) => s.wpUrl === selectedUrl );
 		if ( ! targetSite ) return;
 
 		if ( activeTimerInterval ) {
@@ -166,7 +174,11 @@
 		activeSiteUrl = selectedUrl;
 		chrome.storage.local.set( { activeSiteUrl }, () => {
 			showLoader( `Switching to ${ targetSite.wpUrl }...` );
-			testAndLoadTracker( targetSite.wpUrl, targetSite.username, targetSite.authHeader );
+			testAndLoadTracker(
+				targetSite.wpUrl,
+				targetSite.username,
+				targetSite.authHeader
+			);
 		} );
 	}
 
@@ -211,7 +223,11 @@
 			wpUrl = wpUrl.slice( 0, -1 );
 		}
 
-		const authHeader = 'Basic ' + btoa( unescape( encodeURIComponent( username + ':' + appPassword ) ) );
+		const authHeader =
+			'Basic ' +
+			btoa(
+				unescape( encodeURIComponent( username + ':' + appPassword ) )
+			);
 
 		showLoader( 'Connecting to ' + wpUrl + '...' );
 		testAndLoadTracker( wpUrl, username, authHeader, true );
@@ -239,15 +255,19 @@
 		}
 
 		// Remove the currently active site
-		sites = sites.filter( s => s.wpUrl !== activeSiteUrl );
+		sites = sites.filter( ( s ) => s.wpUrl !== activeSiteUrl );
 
 		if ( sites.length > 0 ) {
 			// Switch to the first available site
-			activeSiteUrl = sites[0].wpUrl;
+			activeSiteUrl = sites[ 0 ].wpUrl;
 			chrome.storage.local.set( { sites, activeSiteUrl }, () => {
 				updateSiteSwitcherDropdown();
 				showLoader( `Switching to ${ activeSiteUrl }...` );
-				testAndLoadTracker( sites[0].wpUrl, sites[0].username, sites[0].authHeader );
+				testAndLoadTracker(
+					sites[ 0 ].wpUrl,
+					sites[ 0 ].username,
+					sites[ 0 ].authHeader
+				);
 			} );
 		} else {
 			// No sites left, purge storage completely
@@ -290,27 +310,26 @@
 			.then( ( projects ) => {
 				if ( save ) {
 					// Add or update the site in the list
-					const existingIndex = sites.findIndex( s => s.wpUrl === wpUrl );
+					const existingIndex = sites.findIndex(
+						( s ) => s.wpUrl === wpUrl
+					);
 					const newSite = { wpUrl, username, authHeader };
 					if ( existingIndex > -1 ) {
-						sites[existingIndex] = newSite;
+						sites[ existingIndex ] = newSite;
 					} else {
 						sites.push( newSite );
 					}
 					activeSiteUrl = wpUrl;
 
-					chrome.storage.local.set(
-						{ sites, activeSiteUrl },
-						() => {
-							updateSiteSwitcherDropdown();
-							loadTrackerData(
-								wpUrl,
-								authHeader,
-								username,
-								projects
-							);
-						}
-					);
+					chrome.storage.local.set( { sites, activeSiteUrl }, () => {
+						updateSiteSwitcherDropdown();
+						loadTrackerData(
+							wpUrl,
+							authHeader,
+							username,
+							projects
+						);
+					} );
 				} else {
 					loadTrackerData( wpUrl, authHeader, username, projects );
 				}
@@ -462,11 +481,10 @@
 	}
 
 	function handleToggleTimer() {
-		const activeSite = sites.find( s => s.wpUrl === activeSiteUrl );
+		const activeSite = sites.find( ( s ) => s.wpUrl === activeSiteUrl );
 		if ( ! activeSite ) return;
 
-		const isRunning =
-			timerContainer.classList.contains( 'timer-active' );
+		const isRunning = timerContainer.classList.contains( 'timer-active' );
 
 		if ( isRunning ) {
 			// Stop timer
