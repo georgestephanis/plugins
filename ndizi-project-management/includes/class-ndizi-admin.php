@@ -18,6 +18,12 @@ class Ndizi_Admin {
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
 
+		// User profile billing rate fields
+		add_action( 'show_user_profile', array( __CLASS__, 'render_user_profile_fields' ) );
+		add_action( 'edit_user_profile', array( __CLASS__, 'render_user_profile_fields' ) );
+		add_action( 'personal_options_update', array( __CLASS__, 'save_user_profile_fields' ) );
+		add_action( 'edit_user_profile_update', array( __CLASS__, 'save_user_profile_fields' ) );
+
 		// Custom columns in listings
 		add_filter( 'manage_ndizi_client_posts_columns', array( __CLASS__, 'add_client_columns' ) );
 		add_action( 'manage_ndizi_client_posts_custom_column', array( __CLASS__, 'render_client_columns' ), 10, 2 );
@@ -58,13 +64,46 @@ class Ndizi_Admin {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
 			}
+
+			$updated = false;
+
 			if ( isset( $_POST['ndizi_adminbar_icon'] ) ) {
 				$icon = sanitize_key( wp_unslash( $_POST['ndizi_adminbar_icon'] ) );
 				if ( in_array( $icon, array( 'banana', 'clock', 'punch_clock', 'hourglass' ), true ) ) {
 					update_option( 'ndizi_adminbar_icon', $icon );
-					wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
-					exit;
+					$updated = true;
 				}
+			}
+
+			if ( isset( $_POST['ndizi_lock_date'] ) ) {
+				$lock_date = sanitize_text_field( wp_unslash( $_POST['ndizi_lock_date'] ) );
+				update_option( 'ndizi_lock_date', $lock_date );
+				$updated = true;
+			}
+
+			if ( isset( $_POST['ndizi_webhook_url'] ) ) {
+				$webhook_url = esc_url_raw( wp_unslash( $_POST['ndizi_webhook_url'] ) );
+				update_option( 'ndizi_webhook_url', $webhook_url );
+				$updated = true;
+			}
+
+			if ( isset( $_POST['ndizi_slack_webhook_url'] ) ) {
+				$slack_webhook_url = esc_url_raw( wp_unslash( $_POST['ndizi_slack_webhook_url'] ) );
+				update_option( 'ndizi_slack_webhook_url', $slack_webhook_url );
+				$updated = true;
+			}
+
+			if ( isset( $_POST['ndizi_save_settings_nonce'] ) ) {
+				$modules = isset( $_POST['ndizi_active_modules'] ) && is_array( $_POST['ndizi_active_modules'] )
+					? array_map( 'sanitize_key', wp_unslash( $_POST['ndizi_active_modules'] ) )
+					: array();
+				update_option( 'ndizi_active_modules', $modules );
+				$updated = true;
+			}
+
+			if ( $updated ) {
+				wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
+				exit;
 			}
 		}
 	}
@@ -158,14 +197,16 @@ class Ndizi_Admin {
 		);
 
 		// Submenu: Gantt Chart
-		add_submenu_page(
-			'ndizi-pm',
-			__( 'Ndizi Gantt Chart', 'ndizi-project-management' ),
-			__( 'Gantt Chart', 'ndizi-project-management' ),
-			'ndizi_view_projects',
-			'ndizi-gantt',
-			array( __CLASS__, 'render_gantt_page' )
-		);
+		if ( Ndizi_Project_Management::is_module_active( 'gantt' ) ) {
+			add_submenu_page(
+				'ndizi-pm',
+				__( 'Ndizi Gantt Chart', 'ndizi-project-management' ),
+				__( 'Gantt Chart', 'ndizi-project-management' ),
+				'ndizi_view_projects',
+				'ndizi-gantt',
+				array( __CLASS__, 'render_gantt_page' )
+			);
+		}
 
 		// Submenu: Settings
 		add_submenu_page(
@@ -192,6 +233,12 @@ class Ndizi_Admin {
 	 * Render the main Ndizi PM Dashboard Page
 	 */
 	public static function render_dashboard_page() {
+		// Read-only, bookmarkable report filters from the query string
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
+		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
 		// Calculate stats
 		$active_projects = count(
 			get_posts(
@@ -223,8 +270,26 @@ class Ndizi_Admin {
 		);
 
 		global $wpdb;
-		$table_name  = Ndizi_DB::get_table_name();
-		$total_sec   = $wpdb->get_var( "SELECT SUM(duration) FROM $table_name" );
+		$table_name = Ndizi_DB::get_table_name();
+
+		$query      = "SELECT SUM(duration) FROM $table_name WHERE 1=1";
+		$query_args = array();
+
+		if ( ! empty( $start_date ) ) {
+			$query       .= ' AND start_time >= %s';
+			$query_args[] = $start_date . ' 00:00:00';
+		}
+		if ( ! empty( $end_date ) ) {
+			$query       .= ' AND start_time <= %s';
+			$query_args[] = $end_date . ' 23:59:59';
+		}
+
+		if ( ! empty( $query_args ) ) {
+			$total_sec = $wpdb->get_var( $wpdb->prepare( $query, $query_args ) );
+		} else {
+			$total_sec = $wpdb->get_var( $query );
+		}
+
 		$total_hours = $total_sec ? round( $total_sec / 3600, 1 ) : 0;
 
 		$pending_invoices = count(
@@ -252,6 +317,26 @@ class Ndizi_Admin {
 				<p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;"><?php esc_html_e( 'Native WordPress tracking for clients, projects, tasks, timesheets, and invoices.', 'ndizi-project-management' ); ?></p>
 			</div>
 
+			<!-- Date Range Filter -->
+			<div style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; margin-bottom: 30px;">
+				<form method="get" action="admin.php" style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin: 0;">
+					<input type="hidden" name="page" value="ndizi-pm">
+					
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<label for="ndizi_start_date" style="font-weight: 600; color: #475569; font-size: 13px;"><?php esc_html_e( 'From:', 'ndizi-project-management' ); ?></label>
+						<input type="date" name="start_date" id="ndizi_start_date" value="<?php echo esc_attr( $start_date ); ?>" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+					</div>
+					
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<label for="ndizi_end_date" style="font-weight: 600; color: #475569; font-size: 13px;"><?php esc_html_e( 'To:', 'ndizi-project-management' ); ?></label>
+						<input type="date" name="end_date" id="ndizi_end_date" value="<?php echo esc_attr( $end_date ); ?>" style="padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+					</div>
+					
+					<button type="submit" class="button button-primary" style="background: #4f46e5; border-color: #4f46e5; height: 32px; line-height: 30px; padding: 0 16px; font-weight: 600;"><?php esc_html_e( 'Filter', 'ndizi-project-management' ); ?></button>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-pm' ) ); ?>" class="button button-secondary" style="height: 32px; line-height: 30px; padding: 0 16px; font-weight: 600;"><?php esc_html_e( 'Clear', 'ndizi-project-management' ); ?></a>
+				</form>
+			</div>
+
 			<!-- Stats Grid -->
 			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px;">
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #4f46e5;">
@@ -263,7 +348,14 @@ class Ndizi_Admin {
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo intval( $open_tasks ); ?></div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #10b981;">
-					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;"><?php esc_html_e( 'Total Hours Logged', 'ndizi-project-management' ); ?></h3>
+					<h3 style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">
+						<?php esc_html_e( 'Total Hours Logged', 'ndizi-project-management' ); ?>
+						<?php if ( ! empty( $start_date ) || ! empty( $end_date ) ) : ?>
+							<span style="font-size: 11px; text-transform: none; display: block; margin-top: 4px; color: #4f46e5; font-weight: 500;">
+								(<?php echo esc_html( $start_date ? $start_date : '...' ); ?> &ndash; <?php echo esc_html( $end_date ? $end_date : '...' ); ?>)
+							</span>
+						<?php endif; ?>
+					</h3>
 					<div style="font-size: 36px; font-weight: 800; color: #1e293b; margin-top: 10px;"><?php echo esc_html( $total_hours ); ?>h</div>
 				</div>
 				<div style="background: #fff; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-top: 4px solid #ec4899;">
@@ -531,7 +623,9 @@ class Ndizi_Admin {
 		add_meta_box( 'ndizi_task_details', __( 'Task Details', 'ndizi-project-management' ), array( __CLASS__, 'render_task_meta_box' ), 'ndizi_task', 'normal', 'high' );
 
 		// Invoice Meta Box
-		add_meta_box( 'ndizi_invoice_details', __( 'Invoice Details', 'ndizi-project-management' ), array( __CLASS__, 'render_invoice_meta_box' ), 'ndizi_invoice', 'normal', 'high' );
+		if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) {
+			add_meta_box( 'ndizi_invoice_details', __( 'Invoice Details', 'ndizi-project-management' ), array( __CLASS__, 'render_invoice_meta_box' ), 'ndizi_invoice', 'normal', 'high' );
+		}
 
 		// Contact Meta Box
 		add_meta_box( 'ndizi_contact_details', __( 'Contact Details', 'ndizi-project-management' ), array( __CLASS__, 'render_contact_meta_box' ), 'ndizi_contact', 'normal', 'high' );
@@ -588,11 +682,12 @@ class Ndizi_Admin {
 	public static function render_project_meta_box( $post ) {
 		wp_nonce_field( 'ndizi_save_project', 'ndizi_project_nonce' );
 
-		$client_id  = get_post_meta( $post->ID, '_ndizi_client_id', true );
-		$start_date = get_post_meta( $post->ID, '_ndizi_project_start_date', true );
-		$end_date   = get_post_meta( $post->ID, '_ndizi_project_end_date', true );
-		$budget     = get_post_meta( $post->ID, '_ndizi_project_budget', true );
-		$status     = get_post_meta( $post->ID, '_ndizi_project_status', true );
+		$client_id   = get_post_meta( $post->ID, '_ndizi_client_id', true );
+		$start_date  = get_post_meta( $post->ID, '_ndizi_project_start_date', true );
+		$end_date    = get_post_meta( $post->ID, '_ndizi_project_end_date', true );
+		$budget      = get_post_meta( $post->ID, '_ndizi_project_budget', true );
+		$hourly_rate = get_post_meta( $post->ID, '_ndizi_project_hourly_rate', true );
+		$status      = get_post_meta( $post->ID, '_ndizi_project_status', true );
 
 		$clients = get_posts(
 			array(
@@ -627,6 +722,12 @@ class Ndizi_Admin {
 				<th><label for="ndizi_project_budget"><?php esc_html_e( 'Budget ($)', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="number" step="0.01" name="ndizi_project_budget" id="ndizi_project_budget" value="<?php echo esc_attr( $budget ); ?>" class="small-text"></td>
 			</tr>
+			<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>
+			<tr>
+				<th><label for="ndizi_project_hourly_rate"><?php esc_html_e( 'Default Hourly Rate ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td><input type="number" step="0.01" name="ndizi_project_hourly_rate" id="ndizi_project_hourly_rate" value="<?php echo esc_attr( $hourly_rate ); ?>" class="small-text"></td>
+			</tr>
+			<?php endif; ?>
 			<tr>
 				<th><label for="ndizi_project_status"><?php esc_html_e( 'Project Status', 'ndizi-project-management' ); ?></label></th>
 				<td>
@@ -766,11 +867,12 @@ class Ndizi_Admin {
 	public static function render_task_meta_box( $post ) {
 		wp_nonce_field( 'ndizi_save_task', 'ndizi_task_nonce' );
 
-		$project_id  = get_post_meta( $post->ID, '_ndizi_project_id', true );
-		$assignee_id = get_post_meta( $post->ID, '_ndizi_assigned_user_id', true );
-		$status      = get_post_meta( $post->ID, '_ndizi_task_status', true );
-		$priority    = get_post_meta( $post->ID, '_ndizi_task_priority', true );
-		$due_date    = get_post_meta( $post->ID, '_ndizi_task_due_date', true );
+		$project_id       = get_post_meta( $post->ID, '_ndizi_project_id', true );
+		$assignee_id      = get_post_meta( $post->ID, '_ndizi_assigned_user_id', true );
+		$status           = get_post_meta( $post->ID, '_ndizi_task_status', true );
+		$priority         = get_post_meta( $post->ID, '_ndizi_task_priority', true );
+		$due_date         = get_post_meta( $post->ID, '_ndizi_task_due_date', true );
+		$task_hourly_rate = get_post_meta( $post->ID, '_ndizi_task_hourly_rate', true );
 
 		$projects = get_posts(
 			array(
@@ -837,6 +939,12 @@ class Ndizi_Admin {
 				<th><label for="ndizi_task_due_date"><?php esc_html_e( 'Due Date', 'ndizi-project-management' ); ?></label></th>
 				<td><input type="date" name="ndizi_task_due_date" id="ndizi_task_due_date" value="<?php echo esc_attr( $due_date ); ?>"></td>
 			</tr>
+			<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>
+			<tr>
+				<th><label for="ndizi_task_hourly_rate"><?php esc_html_e( 'Hourly Rate Override ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td><input type="number" step="0.01" name="ndizi_task_hourly_rate" id="ndizi_task_hourly_rate" value="<?php echo esc_attr( $task_hourly_rate ); ?>" class="small-text"></td>
+			</tr>
+			<?php endif; ?>
 		</table>
 		<?php
 	}
@@ -881,7 +989,8 @@ class Ndizi_Admin {
 					<select name="ndizi_project_id" id="ndizi_invoice_project_id" required>
 						<option value=""><?php esc_html_e( '-- Select Project --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $projects as $project ) : ?>
-							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?>>
+							<?php $proj_rate = get_post_meta( $project->ID, '_ndizi_project_hourly_rate', true ); ?>
+							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?> data-rate="<?php echo esc_attr( $proj_rate ); ?>">
 								<?php echo esc_html( $project->post_title ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -932,6 +1041,8 @@ class Ndizi_Admin {
 												<th><?php esc_html_e( 'User', 'ndizi-project-management' ); ?></th>
 												<th><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
 												<th><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
+												<th><?php esc_html_e( 'Rate ($/h)', 'ndizi-project-management' ); ?></th>
+												<th><?php esc_html_e( 'Subtotal ($)', 'ndizi-project-management' ); ?></th>
 											</tr>
 										</thead>
 										<tbody>
@@ -939,21 +1050,38 @@ class Ndizi_Admin {
 											foreach ( $time_entries as $entry ) :
 												$entry_user = get_userdata( $entry->user_id );
 												$is_linked  = ( intval( $entry->invoice_id ) === $post->ID );
+
+												// Resolve the billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
+												$resolved_rate = '';
+												if ( $entry->task_id ) {
+													$resolved_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+												}
+												if ( '' === $resolved_rate && $entry->user_id ) {
+													$resolved_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+												}
+												if ( '' === $resolved_rate && $entry->project_id ) {
+													$resolved_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+												}
+												$resolved_rate = '' !== $resolved_rate ? floatval( $resolved_rate ) : 0.0;
+												$subtotal      = round( ( $entry->duration / 3600 ) * $resolved_rate, 2 );
 												?>
 												<tr>
 													<td>
-														<input type="checkbox" name="ndizi_invoice_time_entries[]" value="<?php echo esc_attr( $entry->id ); ?>" <?php checked( $is_linked ); ?> class="ndizi-invoice-time-checkbox" data-duration="<?php echo esc_attr( $entry->duration ); ?>">
+														<input type="checkbox" name="ndizi_invoice_time_entries[]" value="<?php echo esc_attr( $entry->id ); ?>" <?php checked( $is_linked ); ?> class="ndizi-invoice-time-checkbox" data-duration="<?php echo esc_attr( $entry->duration ); ?>" data-rate="<?php echo esc_attr( $resolved_rate ); ?>">
 													</td>
 													<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $entry->start_time ) ) ); ?></td>
 													<td><?php echo $entry_user ? esc_html( $entry_user->display_name ) : '-'; ?></td>
 													<td><?php echo esc_html( $entry->description ); ?></td>
 													<td><strong><?php echo esc_html( round( $entry->duration / 3600, 2 ) ); ?>h</strong></td>
+													<td><?php echo $resolved_rate ? '$' . esc_html( number_format( $resolved_rate, 2 ) ) : '-'; ?></td>
+													<td><?php echo $resolved_rate ? '$' . esc_html( number_format( $subtotal, 2 ) ) : '-'; ?></td>
 												</tr>
 											<?php endforeach; ?>
 										</tbody>
 									</table>
 									<div style="margin-top: 10px;">
-										<input type="number" id="ndizi_hourly_rate" placeholder="<?php esc_attr_e( 'Rate ($/hour)', 'ndizi-project-management' ); ?>" style="width: 100px;">
+										<?php $project_hourly_rate = get_post_meta( $project_id, '_ndizi_project_hourly_rate', true ); ?>
+										<input type="number" id="ndizi_hourly_rate" placeholder="<?php esc_attr_e( 'Rate ($/hour)', 'ndizi-project-management' ); ?>" style="width: 100px;" value="<?php echo esc_attr( $project_hourly_rate ); ?>">
 										<button type="button" class="button" id="ndizi_btn_calc_invoice"><?php esc_html_e( 'Calculate & Apply Amount', 'ndizi-project-management' ); ?></button>
 									</div>
 								<?php endif; ?>
@@ -1072,6 +1200,9 @@ class Ndizi_Admin {
 			if ( isset( $_POST['ndizi_project_budget'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_budget', floatval( $_POST['ndizi_project_budget'] ) );
 			}
+			if ( isset( $_POST['ndizi_project_hourly_rate'] ) ) {
+				update_post_meta( $post_id, '_ndizi_project_hourly_rate', max( 0.0, floatval( $_POST['ndizi_project_hourly_rate'] ) ) );
+			}
 			if ( isset( $_POST['ndizi_project_status'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_status', sanitize_text_field( wp_unslash( $_POST['ndizi_project_status'] ) ) );
 			}
@@ -1093,6 +1224,9 @@ class Ndizi_Admin {
 			}
 			if ( isset( $_POST['ndizi_task_due_date'] ) ) {
 				update_post_meta( $post_id, '_ndizi_task_due_date', sanitize_text_field( wp_unslash( $_POST['ndizi_task_due_date'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_task_hourly_rate'] ) ) {
+				update_post_meta( $post_id, '_ndizi_task_hourly_rate', max( 0.0, floatval( $_POST['ndizi_task_hourly_rate'] ) ) );
 			}
 		}
 
@@ -1203,14 +1337,15 @@ class Ndizi_Admin {
 		);
 	}
 
-	/**
-	 * AJAX logic to start a timer
-	 */
 	public static function ajax_start_timer() {
 		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
 
 		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
+		}
+
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ) );
 		}
 
 		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
@@ -1226,7 +1361,7 @@ class Ndizi_Admin {
 		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
 
 		if ( ! $timer_id ) {
-			wp_send_json_error( array( 'message' => __( 'Failed to start timer.', 'ndizi-project-management' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to start timer. The date may be locked or another error occurred.', 'ndizi-project-management' ) ) );
 		}
 
 		wp_send_json_success( array( 'timer_id' => $timer_id ) );
@@ -1243,6 +1378,12 @@ class Ndizi_Admin {
 		}
 
 		$user_id = get_current_user_id();
+
+		$active = Ndizi_DB::get_active_timer( $user_id );
+		if ( $active && Ndizi_DB::is_date_locked( $active->start_time ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot stop timer. The timer start time falls in a locked period.', 'ndizi-project-management' ) ) );
+		}
+
 		$stopped = Ndizi_DB::stop_timer( $user_id );
 
 		if ( ! $stopped ) {
@@ -1273,6 +1414,10 @@ class Ndizi_Admin {
 		// Authorization: own logs, or users who can manage all time.
 		if ( intval( $log->user_id ) !== $user_id && ! Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
+		}
+
+		if ( Ndizi_DB::is_date_locked( $log->start_time ) ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot delete log. The time entry is in a locked period.', 'ndizi-project-management' ) ) );
 		}
 
 		$deleted = Ndizi_DB::delete_time_entry( $log_id );
@@ -1413,6 +1558,64 @@ class Ndizi_Admin {
 		$overall_hours          = round( $overall_seconds / 3600, 2 );
 		$overall_billable_hours = round( $overall_billable_seconds / 3600, 2 );
 		$billable_percentage    = $overall_hours > 0 ? round( ( $overall_billable_hours / $overall_hours ) * 100 ) : 0;
+
+		// Query detailed entries for profitability calculations
+		$detailed_entries = Ndizi_DB::get_time_entries(
+			array(
+				'project_id' => $project_id ? $project_id : null,
+				'user_id'    => $user_id ? $user_id : null,
+				'start_date' => $start_date,
+				'end_date'   => $end_date,
+				'number'     => -1,
+			)
+		);
+
+		$overall_revenue     = 0;
+		$overall_cost        = 0;
+		$project_margin_data = array();
+
+		foreach ( $detailed_entries as $entry ) {
+			// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
+			$entry_rate = '';
+			if ( $entry->task_id ) {
+				$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+			}
+			if ( '' === $entry_rate && $entry->user_id ) {
+				$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+			}
+			if ( '' === $entry_rate && $entry->project_id ) {
+				$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+			}
+			$entry_rate    = '' !== $entry_rate ? floatval( $entry_rate ) : 0.0;
+			$entry_hours   = $entry->duration / 3600;
+			$entry_revenue = $entry->billable ? ( $entry_hours * $entry_rate ) : 0;
+
+			// Resolve salary rate (internal cost)
+			$salary_rate = 0;
+			if ( $entry->user_id ) {
+				$salary_rate = get_user_meta( $entry->user_id, '_ndizi_user_salary_rate', true );
+			}
+			$salary_rate = floatval( $salary_rate );
+			$entry_cost  = $entry_hours * $salary_rate;
+
+			$overall_revenue += $entry_revenue;
+			$overall_cost    += $entry_cost;
+
+			// Group by project
+			if ( ! isset( $project_margin_data[ $entry->project_id ] ) ) {
+				$project_margin_data[ $entry->project_id ] = array(
+					'hours'   => 0,
+					'revenue' => 0,
+					'cost'    => 0,
+				);
+			}
+			$project_margin_data[ $entry->project_id ]['hours']   += $entry_hours;
+			$project_margin_data[ $entry->project_id ]['revenue'] += $entry_revenue;
+			$project_margin_data[ $entry->project_id ]['cost']    += $entry_cost;
+		}
+
+		$overall_margin     = $overall_revenue - $overall_cost;
+		$overall_margin_pct = $overall_revenue > 0 ? round( ( $overall_margin / $overall_revenue ) * 100, 1 ) : 0;
 		?>
 		<div class="wrap ndizi-reports-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Ndizi Time Reports', 'ndizi-project-management' ); ?></h1>
@@ -1461,6 +1664,18 @@ class Ndizi_Admin {
 
 						<div class="ndizi-filter-col filter-actions">
 							<button type="submit" class="button button-primary"><?php esc_html_e( 'Filter Report', 'ndizi-project-management' ); ?></button>
+							<?php
+							$csv_export_url        = wp_nonce_url(
+								add_query_arg( 'ndizi_export_report', 'csv' ),
+								'ndizi_export_report_nonce'
+							);
+							$quickbooks_export_url = wp_nonce_url(
+								add_query_arg( 'ndizi_export_report', 'quickbooks_csv' ),
+								'ndizi_export_report_nonce'
+							);
+							?>
+							<a href="<?php echo esc_url( $csv_export_url ); ?>" class="button button-secondary" style="background: #10b981 !important; border-color: #10b981 !important; color: #fff !important; line-height: 36px; min-height: 38px;"><?php esc_html_e( 'Export CSV', 'ndizi-project-management' ); ?></a>
+							<a href="<?php echo esc_url( $quickbooks_export_url ); ?>" class="button button-secondary" style="background: #059669 !important; border-color: #059669 !important; color: #fff !important; line-height: 36px; min-height: 38px;"><?php esc_html_e( 'Export QuickBooks CSV', 'ndizi-project-management' ); ?></a>
 							<a href="edit.php?post_type=ndizi_project&page=ndizi-reports" class="button button-secondary"><?php esc_html_e( 'Reset', 'ndizi-project-management' ); ?></a>
 						</div>
 					</div>
@@ -1481,6 +1696,15 @@ class Ndizi_Admin {
 					<span class="ndizi-kpi-title"><?php esc_html_e( 'Billable Ratio', 'ndizi-project-management' ); ?></span>
 					<span class="ndizi-kpi-val"><?php echo esc_html( $billable_percentage ); ?>%</span>
 					<div class="ndizi-ratio-bar"><div class="ndizi-ratio-fill" style="width: <?php echo esc_attr( $billable_percentage ); ?>%"></div></div>
+				</div>
+				<div class="ndizi-kpi-card">
+					<span class="ndizi-kpi-title"><?php esc_html_e( 'Total Revenue', 'ndizi-project-management' ); ?></span>
+					<span class="ndizi-kpi-val" style="color: #10b981;">$<?php echo esc_html( number_format( $overall_revenue, 2 ) ); ?></span>
+				</div>
+				<div class="ndizi-kpi-card">
+					<span class="ndizi-kpi-title"><?php esc_html_e( 'Net Margin', 'ndizi-project-management' ); ?></span>
+					<span class="ndizi-kpi-val" style="color: #4f46e5;">$<?php echo esc_html( number_format( $overall_margin, 2 ) ); ?></span>
+					<div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500;"><?php echo esc_html( $overall_margin_pct ); ?>% <?php esc_html_e( 'margin', 'ndizi-project-management' ); ?></div>
 				</div>
 			</div>
 
@@ -1563,6 +1787,64 @@ class Ndizi_Admin {
 						</div>
 					<?php endif; ?>
 				</div>
+			</div>
+
+			<!-- Project Profitability & Margins Table -->
+			<div class="ndizi-chart-card" style="margin-top: 25px;">
+				<h3 style="margin-bottom: 20px; font-size: 16px; font-weight: 700; color: #1e293b;"><?php esc_html_e( 'Project Profitability & Margins', 'ndizi-project-management' ); ?></h3>
+				<?php if ( empty( $project_margin_data ) ) : ?>
+					<p class="no-data-msg"><?php esc_html_e( 'No log data available for this range.', 'ndizi-project-management' ); ?></p>
+				<?php else : ?>
+					<table class="wp-list-table widefat fixed striped posts" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: none;">
+						<thead>
+							<tr>
+								<th style="font-weight: 700; padding: 12px;"><?php esc_html_e( 'Project', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Budget', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Tracked Hours', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Billed Revenue', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Internal Cost', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Profit Margin', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Margin %', 'ndizi-project-management' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php
+							foreach ( $project_margin_data as $p_id => $data ) :
+								$proj = get_post( $p_id );
+								if ( ! $proj ) {
+									continue;
+								}
+								$budget       = floatval( get_post_meta( $p_id, '_ndizi_project_budget', true ) );
+								$p_margin     = $data['revenue'] - $data['cost'];
+								$p_margin_pct = $data['revenue'] > 0 ? round( ( $p_margin / $data['revenue'] ) * 100, 1 ) : 0;
+								?>
+								<tr>
+									<td style="padding: 12px; font-weight: 600;">
+										<a href="<?php echo esc_url( get_edit_post_link( $proj->ID ) ); ?>"><?php echo esc_html( $proj->post_title ); ?></a>
+									</td>
+									<td style="padding: 12px; text-align: right;">
+										<?php echo $budget ? '$' . esc_html( number_format( $budget, 2 ) ) : '<span style="color: #94a3b8;">-</span>'; ?>
+									</td>
+									<td style="padding: 12px; text-align: right; font-weight: 600;">
+										<?php echo esc_html( round( $data['hours'], 2 ) ); ?>h
+									</td>
+									<td style="padding: 12px; text-align: right; color: #10b981; font-weight: 600;">
+										$<?php echo esc_html( number_format( $data['revenue'], 2 ) ); ?>
+									</td>
+									<td style="padding: 12px; text-align: right; color: #475569;">
+										$<?php echo esc_html( number_format( $data['cost'], 2 ) ); ?>
+									</td>
+									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#4f46e5' : '#ef4444'; ?>;">
+										$<?php echo esc_html( number_format( $p_margin, 2 ) ); ?>
+									</td>
+									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#4f46e5' : '#ef4444'; ?>;">
+										<?php echo esc_html( $p_margin_pct ); ?>%
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
 			</div>
 		</div>
 		<?php
@@ -1824,6 +2106,81 @@ class Ndizi_Admin {
 
 					</div>
 
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Active Modules', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Enable or disable core features to customize the interface and optimize performance.', 'ndizi-project-management' ); ?></p>
+					
+					<div style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 16px;">
+						<?php
+						$modules_list = array(
+							'invoicing'     => array(
+								'name' => __( 'Invoicing & Billing', 'ndizi-project-management' ),
+								'desc' => __( 'Generate client invoices, track billing and salary rates, analyze margins, and export/print PDF invoices.', 'ndizi-project-management' ),
+							),
+							'portal'        => array(
+								'name' => __( 'Client Portal', 'ndizi-project-management' ),
+								'desc' => __( 'Enables frontend portal block and shortcodes for client reviews, task updates, and comments.', 'ndizi-project-management' ),
+							),
+							'tracker'       => array(
+								'name' => __( 'Admin Bar & Quick Tracker', 'ndizi-project-management' ),
+								'desc' => __( 'Adds the admin bar quick-timer toggle and a dedicated quick-tracker logger page.', 'ndizi-project-management' ),
+							),
+							'notifications' => array(
+								'name' => __( 'Email Notifications', 'ndizi-project-management' ),
+								'desc' => __( 'Sends automated email notifications when tasks are assigned or their status changes.', 'ndizi-project-management' ),
+							),
+							'gantt'         => array(
+								'name' => __( 'Gantt Timeline Charts', 'ndizi-project-management' ),
+								'desc' => __( 'Provides interactive timelines for project scheduling and visually tracking completion status.', 'ndizi-project-management' ),
+							),
+							'integrations'  => array(
+								'name' => __( 'Webhooks & Slack Integrations', 'ndizi-project-management' ),
+								'desc' => __( 'Sends outbound JSON payloads and formatted Slack alerts when time is logged, tasks change, or invoices transition.', 'ndizi-project-management' ),
+							),
+						);
+
+						$active_modules = Ndizi_Project_Management::get_active_modules();
+						foreach ( $modules_list as $slug => $mod ) :
+							$checked = in_array( $slug, $active_modules, true );
+							?>
+							<label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px 18px; border: 1px solid <?php echo $checked ? '#e0e7ff' : '#e2e8f0'; ?>; background: <?php echo $checked ? '#f8fafc' : '#fff'; ?>; border-radius: 10px; transition: all 0.2s;">
+								<input type="checkbox" name="ndizi_active_modules[]" value="<?php echo esc_attr( $slug ); ?>" <?php checked( $checked ); ?> style="margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
+								<div>
+									<strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 2px;"><?php echo esc_html( $mod['name'] ); ?></strong>
+									<span style="display: block; font-size: 12px; color: #64748b; line-height: 1.4;"><?php echo esc_html( $mod['desc'] ); ?></span>
+								</div>
+							</label>
+						<?php endforeach; ?>
+					</div>
+
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Time Entry Locking', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Prevent users from adding, modifying, or deleting time entries logged on or before this date.', 'ndizi-project-management' ); ?></p>
+					
+					<div style="margin-bottom: 30px;">
+						<?php $lock_date = get_option( 'ndizi_lock_date', '' ); ?>
+						<label for="ndizi_lock_date" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Lock Date', 'ndizi-project-management' ); ?></label>
+						<input type="date" name="ndizi_lock_date" id="ndizi_lock_date" value="<?php echo esc_attr( $lock_date ); ?>" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
+					</div>
+
+					<?php if ( Ndizi_Project_Management::is_module_active( 'integrations' ) ) : ?>
+						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Webhooks & Slack Settings', 'ndizi-project-management' ); ?></h2>
+						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Configure outbound webhook endpoints to connect Ndizi with external systems or Slack.', 'ndizi-project-management' ); ?></p>
+						
+						<div style="margin-bottom: 20px;">
+							<?php $webhook_url = get_option( 'ndizi_webhook_url', '' ); ?>
+							<label for="ndizi_webhook_url" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Outbound Webhook URL', 'ndizi-project-management' ); ?></label>
+							<input type="url" name="ndizi_webhook_url" id="ndizi_webhook_url" value="<?php echo esc_url( $webhook_url ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'The URL where JSON payloads will be POSTed on events.', 'ndizi-project-management' ); ?></p>
+						</div>
+
+						<div style="margin-bottom: 30px;">
+							<?php $slack_webhook_url = get_option( 'ndizi_slack_webhook_url', '' ); ?>
+							<label for="ndizi_slack_webhook_url" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Slack Webhook URL', 'ndizi-project-management' ); ?></label>
+							<input type="url" name="ndizi_slack_webhook_url" id="ndizi_slack_webhook_url" value="<?php echo esc_url( $slack_webhook_url ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Your Slack incoming webhook URL for formatting alerts.', 'ndizi-project-management' ); ?></p>
+						</div>
+					<?php endif; ?>
+
 					<button type="submit" class="button button-primary" style="background: #4f46e5 !important; border-color: #4f46e5 !important; color: #fff !important; padding: 0 24px !important; height: 40px !important; font-size: 14px !important; border-radius: 6px !important; font-weight: 600 !important; cursor: pointer; transition: background 0.2s;">
 						<?php esc_html_e( 'Save Changes', 'ndizi-project-management' ); ?>
 					</button>
@@ -1862,5 +2219,69 @@ class Ndizi_Admin {
 			</script>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Add Ndizi Billing Rate to the user profile page.
+	 */
+	public static function render_user_profile_fields( $user ) {
+		if ( ! current_user_can( 'ndizi_manage_time' ) && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! Ndizi_Project_Management::is_module_active( 'invoicing' ) ) {
+			return;
+		}
+
+		$billing_rate = get_user_meta( $user->ID, '_ndizi_user_billing_rate', true );
+		$salary_rate  = get_user_meta( $user->ID, '_ndizi_user_salary_rate', true );
+		?>
+		<h2><?php esc_html_e( 'Ndizi Project Management Settings', 'ndizi-project-management' ); ?></h2>
+		<table class="form-table">
+			<tr>
+				<th><label for="ndizi_user_billing_rate"><?php esc_html_e( 'Billing Rate ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="number" name="ndizi_user_billing_rate" id="ndizi_user_billing_rate" value="<?php echo esc_attr( $billing_rate ); ?>" class="regular-text" step="0.01" min="0">
+					<p class="description"><?php esc_html_e( 'The hourly billing rate for this user. Used to auto-calculate invoice amounts if no task rate is set.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_user_salary_rate"><?php esc_html_e( 'Salary Rate ($/hour)', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="number" name="ndizi_user_salary_rate" id="ndizi_user_salary_rate" value="<?php echo esc_attr( $salary_rate ); ?>" class="regular-text" step="0.01" min="0">
+					<p class="description"><?php esc_html_e( 'The hourly salary rate (internal cost) for this user. Used to calculate internal costs and project margins.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+	}
+
+	/**
+	 * Save Ndizi Billing Rate user profile field.
+	 */
+	public static function save_user_profile_fields( $user_id ) {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'ndizi_manage_time' ) && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( ! Ndizi_Project_Management::is_module_active( 'invoicing' ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+		if ( isset( $_POST['ndizi_user_billing_rate'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+			update_user_meta( $user_id, '_ndizi_user_billing_rate', max( 0.0, floatval( $_POST['ndizi_user_billing_rate'] ) ) );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+		if ( isset( $_POST['ndizi_user_salary_rate'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
+			update_user_meta( $user_id, '_ndizi_user_salary_rate', max( 0.0, floatval( $_POST['ndizi_user_salary_rate'] ) ) );
+		}
 	}
 }

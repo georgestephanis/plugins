@@ -160,7 +160,9 @@ import './adminbar-style.scss';
 				? 1
 				: 0;
 
-			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_starting );
+			$btn.prop( 'disabled', true ).text(
+				ndizi_adminbar.labels.btn_starting
+			);
 
 			wp.ajax
 				.post( 'ndizi_start_timer_action', {
@@ -198,7 +200,9 @@ import './adminbar-style.scss';
 					window.alert(
 						err.message || ndizi_adminbar.labels.error_general
 					);
-					$btn.prop( 'disabled', false ).text( ndizi_adminbar.labels.btn_start_timer );
+					$btn.prop( 'disabled', false ).text(
+						ndizi_adminbar.labels.btn_start_timer
+					);
 				} );
 		} );
 
@@ -206,7 +210,9 @@ import './adminbar-style.scss';
 		$( '#ndizi-ab-btn-stop' ).on( 'click', function ( e ) {
 			e.preventDefault();
 			const $btn = $( this );
-			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_stopping );
+			$btn.prop( 'disabled', true ).text(
+				ndizi_adminbar.labels.btn_stopping
+			);
 
 			wp.ajax
 				.post( 'ndizi_stop_timer_action', {
@@ -216,7 +222,10 @@ import './adminbar-style.scss';
 					stopClockTicker();
 
 					const $node = $( '#wp-admin-bar-ndizi-time-tracker' );
-					$node.removeClass( 'ndizi-timer-active' );
+					$node.removeClass(
+						'ndizi-timer-active ndizi-timer-idle-warning'
+					);
+					$panel.find( '.ndizi-ab-warning-banner' ).remove();
 					$node
 						.find( '.ndizi-ab-label' )
 						.removeClass( 'screen-reader-text' )
@@ -281,7 +290,9 @@ import './adminbar-style.scss';
 				? 1
 				: 0;
 
-			$btn.prop( 'disabled', true ).text( ndizi_adminbar.labels.btn_saving );
+			$btn.prop( 'disabled', true ).text(
+				ndizi_adminbar.labels.btn_saving
+			);
 
 			wp.ajax
 				.post( 'ndizi_log_time_manual_action', {
@@ -373,7 +384,9 @@ import './adminbar-style.scss';
 
 		if ( projectsData.length === 0 ) {
 			$select.append(
-				$( '<option>' ).val( '' ).text( ndizi_adminbar.labels.no_active_projects )
+				$( '<option>' )
+					.val( '' )
+					.text( ndizi_adminbar.labels.no_active_projects )
 			);
 			return;
 		}
@@ -387,19 +400,21 @@ import './adminbar-style.scss';
 		// Group projects by client_name
 		const groups = {};
 		projectsData.forEach( function ( project ) {
-			const clientName = project.client_name || ndizi_adminbar.labels.internal_client;
+			const clientName =
+				project.client_name || ndizi_adminbar.labels.internal_client;
 			if ( ! groups[ clientName ] ) {
 				groups[ clientName ] = [];
 			}
 			groups[ clientName ].push( project );
 		} );
 
-		// Sort client names, keeping 'Internal' at the bottom
+		// Sort client names, keeping the internal client label at the bottom
+		const internalLabel = ndizi_adminbar.labels.internal_client;
 		const clientNames = Object.keys( groups ).sort( function ( a, b ) {
-			if ( a === 'Internal' ) {
+			if ( a === internalLabel ) {
 				return 1;
 			}
-			if ( b === 'Internal' ) {
+			if ( b === internalLabel ) {
 				return -1;
 			}
 			return a.localeCompare( b );
@@ -440,7 +455,10 @@ import './adminbar-style.scss';
 		$( '#ndizi-ab-stat-logged' ).text( hours + 'h (' + label + ')' );
 
 		const $budgetRow = $( '#ndizi-ab-stat-budget-row' );
-		if ( selectedProject.budget !== null && selectedProject.budget !== undefined ) {
+		if (
+			selectedProject.budget !== null &&
+			selectedProject.budget !== undefined
+		) {
 			$( '#ndizi-ab-stat-budget' ).text(
 				'$' +
 					selectedProject.budget.toLocaleString( undefined, {
@@ -482,6 +500,26 @@ import './adminbar-style.scss';
 				.find( '.ndizi-ab-label' )
 				.removeClass( 'screen-reader-text' )
 				.text( formatted );
+
+			// Check for 8 hours warning (8 * 3600 = 28800 seconds)
+			if ( diff > 28800 ) {
+				const $panel = $( '#ndizi-ab-panel' );
+				if ( ! $panel.find( '.ndizi-ab-warning-banner' ).length ) {
+					const $icon = $(
+						'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+					);
+					const $banner = $( '<div class="ndizi-ab-warning-banner"></div>' )
+						.append( $icon )
+						.append( $( '<span></span>' ).text( ndizi_adminbar.labels.idle_warning ) );
+					$panel
+						.find( '.ndizi-ab-active-timer-view' )
+						.find( '.ndizi-ab-section-title' )
+						.after( $banner );
+				}
+				$( '#wp-admin-bar-ndizi-time-tracker' ).addClass(
+					'ndizi-timer-idle-warning'
+				);
+			}
 		};
 
 		updateTime( startOffset );

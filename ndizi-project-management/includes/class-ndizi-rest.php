@@ -394,6 +394,10 @@ class Ndizi_REST {
 		$description = $request->get_param( 'description' );
 		$billable    = $request->get_param( 'billable' );
 
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+			return new WP_REST_Response( array( 'error' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ), 400 );
+		}
+
 		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
 
 		if ( ! $timer_id ) {
@@ -415,6 +419,12 @@ class Ndizi_REST {
 	 */
 	public static function stop_timer() {
 		$user_id = get_current_user_id();
+
+		$active = Ndizi_DB::get_active_timer( $user_id );
+		if ( $active && Ndizi_DB::is_date_locked( $active->start_time ) ) {
+			return new WP_REST_Response( array( 'error' => __( 'Cannot stop timer. The timer start time falls in a locked period.', 'ndizi-project-management' ) ), 400 );
+		}
+
 		$stopped = Ndizi_DB::stop_timer( $user_id );
 
 		if ( ! $stopped ) {
@@ -441,6 +451,11 @@ class Ndizi_REST {
 		$duration    = $request->get_param( 'duration' ); // in seconds
 		$billable    = $request->get_param( 'billable' );
 		$start_time  = $request->get_param( 'start_time' );
+
+		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
+		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
+			return new WP_REST_Response( array( 'error' => __( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' ) ), 400 );
+		}
 
 		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time );
 
@@ -508,6 +523,17 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to edit this entry', 'ndizi-project-management' ) ), 403 );
 		}
 
+		if ( Ndizi_DB::is_date_locked( $log->start_time ) ) {
+			return new WP_REST_Response( array( 'error' => __( 'Cannot update time entry. The existing time entry is in a locked period.', 'ndizi-project-management' ) ), 400 );
+		}
+
+		if ( $request->has_param( 'start_time' ) ) {
+			$new_start = $request->get_param( 'start_time' );
+			if ( Ndizi_DB::is_date_locked( $new_start ) ) {
+				return new WP_REST_Response( array( 'error' => __( 'Cannot update time entry. The new start date is locked.', 'ndizi-project-management' ) ), 400 );
+			}
+		}
+
 		// Build data list from params
 		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
 		$data   = array();
@@ -548,6 +574,10 @@ class Ndizi_REST {
 		// Users can only delete their own logs, unless they can manage all time.
 		if ( intval( $log->user_id ) !== $user_id && ! Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to delete this entry', 'ndizi-project-management' ) ), 403 );
+		}
+
+		if ( Ndizi_DB::is_date_locked( $log->start_time ) ) {
+			return new WP_REST_Response( array( 'error' => __( 'Cannot delete time entry. The time entry is in a locked period.', 'ndizi-project-management' ) ), 400 );
 		}
 
 		$deleted = Ndizi_DB::delete_time_entry( $id );

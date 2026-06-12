@@ -15,6 +15,7 @@ class Ndizi_Integrations {
 	public static function init() {
 		add_action( 'template_redirect', array( __CLASS__, 'handle_invoice_print_request' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_invoice_export_requests' ) );
+		add_action( 'admin_init', array( __CLASS__, 'handle_report_export_requests' ) );
 		add_action( 'post_submitbox_misc_actions', array( __CLASS__, 'add_export_buttons_to_editor' ) );
 	}
 
@@ -113,48 +114,66 @@ class Ndizi_Integrations {
 		<html <?php language_attributes(); ?>>
 		<head>
 			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<title><?php echo esc_html( $invoice->post_title ); ?></title>
+			<link rel="preconnect" href="https://fonts.googleapis.com">
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+			<?php // phpcs:disable WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Standalone invoice print template, not a WordPress theme page ?>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 			<style>
 				body {
-					font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+					font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 					color: #1e293b;
-					background: #fff;
+					background: #f8fafc;
 					margin: 0;
-					padding: 40px;
+					padding: 40px 20px;
 					line-height: 1.5;
+					-webkit-print-color-adjust: exact;
+					print-color-adjust: exact;
 				}
 				.invoice-wrapper {
 					max-width: 800px;
 					margin: 0 auto;
+					background: #fff;
+					padding: 45px;
+					border-radius: 12px;
+					box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+					border: 1px solid #e2e8f0;
 				}
 				.invoice-header {
 					display: flex;
 					justify-content: space-between;
+					align-items: flex-start;
 					margin-bottom: 40px;
+					border-bottom: 1px solid #f1f5f9;
+					padding-bottom: 30px;
 				}
 				.invoice-logo {
-					font-size: 28px;
+					font-size: 26px;
 					font-weight: 800;
 					color: #4f46e5;
+					letter-spacing: -0.03em;
 				}
 				.invoice-title-col {
 					text-align: right;
 				}
 				.invoice-title-col h1 {
-					margin: 0 0 5px 0;
-					font-size: 32px;
-					font-weight: 900;
+					margin: 0 0 8px 0;
+					font-size: 28px;
+					font-weight: 800;
 					color: #0f172a;
+					letter-spacing: -0.02em;
 				}
 				.invoice-status-badge {
 					display: inline-block;
-					padding: 5px 12px;
-					border-radius: 4px;
+					padding: 6px 12px;
+					border-radius: 6px;
 					font-size: 11px;
 					font-weight: 700;
 					text-transform: uppercase;
 					letter-spacing: 0.05em;
-					background: #f1f5f9;
+					background: #e2e8f0;
+					color: #475569;
 				}
 				.invoice-status-paid {
 					background: #d1fae5;
@@ -164,25 +183,33 @@ class Ndizi_Integrations {
 					background: #fef3c7;
 					color: #92400e;
 				}
+				.invoice-status-draft {
+					background: #f1f5f9;
+					color: #475569;
+				}
+				.invoice-status-overdue {
+					background: #fee2e2;
+					color: #991b1b;
+				}
 
 				.invoice-details-grid {
 					display: grid;
 					grid-template-columns: 1fr 1fr;
 					gap: 40px;
-					margin-bottom: 45px;
-					border-bottom: 1px solid #e2e8f0;
-					padding-bottom: 30px;
+					margin-bottom: 40px;
 				}
 				.details-col h3 {
-					font-size: 12px;
+					font-size: 11px;
+					font-weight: 700;
 					text-transform: uppercase;
-					color: #64748b;
-					margin-bottom: 10px;
+					color: #94a3b8;
+					margin: 0 0 12px 0;
 					letter-spacing: 0.05em;
 				}
 				.details-col p {
-					margin: 0 0 5px 0;
+					margin: 0 0 6px 0;
 					font-size: 14px;
+					color: #334155;
 				}
 
 				.invoice-table {
@@ -192,17 +219,23 @@ class Ndizi_Integrations {
 				}
 				.invoice-table th {
 					background: #f8fafc;
-					border-bottom: 2px solid #cbd5e1;
-					padding: 12px;
+					border-bottom: 2px solid #e2e8f0;
+					padding: 12px 14px;
 					text-align: left;
 					font-size: 11px;
+					font-weight: 700;
 					text-transform: uppercase;
 					color: #64748b;
+					letter-spacing: 0.05em;
 				}
 				.invoice-table td {
-					border-bottom: 1px solid #e2e8f0;
-					padding: 14px 12px;
+					border-bottom: 1px solid #f1f5f9;
+					padding: 14px;
 					font-size: 14px;
+					color: #334155;
+				}
+				.invoice-table tbody tr:nth-child(even) {
+					background-color: #fafbfd;
 				}
 				.invoice-table tr:last-child td {
 					border-bottom: 1px solid #cbd5e1;
@@ -212,58 +245,124 @@ class Ndizi_Integrations {
 					display: flex;
 					flex-direction: column;
 					align-items: flex-end;
-					gap: 10px;
-					margin-bottom: 50px;
+					gap: 8px;
+					margin-bottom: 40px;
 				}
 				.totals-row {
 					display: flex;
-					width: 250px;
+					width: 280px;
 					justify-content: space-between;
 					font-size: 14px;
+					color: #64748b;
+					box-sizing: border-box;
+				}
+				.totals-row strong {
+					color: #334155;
 				}
 				.totals-row-grand {
 					font-size: 20px;
 					font-weight: 800;
-					color: #0f172a;
+					color: #4f46e5;
 					border-top: 2px solid #4f46e5;
-					padding-top: 10px;
+					background: #f5f3ff;
+					padding: 12px 16px;
+					border-radius: 8px;
+					margin-top: 6px;
+				}
+				.totals-row-grand span {
+					color: #4f46e5;
+				}
+				.totals-row-grand strong {
+					color: #4f46e5;
 				}
 
 				.invoice-notes {
-					font-size: 12px;
+					font-size: 13px;
 					color: #64748b;
-					border-top: 1px solid #e2e8f0;
+					border-top: 1px solid #f1f5f9;
 					padding-top: 30px;
+					margin-bottom: 30px;
+				}
+				.invoice-notes strong {
+					display: block;
+					color: #475569;
+					margin-bottom: 8px;
+				}
+
+				.invoice-footer {
+					text-align: center;
+					font-size: 13px;
+					color: #94a3b8;
+					border-top: 1px solid #f1f5f9;
+					padding-top: 30px;
+					margin-top: 30px;
 				}
 
 				.print-controls {
 					background: #f8fafc;
-					padding: 15px;
-					border-radius: 8px;
+					padding: 15px 24px;
+					border-radius: 10px;
 					margin-bottom: 30px;
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
 					border: 1px solid #e2e8f0;
 				}
+				.print-controls span {
+					font-size: 14px;
+					color: #64748b;
+					font-weight: 500;
+				}
 				.print-btn {
-					background: #4f46e5;
+					background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
 					color: #fff;
-					padding: 10px 20px;
+					padding: 10px 24px;
 					border: none;
-					border-radius: 6px;
-					font-weight: 700;
+					border-radius: 8px;
+					font-weight: 600;
+					font-size: 14px;
 					cursor: pointer;
+					box-shadow: 0 2px 4px rgb(79 70 229 / 0.2);
+					transition: all 0.2s;
 				}
 				.print-btn:hover {
-					background: #4338ca;
+					transform: translateY(-1px);
+					box-shadow: 0 4px 6px rgb(79 70 229 / 0.3);
+				}
+
+				@page {
+					size: letter;
+					margin: 15mm 20mm;
 				}
 
 				@media print {
-					body { padding: 0; }
-					.print-controls { display: none; }
+					body {
+						padding: 0;
+						background: #fff;
+						color: #000;
+					}
+					.invoice-wrapper {
+						border: none;
+						box-shadow: none;
+						padding: 0;
+						max-width: 100%;
+						margin: 0;
+					}
+					.print-controls {
+						display: none;
+					}
+					tr {
+						page-break-inside: avoid;
+					}
+					thead {
+						display: table-header-group;
+					}
+					.invoice-totals, .invoice-notes, .invoice-footer {
+						page-break-inside: avoid;
+					}
 				}
 			</style>
+			<?php // phpcs:enable WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
 		</head>
 		<body>
 			<div class="invoice-wrapper">
@@ -308,16 +407,18 @@ class Ndizi_Integrations {
 				<table class="invoice-table">
 					<thead>
 						<tr>
-							<th style="width: 15%;"><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
-							<th style="width: 20%;"><?php esc_html_e( 'Team Member', 'ndizi-project-management' ); ?></th>
-							<th style="width: 50%;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
-							<th style="width: 15%; text-align: right;"><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
+							<th style="width: 12%;"><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
+							<th style="width: 18%;"><?php esc_html_e( 'Team Member', 'ndizi-project-management' ); ?></th>
+							<th style="width: 40%;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
+							<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
+							<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Rate', 'ndizi-project-management' ); ?></th>
+							<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Subtotal', 'ndizi-project-management' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $time_entries ) ) : ?>
 							<tr>
-								<td colspan="4" style="text-align: center; color: #64748b;">
+								<td colspan="6" style="text-align: center; color: #64748b;">
 									<em><?php esc_html_e( 'No detailed time entries linked. Showing summary amount only.', 'ndizi-project-management' ); ?></em>
 								</td>
 							</tr>
@@ -325,12 +426,28 @@ class Ndizi_Integrations {
 							<?php
 							foreach ( $time_entries as $entry ) :
 								$user = get_userdata( $entry->user_id );
+
+								// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
+								$entry_rate = '';
+								if ( $entry->task_id ) {
+									$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+								}
+								if ( '' === $entry_rate && $entry->user_id ) {
+									$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+								}
+								if ( '' === $entry_rate && $entry->project_id ) {
+									$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+								}
+								$entry_rate     = '' !== $entry_rate ? floatval( $entry_rate ) : 0.0;
+								$entry_subtotal = round( ( $entry->duration / 3600 ) * $entry_rate, 2 );
 								?>
 								<tr>
 									<td><?php echo esc_html( gmdate( 'Y-m-d', strtotime( $entry->start_time ) ) ); ?></td>
 									<td><?php echo $user ? esc_html( $user->display_name ) : '-'; ?></td>
 									<td><?php echo esc_html( $entry->description ); ?></td>
 									<td style="text-align: right;"><strong><?php echo esc_html( round( $entry->duration / 3600, 2 ) ); ?>h</strong></td>
+									<td style="text-align: right;"><?php echo $entry_rate ? '$' . esc_html( number_format( $entry_rate, 2 ) ) : '-'; ?></td>
+									<td style="text-align: right;"><strong><?php echo $entry_rate ? '$' . esc_html( number_format( $entry_subtotal, 2 ) ) : '-'; ?></strong></td>
 								</tr>
 							<?php endforeach; ?>
 						<?php endif; ?>
@@ -344,7 +461,7 @@ class Ndizi_Integrations {
 					</div>
 					<div class="totals-row totals-row-grand">
 						<span><?php esc_html_e( 'Total Due:', 'ndizi-project-management' ); ?></span>
-						<span>$<?php echo esc_html( number_format( $amount, 2 ) ); ?></span>
+						<span><strong>$<?php echo esc_html( number_format( $amount, 2 ) ); ?></strong></span>
 					</div>
 				</div>
 
@@ -354,6 +471,11 @@ class Ndizi_Integrations {
 						<?php echo wp_kses_post( wpautop( esc_html( $invoice->post_content ) ) ); ?>
 					</div>
 				<?php endif; ?>
+
+				<footer class="invoice-footer">
+					<p><?php esc_html_e( 'Thank you for your business!', 'ndizi-project-management' ); ?></p>
+					<p style="font-size: 10px; color: #cbd5e1; margin-top: 10px;"><?php esc_html_e( 'Generated by Ndizi Project Management', 'ndizi-project-management' ); ?></p>
+				</footer>
 			</div>
 		</body>
 		</html>
@@ -475,6 +597,204 @@ class Ndizi_Integrations {
 		}
 
 		wp_die( esc_html__( 'Invalid export format.', 'ndizi-project-management' ) );
+	}
+
+	/**
+	 * Handle admin filtered time report CSV exports
+	 */
+	public static function handle_report_export_requests() {
+		if ( ! isset( $_GET['ndizi_export_report'] ) || ! in_array( $_GET['ndizi_export_report'], array( 'csv', 'quickbooks_csv' ), true ) ) {
+			return;
+		}
+
+		check_admin_referer( 'ndizi_export_report_nonce' );
+
+		if ( ! current_user_can( 'ndizi_view_reports' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'ndizi-project-management' ) );
+		}
+
+		$project_id = isset( $_GET['project_id'] ) ? intval( $_GET['project_id'] ) : 0;
+		$user_id    = isset( $_GET['user_id'] ) ? intval( $_GET['user_id'] ) : 0;
+		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : '';
+		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : '';
+
+		// Query time entries matching filters
+		$time_entries = Ndizi_DB::get_time_entries(
+			array(
+				'project_id' => $project_id ? $project_id : null,
+				'user_id'    => $user_id ? $user_id : null,
+				'start_date' => $start_date,
+				'end_date'   => $end_date,
+				'number'     => -1,
+			)
+		);
+
+		$format = sanitize_text_field( wp_unslash( $_GET['ndizi_export_report'] ) );
+
+		if ( 'quickbooks_csv' === $format ) {
+			header( 'Content-Type: text/csv; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="ndizi_quickbooks_report_' . gmdate( 'Y-m-d' ) . '.csv"' );
+
+			$output = fopen( 'php://output', 'w' );
+
+			fputcsv(
+				$output,
+				array(
+					'Customer',
+					'Item',
+					'Date',
+					'Hours',
+					'Rate',
+					'Description',
+				)
+			);
+
+			foreach ( $time_entries as $entry ) {
+				$proj   = get_post( $entry->project_id );
+				$task   = $entry->task_id ? get_post( $entry->task_id ) : null;
+				$client = null;
+				if ( $proj ) {
+					$client_id = get_post_meta( $proj->ID, '_ndizi_client_id', true );
+					if ( $client_id ) {
+						$client = get_post( $client_id );
+					}
+				}
+
+				$customer_parts = array();
+				if ( $client ) {
+					$customer_parts[] = $client->post_title;
+				}
+				if ( $proj ) {
+					$customer_parts[] = $proj->post_title;
+				}
+				$customer = implode( ': ', $customer_parts );
+
+				$item  = $task ? $task->post_title : __( 'Time Tracking', 'ndizi-project-management' );
+				$date  = gmdate( 'm/d/Y', strtotime( $entry->start_time ) );
+				$hours = round( $entry->duration / 3600, 2 );
+
+				$billing_rate = '';
+				if ( $entry->task_id ) {
+					$billing_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+				}
+				if ( '' === $billing_rate && $entry->user_id ) {
+					$billing_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+				}
+				if ( '' === $billing_rate && $entry->project_id ) {
+					$billing_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+				}
+				$billing_rate = '' !== $billing_rate ? floatval( $billing_rate ) : 0.0;
+
+				fputcsv(
+					$output,
+					array(
+						self::escape_csv_field( $customer ),
+						self::escape_csv_field( $item ),
+						self::escape_csv_field( $date ),
+						self::escape_csv_field( $hours ),
+						self::escape_csv_field( number_format( $billing_rate, 2 ) ),
+						self::escape_csv_field( $entry->description ),
+					)
+				);
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+			fclose( $output );
+			exit;
+		}
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="ndizi_time_report_' . gmdate( 'Y-m-d' ) . '.csv"' );
+
+		$output = fopen( 'php://output', 'w' );
+
+		// Write CSV headers. User-controlled cells are run through self::escape_csv_field()
+		fputcsv( $output, array( 'Ndizi Time Report Export' ) );
+		if ( $project_id ) {
+			$proj = get_post( $project_id );
+			fputcsv( $output, array( 'Project Filter', $proj ? self::escape_csv_field( $proj->post_title ) : '' ) );
+		}
+		if ( $user_id ) {
+			$usr = get_userdata( $user_id );
+			fputcsv( $output, array( 'Team Member Filter', $usr ? self::escape_csv_field( $usr->display_name ) : '' ) );
+		}
+		if ( $start_date ) {
+			fputcsv( $output, array( 'Start Date', self::escape_csv_field( $start_date ) ) );
+		}
+		if ( $end_date ) {
+			fputcsv( $output, array( 'End Date', self::escape_csv_field( $end_date ) ) );
+		}
+		fputcsv( $output, array() ); // Spacer row
+
+		fputcsv(
+			$output,
+			array(
+				'Date',
+				'Project',
+				'Task',
+				'Team Member',
+				'Description',
+				'Hours',
+				'Billable',
+				'Billing Rate',
+				'Revenue',
+				'Salary Rate',
+				'Internal Cost',
+				'Margin',
+			)
+		);
+
+		foreach ( $time_entries as $entry ) {
+			$user = get_userdata( $entry->user_id );
+			$proj = get_post( $entry->project_id );
+			$task = $entry->task_id ? get_post( $entry->task_id ) : null;
+
+			// Resolve billing rate
+			$billing_rate = '';
+			if ( $entry->task_id ) {
+				$billing_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+			}
+			if ( '' === $billing_rate && $entry->user_id ) {
+				$billing_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+			}
+			if ( '' === $billing_rate && $entry->project_id ) {
+				$billing_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+			}
+			$billing_rate  = '' !== $billing_rate ? floatval( $billing_rate ) : 0.0;
+			$hours         = $entry->duration / 3600;
+			$entry_revenue = $entry->billable ? ( $hours * $billing_rate ) : 0;
+
+			// Resolve salary rate
+			$salary_rate = 0;
+			if ( $entry->user_id ) {
+				$salary_rate = get_user_meta( $entry->user_id, '_ndizi_user_salary_rate', true );
+			}
+			$salary_rate = floatval( $salary_rate );
+			$entry_cost  = $hours * $salary_rate;
+			$margin      = $entry_revenue - $entry_cost;
+
+			fputcsv(
+				$output,
+				array(
+					self::escape_csv_field( gmdate( 'Y-m-d', strtotime( $entry->start_time ) ) ),
+					self::escape_csv_field( $proj ? $proj->post_title : '' ),
+					self::escape_csv_field( $task ? $task->post_title : '' ),
+					self::escape_csv_field( $user ? $user->display_name : '' ),
+					self::escape_csv_field( $entry->description ),
+					self::escape_csv_field( round( $hours, 2 ) ),
+					self::escape_csv_field( $entry->billable ? 'Yes' : 'No' ),
+					self::escape_csv_field( '$' . number_format( $billing_rate, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $entry_revenue, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $salary_rate, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $entry_cost, 2 ) ),
+					self::escape_csv_field( '$' . number_format( $margin, 2 ) ),
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+		fclose( $output );
+		exit;
 	}
 
 	/**

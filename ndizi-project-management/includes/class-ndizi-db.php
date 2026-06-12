@@ -71,6 +71,10 @@ class Ndizi_DB {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
+		if ( self::is_date_locked( current_time( 'mysql' ) ) ) {
+			return false;
+		}
+
 		// Stop any existing active timers for this user first
 		self::stop_timer( $user_id );
 
@@ -95,7 +99,9 @@ class Ndizi_DB {
 		);
 
 		if ( $result ) {
-			return $wpdb->insert_id;
+			$insert_id = $wpdb->insert_id;
+			do_action( 'ndizi_timer_started', $insert_id, $user_id, $project_id, $task_id, $description, $billable );
+			return $insert_id;
 		}
 
 		return false;
@@ -110,6 +116,10 @@ class Ndizi_DB {
 
 		$active_timer = self::get_active_timer( $user_id );
 		if ( ! $active_timer ) {
+			return false;
+		}
+
+		if ( self::is_date_locked( $active_timer->start_time ) ) {
 			return false;
 		}
 
@@ -131,6 +141,7 @@ class Ndizi_DB {
 		);
 
 		if ( $result !== false ) {
+			do_action( 'ndizi_timer_stopped', $active_timer->id, $user_id, $duration );
 			return self::get_time_entry( $active_timer->id );
 		}
 
@@ -143,6 +154,12 @@ class Ndizi_DB {
 	public static function log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time = '', $end_time = '' ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
+
+		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
+		if ( self::is_date_locked( $check_time ) ) {
+			return false;
+		}
+
 		// Use a single site-local timestamp basis so every derived datetime
 		// below is in the same timezone convention as $now and the values
 		// stored elsewhere via current_time( 'mysql' ).
@@ -182,7 +199,9 @@ class Ndizi_DB {
 		);
 
 		if ( $result ) {
-			return $wpdb->insert_id;
+			$insert_id = $wpdb->insert_id;
+			do_action( 'ndizi_time_logged', $insert_id, $user_id, $project_id, $task_id, $description, $duration, $billable );
+			return $insert_id;
 		}
 
 		return false;
@@ -194,6 +213,19 @@ class Ndizi_DB {
 	public static function update_time_entry( $id, $data ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
+
+		$existing = self::get_time_entry( $id );
+		if ( ! $existing ) {
+			return false;
+		}
+
+		if ( self::is_date_locked( $existing->start_time ) ) {
+			return false;
+		}
+
+		if ( isset( $data['start_time'] ) && self::is_date_locked( $data['start_time'] ) ) {
+			return false;
+		}
 
 		$update_data = array();
 		$formats     = array();
@@ -237,7 +269,12 @@ class Ndizi_DB {
 			array( '%d' )
 		);
 
-		return $result !== false;
+		if ( $result !== false ) {
+			do_action( 'ndizi_time_entry_updated', $id, $update_data );
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -262,11 +299,22 @@ class Ndizi_DB {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
-		return $wpdb->delete(
+		$existing = self::get_time_entry( $id );
+		if ( $existing && self::is_date_locked( $existing->start_time ) ) {
+			return false;
+		}
+
+		$result = $wpdb->delete(
 			$table_name,
 			array( 'id' => $id ),
 			array( '%d' )
 		);
+
+		if ( $result ) {
+			do_action( 'ndizi_time_entry_deleted', $id );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -420,5 +468,24 @@ class Ndizi_DB {
 		}
 
 		return $wpdb->get_results( $sql );
+	}
+
+	/**
+	 * Check if a date string falls on or before the lock date option.
+	 */
+	public static function is_date_locked( $date_string ) {
+		$lock_date = get_option( 'ndizi_lock_date' );
+		if ( empty( $lock_date ) ) {
+			return false;
+		}
+
+		$lock_time  = strtotime( $lock_date . ' 23:59:59' );
+		$check_time = strtotime( $date_string );
+
+		if ( false === $lock_time || false === $check_time ) {
+			return false;
+		}
+
+		return $check_time <= $lock_time;
 	}
 }

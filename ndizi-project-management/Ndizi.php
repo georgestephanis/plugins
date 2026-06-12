@@ -43,6 +43,32 @@ class Ndizi_Project_Management {
 	}
 
 	/**
+	 * Get list of active modules
+	 *
+	 * @return array Slugs of active modules.
+	 */
+	public static function get_active_modules() {
+		$default_modules = array( 'invoicing', 'portal', 'tracker', 'notifications', 'gantt', 'integrations' );
+		$active          = get_option( 'ndizi_active_modules', null );
+
+		if ( null === $active ) {
+			return $default_modules;
+		}
+
+		return (array) $active;
+	}
+
+	/**
+	 * Check if a specific module is active
+	 *
+	 * @param string $module Module slug.
+	 * @return bool True if active, false otherwise.
+	 */
+	public static function is_module_active( $module ) {
+		return in_array( $module, self::get_active_modules(), true );
+	}
+
+	/**
 	 * Include plugin dependencies
 	 */
 	private static function includes() {
@@ -51,11 +77,25 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-portal.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-notifications.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin-bar.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-standalone-tracker.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
+
+		// Conditional modules dependencies
+		if ( self::is_module_active( 'portal' ) ) {
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-portal.php';
+		}
+		if ( self::is_module_active( 'notifications' ) ) {
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-notifications.php';
+		}
+		if ( self::is_module_active( 'invoicing' ) ) {
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
+		}
+		if ( self::is_module_active( 'tracker' ) ) {
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin-bar.php';
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-standalone-tracker.php';
+		}
+		if ( self::is_module_active( 'integrations' ) ) {
+			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-webhooks.php';
+		}
 	}
 
 	/**
@@ -96,26 +136,46 @@ class Ndizi_Project_Management {
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();
 
+		// Initialize CLI Commands
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			Ndizi_CLI::init();
+		}
+
 		// Initialize REST API Routes
 		Ndizi_REST::init();
 
 		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
 		if ( is_admin() ) {
 			Ndizi_Admin::init();
-			Ndizi_Standalone_Tracker::init();
+			if ( self::is_module_active( 'tracker' ) ) {
+				Ndizi_Standalone_Tracker::init();
+			}
 		}
 
 		// Initialize Client Frontend Portal
-		Ndizi_Portal::init();
+		if ( self::is_module_active( 'portal' ) ) {
+			Ndizi_Portal::init();
+		}
 
 		// Initialize Notifications
-		Ndizi_Notifications::init();
+		if ( self::is_module_active( 'notifications' ) ) {
+			Ndizi_Notifications::init();
+		}
 
 		// Initialize Integrations
-		Ndizi_Integrations::init();
+		if ( self::is_module_active( 'invoicing' ) ) {
+			Ndizi_Integrations::init();
+		}
+
+		// Initialize Webhooks & Slack
+		if ( self::is_module_active( 'integrations' ) ) {
+			Ndizi_Webhooks::init();
+		}
 
 		// Initialize Admin Bar Logger
-		Ndizi_Admin_Bar::init();
+		if ( self::is_module_active( 'tracker' ) ) {
+			Ndizi_Admin_Bar::init();
+		}
 	}
 }
 
