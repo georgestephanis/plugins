@@ -1052,17 +1052,17 @@ class Ndizi_Admin {
 												$is_linked  = ( intval( $entry->invoice_id ) === $post->ID );
 
 												// Resolve the billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
-												$resolved_rate = 0;
+												$resolved_rate = '';
 												if ( $entry->task_id ) {
 													$resolved_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
 												}
-												if ( ! $resolved_rate && $entry->user_id ) {
+												if ( '' === $resolved_rate && $entry->user_id ) {
 													$resolved_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
 												}
-												if ( ! $resolved_rate && $entry->project_id ) {
+												if ( '' === $resolved_rate && $entry->project_id ) {
 													$resolved_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
 												}
-												$resolved_rate = floatval( $resolved_rate );
+												$resolved_rate = '' !== $resolved_rate ? floatval( $resolved_rate ) : 0.0;
 												$subtotal      = round( ( $entry->duration / 3600 ) * $resolved_rate, 2 );
 												?>
 												<tr>
@@ -1576,17 +1576,17 @@ class Ndizi_Admin {
 
 		foreach ( $detailed_entries as $entry ) {
 			// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
-			$entry_rate = 0;
+			$entry_rate = '';
 			if ( $entry->task_id ) {
 				$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
 			}
-			if ( ! $entry_rate && $entry->user_id ) {
+			if ( '' === $entry_rate && $entry->user_id ) {
 				$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
 			}
-			if ( ! $entry_rate && $entry->project_id ) {
+			if ( '' === $entry_rate && $entry->project_id ) {
 				$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
 			}
-			$entry_rate    = floatval( $entry_rate );
+			$entry_rate    = '' !== $entry_rate ? floatval( $entry_rate ) : 0.0;
 			$entry_hours   = $entry->duration / 3600;
 			$entry_revenue = $entry->billable ? ( $entry_hours * $entry_rate ) : 0;
 

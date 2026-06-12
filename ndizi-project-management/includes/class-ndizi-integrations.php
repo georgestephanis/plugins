@@ -428,17 +428,17 @@ class Ndizi_Integrations {
 								$user = get_userdata( $entry->user_id );
 
 								// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
-								$entry_rate = 0;
+								$entry_rate = '';
 								if ( $entry->task_id ) {
 									$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
 								}
-								if ( ! $entry_rate && $entry->user_id ) {
+								if ( '' === $entry_rate && $entry->user_id ) {
 									$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
 								}
-								if ( ! $entry_rate && $entry->project_id ) {
+								if ( '' === $entry_rate && $entry->project_id ) {
 									$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
 								}
-								$entry_rate     = floatval( $entry_rate );
+								$entry_rate     = '' !== $entry_rate ? floatval( $entry_rate ) : 0.0;
 								$entry_subtotal = round( ( $entry->duration / 3600 ) * $entry_rate, 2 );
 								?>
 								<tr>
@@ -673,17 +673,17 @@ class Ndizi_Integrations {
 				$date  = gmdate( 'm/d/Y', strtotime( $entry->start_time ) );
 				$hours = round( $entry->duration / 3600, 2 );
 
-				$billing_rate = 0;
+				$billing_rate = '';
 				if ( $entry->task_id ) {
 					$billing_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
 				}
-				if ( ! $billing_rate && $entry->user_id ) {
+				if ( '' === $billing_rate && $entry->user_id ) {
 					$billing_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
 				}
-				if ( ! $billing_rate && $entry->project_id ) {
+				if ( '' === $billing_rate && $entry->project_id ) {
 					$billing_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
 				}
-				$billing_rate = floatval( $billing_rate );
+				$billing_rate = '' !== $billing_rate ? floatval( $billing_rate ) : 0.0;
 
 				fputcsv(
 					$output,
@@ -750,17 +750,17 @@ class Ndizi_Integrations {
 			$task = $entry->task_id ? get_post( $entry->task_id ) : null;
 
 			// Resolve billing rate
-			$billing_rate = 0;
+			$billing_rate = '';
 			if ( $entry->task_id ) {
 				$billing_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
 			}
-			if ( ! $billing_rate && $entry->user_id ) {
+			if ( '' === $billing_rate && $entry->user_id ) {
 				$billing_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
 			}
-			if ( ! $billing_rate && $entry->project_id ) {
+			if ( '' === $billing_rate && $entry->project_id ) {
 				$billing_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
 			}
-			$billing_rate  = floatval( $billing_rate );
+			$billing_rate  = '' !== $billing_rate ? floatval( $billing_rate ) : 0.0;
 			$hours         = $entry->duration / 3600;
 			$entry_revenue = $entry->billable ? ( $hours * $billing_rate ) : 0;
 
