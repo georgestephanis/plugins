@@ -164,6 +164,11 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-time-service.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-settings.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-meta-boxes.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-list-tables.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-ajax.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-reports.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
