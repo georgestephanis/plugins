@@ -182,15 +182,16 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
 
 ## P4 — Packaging / wp.org release readiness
 
-- [ ] **Stable tag mismatch.** `readme.txt` says `Stable tag: 1.0.0-alpha` while the
-  changelog's latest entry is `1.0.0-alpha.2`. Align them; for the actual wp.org launch,
-  ship a clean `1.0.0` (the directory treats stable tag as a literal SVN tag name).
+- [x] **Stable tag mismatch.** Aligned `readme.txt` `Stable tag` to `1.0.0-alpha.2`
+  (matches latest changelog entry). For the actual wp.org launch, bump to `1.0.0`.
+  _(branch: ndizi/fable-review)_
 
-- [ ] **No `.pot` file in `languages/`.** Add `wp i18n make-pot . languages/ndizi-project-management.pot`
-  to the build script (i18n coverage in the code itself is already excellent).
+- [x] **No `.pot` file in `languages/`.** Generated via `wp i18n make-pot`.
+  File: `languages/ndizi-project-management.pot`. Add to build script before launch.
+  _(branch: ndizi/fable-review)_
 
-- [ ] **Add a LICENSE file** (GPL-2.0-or-later is declared in headers/composer but no
-  full-text file ships).
+- [x] **Add a LICENSE file.** Added full GPL-2.0 text as `LICENSE`.
+  _(branch: ndizi/fable-review)_
 
 - [ ] **Add automated tests.** Nothing exists today. Highest-value first targets:
   `Ndizi_DB` lock-date/approval/duration logic (pure, easy to test), Stripe webhook
