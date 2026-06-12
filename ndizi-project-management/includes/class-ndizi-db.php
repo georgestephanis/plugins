@@ -482,6 +482,10 @@ class Ndizi_DB {
 		$lock_time  = strtotime( $lock_date . ' 23:59:59' );
 		$check_time = strtotime( $date_string );
 
+		if ( false === $lock_time || false === $check_time ) {
+			return false;
+		}
+
 		return $check_time <= $lock_time;
 	}
 }
