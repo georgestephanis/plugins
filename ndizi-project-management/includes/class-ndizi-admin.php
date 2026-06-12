@@ -61,7 +61,9 @@ class Ndizi_Admin {
 	 */
 	public static function save_settings_page() {
 		// Handle Google OAuth callback redirect first
-		if ( isset( $_GET['page'] ) && 'ndizi-settings' === $_GET['page'] && isset( $_GET['code'] ) ) {
+		if ( isset( $_GET['page'] ) && 'ndizi-settings' === $_GET['page'] && isset( $_GET['code'] )
+			&& Ndizi_Project_Management::is_module_active( 'calendar' )
+		) {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'ndizi-project-management' ) );
 			}
@@ -265,18 +267,6 @@ class Ndizi_Admin {
 			array( __CLASS__, 'render_reports_page' )
 		);
 
-		// Submenu: Gantt Chart
-		if ( Ndizi_Project_Management::is_module_active( 'gantt' ) ) {
-			add_submenu_page(
-				'ndizi-pm',
-				__( 'Ndizi Gantt Chart', 'ndizi-project-management' ),
-				__( 'Gantt Chart', 'ndizi-project-management' ),
-				'ndizi_view_projects',
-				'ndizi-gantt',
-				array( __CLASS__, 'render_gantt_page' )
-			);
-		}
-
 		// Submenu: Settings
 		add_submenu_page(
 			'ndizi-pm',
@@ -286,15 +276,26 @@ class Ndizi_Admin {
 			'ndizi-settings',
 			array( __CLASS__, 'render_settings_page' )
 		);
+	}
 
-		// Submenu: Standalone Tracker
+	/**
+	 * Initialize Gantt module hooks
+	 */
+	public static function init_gantt() {
+		add_action( 'admin_menu', array( __CLASS__, 'register_gantt_admin_page' ) );
+	}
+
+	/**
+	 * Register Gantt Chart submenu page under Ndizi PM
+	 */
+	public static function register_gantt_admin_page() {
 		add_submenu_page(
 			'ndizi-pm',
-			__( 'Standalone Tracker', 'ndizi-project-management' ),
-			__( 'Standalone Tracker', 'ndizi-project-management' ),
-			'ndizi_log_time',
-			'ndizi-tracker-standalone',
-			array( 'Ndizi_Standalone_Tracker', 'render_standalone_page' )
+			__( 'Ndizi Gantt Chart', 'ndizi-project-management' ),
+			__( 'Gantt Chart', 'ndizi-project-management' ),
+			'ndizi_view_projects',
+			'ndizi-gantt',
+			array( __CLASS__, 'render_gantt_page' )
 		);
 	}
 
@@ -455,10 +456,12 @@ class Ndizi_Admin {
 							<span class="dashicons dashicons-yes" style="margin-right: 10px; color: #4f46e5;"></span>
 							<?php esc_html_e( 'Create New Task', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_invoice' ) ); ?>" class="ndizi-qa-link" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600;">
-							<span class="dashicons dashicons-analytics" style="margin-right: 10px; color: #4f46e5;"></span>
-							<?php esc_html_e( 'Generate Invoice', 'ndizi-project-management' ); ?>
-						</a>
+						<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_invoice' ) ); ?>" class="ndizi-qa-link" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600;">
+								<span class="dashicons dashicons-analytics" style="margin-right: 10px; color: #4f46e5;"></span>
+								<?php esc_html_e( 'Generate Invoice', 'ndizi-project-management' ); ?>
+							</a>
+						<?php endif; ?>
 					</div>
 				</div>
 
@@ -466,16 +469,20 @@ class Ndizi_Admin {
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
 					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi-project-management' ); ?></h2>
 					<div style="display: flex; flex-direction: column; gap: 10px;">
-						<a href="#" class="ndizi-qa-link-yellow ndizi-launch-tracker" data-tracker-url="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);">
-							<span class="dashicons dashicons-external" style="margin-right: 6px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; color: #0f172a;"></span>
-							<?php esc_html_e( 'Launch Standalone Tracker', 'ndizi-project-management' ); ?>
-						</a>
+						<?php if ( Ndizi_Project_Management::is_module_active( 'tracker' ) ) : ?>
+							<a href="#" class="ndizi-qa-link-yellow ndizi-launch-tracker" data-tracker-url="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);">
+								<span class="dashicons dashicons-external" style="margin-right: 6px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; color: #0f172a;"></span>
+								<?php esc_html_e( 'Launch Standalone Tracker', 'ndizi-project-management' ); ?>
+							</a>
+						<?php endif; ?>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-reports' ) ); ?>" class="ndizi-qa-link-indigo" style="display: block; background: #4f46e5; color: #fff; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none;">
 							<?php esc_html_e( 'View Productivity Reports', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-gantt' ) ); ?>" class="ndizi-qa-link-ghost" style="display: block; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none;">
-							<?php esc_html_e( 'View Gantt Charts', 'ndizi-project-management' ); ?>
-						</a>
+						<?php if ( Ndizi_Project_Management::is_module_active( 'gantt' ) ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-gantt' ) ); ?>" class="ndizi-qa-link-ghost" style="display: block; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none;">
+								<?php esc_html_e( 'View Gantt Charts', 'ndizi-project-management' ); ?>
+							</a>
+						<?php endif; ?>
 					</div>
 				</div>
 			</div>
@@ -2492,32 +2499,7 @@ class Ndizi_Admin {
 					
 					<div style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 16px;">
 						<?php
-						$modules_list = array(
-							'invoicing'     => array(
-								'name' => __( 'Invoicing & Billing', 'ndizi-project-management' ),
-								'desc' => __( 'Generate client invoices, track billing and salary rates, analyze margins, and export/print PDF invoices.', 'ndizi-project-management' ),
-							),
-							'portal'        => array(
-								'name' => __( 'Client Portal', 'ndizi-project-management' ),
-								'desc' => __( 'Enables frontend portal block and shortcodes for client reviews, task updates, and comments.', 'ndizi-project-management' ),
-							),
-							'tracker'       => array(
-								'name' => __( 'Admin Bar & Quick Tracker', 'ndizi-project-management' ),
-								'desc' => __( 'Adds the admin bar quick-timer toggle and a dedicated quick-tracker logger page.', 'ndizi-project-management' ),
-							),
-							'notifications' => array(
-								'name' => __( 'Email Notifications', 'ndizi-project-management' ),
-								'desc' => __( 'Sends automated email notifications when tasks are assigned or their status changes.', 'ndizi-project-management' ),
-							),
-							'gantt'         => array(
-								'name' => __( 'Gantt Timeline Charts', 'ndizi-project-management' ),
-								'desc' => __( 'Provides interactive timelines for project scheduling and visually tracking completion status.', 'ndizi-project-management' ),
-							),
-							'integrations'  => array(
-								'name' => __( 'Webhooks & Slack Integrations', 'ndizi-project-management' ),
-								'desc' => __( 'Sends outbound JSON payloads and formatted Slack alerts when time is logged, tasks change, or invoices transition.', 'ndizi-project-management' ),
-							),
-						);
+						$modules_list = Ndizi_Project_Management::get_module_registry();
 
 						$active_modules = Ndizi_Project_Management::get_active_modules();
 						foreach ( $modules_list as $slug => $mod ) :
@@ -2587,92 +2569,96 @@ class Ndizi_Admin {
 						</div>
 					<?php endif; ?>
 
-					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Google Calendar Integration', 'ndizi-project-management' ); ?></h2>
-					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ); ?></p>
+					<?php if ( Ndizi_Project_Management::is_module_active( 'calendar' ) ) : ?>
+						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Google Calendar Integration', 'ndizi-project-management' ); ?></h2>
+						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ); ?></p>
 
-					<?php
-					$google_cid        = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
-					$google_cid_locked = defined( 'NDIZI_GOOGLE_CLIENT_ID' );
-					$google_secret     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
-					$google_sec_locked = defined( 'NDIZI_GOOGLE_CLIENT_SECRET' );
-					?>
-					<div style="margin-bottom: 20px;">
-						<label for="ndizi_google_client_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client ID', 'ndizi-project-management' ); ?></label>
-						<?php if ( $google_cid_locked ) : ?>
-							<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_ID constant.', 'ndizi-project-management' ); ?></p>
-						<?php else : ?>
-							<input type="text" name="ndizi_google_client_id" id="ndizi_google_client_id" value="<?php echo esc_attr( $google_cid ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
-						<?php endif; ?>
-					</div>
-
-					<div style="margin-bottom: 20px;">
-						<label for="ndizi_google_client_secret" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client Secret', 'ndizi-project-management' ); ?></label>
-						<?php if ( $google_sec_locked ) : ?>
-							<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_SECRET constant.', 'ndizi-project-management' ); ?></p>
-						<?php else : ?>
-							<input type="password" name="ndizi_google_client_secret" id="ndizi_google_client_secret" value="<?php echo esc_attr( $google_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
-						<?php endif; ?>
-						<p class="description" style="margin-top: 5px; color: #64748b;">
-							<?php esc_html_e( 'OAuth Redirect URI for Google Cloud Console:', 'ndizi-project-management' ); ?>
-							<code><?php echo esc_url( admin_url( 'admin.php?page=ndizi-settings' ) ); ?></code>
-						</p>
-					</div>
-
-					<div style="margin-bottom: 30px;">
 						<?php
-						$google_refresh_token = Ndizi_Project_Management::get_secret( 'ndizi_google_refresh_token' );
-						if ( $google_refresh_token ) :
-							?>
-							<p style="color: #16a34a; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px;">
-								<span class="dashicons dashicons-yes-alt" style="color: #16a34a;"></span>
-								<?php esc_html_e( 'Connected to Google Calendar!', 'ndizi-project-management' ); ?>
-							</p>
-						<?php else : ?>
-							<?php
-							$auth_url = '';
-							if ( $google_cid ) {
-								$auth_url = add_query_arg(
-									array(
-										'client_id'     => $google_cid,
-										'redirect_uri'  => admin_url( 'admin.php?page=ndizi-settings' ),
-										'response_type' => 'code',
-										'scope'         => 'https://www.googleapis.com/auth/calendar',
-										'access_type'   => 'offline',
-										'prompt'        => 'consent',
-										'state'         => wp_create_nonce( 'ndizi_google_oauth_state' ),
-									),
-									'https://accounts.google.com/o/oauth2/v2/auth'
-								);
-							}
-							?>
-							<?php if ( $auth_url ) : ?>
-								<a href="<?php echo esc_url( $auth_url ); ?>" class="button button-secondary"><?php esc_html_e( 'Connect to Google Calendar', 'ndizi-project-management' ); ?></a>
-							<?php else : ?>
-								<p class="description" style="color: #dc2626;"><?php esc_html_e( 'Enter Client ID and Secret, save changes, and then click Connect.', 'ndizi-project-management' ); ?></p>
-							<?php endif; ?>
-						<?php endif; ?>
-					</div>
-
-					<div style="margin-bottom: 20px; border-top: 1px dashed #e2e8f0; padding-top: 20px;">
-						<?php
-						$feed_token = get_option( 'ndizi_calendar_feed_token', '' );
-						if ( ! $feed_token ) {
-							$feed_token = wp_hash( time() . wp_generate_password( 20, false ) );
-							update_option( 'ndizi_calendar_feed_token', $feed_token );
-						}
-						$feed_url = home_url( '/wp-json/ndizi/v1/calendar/ical?token=' . $feed_token );
+						$google_cid        = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+						$google_cid_locked = defined( 'NDIZI_GOOGLE_CLIENT_ID' );
+						$google_secret     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
+						$google_sec_locked = defined( 'NDIZI_GOOGLE_CLIENT_SECRET' );
 						?>
-						<label style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'iCal Subscription URL', 'ndizi-project-management' ); ?></label>
-						<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" class="ndizi-select-on-click">
-						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Subscribe to this feed URL in Google Calendar, Apple Calendar, or Outlook to view project milestones and task due dates.', 'ndizi-project-management' ); ?></p>
-					</div>
+						<div style="margin-bottom: 20px;">
+							<label for="ndizi_google_client_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client ID', 'ndizi-project-management' ); ?></label>
+							<?php if ( $google_cid_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_ID constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="text" name="ndizi_google_client_id" id="ndizi_google_client_id" value="<?php echo esc_attr( $google_cid ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
+						</div>
 
-					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Bookmarklet Quick Tracker', 'ndizi-project-management' ); ?></h2>
-					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Drag the button below to your browser bookmarks bar to track time with one click from any website tab.', 'ndizi-project-management' ); ?></p>
-					
-					<div style="margin-bottom: 30px;">
-						<a href="javascript:(function(){var title=encodeURIComponent(document.title);var url=encodeURIComponent(window.location.href);window.open('<?php echo esc_js( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>&desc='+title+' '+url,'ndizi_tracker','width=380,height=640,resizable=yes,scrollbars=yes');})()" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);"><?php esc_html_e( 'Track Time ➔', 'ndizi-project-management' ); ?></a>
-					</div>
+						<div style="margin-bottom: 20px;">
+							<label for="ndizi_google_client_secret" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client Secret', 'ndizi-project-management' ); ?></label>
+							<?php if ( $google_sec_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_SECRET constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="password" name="ndizi_google_client_secret" id="ndizi_google_client_secret" value="<?php echo esc_attr( $google_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
+							<p class="description" style="margin-top: 5px; color: #64748b;">
+								<?php esc_html_e( 'OAuth Redirect URI for Google Cloud Console:', 'ndizi-project-management' ); ?>
+								<code><?php echo esc_url( admin_url( 'admin.php?page=ndizi-settings' ) ); ?></code>
+							</p>
+						</div>
+
+						<div style="margin-bottom: 30px;">
+							<?php
+							$google_refresh_token = Ndizi_Project_Management::get_secret( 'ndizi_google_refresh_token' );
+							if ( $google_refresh_token ) :
+								?>
+								<p style="color: #16a34a; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+									<span class="dashicons dashicons-yes-alt" style="color: #16a34a;"></span>
+									<?php esc_html_e( 'Connected to Google Calendar!', 'ndizi-project-management' ); ?>
+								</p>
+							<?php else : ?>
+								<?php
+								$auth_url = '';
+								if ( $google_cid ) {
+									$auth_url = add_query_arg(
+										array(
+											'client_id'    => $google_cid,
+											'redirect_uri' => admin_url( 'admin.php?page=ndizi-settings' ),
+											'response_type' => 'code',
+											'scope'        => 'https://www.googleapis.com/auth/calendar',
+											'access_type'  => 'offline',
+											'prompt'       => 'consent',
+											'state'        => wp_create_nonce( 'ndizi_google_oauth_state' ),
+										),
+										'https://accounts.google.com/o/oauth2/v2/auth'
+									);
+								}
+								?>
+								<?php if ( $auth_url ) : ?>
+									<a href="<?php echo esc_url( $auth_url ); ?>" class="button button-secondary"><?php esc_html_e( 'Connect to Google Calendar', 'ndizi-project-management' ); ?></a>
+								<?php else : ?>
+									<p class="description" style="color: #dc2626;"><?php esc_html_e( 'Enter Client ID and Secret, save changes, and then click Connect.', 'ndizi-project-management' ); ?></p>
+								<?php endif; ?>
+							<?php endif; ?>
+						</div>
+
+						<div style="margin-bottom: 20px; border-top: 1px dashed #e2e8f0; padding-top: 20px;">
+							<?php
+							$feed_token = get_option( 'ndizi_calendar_feed_token', '' );
+							if ( ! $feed_token ) {
+								$feed_token = wp_hash( time() . wp_generate_password( 20, false ) );
+								update_option( 'ndizi_calendar_feed_token', $feed_token );
+							}
+							$feed_url = home_url( '/wp-json/ndizi/v1/calendar/ical?token=' . $feed_token );
+							?>
+							<label style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'iCal Subscription URL', 'ndizi-project-management' ); ?></label>
+							<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" class="ndizi-select-on-click">
+							<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Subscribe to this feed URL in Google Calendar, Apple Calendar, or Outlook to view project milestones and task due dates.', 'ndizi-project-management' ); ?></p>
+						</div>
+					<?php endif; ?>
+
+					<?php if ( Ndizi_Project_Management::is_module_active( 'tracker' ) ) : ?>
+						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Bookmarklet Quick Tracker', 'ndizi-project-management' ); ?></h2>
+						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Drag the button below to your browser bookmarks bar to track time with one click from any website tab.', 'ndizi-project-management' ); ?></p>
+						
+						<div style="margin-bottom: 30px;">
+							<a href="javascript:(function(){var title=encodeURIComponent(document.title);var url=encodeURIComponent(window.location.href);window.open('<?php echo esc_js( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>&desc='+title+' '+url,'ndizi_tracker','width=380,height=640,resizable=yes,scrollbars=yes');})()" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);"><?php esc_html_e( 'Track Time ➔', 'ndizi-project-management' ); ?></a>
+						</div>
+					<?php endif; ?>
 
 					<?php if ( Ndizi_Project_Management::is_module_active( 'integrations' ) ) : ?>
 						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Webhooks & Slack Settings', 'ndizi-project-management' ); ?></h2>

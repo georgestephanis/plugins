@@ -47,8 +47,83 @@ class Ndizi_Project_Management {
 	 *
 	 * @return array Slugs of active modules.
 	 */
+	/**
+	 * Get the module registry.
+	 *
+	 * @return array[] Declarative module configuration.
+	 */
+	public static function get_module_registry() {
+		return array(
+			'invoicing'     => array(
+				'name'        => __( 'Stripe Invoicing', 'ndizi-project-management' ),
+				'desc'        => __( 'Enables invoicing capabilities, Stripe checkout integration, and invoice payment webhooks.', 'ndizi-project-management' ),
+				'includes'    => array(
+					'includes/class-ndizi-integrations.php',
+				),
+				'init'        => array( 'Ndizi_Integrations', 'init' ),
+				'rest_routes' => array( 'Ndizi_REST', 'register_invoicing_routes' ),
+			),
+			'portal'        => array(
+				'name'     => __( 'Client Portal', 'ndizi-project-management' ),
+				'desc'     => __( 'Enables frontend portal block and shortcodes for client reviews, task updates, and comments.', 'ndizi-project-management' ),
+				'includes' => array(
+					'includes/class-ndizi-portal.php',
+				),
+				'init'     => array( 'Ndizi_Portal', 'init' ),
+			),
+			'tracker'       => array(
+				'name'     => __( 'Admin Bar & Quick Tracker', 'ndizi-project-management' ),
+				'desc'     => __( 'Adds the admin bar quick-timer toggle and a dedicated quick-tracker logger page.', 'ndizi-project-management' ),
+				'includes' => array(
+					'includes/class-ndizi-admin-bar.php',
+					'includes/class-ndizi-standalone-tracker.php',
+				),
+				'init'     => array(
+					array( 'Ndizi_Admin_Bar', 'init' ),
+					array( 'Ndizi_Standalone_Tracker', 'init' ),
+				),
+			),
+			'notifications' => array(
+				'name'     => __( 'Email Notifications', 'ndizi-project-management' ),
+				'desc'     => __( 'Sends automated email notifications when tasks are assigned or their status changes.', 'ndizi-project-management' ),
+				'includes' => array(
+					'includes/class-ndizi-notifications.php',
+				),
+				'init'     => array( 'Ndizi_Notifications', 'init' ),
+			),
+			'gantt'         => array(
+				'name'     => __( 'Gantt Timeline Charts', 'ndizi-project-management' ),
+				'desc'     => __( 'Provides interactive timelines for project scheduling and visually tracking completion status.', 'ndizi-project-management' ),
+				'includes' => array(),
+				'init'     => array( 'Ndizi_Admin', 'init_gantt' ),
+			),
+			'integrations'  => array(
+				'name'     => __( 'Webhooks & Slack Integrations', 'ndizi-project-management' ),
+				'desc'     => __( 'Sends outbound JSON payloads and formatted Slack alerts when time is logged, tasks change, or invoices transition.', 'ndizi-project-management' ),
+				'includes' => array(
+					'includes/class-ndizi-webhooks.php',
+				),
+				'init'     => array( 'Ndizi_Webhooks', 'init' ),
+			),
+			'calendar'      => array(
+				'name'        => __( 'Google Calendar Sync', 'ndizi-project-management' ),
+				'desc'        => __( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ),
+				'includes'    => array(
+					'includes/class-ndizi-calendar.php',
+				),
+				'init'        => array( 'Ndizi_Calendar', 'init' ),
+				'rest_routes' => array( 'Ndizi_REST', 'register_calendar_routes' ),
+			),
+		);
+	}
+
+	/**
+	 * Get list of active modules
+	 *
+	 * @return array Slugs of active modules.
+	 */
 	public static function get_active_modules() {
-		$default_modules = array( 'invoicing', 'portal', 'tracker', 'notifications', 'gantt', 'integrations' );
+		$default_modules = array_keys( self::get_module_registry() );
 		$active          = get_option( 'ndizi_active_modules', null );
 
 		if ( null === $active ) {
@@ -96,24 +171,15 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-calendar.php';
 
-		// Conditional modules dependencies
-		if ( self::is_module_active( 'portal' ) ) {
-			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-portal.php';
-		}
-		if ( self::is_module_active( 'notifications' ) ) {
-			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-notifications.php';
-		}
-		if ( self::is_module_active( 'invoicing' ) ) {
-			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-integrations.php';
-		}
-		if ( self::is_module_active( 'tracker' ) ) {
-			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin-bar.php';
-			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-standalone-tracker.php';
-		}
-		if ( self::is_module_active( 'integrations' ) ) {
-			require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-webhooks.php';
+		// Dynamic module dependency loading
+		$registry = self::get_module_registry();
+		foreach ( self::get_active_modules() as $module ) {
+			if ( isset( $registry[ $module ] ) && ! empty( $registry[ $module ]['includes'] ) ) {
+				foreach ( $registry[ $module ]['includes'] as $file ) {
+					require_once NDIZI_PLUGIN_DIR . $file;
+				}
+			}
 		}
 	}
 
@@ -175,40 +241,45 @@ class Ndizi_Project_Management {
 		// Initialize REST API Routes
 		Ndizi_REST::init();
 
-		// Initialize Google Calendar Integration
-		Ndizi_Calendar::init();
-
 		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
 		if ( is_admin() ) {
 			Ndizi_Admin::init();
-			if ( self::is_module_active( 'tracker' ) ) {
-				Ndizi_Standalone_Tracker::init();
+		}
+
+		// Dynamically bootstrap active modules
+		$registry = self::get_module_registry();
+		foreach ( self::get_active_modules() as $module ) {
+			if ( ! isset( $registry[ $module ] ) ) {
+				continue;
+			}
+			$mod = $registry[ $module ];
+			if ( ! empty( $mod['init'] ) ) {
+				$callbacks = is_callable( $mod['init'] ) || ( is_array( $mod['init'] ) && is_string( $mod['init'][0] ) )
+					? array( $mod['init'] )
+					: $mod['init'];
+
+				foreach ( $callbacks as $callback ) {
+					if ( is_callable( $callback ) ) {
+						call_user_func( $callback );
+					}
+				}
 			}
 		}
+	}
 
-		// Initialize Client Frontend Portal
-		if ( self::is_module_active( 'portal' ) ) {
-			Ndizi_Portal::init();
-		}
-
-		// Initialize Notifications
-		if ( self::is_module_active( 'notifications' ) ) {
-			Ndizi_Notifications::init();
-		}
-
-		// Initialize Integrations
-		if ( self::is_module_active( 'invoicing' ) ) {
-			Ndizi_Integrations::init();
-		}
-
-		// Initialize Webhooks & Slack
-		if ( self::is_module_active( 'integrations' ) ) {
-			Ndizi_Webhooks::init();
-		}
-
-		// Initialize Admin Bar Logger
-		if ( self::is_module_active( 'tracker' ) ) {
-			Ndizi_Admin_Bar::init();
+	/**
+	 * Register REST routes for all active modules
+	 */
+	public static function register_active_rest_routes() {
+		$registry = self::get_module_registry();
+		foreach ( self::get_active_modules() as $module ) {
+			if ( ! isset( $registry[ $module ] ) ) {
+				continue;
+			}
+			$mod = $registry[ $module ];
+			if ( ! empty( $mod['rest_routes'] ) && is_callable( $mod['rest_routes'] ) ) {
+				call_user_func( $mod['rest_routes'] );
+			}
 		}
 	}
 }

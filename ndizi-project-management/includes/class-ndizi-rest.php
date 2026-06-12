@@ -223,6 +223,17 @@ class Ndizi_REST {
 			)
 		);
 
+		// Register REST routes for active modules
+		Ndizi_Project_Management::register_active_rest_routes();
+	}
+
+	/**
+	 * Register invoicing specific REST routes.
+	 * Called dynamically if invoicing module is active.
+	 */
+	public static function register_invoicing_routes() {
+		$namespace = 'ndizi/v1';
+
 		// Stripe Payment Endpoint
 		register_rest_route(
 			$namespace,
@@ -244,6 +255,14 @@ class Ndizi_REST {
 				'permission_callback' => '__return_true',
 			)
 		);
+	}
+
+	/**
+	 * Register calendar specific REST routes.
+	 * Called dynamically if calendar module is active.
+	 */
+	public static function register_calendar_routes() {
+		$namespace = 'ndizi/v1';
 
 		// Calendar iCal feed Endpoint
 		register_rest_route(
@@ -795,7 +814,7 @@ class Ndizi_REST {
 		}
 
 		$token = $request->get_param( 'token' );
-		if ( $token ) {
+		if ( $token && class_exists( 'Ndizi_Portal' ) ) {
 			$token_client_id = Ndizi_Portal::get_client_id_by_token( $token );
 			if ( $token_client_id ) {
 				$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
@@ -1016,7 +1035,7 @@ class Ndizi_REST {
 		$global_token = get_option( 'ndizi_calendar_feed_token', '' );
 		if ( $global_token && hash_equals( $global_token, $token ) ) {
 			$is_admin_feed = true;
-		} else {
+		} elseif ( class_exists( 'Ndizi_Portal' ) ) {
 			// Check if token matches a client.
 			$found = Ndizi_Portal::get_client_id_by_token( $token );
 			if ( $found ) {
