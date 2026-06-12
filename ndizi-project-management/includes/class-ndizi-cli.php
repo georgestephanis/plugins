@@ -217,19 +217,15 @@ class Ndizi_CLI {
 			}
 		}
 
-		$posts = get_posts(
-			array(
-				'post_type'   => 'ndizi_project',
-				'title'       => $project_string,
-				'numberposts' => 1,
+		global $wpdb;
+		$id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_title = %s AND post_type = 'ndizi_project' AND post_status != 'trash' LIMIT 1",
+				$project_string
 			)
 		);
 
-		if ( ! empty( $posts ) ) {
-			return $posts[0]->ID;
-		}
-
-		return 0;
+		return $id ? intval( $id ) : 0;
 	}
 
 	/**
@@ -243,24 +239,22 @@ class Ndizi_CLI {
 			}
 		}
 
-		$posts = get_posts(
-			array(
-				'post_type'   => 'ndizi_task',
-				'title'       => $task_string,
-				'meta_query'  => array(
-					array(
-						'key'   => '_ndizi_project_id',
-						'value' => $project_id,
-					),
-				),
-				'numberposts' => 1,
+		global $wpdb;
+		$id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+				 WHERE p.post_title = %s
+				   AND p.post_type = 'ndizi_task'
+				   AND p.post_status != 'trash'
+				   AND pm.meta_key = '_ndizi_project_id'
+				   AND pm.meta_value = %d
+				 LIMIT 1",
+				$task_string,
+				$project_id
 			)
 		);
 
-		if ( ! empty( $posts ) ) {
-			return $posts[0]->ID;
-		}
-
-		return 0;
+		return $id ? intval( $id ) : 0;
 	}
 }
