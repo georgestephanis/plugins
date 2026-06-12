@@ -77,6 +77,7 @@ class Ndizi_Admin_Bar {
 					'enter_duration'       => __( 'Please enter a valid duration.', 'ndizi-project-management' ),
 					'stat_label_project'   => __( 'Project:', 'ndizi-project-management' ),
 					'stat_label_task'      => __( 'Task:', 'ndizi-project-management' ),
+					'idle_warning'         => __( 'Warning: Your timer has been running for over 8 hours. Please verify your logged time.', 'ndizi-project-management' ),
 				),
 			)
 		);

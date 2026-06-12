@@ -427,6 +427,25 @@
 			}
 		}
 
+		.ndizi-ab-warning-banner {
+			align-items: center;
+			background: #fee2e2;
+			border: 1px solid #fca5a5;
+			border-radius: 6px;
+			color: #991b1b;
+			display: flex;
+			font-size: 12px;
+			gap: 8px;
+			line-height: 1.4;
+			margin-bottom: 15px;
+			padding: 10px 12px;
+			text-align: left;
+
+			svg {
+				flex-shrink: 0;
+			}
+		}
+
 		&.ndizi-timer-idle-warning {
 
 			.ndizi-ab-icon-wrapper .dashicons,
