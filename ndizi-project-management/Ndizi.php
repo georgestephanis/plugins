@@ -125,14 +125,7 @@ class Ndizi_Project_Management {
 			return $all_modules;
 		}
 
-		$stored = (array) $active;
-
-		// Auto-activate any registry module keys not present in the stored option.
-		// This ensures newly-added modules (like 'calendar') are on by default for
-		// existing installs whose stored option predates the module's introduction,
-		// matching the fresh-install behaviour without requiring a DB migration.
-		$new_modules = array_diff( $all_modules, $stored );
-		return array_merge( $stored, $new_modules );
+		return (array) $active;
 	}
 
 	/**
@@ -229,6 +222,18 @@ class Ndizi_Project_Management {
 			&& ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) )
 		) {
 			Ndizi_DB::create_table();
+
+			// Activate any registry modules not yet in the stored option so new
+			// modules (e.g. 'calendar') default to on for existing installs.
+			// Runs once per version bump; user toggles made after this are preserved.
+			$stored_modules = get_option( 'ndizi_active_modules', null );
+			if ( null !== $stored_modules ) {
+				$new_modules = array_diff( array_keys( self::get_module_registry() ), (array) $stored_modules );
+				if ( ! empty( $new_modules ) ) {
+					update_option( 'ndizi_active_modules', array_merge( (array) $stored_modules, $new_modules ) );
+				}
+			}
+
 			update_option( 'ndizi_db_version', NDIZI_VERSION );
 		}
 

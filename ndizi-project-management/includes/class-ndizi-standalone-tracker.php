@@ -15,9 +15,9 @@ class Ndizi_Standalone_Tracker {
 	public static function init() {
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-			add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
+			add_action( 'admin_init', array( __CLASS__, 'handle_requests' ) );
 		}
-		add_action( 'wp_ajax_ndizi_push_notification', array( __CLASS__, 'push_notification' ) );
+		add_action( 'wp_ajax_ndizi_get_recent_user_logs', array( __CLASS__, 'ajax_get_recent_user_logs' ) );
 	}
 
 	/**
