@@ -629,3 +629,64 @@
 	border-left: 1px dashed #e2e8f0;
 	width: 1px;
 }
+
+/* Dashboard quick-action links — hover via CSS, no inline JS handlers */
+.ndizi-qa-link {
+	transition: background 0.2s, border-color 0.2s;
+
+	&:hover {
+		background: #f1f5f9 !important;
+		border-color: #cbd5e1 !important;
+	}
+}
+
+.ndizi-qa-link-yellow {
+	transition: background 0.2s;
+
+	&:hover {
+		background: #ca8a04 !important;
+	}
+}
+
+.ndizi-qa-link-indigo {
+	transition: background 0.2s;
+
+	&:hover {
+		background: #4338ca !important;
+	}
+}
+
+.ndizi-qa-link-ghost {
+	transition: background 0.2s;
+
+	&:hover {
+		background: #e2e8f0 !important;
+	}
+}
+
+/* Icon-picker cards — hover and checked state via CSS, no inline JS handlers */
+.ndizi-icon-card {
+	border: 2px solid #e2e8f0;
+	background: #fff;
+	transition: border-color 0.2s;
+
+	&:hover {
+		border-color: #4f46e5;
+	}
+}
+
+input[type="radio"]:checked + .ndizi-icon-card {
+	border-color: #4f46e5;
+	background: #f5f3ff;
+}
+
+/* Icon colour follows card hover / checked state */
+.ndizi-icon-card-icon {
+	color: #64748b;
+	transition: color 0.2s;
+}
+
+.ndizi-icon-card:hover .ndizi-icon-card-icon,
+input[type="radio"]:checked + .ndizi-icon-card .ndizi-icon-card-icon {
+	color: #4f46e5;
+}

@@ -143,11 +143,13 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   vs custom webhook per event) and centralize the event detection so a status change
   fires one canonical `do_action()` both consume.
 
-- [ ] **Replace deprecated `meta_key`/`meta_value` query args with `meta_query`**
+- [x] **Replace deprecated `meta_key`/`meta_value` query args with `meta_query`**
   (~[class-ndizi-admin.php:318](includes/class-ndizi-admin.php#L318)) and remove inline
-  `onmouseover`/`onmouseout` style handlers on dashboard quick actions
-  (~[class-ndizi-admin.php:442-472](includes/class-ndizi-admin.php#L442-L472)) in favor
-  of CSS `:hover` — those break under a strict CSP.
+  `onmouseover`/`onmouseout` style handlers on dashboard quick actions and icon-picker
+  cards in favor of CSS `:hover` / `input:checked + .ndizi-icon-card` — those break
+  under a strict CSP. SCSS compiled to `build/admin.css`.
+  ([class-ndizi-admin.php](includes/class-ndizi-admin.php), [src/admin/admin-style.scss](src/admin/admin-style.scss))
+  _(branch: ndizi/fable-review)_
 
 - [ ] **Chrome extension: validate legacy credential migration and document storage risk.**
   Migration push at [chrome-extension/popup.js:72-86](chrome-extension/popup.js#L72-L86)
