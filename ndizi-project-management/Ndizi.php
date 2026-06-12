@@ -58,9 +58,9 @@ class Ndizi_Project_Management {
 				'name'        => __( 'Stripe Invoicing', 'ndizi-project-management' ),
 				'desc'        => __( 'Enables invoicing capabilities, Stripe checkout integration, and invoice payment webhooks.', 'ndizi-project-management' ),
 				'includes'    => array(
-					'includes/class-ndizi-integrations.php',
+					'includes/class-ndizi-invoicing.php',
 				),
-				'init'        => array( 'Ndizi_Integrations', 'init' ),
+				'init'        => array( 'Ndizi_Invoicing', 'init' ),
 				'rest_routes' => array( 'Ndizi_REST', 'register_invoicing_routes' ),
 			),
 			'portal'        => array(
@@ -254,11 +254,11 @@ class Ndizi_Project_Management {
 			}
 			$mod = $registry[ $module ];
 			if ( ! empty( $mod['init'] ) ) {
-				$callbacks = is_callable( $mod['init'] ) || ( is_array( $mod['init'] ) && is_string( $mod['init'][0] ) )
-					? array( $mod['init'] )
-					: $mod['init'];
+				// If the init property is a single valid callable, wrap it in an array for consistent processing.
+				// Otherwise, assume it's already an array of callables.
+				$callbacks = is_callable( $mod['init'] ) ? array( $mod['init'] ) : $mod['init'];
 
-				foreach ( $callbacks as $callback ) {
+				foreach ( (array) $callbacks as $callback ) {
 					if ( is_callable( $callback ) ) {
 						call_user_func( $callback );
 					}

@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Ndizi_Integrations {
+class Ndizi_Invoicing {
 
 	/**
 	 * Initialize integrations and export hooks
