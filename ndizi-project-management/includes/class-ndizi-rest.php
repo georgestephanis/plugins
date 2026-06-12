@@ -317,7 +317,7 @@ class Ndizi_REST {
 				)
 			);
 			if ( empty( $user_tasks ) ) {
-				return new WP_Error( 'project_not_assigned', __( 'You must be assigned to tasks in this project to log time.', 'ndizi-project-management' ) );
+				return new WP_Error( 'project_not_assigned', __( 'You must be assigned to tasks in this project to track time.', 'ndizi-project-management' ) );
 			}
 		}
 
