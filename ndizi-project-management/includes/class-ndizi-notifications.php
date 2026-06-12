@@ -10,36 +10,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Ndizi_Notifications {
 
 	/**
-	 * Stash of old meta values captured before update_post_meta writes.
-	 *
-	 * @var array
-	 */
-	private static $prev_meta_values = array();
-
-	/**
 	 * Initialize notification hooks
 	 */
 	public static function init() {
 		add_action( 'ndizi_client_submitted_task', array( __CLASS__, 'notify_admin_on_client_task' ), 10, 3 );
-		add_action( 'added_post_meta', array( __CLASS__, 'handle_added_post_meta' ), 10, 4 );
-		// Fires before the DB write so get_post_meta() still returns the old value.
-		add_filter( 'update_post_metadata', array( __CLASS__, 'capture_old_task_meta' ), 10, 3 );
-		add_action( 'updated_post_meta', array( __CLASS__, 'handle_updated_post_meta' ), 10, 4 );
+		// Canonical events fired by Ndizi_CPTs (which is always loaded)
+		add_action( 'ndizi_task_assigned', array( __CLASS__, 'on_task_assigned' ), 10, 2 );
+		add_action( 'ndizi_task_status_changed', array( __CLASS__, 'on_task_status_changed' ), 10, 3 );
 	}
 
 	/**
-	 * Cache the current meta value before it is overwritten, for use in handle_updated_post_meta.
+	 * Handle task assignment notification via the canonical ndizi_task_assigned action.
 	 *
-	 * @param mixed  $check      Whether to bypass filtering metadata.
-	 * @param int    $object_id  Object ID.
-	 * @param string $meta_key   Meta key.
-	 * @return mixed
+	 * @param int $task_id     Task post ID.
+	 * @param int $assignee_id User ID of the assignee.
 	 */
-	public static function capture_old_task_meta( $check, $object_id, $meta_key ) {
-		if ( in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status' ), true ) ) {
-			self::$prev_meta_values[ $object_id . ':' . $meta_key ] = get_post_meta( $object_id, $meta_key, true );
+	public static function on_task_assigned( $task_id, $assignee_id ) {
+		$assignee_id = intval( $assignee_id );
+		if ( $assignee_id > 0 ) {
+			self::send_assignment_notification( $task_id, $assignee_id );
 		}
-		return $check;
+	}
+
+	/**
+	 * Handle task status change notification via the canonical ndizi_task_status_changed action.
+	 *
+	 * @param int    $task_id    Task post ID.
+	 * @param string $new_status New status value.
+	 * @param string $old_status Previous status value.
+	 */
+	public static function on_task_status_changed( $task_id, $new_status, $old_status ) {
+		$assignee_id = intval( get_post_meta( $task_id, '_ndizi_assigned_user_id', true ) );
+		if ( $assignee_id > 0 && ! empty( $old_status ) && $new_status !== $old_status ) {
+			self::send_status_change_notification( $task_id, $assignee_id, $old_status, $new_status );
+		}
 	}
 
 	/**
@@ -88,55 +92,6 @@ class Ndizi_Notifications {
 		wp_mail( $to, $subject, $message, $headers );
 	}
 
-	/**
-	 * Handle metadata additions to trigger notifications
-	 */
-	public static function handle_added_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
-		if ( '_ndizi_assigned_user_id' !== $meta_key ) {
-			return;
-		}
-
-		if ( 'ndizi_task' !== get_post_type( $object_id ) ) {
-			return;
-		}
-
-		$assignee_id = intval( $_meta_value );
-		if ( $assignee_id > 0 ) {
-			self::send_assignment_notification( $object_id, $assignee_id );
-		}
-	}
-
-	/**
-	 * Handle metadata updates to trigger notifications
-	 */
-	public static function handle_updated_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
-		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status' ), true ) ) {
-			return;
-		}
-
-		if ( 'ndizi_task' !== get_post_type( $object_id ) ) {
-			return;
-		}
-
-		$cache_key = $object_id . ':' . $meta_key;
-		$old_value = isset( self::$prev_meta_values[ $cache_key ] ) ? self::$prev_meta_values[ $cache_key ] : '';
-		unset( self::$prev_meta_values[ $cache_key ] );
-
-		if ( '_ndizi_assigned_user_id' === $meta_key ) {
-			$new_assignee = intval( $_meta_value );
-			$old_assignee = intval( $old_value );
-			if ( $new_assignee > 0 && $new_assignee !== $old_assignee ) {
-				self::send_assignment_notification( $object_id, $new_assignee );
-			}
-		} elseif ( '_ndizi_task_status' === $meta_key ) {
-			$new_status  = sanitize_text_field( $_meta_value );
-			$old_status  = sanitize_text_field( $old_value );
-			$assignee_id = intval( get_post_meta( $object_id, '_ndizi_assigned_user_id', true ) );
-			if ( $assignee_id > 0 && ! empty( $old_status ) && $new_status !== $old_status ) {
-				self::send_status_change_notification( $object_id, $assignee_id, $old_status, $new_status );
-			}
-		}
-	}
 
 	/**
 	 * Send email notification when a task is assigned to a user

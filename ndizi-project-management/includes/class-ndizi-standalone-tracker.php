@@ -188,7 +188,7 @@ class Ndizi_Standalone_Tracker {
 
 		if ( $active_timer ) {
 			$start_ts     = strtotime( $active_timer->start_time );
-			$now_ts       = strtotime( current_time( 'mysql' ) );
+			$now_ts       = time();
 			$duration_sec = max( 0, $now_ts - $start_ts );
 		}
 

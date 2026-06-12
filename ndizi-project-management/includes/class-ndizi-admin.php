@@ -72,8 +72,8 @@ class Ndizi_Admin {
 			}
 
 			$code          = sanitize_text_field( wp_unslash( $_GET['code'] ) );
-			$client_id     = get_option( 'ndizi_google_client_id', '' );
-			$client_secret = get_option( 'ndizi_google_client_secret', '' );
+			$client_id     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+			$client_secret = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
 
 			if ( $client_id && $client_secret ) {
 				$response = wp_remote_post(
@@ -89,7 +89,7 @@ class Ndizi_Admin {
 					)
 				);
 
-				if ( ! is_wp_error( $response ) ) {
+				if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 					$body = json_decode( wp_remote_retrieve_body( $response ), true );
 					if ( isset( $body['refresh_token'] ) ) {
 						update_option( 'ndizi_google_refresh_token', $body['refresh_token'] );
@@ -315,8 +315,12 @@ class Ndizi_Admin {
 					'post_type'      => 'ndizi_project',
 					'posts_per_page' => -1,
 					'fields'         => 'ids',
-					'meta_key'       => '_ndizi_project_status',
-					'meta_value'     => 'active',
+					'meta_query'     => array(
+						array(
+							'key'   => '_ndizi_project_status',
+							'value' => 'active',
+						),
+					),
 				)
 			)
 		);
@@ -439,19 +443,19 @@ class Ndizi_Admin {
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
 					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Quick Action Workspace', 'ndizi-project-management' ); ?></h2>
 					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_client' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_client' ) ); ?>" class="ndizi-qa-link" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600;">
 							<span class="dashicons dashicons-networking" style="margin-right: 10px; color: #4f46e5;"></span>
 							<?php esc_html_e( 'Add New Client', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_project' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_project' ) ); ?>" class="ndizi-qa-link" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600;">
 							<span class="dashicons dashicons-portfolio" style="margin-right: 10px; color: #4f46e5;"></span>
 							<?php esc_html_e( 'Create New Project', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_task' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_task' ) ); ?>" class="ndizi-qa-link" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600;">
 							<span class="dashicons dashicons-yes" style="margin-right: 10px; color: #4f46e5;"></span>
 							<?php esc_html_e( 'Create New Task', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_invoice' ) ); ?>" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+						<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=ndizi_invoice' ) ); ?>" class="ndizi-qa-link" style="display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; text-decoration: none; color: #1e293b; font-weight: 600;">
 							<span class="dashicons dashicons-analytics" style="margin-right: 10px; color: #4f46e5;"></span>
 							<?php esc_html_e( 'Generate Invoice', 'ndizi-project-management' ); ?>
 						</a>
@@ -462,14 +466,14 @@ class Ndizi_Admin {
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
 					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi-project-management' ); ?></h2>
 					<div style="display: flex; flex-direction: column; gap: 10px;">
-						<a href="#" onclick="window.open('<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>', 'ndizi_tracker', 'width=380,height=640,resizable=yes,scrollbars=yes'); return false;" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);" onmouseover="this.style.background='#ca8a04';" onmouseout="this.style.background='#eab308';">
+						<a href="#" class="ndizi-qa-link-yellow ndizi-launch-tracker" data-tracker-url="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);">
 							<span class="dashicons dashicons-external" style="margin-right: 6px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; color: #0f172a;"></span>
 							<?php esc_html_e( 'Launch Standalone Tracker', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-reports' ) ); ?>" style="display: block; background: #4f46e5; color: #fff; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#4338ca';" onmouseout="this.style.background='#4f46e5';">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-reports' ) ); ?>" class="ndizi-qa-link-indigo" style="display: block; background: #4f46e5; color: #fff; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none;">
 							<?php esc_html_e( 'View Productivity Reports', 'ndizi-project-management' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-gantt' ) ); ?>" style="display: block; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f8fafc';">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-gantt' ) ); ?>" class="ndizi-qa-link-ghost" style="display: block; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; text-align: center; font-weight: 600; padding: 12px; border-radius: 6px; text-decoration: none;">
 							<?php esc_html_e( 'View Gantt Charts', 'ndizi-project-management' ); ?>
 						</a>
 					</div>
@@ -1527,7 +1531,7 @@ class Ndizi_Admin {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ) );
 		}
 
@@ -1627,7 +1631,7 @@ class Ndizi_Admin {
 
 		// Add live duration
 		$start_ts             = strtotime( $timer->start_time );
-		$now_ts               = strtotime( current_time( 'mysql' ) );
+		$now_ts               = time();
 		$timer->live_duration = max( 0, $now_ts - $start_ts );
 
 		wp_send_json_success(
@@ -2440,8 +2444,8 @@ class Ndizi_Admin {
 						<!-- Option: Banana -->
 						<label style="cursor: pointer; display: block; position: relative;">
 							<input type="radio" name="ndizi_adminbar_icon" value="banana" <?php checked( $current_icon, 'banana' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
-							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'banana' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'banana' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
-								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'banana' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+							<div class="ndizi-icon-card" style="border-radius: 10px; padding: 20px; text-align: center;">
+								<div class="ndizi-icon-card-icon" style="height: 48px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
 									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v-2a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v2a9.09 9.09 0 0 1 -4 8.08c-2 1.31 -5 1.57 -7 1.59a2 2 0 0 0 -2 2a2 2 0 0 0 1.16 1.81c2.69 1.2 9.46 3.44 14.35 -1.66c4.49 -4.74 1.49 -11.82 1.49 -11.82" /></svg>
 								</div>
 								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Banana', 'ndizi-project-management' ); ?></span>
@@ -2451,8 +2455,8 @@ class Ndizi_Admin {
 						<!-- Option: Clock -->
 						<label style="cursor: pointer; display: block; position: relative;">
 							<input type="radio" name="ndizi_adminbar_icon" value="clock" <?php checked( $current_icon, 'clock' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
-							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'clock' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'clock' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
-								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'clock' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+							<div class="ndizi-icon-card" style="border-radius: 10px; padding: 20px; text-align: center;">
+								<div class="ndizi-icon-card-icon" style="height: 48px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
 									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
 								</div>
 								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Clock', 'ndizi-project-management' ); ?></span>
@@ -2462,8 +2466,8 @@ class Ndizi_Admin {
 						<!-- Option: Punch Clock -->
 						<label style="cursor: pointer; display: block; position: relative;">
 							<input type="radio" name="ndizi_adminbar_icon" value="punch_clock" <?php checked( $current_icon, 'punch_clock' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
-							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'punch_clock' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'punch_clock' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
-								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'punch_clock' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+							<div class="ndizi-icon-card" style="border-radius: 10px; padding: 20px; text-align: center;">
+								<div class="ndizi-icon-card-icon" style="height: 48px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
 									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 -960 960 960" fill="currentColor"><path d="M360-120v-80h240v80H360Zm120-160q-100 0-170-70t-70-170q0-100 70-170t170-70q100 0 170 70t70 170q0 100-70 170t-170 70Zm0-80q66 0 113-47t47-113q0-66-47-113t-113-47q-66 0-113 47t-47 113q0 66 47 113t113 47ZM80-560v-80h160v80H80Zm640 0v-80h160v80H720ZM440-440h80v120l-70 70-56-56 46-46v-88Z"/></svg>
 								</div>
 								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Punch Clock', 'ndizi-project-management' ); ?></span>
@@ -2473,8 +2477,8 @@ class Ndizi_Admin {
 						<!-- Option: Hourglass -->
 						<label style="cursor: pointer; display: block; position: relative;">
 							<input type="radio" name="ndizi_adminbar_icon" value="hourglass" <?php checked( $current_icon, 'hourglass' ); ?> style="position: absolute; opacity: 0; width: 0; height: 0;">
-							<div class="ndizi-icon-card" style="border: 2px solid <?php echo $current_icon === 'hourglass' ? '#4f46e5' : '#e2e8f0'; ?>; background: <?php echo $current_icon === 'hourglass' ? '#f5f3ff' : '#fff'; ?>; border-radius: 10px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#4f46e5'" onmouseout="if(this.previousElementSibling.checked === false) this.style.borderColor='#e2e8f0'">
-								<div style="height: 48px; display: flex; align-items: center; justify-content: center; color: <?php echo $current_icon === 'hourglass' ? '#4f46e5' : '#64748b'; ?>; margin-bottom: 12px;">
+							<div class="ndizi-icon-card" style="border-radius: 10px; padding: 20px; text-align: center;">
+								<div class="ndizi-icon-card-icon" style="height: 48px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
 									<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14" /><path d="M5 2h14" /><path d="M17 22v-4.172a2 2 0 0 0 -.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" /><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></svg>
 								</div>
 								<span style="font-size: 14px; font-weight: 600; color: #1e293b;"><?php esc_html_e( 'Hourglass', 'ndizi-project-management' ); ?></span>
@@ -2543,22 +2547,39 @@ class Ndizi_Admin {
 						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Stripe Invoicing Settings', 'ndizi-project-management' ); ?></h2>
 						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Configure Stripe payment gateway integration to allow clients to pay invoices online.', 'ndizi-project-management' ); ?></p>
 						
+						<?php
+						$stripe_secret             = Ndizi_Project_Management::get_secret( 'ndizi_stripe_secret_key' );
+						$stripe_secret_locked      = defined( 'NDIZI_STRIPE_SECRET_KEY' );
+						$stripe_publishable        = Ndizi_Project_Management::get_secret( 'ndizi_stripe_publishable_key' );
+						$stripe_publishable_locked = defined( 'NDIZI_STRIPE_PUBLISHABLE_KEY' );
+						$stripe_webhook            = Ndizi_Project_Management::get_secret( 'ndizi_stripe_webhook_secret' );
+						$stripe_webhook_locked     = defined( 'NDIZI_STRIPE_WEBHOOK_SECRET' );
+						?>
 						<div style="margin-bottom: 20px;">
-							<?php $stripe_secret = get_option( 'ndizi_stripe_secret_key', '' ); ?>
 							<label for="ndizi_stripe_secret_key" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Stripe Secret Key', 'ndizi-project-management' ); ?></label>
-							<input type="password" name="ndizi_stripe_secret_key" id="ndizi_stripe_secret_key" value="<?php echo esc_attr( $stripe_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php if ( $stripe_secret_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_STRIPE_SECRET_KEY constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="password" name="ndizi_stripe_secret_key" id="ndizi_stripe_secret_key" value="<?php echo esc_attr( $stripe_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
 						</div>
 
 						<div style="margin-bottom: 20px;">
-							<?php $stripe_publishable = get_option( 'ndizi_stripe_publishable_key', '' ); ?>
 							<label for="ndizi_stripe_publishable_key" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Stripe Publishable Key', 'ndizi-project-management' ); ?></label>
-							<input type="text" name="ndizi_stripe_publishable_key" id="ndizi_stripe_publishable_key" value="<?php echo esc_attr( $stripe_publishable ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php if ( $stripe_publishable_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_STRIPE_PUBLISHABLE_KEY constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="text" name="ndizi_stripe_publishable_key" id="ndizi_stripe_publishable_key" value="<?php echo esc_attr( $stripe_publishable ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
 						</div>
 
 						<div style="margin-bottom: 30px;">
-							<?php $stripe_webhook = get_option( 'ndizi_stripe_webhook_secret', '' ); ?>
 							<label for="ndizi_stripe_webhook_secret" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Stripe Webhook Signing Secret', 'ndizi-project-management' ); ?></label>
-							<input type="password" name="ndizi_stripe_webhook_secret" id="ndizi_stripe_webhook_secret" value="<?php echo esc_attr( $stripe_webhook ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php if ( $stripe_webhook_locked ) : ?>
+								<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_STRIPE_WEBHOOK_SECRET constant.', 'ndizi-project-management' ); ?></p>
+							<?php else : ?>
+								<input type="password" name="ndizi_stripe_webhook_secret" id="ndizi_stripe_webhook_secret" value="<?php echo esc_attr( $stripe_webhook ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<?php endif; ?>
 							<p class="description" style="margin-top: 5px; color: #64748b;">
 								<?php esc_html_e( 'Webhook URL for Stripe Dashboard:', 'ndizi-project-management' ); ?>
 								<code><?php echo esc_url( home_url( '/wp-json/ndizi/v1/stripe/webhook' ) ); ?></code>
@@ -2568,17 +2589,29 @@ class Ndizi_Admin {
 
 					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Google Calendar Integration', 'ndizi-project-management' ); ?></h2>
 					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ); ?></p>
-					
+
+					<?php
+					$google_cid        = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+					$google_cid_locked = defined( 'NDIZI_GOOGLE_CLIENT_ID' );
+					$google_secret     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
+					$google_sec_locked = defined( 'NDIZI_GOOGLE_CLIENT_SECRET' );
+					?>
 					<div style="margin-bottom: 20px;">
-						<?php $google_cid = get_option( 'ndizi_google_client_id', '' ); ?>
 						<label for="ndizi_google_client_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client ID', 'ndizi-project-management' ); ?></label>
-						<input type="text" name="ndizi_google_client_id" id="ndizi_google_client_id" value="<?php echo esc_attr( $google_cid ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php if ( $google_cid_locked ) : ?>
+							<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_ID constant.', 'ndizi-project-management' ); ?></p>
+						<?php else : ?>
+							<input type="text" name="ndizi_google_client_id" id="ndizi_google_client_id" value="<?php echo esc_attr( $google_cid ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php endif; ?>
 					</div>
 
 					<div style="margin-bottom: 20px;">
-						<?php $google_secret = get_option( 'ndizi_google_client_secret', '' ); ?>
 						<label for="ndizi_google_client_secret" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client Secret', 'ndizi-project-management' ); ?></label>
-						<input type="password" name="ndizi_google_client_secret" id="ndizi_google_client_secret" value="<?php echo esc_attr( $google_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php if ( $google_sec_locked ) : ?>
+							<p class="description" style="color: #64748b; font-style: italic;"><?php esc_html_e( 'Set via NDIZI_GOOGLE_CLIENT_SECRET constant.', 'ndizi-project-management' ); ?></p>
+						<?php else : ?>
+							<input type="password" name="ndizi_google_client_secret" id="ndizi_google_client_secret" value="<?php echo esc_attr( $google_secret ); ?>" style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+						<?php endif; ?>
 						<p class="description" style="margin-top: 5px; color: #64748b;">
 							<?php esc_html_e( 'OAuth Redirect URI for Google Cloud Console:', 'ndizi-project-management' ); ?>
 							<code><?php echo esc_url( admin_url( 'admin.php?page=ndizi-settings' ) ); ?></code>
@@ -2587,7 +2620,7 @@ class Ndizi_Admin {
 
 					<div style="margin-bottom: 30px;">
 						<?php
-						$google_refresh_token = get_option( 'ndizi_google_refresh_token', '' );
+						$google_refresh_token = Ndizi_Project_Management::get_secret( 'ndizi_google_refresh_token' );
 						if ( $google_refresh_token ) :
 							?>
 							<p style="color: #16a34a; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px;">
@@ -2630,7 +2663,7 @@ class Ndizi_Admin {
 						$feed_url = home_url( '/wp-json/ndizi/v1/calendar/ical?token=' . $feed_token );
 						?>
 						<label style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'iCal Subscription URL', 'ndizi-project-management' ); ?></label>
-						<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" onclick="this.select();">
+						<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" class="ndizi-select-on-click">
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Subscribe to this feed URL in Google Calendar, Apple Calendar, or Outlook to view project milestones and task due dates.', 'ndizi-project-management' ); ?></p>
 					</div>
 

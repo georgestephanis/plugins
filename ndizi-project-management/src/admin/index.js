@@ -18,6 +18,8 @@ import './admin-style.scss';
 		initAuthKeyRegen();
 		initTimeTracker();
 		initInvoiceAggregator();
+		initTrackerLauncher();
+		initSelectOnClick();
 	} );
 
 	/**
@@ -319,6 +321,32 @@ import './admin-style.scss';
 			} );
 
 			$( '#ndizi_invoice_amount' ).val( totalAmount.toFixed( 2 ) );
+		} );
+	}
+
+	/**
+	 * Launch Standalone Tracker
+	 */
+	function initTrackerLauncher() {
+		$( document ).on( 'click', '.ndizi-launch-tracker', function ( e ) {
+			e.preventDefault();
+			const url = $( this ).data( 'tracker-url' );
+			if ( url ) {
+				window.open(
+					url,
+					'ndizi_tracker',
+					'width=380,height=640,resizable=yes,scrollbars=yes'
+				);
+			}
+		} );
+	}
+
+	/**
+	 * Select text inside readonly input fields on click
+	 */
+	function initSelectOnClick() {
+		$( document ).on( 'click', '.ndizi-select-on-click', function () {
+			this.select();
 		} );
 	}
 } )( window.jQuery );

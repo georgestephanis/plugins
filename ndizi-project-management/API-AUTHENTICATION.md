@@ -72,7 +72,36 @@ if ( ! is_wp_error( $response ) ) {
 
 ---
 
-## 3. Core Ndizi Endpoint Cheat Sheet
+## 3. Chrome Extension — Credential Storage Notes
+
+The Chrome extension stores the Base64-encoded Basic Auth header in `chrome.storage.local`
+alongside the WordPress site URL and username. Be aware of the following:
+
+- **Credentials are unencrypted.** `chrome.storage.local` is not encrypted on disk;
+  any other extension granted `storage` access (or physical access to the Chrome profile
+  directory) can read stored credentials.
+- **Use dedicated, revocable Application Passwords.** Never store your main WordPress
+  password. Generate a specific Application Password for the extension (e.g.,
+  `Chrome Extension`) so you can revoke it independently without changing your login
+  credentials.
+- **Rotate periodically.** Application Passwords have no expiry by default; rotate them
+  if you suspect exposure or remove the extension from a machine you no longer control.
+
+**Keeping secrets out of the DB (for self-hosted installs):** If your site uses the
+REST API programmatically, you can define Stripe/Google secrets as PHP constants in
+`wp-config.php` instead of the database:
+
+```php
+define( 'NDIZI_STRIPE_SECRET_KEY', 'sk_live_...' );
+define( 'NDIZI_GOOGLE_CLIENT_SECRET', '...' );
+```
+
+Ndizi will check for these constants before falling back to `wp_options`, so secrets
+never appear in database exports or option-table dumps.
+
+---
+
+## 4. Core Ndizi Endpoint Cheat Sheet
 
 All routes are relative to `https://your-wordpress-site.local/wp-json/ndizi/v1`:
 

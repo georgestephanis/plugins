@@ -73,14 +73,14 @@ class Ndizi_DB {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
-		if ( self::is_date_locked( current_time( 'mysql' ) ) ) {
+		if ( self::is_date_locked( current_time( 'mysql', true ) ) ) {
 			return false;
 		}
 
 		// Stop any existing active timers for this user first
 		self::stop_timer( $user_id );
 
-		$now = current_time( 'mysql' );
+		$now = current_time( 'mysql', true );
 
 		$result = $wpdb->insert(
 			$table_name,
@@ -125,7 +125,7 @@ class Ndizi_DB {
 			return false;
 		}
 
-		$now_mysql = current_time( 'mysql' );
+		$now_mysql = current_time( 'mysql', true );
 		$now_ts    = strtotime( $now_mysql );
 		$start_ts  = strtotime( $active_timer->start_time );
 		$duration  = max( 0, $now_ts - $start_ts );
@@ -157,15 +157,13 @@ class Ndizi_DB {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
-		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
+		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
 		if ( self::is_date_locked( $check_time ) ) {
 			return false;
 		}
 
-		// Use a single site-local timestamp basis so every derived datetime
-		// below is in the same timezone convention as $now and the values
-		// stored elsewhere via current_time( 'mysql' ).
-		$now_ts = strtotime( current_time( 'mysql' ) );
+		// All timestamps stored in UTC.
+		$now_ts = time();
 		$now    = gmdate( 'Y-m-d H:i:s', $now_ts );
 
 		// If start/end times aren't provided, estimate them based on duration
@@ -276,7 +274,7 @@ class Ndizi_DB {
 			$formats[]               = '%d';
 		}
 
-		$update_data['updated_at'] = current_time( 'mysql' );
+		$update_data['updated_at'] = current_time( 'mysql', true );
 		$formats[]                 = '%s';
 
 		$result = $wpdb->update(
@@ -357,7 +355,7 @@ class Ndizi_DB {
 			'approved'   => null,
 			'orderby'    => 'start_time',
 			'order'      => 'DESC',
-			'number'     => -1,
+			'number'     => 500,
 			'offset'     => 0,
 		);
 

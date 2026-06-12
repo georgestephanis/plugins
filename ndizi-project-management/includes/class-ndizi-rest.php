@@ -30,6 +30,16 @@ class Ndizi_REST {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_projects' ),
 				'permission_callback' => array( __CLASS__, 'check_view_projects_permission' ),
+				'args'                => array(
+					'per_page' => array(
+						'default'           => 100,
+						'sanitize_callback' => 'absint',
+					),
+					'page'     => array(
+						'default'           => 1,
+						'sanitize_callback' => 'absint',
+					),
+				),
 			)
 		);
 
@@ -41,6 +51,20 @@ class Ndizi_REST {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( __CLASS__, 'get_tasks' ),
 				'permission_callback' => array( __CLASS__, 'check_view_tasks_permission' ),
+				'args'                => array(
+					'per_page'   => array(
+						'default'           => 100,
+						'sanitize_callback' => 'absint',
+					),
+					'page'       => array(
+						'default'           => 1,
+						'sanitize_callback' => 'absint',
+					),
+					'project_id' => array(
+						'default'           => 0,
+						'sanitize_callback' => 'absint',
+					),
+				),
 			)
 		);
 
@@ -255,6 +279,65 @@ class Ndizi_REST {
 	}
 
 	/**
+	 * Validate that a user can log time against a given project and optional task.
+	 * Shared by REST and Abilities write paths so enforcement stays consistent.
+	 *
+	 * @param int $project_id Project post ID.
+	 * @param int $task_id    Task post ID, or 0 if none.
+	 * @param int $user_id    User performing the action.
+	 * @return true|WP_Error
+	 */
+	public static function validate_time_project_access( $project_id, $task_id, $user_id ) {
+		if ( ! $project_id || 'ndizi_project' !== get_post_type( $project_id ) ) {
+			return new WP_Error( 'invalid_project', __( 'Invalid project ID.', 'ndizi-project-management' ) );
+		}
+
+		if ( 'active' !== get_post_meta( $project_id, '_ndizi_project_status', true ) ) {
+			return new WP_Error( 'project_not_active', __( 'Cannot track time on an inactive project.', 'ndizi-project-management' ) );
+		}
+
+		if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
+			$user_tasks = get_posts(
+				array(
+					'post_type'      => 'ndizi_task',
+					'post_status'    => 'publish',
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					'meta_query'     => array(
+						array(
+							'key'   => '_ndizi_project_id',
+							'value' => $project_id,
+						),
+						array(
+							'key'   => '_ndizi_assigned_user_id',
+							'value' => $user_id,
+						),
+					),
+				)
+			);
+			if ( empty( $user_tasks ) ) {
+				return new WP_Error( 'project_not_assigned', __( 'You must be assigned to tasks in this project to track time.', 'ndizi-project-management' ) );
+			}
+		}
+
+		if ( $task_id ) {
+			if ( 'ndizi_task' !== get_post_type( $task_id ) || (int) get_post_meta( $task_id, '_ndizi_project_id', true ) !== $project_id ) {
+				return new WP_Error( 'invalid_task', __( 'Invalid task ID or task does not belong to the specified project.', 'ndizi-project-management' ) );
+			}
+
+			if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_tasks' ) ) {
+				$assigned_user = (int) get_post_meta( $task_id, '_ndizi_assigned_user_id', true );
+				if ( $assigned_user !== $user_id ) {
+					return new WP_Error( 'task_not_assigned', __( 'You are not assigned to this task.', 'ndizi-project-management' ) );
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Get the IDs of projects the current user is involved in.
 	 *
 	 * "Involved in" means the project contains at least one task assigned to the
@@ -296,11 +379,15 @@ class Ndizi_REST {
 	/**
 	 * Get list of active projects
 	 */
-	public static function get_projects() {
+	public static function get_projects( $request ) {
+		$per_page = min( absint( $request->get_param( 'per_page' ) ?: 100 ), 200 );
+		$page     = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
+
 		$args = array(
 			'post_type'      => 'ndizi_project',
 			'post_status'    => 'publish',
-			'posts_per_page' => -1,
+			'posts_per_page' => $per_page,
+			'paged'          => $page,
 			'meta_query'     => array(
 				array(
 					'key'     => '_ndizi_project_status',
@@ -320,7 +407,29 @@ class Ndizi_REST {
 			$args['post__in'] = $project_ids;
 		}
 
-		$projects = get_posts( $args );
+		$query       = new WP_Query( $args );
+		$projects    = $query->posts;
+		$total       = (int) $query->found_posts;
+		$total_pages = (int) $query->max_num_pages;
+
+		if ( ! empty( $projects ) ) {
+			$project_ids = wp_list_pluck( $projects, 'ID' );
+			update_meta_cache( 'post', $project_ids );
+
+			$client_ids = array_filter(
+				array_unique(
+					array_map(
+						function ( $p ) {
+							return (int) get_post_meta( $p->ID, '_ndizi_client_id', true );
+						},
+						$projects
+					)
+				)
+			);
+			if ( ! empty( $client_ids ) ) {
+				_prime_post_caches( $client_ids );
+			}
+		}
 
 		$response = array();
 		foreach ( $projects as $project ) {
@@ -339,19 +448,25 @@ class Ndizi_REST {
 			);
 		}
 
-		return new WP_REST_Response( $response, 200 );
+		$rest_response = new WP_REST_Response( $response, 200 );
+		$rest_response->header( 'X-WP-Total', $total );
+		$rest_response->header( 'X-WP-TotalPages', $total_pages );
+		return $rest_response;
 	}
 
 	/**
 	 * Get list of active tasks
 	 */
 	public static function get_tasks( $request ) {
+		$per_page   = min( absint( $request->get_param( 'per_page' ) ?: 100 ), 200 );
+		$page       = max( 1, absint( $request->get_param( 'page' ) ?: 1 ) );
 		$project_id = $request->get_param( 'project_id' );
 
 		$args = array(
 			'post_type'      => 'ndizi_task',
 			'post_status'    => 'publish',
-			'posts_per_page' => -1,
+			'posts_per_page' => $per_page,
+			'paged'          => $page,
 		);
 
 		if ( $project_id ) {
@@ -374,7 +489,29 @@ class Ndizi_REST {
 			);
 		}
 
-		$tasks = get_posts( $args );
+		$query       = new WP_Query( $args );
+		$tasks       = $query->posts;
+		$total       = (int) $query->found_posts;
+		$total_pages = (int) $query->max_num_pages;
+
+		if ( ! empty( $tasks ) ) {
+			$task_ids = wp_list_pluck( $tasks, 'ID' );
+			update_meta_cache( 'post', $task_ids );
+
+			$project_ids = array_filter(
+				array_unique(
+					array_map(
+						function ( $t ) {
+							return (int) get_post_meta( $t->ID, '_ndizi_project_id', true );
+						},
+						$tasks
+					)
+				)
+			);
+			if ( ! empty( $project_ids ) ) {
+				_prime_post_caches( $project_ids );
+			}
+		}
 
 		$response = array();
 		foreach ( $tasks as $task ) {
@@ -393,7 +530,10 @@ class Ndizi_REST {
 			);
 		}
 
-		return new WP_REST_Response( $response, 200 );
+		$rest_response = new WP_REST_Response( $response, 200 );
+		$rest_response->header( 'X-WP-Total', $total );
+		$rest_response->header( 'X-WP-TotalPages', $total_pages );
+		return $rest_response;
 	}
 
 	/**
@@ -409,7 +549,7 @@ class Ndizi_REST {
 
 		// Calculate current live duration
 		$start_ts             = strtotime( $timer->start_time );
-		$now_ts               = strtotime( current_time( 'mysql' ) );
+		$now_ts               = time();
 		$timer->live_duration = max( 0, $now_ts - $start_ts );
 
 		return new WP_REST_Response(
@@ -431,7 +571,13 @@ class Ndizi_REST {
 		$description = $request->get_param( 'description' );
 		$billable    = $request->get_param( 'billable' );
 
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
+		if ( is_wp_error( $access ) ) {
+			$status_code = in_array( $access->get_error_code(), array( 'invalid_project', 'invalid_task' ), true ) ? 400 : 403;
+			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), $status_code );
+		}
+
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ), 400 );
 		}
 
@@ -489,7 +635,13 @@ class Ndizi_REST {
 		$billable    = $request->get_param( 'billable' );
 		$start_time  = $request->get_param( 'start_time' );
 
-		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
+		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
+		if ( is_wp_error( $access ) ) {
+			$status_code = in_array( $access->get_error_code(), array( 'invalid_project', 'invalid_task' ), true ) ? 400 : 403;
+			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), $status_code );
+		}
+
+		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
 		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' ) ), 400 );
 		}
@@ -644,14 +796,12 @@ class Ndizi_REST {
 
 		$token = $request->get_param( 'token' );
 		if ( $token ) {
-			$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
-			if ( $project_id ) {
-				$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
-				if ( $client_id ) {
-					$expected_token = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
-					if ( $expected_token && hash_equals( $expected_token, $token ) ) {
-						return true;
-					}
+			$token_client_id = Ndizi_Portal::get_client_id_by_token( $token );
+			if ( $token_client_id ) {
+				$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+				$client_id  = $project_id ? get_post_meta( $project_id, '_ndizi_client_id', true ) : 0;
+				if ( $client_id && (int) $client_id === (int) $token_client_id ) {
+					return true;
 				}
 			}
 		}
@@ -669,7 +819,7 @@ class Ndizi_REST {
 		$invoice_id = $request->get_param( 'id' );
 		$token      = $request->get_param( 'token' );
 
-		$stripe_secret = get_option( 'ndizi_stripe_secret_key', '' );
+		$stripe_secret = Ndizi_Project_Management::get_secret( 'ndizi_stripe_secret_key' );
 		if ( ! $stripe_secret ) {
 			return new WP_Error( 'stripe_not_configured', __( 'Stripe is not configured on this site.', 'ndizi-project-management' ), array( 'status' => 500 ) );
 		}
@@ -770,7 +920,7 @@ class Ndizi_REST {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function handle_stripe_webhook( $request ) {
-		$stripe_webhook_secret = get_option( 'ndizi_stripe_webhook_secret', '' );
+		$stripe_webhook_secret = Ndizi_Project_Management::get_secret( 'ndizi_stripe_webhook_secret' );
 		$sig_header            = $request->get_header( 'stripe-signature' );
 		$payload               = $request->get_body();
 
@@ -825,7 +975,20 @@ class Ndizi_REST {
 			$session    = $event['data']['object'] ?? array();
 			$invoice_id = isset( $session['client_reference_id'] ) ? intval( $session['client_reference_id'] ) : 0;
 
+			// Async payment methods (e.g. bank transfers) complete the session before funds
+			// actually settle, so payment_status may still be 'unpaid' here. Only act when
+			// payment is confirmed captured.
+			if ( ( $session['payment_status'] ?? '' ) !== 'paid' ) {
+				return new WP_REST_Response( array( 'received' => true ), 200 );
+			}
+
 			if ( $invoice_id && 'ndizi_invoice' === get_post_type( $invoice_id ) ) {
+				// Idempotency: skip if already marked paid so Stripe retries don't
+				// fire ndizi_invoice_paid a second time (duplicate emails/webhooks).
+				if ( 'paid' === get_post_meta( $invoice_id, '_ndizi_invoice_status', true ) ) {
+					return new WP_REST_Response( array( 'received' => true ), 200 );
+				}
+
 				update_post_meta( $invoice_id, '_ndizi_invoice_status', 'paid' );
 				do_action( 'ndizi_invoice_paid', $invoice_id );
 			}
@@ -855,20 +1018,9 @@ class Ndizi_REST {
 			$is_admin_feed = true;
 		} else {
 			// Check if token matches a client.
-			$clients = get_posts(
-				array(
-					'post_type'      => 'ndizi_client',
-					'posts_per_page' => 1,
-					'meta_query'     => array(
-						array(
-							'key'   => '_ndizi_client_auth_key',
-							'value' => $token,
-						),
-					),
-				)
-			);
-			if ( ! empty( $clients ) ) {
-				$client_id = $clients[0]->ID;
+			$found = Ndizi_Portal::get_client_id_by_token( $token );
+			if ( $found ) {
+				$client_id = $found;
 			}
 		}
 

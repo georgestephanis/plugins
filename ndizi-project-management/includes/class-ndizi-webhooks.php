@@ -10,13 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Ndizi_Webhooks {
 
 	/**
-	 * Stash of old meta values captured before update_post_meta writes.
-	 *
-	 * @var array
-	 */
-	private static $prev_meta_values = array();
-
-	/**
 	 * Initialize webhook triggers
 	 */
 	public static function init() {
@@ -30,26 +23,10 @@ class Ndizi_Webhooks {
 		// Custom Post Type Transitions (Tasks & Invoices)
 		add_action( 'transition_post_status', array( __CLASS__, 'handle_post_status_transition' ), 10, 3 );
 
-		// Meta updates (Assignments and Statuses)
-		add_action( 'added_post_meta', array( __CLASS__, 'handle_added_post_meta' ), 10, 4 );
-		// Fires before the DB write so get_post_meta() still returns the old value.
-		add_filter( 'update_post_metadata', array( __CLASS__, 'capture_old_task_meta' ), 10, 3 );
-		add_action( 'updated_post_meta', array( __CLASS__, 'handle_updated_post_meta' ), 10, 4 );
-	}
-
-	/**
-	 * Cache the current meta value before it is overwritten, for use in handle_updated_post_meta.
-	 *
-	 * @param mixed  $check      Whether to bypass filtering metadata.
-	 * @param int    $object_id  Object ID.
-	 * @param string $meta_key   Meta key.
-	 * @return mixed
-	 */
-	public static function capture_old_task_meta( $check, $object_id, $meta_key ) {
-		if ( in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
-			self::$prev_meta_values[ $object_id . ':' . $meta_key ] = get_post_meta( $object_id, $meta_key, true );
-		}
-		return $check;
+		// Canonical events fired by Ndizi_CPTs (always loaded)
+		add_action( 'ndizi_task_assigned', array( __CLASS__, 'task_assigned' ), 10, 2 );
+		add_action( 'ndizi_task_status_changed', array( __CLASS__, 'task_status_changed' ), 10, 3 );
+		add_action( 'ndizi_invoice_status_changed', array( __CLASS__, 'invoice_status_changed' ), 10, 3 );
 	}
 
 	/**
@@ -69,8 +46,9 @@ class Ndizi_Webhooks {
 			'data'      => $data,
 		);
 
-		// Trigger webhook POST request (non-blocking)
-		if ( ! empty( $webhook_url ) && filter_var( $webhook_url, FILTER_VALIDATE_URL ) ) {
+		// Trigger webhook POST request (non-blocking).
+		// wp_http_validate_url() rejects loopback and private-range targets (SSRF guard).
+		if ( ! empty( $webhook_url ) && wp_http_validate_url( $webhook_url ) ) {
 			wp_remote_post(
 				$webhook_url,
 				array(
@@ -85,10 +63,15 @@ class Ndizi_Webhooks {
 					'body'        => wp_json_encode( $payload ),
 				)
 			);
+		} elseif ( ! empty( $webhook_url ) ) {
+			$parsed     = wp_parse_url( $webhook_url );
+			$logged_url = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' ) . ( isset( $parsed['host'] ) ? $parsed['host'] : '' );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Ndizi: outbound webhook URL blocked by SSRF guard: ' . $logged_url );
 		}
 
-		// Trigger Slack webhook POST request (non-blocking)
-		if ( ! empty( $slack_webhook_url ) && filter_var( $slack_webhook_url, FILTER_VALIDATE_URL ) && ! empty( $slack_message ) ) {
+		// Trigger Slack webhook POST request (non-blocking).
+		if ( ! empty( $slack_webhook_url ) && wp_http_validate_url( $slack_webhook_url ) && ! empty( $slack_message ) ) {
 			wp_remote_post(
 				$slack_webhook_url,
 				array(
@@ -103,6 +86,11 @@ class Ndizi_Webhooks {
 					'body'        => wp_json_encode( array( 'text' => $slack_message ) ),
 				)
 			);
+		} elseif ( ! empty( $slack_webhook_url ) && ! empty( $slack_message ) ) {
+			$parsed     = wp_parse_url( $slack_webhook_url );
+			$logged_url = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' ) . ( isset( $parsed['host'] ) ? $parsed['host'] : '' );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Ndizi: Slack webhook URL blocked by SSRF guard: ' . $logged_url );
 		}
 	}
 
@@ -316,117 +304,91 @@ class Ndizi_Webhooks {
 	}
 
 	/**
-	 * Handler for added_post_meta (Task Assignment, Statuses, Invoice Status)
+	 * Handler for canonical ndizi_task_assigned action
 	 */
-	public static function handle_added_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
-		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
-			return;
+	public static function task_assigned( $task_id, $assignee_id ) {
+		$assignee_id = intval( $assignee_id );
+		if ( $assignee_id > 0 ) {
+			$user      = get_userdata( $assignee_id );
+			$user_name = $user ? $user->display_name : __( 'Unknown User', 'ndizi-project-management' );
+			$task      = get_post( $task_id );
+			$edit_url  = admin_url( 'post.php?post=' . $task_id . '&action=edit' );
+
+			$data = array(
+				'task_id'     => $task_id,
+				'task_title'  => $task ? $task->post_title : '',
+				'assigned_to' => $assignee_id,
+				'user_name'   => $user_name,
+			);
+
+			$slack_message = sprintf(
+				"👤 *Task Assigned*: *%s* is now assigned to *%s*\n*Link*: <%s|View Task>",
+				$task ? $task->post_title : '',
+				$user_name,
+				$edit_url
+			);
+
+			self::dispatch( 'task_assigned', $data, $slack_message );
 		}
-		self::handle_meta_change( $object_id, $meta_key, $_meta_value );
 	}
 
 	/**
-	 * Handler for updated_post_meta (Task Assignment, Statuses, Invoice Status)
+	 * Handler for canonical ndizi_task_status_changed action
 	 */
-	public static function handle_updated_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
-		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
-			return;
-		}
+	public static function task_status_changed( $task_id, $new_status_val, $old_status_val ) {
+		$task          = get_post( $task_id );
+		$status_labels = array(
+			'open'        => __( 'Open', 'ndizi-project-management' ),
+			'in_progress' => __( 'In Progress', 'ndizi-project-management' ),
+			'completed'   => __( 'Completed', 'ndizi-project-management' ),
+			'cancelled'   => __( 'Cancelled', 'ndizi-project-management' ),
+		);
+		$old_status    = isset( $status_labels[ $old_status_val ] ) ? $status_labels[ $old_status_val ] : $old_status_val;
+		$new_status    = isset( $status_labels[ $new_status_val ] ) ? $status_labels[ $new_status_val ] : $new_status_val;
+		$edit_url      = admin_url( 'post.php?post=' . $task_id . '&action=edit' );
 
-		$cache_key = $object_id . ':' . $meta_key;
-		$old_value = isset( self::$prev_meta_values[ $cache_key ] ) ? self::$prev_meta_values[ $cache_key ] : '';
-		unset( self::$prev_meta_values[ $cache_key ] );
+		$data = array(
+			'task_id'    => $task_id,
+			'task_title' => $task ? $task->post_title : '',
+			'old_status' => $old_status_val,
+			'new_status' => $new_status_val,
+		);
 
-		if ( $_meta_value === $old_value ) {
-			return;
-		}
-		self::handle_meta_change( $object_id, $meta_key, $_meta_value, $old_value );
+		$slack_message = sprintf(
+			"🔄 *Task Status Updated*: *%s* status changed from *%s* to *%s*\n*Link*: <%s|View Task>",
+			$task ? $task->post_title : '',
+			$old_status ? $old_status : __( 'None', 'ndizi-project-management' ),
+			$new_status,
+			$edit_url
+		);
+
+		self::dispatch( 'task_status_updated', $data, $slack_message );
 	}
 
 	/**
-	 * Process meta updates to dispatch webhooks
+	 * Handler for canonical ndizi_invoice_status_changed action
 	 */
-	private static function handle_meta_change( $object_id, $meta_key, $new_val, $old_val = '' ) {
-		$post_type = get_post_type( $object_id );
+	public static function invoice_status_changed( $invoice_id, $new_status_val, $old_status_val ) {
+		$invoice  = get_post( $invoice_id );
+		$amount   = get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
+		$edit_url = admin_url( 'post.php?post=' . $invoice_id . '&action=edit' );
 
-		if ( 'ndizi_task' === $post_type ) {
-			if ( '_ndizi_assigned_user_id' === $meta_key ) {
-				$assignee_id = intval( $new_val );
-				if ( $assignee_id > 0 ) {
-					$user      = get_userdata( $assignee_id );
-					$user_name = $user ? $user->display_name : __( 'Unknown User', 'ndizi-project-management' );
-					$task      = get_post( $object_id );
-					$edit_url  = admin_url( 'post.php?post=' . $object_id . '&action=edit' );
+		$data = array(
+			'invoice_id' => $invoice_id,
+			'invoice_no' => $invoice ? $invoice->post_title : '',
+			'old_status' => $old_status_val,
+			'new_status' => $new_status_val,
+			'amount'     => $amount,
+		);
 
-					$data = array(
-						'task_id'     => $object_id,
-						'task_title'  => $task ? $task->post_title : '',
-						'assigned_to' => $assignee_id,
-						'user_name'   => $user_name,
-					);
+		$slack_message = sprintf(
+			"📄 *Invoice Status Updated*: *%s* status changed to *%s* (Amount: $%s)\n*Link*: <%s|View Invoice>",
+			$invoice ? $invoice->post_title : '',
+			strtoupper( $new_status_val ),
+			number_format( floatval( $amount ), 2 ),
+			$edit_url
+		);
 
-					$slack_message = sprintf(
-						"👤 *Task Assigned*: *%s* is now assigned to *%s*\n*Link*: <%s|View Task>",
-						$task ? $task->post_title : '',
-						$user_name,
-						$edit_url
-					);
-
-					self::dispatch( 'task_assigned', $data, $slack_message );
-				}
-			} elseif ( '_ndizi_task_status' === $meta_key ) {
-				$task          = get_post( $object_id );
-				$status_labels = array(
-					'open'        => __( 'Open', 'ndizi-project-management' ),
-					'in_progress' => __( 'In Progress', 'ndizi-project-management' ),
-					'completed'   => __( 'Completed', 'ndizi-project-management' ),
-					'cancelled'   => __( 'Cancelled', 'ndizi-project-management' ),
-				);
-				$old_status    = isset( $status_labels[ $old_val ] ) ? $status_labels[ $old_val ] : $old_val;
-				$new_status    = isset( $status_labels[ $new_val ] ) ? $status_labels[ $new_val ] : $new_val;
-				$edit_url      = admin_url( 'post.php?post=' . $object_id . '&action=edit' );
-
-				$data = array(
-					'task_id'    => $object_id,
-					'task_title' => $task ? $task->post_title : '',
-					'old_status' => $old_val,
-					'new_status' => $new_val,
-				);
-
-				$slack_message = sprintf(
-					"🔄 *Task Status Updated*: *%s* status changed from *%s* to *%s*\n*Link*: <%s|View Task>",
-					$task ? $task->post_title : '',
-					$old_status ? $old_status : __( 'None', 'ndizi-project-management' ),
-					$new_status,
-					$edit_url
-				);
-
-				self::dispatch( 'task_status_updated', $data, $slack_message );
-			}
-		} elseif ( 'ndizi_invoice' === $post_type ) {
-			if ( '_ndizi_invoice_status' === $meta_key ) {
-				$invoice  = get_post( $object_id );
-				$amount   = get_post_meta( $object_id, '_ndizi_invoice_amount', true );
-				$edit_url = admin_url( 'post.php?post=' . $object_id . '&action=edit' );
-
-				$data = array(
-					'invoice_id' => $object_id,
-					'invoice_no' => $invoice ? $invoice->post_title : '',
-					'old_status' => $old_val,
-					'new_status' => $new_val,
-					'amount'     => $amount,
-				);
-
-				$slack_message = sprintf(
-					"📄 *Invoice Status Updated*: *%s* status changed to *%s* (Amount: $%s)\n*Link*: <%s|View Invoice>",
-					$invoice ? $invoice->post_title : '',
-					strtoupper( $new_val ),
-					number_format( floatval( $amount ), 2 ),
-					$edit_url
-				);
-
-				self::dispatch( 'invoice_status_updated', $data, $slack_message );
-			}
-		}
+		self::dispatch( 'invoice_status_updated', $data, $slack_message );
 	}
 }

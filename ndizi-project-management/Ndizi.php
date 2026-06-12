@@ -5,7 +5,7 @@ Plugin URI: https://wordpress.org/plugins/ndizi-project-management/
 Description: Ndizi Project Management adds a complete project management system to WordPress.
 Author: George Stephanis
 Author URI: https://georgestephanis.wordpress.com
-Version: 1.0.0-alpha
+Version: 1.0.0-alpha.2
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin constants
 define( 'NDIZI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NDIZI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'NDIZI_VERSION', '1.0.0-alpha' );
+define( 'NDIZI_VERSION', '1.0.0-alpha.2' );
 
 /**
  * Main Plugin Class
@@ -66,6 +66,23 @@ class Ndizi_Project_Management {
 	 */
 	public static function is_module_active( $module ) {
 		return in_array( $module, self::get_active_modules(), true );
+	}
+
+	/**
+	 * Read a secret option, preferring a matching PHP constant when defined.
+	 *
+	 * Constant naming: upper-case the option name.
+	 * Example: `ndizi_stripe_secret_key` → `NDIZI_STRIPE_SECRET_KEY`.
+	 *
+	 * @param string $option_name The wp_options key (e.g. 'ndizi_stripe_secret_key').
+	 * @return string The value from the constant, or from wp_options, or '' if unset.
+	 */
+	public static function get_secret( $option_name ) {
+		$constant = strtoupper( $option_name );
+		if ( defined( $constant ) ) {
+			return (string) constant( $constant );
+		}
+		return (string) get_option( $option_name, '' );
 	}
 
 	/**

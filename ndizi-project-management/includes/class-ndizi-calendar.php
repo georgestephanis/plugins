@@ -26,7 +26,7 @@ class Ndizi_Calendar {
 	 * @return string|false Access token or false on failure.
 	 */
 	private static function get_access_token() {
-		$refresh_token = get_option( 'ndizi_google_refresh_token', '' );
+		$refresh_token = Ndizi_Project_Management::get_secret( 'ndizi_google_refresh_token' );
 		if ( ! $refresh_token ) {
 			return false;
 		}
@@ -38,8 +38,8 @@ class Ndizi_Calendar {
 			return $access_token;
 		}
 
-		$client_id     = get_option( 'ndizi_google_client_id', '' );
-		$client_secret = get_option( 'ndizi_google_client_secret', '' );
+		$client_id     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+		$client_secret = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
 
 		if ( ! $client_id || ! $client_secret ) {
 			return false;
@@ -58,10 +58,21 @@ class Ndizi_Calendar {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Ndizi: Google token refresh failed: ' . $response->get_error_message() );
 			return false;
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$http_code = wp_remote_retrieve_response_code( $response );
+		$body      = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $http_code ) {
+			$error = isset( $body['error'] ) ? $body['error'] : $http_code;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Ndizi: Google token refresh returned HTTP ' . $http_code . ': ' . $error );
+			return false;
+		}
+
 		if ( isset( $body['access_token'] ) ) {
 			update_option( 'ndizi_google_access_token', $body['access_token'] );
 			if ( isset( $body['expires_in'] ) ) {
@@ -70,6 +81,8 @@ class Ndizi_Calendar {
 			return $body['access_token'];
 		}
 
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( 'Ndizi: Google token refresh response missing access_token.' );
 		return false;
 	}
 
@@ -110,7 +123,7 @@ class Ndizi_Calendar {
 		}
 
 		$start_date = $due_date;
-		$end_date   = date( 'Y-m-d', strtotime( $due_date . ' +1 day' ) ); // Exclusive.
+		$end_date   = gmdate( 'Y-m-d', strtotime( $due_date . ' +1 day' ) ); // Exclusive.
 
 		$project_id    = get_post_meta( $post_id, '_ndizi_project_id', true );
 		$project_title = $project_id ? get_the_title( $project_id ) : '';
