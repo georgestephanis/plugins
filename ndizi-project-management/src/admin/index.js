@@ -310,9 +310,11 @@ import './admin-style.scss';
 
 			$( '.ndizi-invoice-time-checkbox:checked' ).each( function () {
 				const duration = parseInt( $( this ).data( 'duration' ) ) || 0;
-				const entryRate =
-					parseFloat( $( this ).attr( 'data-rate' ) ) || 0;
-				const rate = entryRate > 0 ? entryRate : defaultRate;
+				const entryRateAttr = $( this ).attr( 'data-rate' );
+				const rate =
+					entryRateAttr !== undefined && entryRateAttr !== ''
+						? parseFloat( entryRateAttr )
+						: defaultRate;
 				totalAmount += ( duration / 3600 ) * rate;
 			} );
 
