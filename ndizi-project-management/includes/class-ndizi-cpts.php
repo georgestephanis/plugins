@@ -378,7 +378,9 @@ class Ndizi_CPTs {
 				'show_in_rest'      => true,
 				'single'            => true,
 				'type'              => 'number',
-				'sanitize_callback' => 'floatval',
+				'sanitize_callback' => function ( $value ) {
+					return floatval( $value );
+				},
 			)
 		);
 		register_post_meta(
@@ -399,7 +401,9 @@ class Ndizi_CPTs {
 				'show_in_rest'      => true,
 				'single'            => true,
 				'type'              => 'number',
-				'sanitize_callback' => 'floatval',
+				'sanitize_callback' => function ( $value ) {
+					return floatval( $value );
+				},
 			)
 		);
 
@@ -463,7 +467,9 @@ class Ndizi_CPTs {
 				'show_in_rest'      => true,
 				'single'            => true,
 				'type'              => 'number',
-				'sanitize_callback' => 'floatval',
+				'sanitize_callback' => function ( $value ) {
+					return floatval( $value );
+				},
 			)
 		);
 
@@ -506,7 +512,9 @@ class Ndizi_CPTs {
 					'show_in_rest'      => true,
 					'single'            => true,
 					'type'              => 'number',
-					'sanitize_callback' => 'floatval',
+					'sanitize_callback' => function ( $value ) {
+						return floatval( $value );
+					},
 				)
 			);
 			register_post_meta(

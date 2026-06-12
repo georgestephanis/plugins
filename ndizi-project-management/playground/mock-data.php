@@ -3,12 +3,19 @@
  * Create Mock Data / Reset Staging Ground for Ndizi Project Management
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+if ( ! defined( 'ABSPATH' ) || ! class_exists( 'Ndizi_Project_Management' ) ) {
+	exit;
+}
+
+// Get the current user to assign tasks and time to.
+$user_id = get_current_user_id();
+if ( ! $user_id ) {
+	echo "Error: Could not determine the current user. Please run this as a logged-in user.\n";
 	exit;
 }
 
 // 1. Clear existing posts of all Ndizi post types to ensure a clean reset
-$post_types = array( 'ndizi_client', 'ndizi_project', 'ndizi_task', 'ndizi_invoice', 'ndizi_contact' );
+$post_types = array( 'ndizi_client', 'ndizi_project', 'ndizi_task', 'ndizi_invoice', 'ndizi_contact', 'ndizi_time_off' );
 foreach ( $post_types as $pt ) {
 	$posts = get_posts(
 		array(
@@ -247,7 +254,7 @@ $task1_id = wp_insert_post(
 );
 if ( $task1_id ) {
 	update_post_meta( $task1_id, '_ndizi_project_id', $proj1_id );
-	update_post_meta( $task1_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task1_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task1_id, '_ndizi_task_status', 'in_progress' );
 	update_post_meta( $task1_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task1_id, '_ndizi_task_due_date', '2026-06-15' );
@@ -264,7 +271,7 @@ $task2_id = wp_insert_post(
 );
 if ( $task2_id ) {
 	update_post_meta( $task2_id, '_ndizi_project_id', $proj1_id );
-	update_post_meta( $task2_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task2_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task2_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task2_id, '_ndizi_task_priority', 'medium' );
 	update_post_meta( $task2_id, '_ndizi_task_due_date', '2026-06-18' );
@@ -281,7 +288,7 @@ $task3_id = wp_insert_post(
 );
 if ( $task3_id ) {
 	update_post_meta( $task3_id, '_ndizi_project_id', $proj1_id );
-	update_post_meta( $task3_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task3_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task3_id, '_ndizi_task_status', 'completed' );
 	update_post_meta( $task3_id, '_ndizi_task_priority', 'medium' );
 	update_post_meta( $task3_id, '_ndizi_task_due_date', '2026-06-08' );
@@ -299,7 +306,7 @@ $task4_id = wp_insert_post(
 );
 if ( $task4_id ) {
 	update_post_meta( $task4_id, '_ndizi_project_id', $proj2_id );
-	update_post_meta( $task4_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task4_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task4_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task4_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task4_id, '_ndizi_task_due_date', '2026-07-10' );
@@ -316,7 +323,7 @@ $task5_id = wp_insert_post(
 );
 if ( $task5_id ) {
 	update_post_meta( $task5_id, '_ndizi_project_id', $proj2_id );
-	update_post_meta( $task5_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task5_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task5_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task5_id, '_ndizi_task_priority', 'low' );
 	update_post_meta( $task5_id, '_ndizi_task_due_date', '2026-07-28' );
@@ -334,7 +341,7 @@ $task6_id = wp_insert_post(
 );
 if ( $task6_id ) {
 	update_post_meta( $task6_id, '_ndizi_project_id', $proj3_id );
-	update_post_meta( $task6_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task6_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task6_id, '_ndizi_task_status', 'in_progress' );
 	update_post_meta( $task6_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task6_id, '_ndizi_task_due_date', '2026-07-15' );
@@ -351,7 +358,7 @@ $task7_id = wp_insert_post(
 );
 if ( $task7_id ) {
 	update_post_meta( $task7_id, '_ndizi_project_id', $proj3_id );
-	update_post_meta( $task7_id, '_ndizi_assigned_user_id', 1 );
+	update_post_meta( $task7_id, '_ndizi_assigned_user_id', $user_id );
 	update_post_meta( $task7_id, '_ndizi_task_status', 'completed' );
 	update_post_meta( $task7_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task7_id, '_ndizi_task_due_date', '2026-06-05' );
@@ -444,168 +451,182 @@ $time_entries = array(
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task1_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Initial Layout Mockup Design and feedback cycles',
 		'start_time'  => '2026-06-03 09:00:00',
 		'end_time'    => '2026-06-03 14:00:00',
-		'duration'    => 18000,
 		'billable'    => 1,
 		'invoice_id'  => $inv1_id,
-		'created_at'  => '2026-06-03 14:00:00',
 	),
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task1_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Home Page wireframe corrections and client sync',
 		'start_time'  => '2026-06-04 10:00:00',
 		'end_time'    => '2026-06-04 13:00:00',
-		'duration'    => 10800,
 		'billable'    => 1,
 		'invoice_id'  => $inv1_id,
-		'created_at'  => '2026-06-04 13:00:00',
 	),
 	// Project 1 - Invoiced to Invoice #1002 (inv2)
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task2_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Configure custom tables and hook init callbacks',
 		'start_time'  => '2026-06-06 10:00:00',
 		'end_time'    => '2026-06-06 13:00:00',
-		'duration'    => 10800,
 		'billable'    => 1,
 		'invoice_id'  => $inv2_id,
-		'created_at'  => '2026-06-06 13:00:00',
 	),
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task3_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Implement token-authentications checks in REST handlers',
 		'start_time'  => '2026-06-07 14:00:00',
 		'end_time'    => '2026-06-07 18:30:00',
-		'duration'    => 16200,
 		'billable'    => 1,
 		'invoice_id'  => $inv2_id,
-		'created_at'  => '2026-06-07 18:30:00',
 	),
 	// Project 1 - Uninvoiced & Billable
 	array(
 		'project_id'  => $proj1_id,
 		'task_id'     => $task2_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Database migrations audit and schema indexes configuration',
 		'start_time'  => '2026-06-09 09:30:00',
 		'end_time'    => '2026-06-09 11:30:00',
-		'duration'    => 7200,
 		'billable'    => 1,
 		'invoice_id'  => 0,
-		'created_at'  => '2026-06-09 11:30:00',
 	),
 	// Project 2 (Acme Mobile App) - Uninvoiced & Billable
 	array(
 		'project_id'  => $proj2_id,
 		'task_id'     => $task4_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Setup Firebase project console and export google-services plist config',
 		'start_time'  => '2026-06-10 11:00:00',
 		'end_time'    => '2026-06-10 14:00:00',
-		'duration'    => 10800,
 		'billable'    => 1,
 		'invoice_id'  => 0,
-		'created_at'  => '2026-06-10 14:00:00',
 	),
 	// Project 2 - Uninvoiced & Non-Billable
 	array(
 		'project_id'  => $proj2_id,
 		'task_id'     => $task5_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'App store developer account review and documentation lookup',
 		'start_time'  => '2026-06-10 15:00:00',
 		'end_time'    => '2026-06-10 16:30:00',
-		'duration'    => 5400,
 		'billable'    => 0,
 		'invoice_id'  => 0,
-		'created_at'  => '2026-06-10 16:30:00',
 	),
 	// Project 3 (Stark Arc Reactor Portal) - Invoiced to Invoice #2001 (inv3)
 	array(
 		'project_id'  => $proj3_id,
 		'task_id'     => $task7_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Run disperse containment integrity testing scans',
 		'start_time'  => '2026-06-02 08:00:00',
 		'end_time'    => '2026-06-02 18:00:00',
-		'duration'    => 36000,
 		'billable'    => 1,
 		'invoice_id'  => $inv3_id,
-		'created_at'  => '2026-06-02 18:00:00',
 	),
 	// Project 3 - Uninvoiced & Billable
 	array(
 		'project_id'  => $proj3_id,
 		'task_id'     => $task6_id,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Render core Canvas container component and test updates latency',
 		'start_time'  => '2026-06-08 09:00:00',
 		'end_time'    => '2026-06-08 17:00:00',
-		'duration'    => 28800,
 		'billable'    => 1,
 		'invoice_id'  => 0,
-		'created_at'  => '2026-06-08 17:00:00',
 	),
 	// Project 4 (Stark Energy Grid) - Uninvoiced (Archived project)
 	array(
 		'project_id'  => $proj4_id,
 		'task_id'     => 0,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Scoped grids route overlays and timelines outline',
 		'start_time'  => '2026-05-15 10:00:00',
 		'end_time'    => '2026-05-15 15:30:00',
-		'duration'    => 19800,
 		'billable'    => 1,
 		'invoice_id'  => 0,
-		'created_at'  => '2026-05-15 15:30:00',
 	),
 	// Project 5 (Wayne Batcave security) - Uninvoiced (Archived project)
 	array(
 		'project_id'  => $proj5_id,
 		'task_id'     => 0,
-		'user_id'     => 1,
+		'user_id'     => $user_id,
 		'description' => 'Scanned server ports and audited mainframe logins frequencies',
 		'start_time'  => '2026-04-20 22:00:00',
 		'end_time'    => '2026-04-21 02:00:00',
-		'duration'    => 14400,
 		'billable'    => 1,
 		'invoice_id'  => 0,
-		'created_at'  => '2026-04-21 02:00:00',
 	),
 );
 
 foreach ( $time_entries as $entry ) {
-	$wpdb->insert(
-		$table_name,
-		array(
-			'project_id'  => $entry['project_id'],
-			'task_id'     => $entry['task_id'],
-			'user_id'     => $entry['user_id'],
-			'description' => $entry['description'],
-			'start_time'  => $entry['start_time'],
-			'end_time'    => $entry['end_time'],
-			'duration'    => $entry['duration'],
-			'billable'    => $entry['billable'],
-			'invoice_id'  => $entry['invoice_id'],
-			'created_at'  => $entry['created_at'],
-			'updated_at'  => $entry['created_at'],
-		),
-		array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' )
+	$result = Ndizi_Time_Service::log_time_manual(
+		$entry['user_id'],
+		$entry['project_id'],
+		$entry['task_id'],
+		$entry['start_time'],
+		$entry['end_time'],
+		$entry['description'],
+		$entry['billable']
 	);
+
+	if ( ! is_wp_error( $result ) && $entry['invoice_id'] ) {
+		Ndizi_DB::update_time_entry(
+			$result,
+			array(
+				'invoice_id' => $entry['invoice_id'],
+			)
+		);
+	}
 }
 
-echo 'Logged ' . count( $time_entries ) . " time entries in custom database table.\n";
+echo 'Logged ' . count( $time_entries ) . " time entries via Time Service.\n";
 
-// 8. Create Client Portal Page if it doesn't exist
+// 8. Create Time Off Requests
+$time_off_1 = wp_insert_post(
+	array(
+		'post_title'   => 'Vacation Request - John Doe',
+		'post_content' => 'Annual family vacation.',
+		'post_status'  => 'publish',
+		'post_type'    => 'ndizi_time_off',
+	)
+);
+if ( $time_off_1 ) {
+	update_post_meta( $time_off_1, '_ndizi_time_off_start_date', '2026-07-01' );
+	update_post_meta( $time_off_1, '_ndizi_time_off_end_date', '2026-07-10' );
+	update_post_meta( $time_off_1, '_ndizi_time_off_type', 'vacation' );
+	update_post_meta( $time_off_1, '_ndizi_time_off_status', 'approved' );
+	update_post_meta( $time_off_1, '_ndizi_time_off_client_id', $client1_id );
+	echo "Created Time Off Request: Vacation - John Doe (ID: $time_off_1)\n";
+}
+
+$time_off_2 = wp_insert_post(
+	array(
+		'post_title'   => 'Sick Leave - Jane Smith',
+		'post_content' => 'Recovering from illness.',
+		'post_status'  => 'publish',
+		'post_type'    => 'ndizi_time_off',
+	)
+);
+if ( $time_off_2 ) {
+	update_post_meta( $time_off_2, '_ndizi_time_off_start_date', '2026-06-15' );
+	update_post_meta( $time_off_2, '_ndizi_time_off_end_date', '2026-06-16' );
+	update_post_meta( $time_off_2, '_ndizi_time_off_type', 'sick_leave' );
+	update_post_meta( $time_off_2, '_ndizi_time_off_status', 'pending' );
+	update_post_meta( $time_off_2, '_ndizi_time_off_client_id', $client2_id );
+	echo "Created Time Off Request: Sick Leave - Jane Smith (ID: $time_off_2)\n";
+}
+
+// 9. Create Client Portal Page if it doesn't exist
 $portal_page = get_page_by_path( 'client-portal' );
 if ( ! $portal_page ) {
 	$portal_id = wp_insert_post(
