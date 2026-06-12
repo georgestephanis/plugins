@@ -43,7 +43,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
   of this person's tracked time is billable" and similar metrics. Ndizi's admin dashboard shows
   summary charts but lacks drill-down utilization views.
 - [x] **Individual salary rates tracking** — track internal employee hourly salary rates to calculate project costs and margins.
-- [ ] **Profitability reports** — once billing rates exist, a report comparing budget vs. actual
+- [x] **Profitability reports** — once billing rates exist, a report comparing budget vs. actual
   (time cost vs. project budget) is a natural next step.
 - [ ] **Exportable time reports** — a CSV/PDF export of filtered time entries (by date range,
   project, user, billable flag) is expected by accountants and clients.

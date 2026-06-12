@@ -1530,6 +1530,64 @@ class Ndizi_Admin {
 		$overall_hours          = round( $overall_seconds / 3600, 2 );
 		$overall_billable_hours = round( $overall_billable_seconds / 3600, 2 );
 		$billable_percentage    = $overall_hours > 0 ? round( ( $overall_billable_hours / $overall_hours ) * 100 ) : 0;
+
+		// Query detailed entries for profitability calculations
+		$detailed_entries = Ndizi_DB::get_time_entries(
+			array(
+				'project_id' => $project_id ? $project_id : null,
+				'user_id'    => $user_id ? $user_id : null,
+				'start_date' => $start_date,
+				'end_date'   => $end_date,
+				'number'     => -1,
+			)
+		);
+
+		$overall_revenue     = 0;
+		$overall_cost        = 0;
+		$project_margin_data = array();
+
+		foreach ( $detailed_entries as $entry ) {
+			// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
+			$entry_rate = 0;
+			if ( $entry->task_id ) {
+				$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+			}
+			if ( ! $entry_rate && $entry->user_id ) {
+				$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+			}
+			if ( ! $entry_rate && $entry->project_id ) {
+				$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+			}
+			$entry_rate    = floatval( $entry_rate );
+			$entry_hours   = $entry->duration / 3600;
+			$entry_revenue = $entry->billable ? ( $entry_hours * $entry_rate ) : 0;
+
+			// Resolve salary rate (internal cost)
+			$salary_rate = 0;
+			if ( $entry->user_id ) {
+				$salary_rate = get_user_meta( $entry->user_id, '_ndizi_user_salary_rate', true );
+			}
+			$salary_rate = floatval( $salary_rate );
+			$entry_cost  = $entry_hours * $salary_rate;
+
+			$overall_revenue += $entry_revenue;
+			$overall_cost    += $entry_cost;
+
+			// Group by project
+			if ( ! isset( $project_margin_data[ $entry->project_id ] ) ) {
+				$project_margin_data[ $entry->project_id ] = array(
+					'hours'   => 0,
+					'revenue' => 0,
+					'cost'    => 0,
+				);
+			}
+			$project_margin_data[ $entry->project_id ]['hours']   += $entry_hours;
+			$project_margin_data[ $entry->project_id ]['revenue'] += $entry_revenue;
+			$project_margin_data[ $entry->project_id ]['cost']    += $entry_cost;
+		}
+
+		$overall_margin     = $overall_revenue - $overall_cost;
+		$overall_margin_pct = $overall_revenue > 0 ? round( ( $overall_margin / $overall_revenue ) * 100, 1 ) : 0;
 		?>
 		<div class="wrap ndizi-reports-page">
 			<h1 class="wp-heading-inline"><?php esc_html_e( 'Ndizi Time Reports', 'ndizi-project-management' ); ?></h1>
@@ -1578,6 +1636,13 @@ class Ndizi_Admin {
 
 						<div class="ndizi-filter-col filter-actions">
 							<button type="submit" class="button button-primary"><?php esc_html_e( 'Filter Report', 'ndizi-project-management' ); ?></button>
+							<?php
+							$csv_export_url = wp_nonce_url(
+								add_query_arg( 'ndizi_export_report', 'csv' ),
+								'ndizi_export_report_nonce'
+							);
+							?>
+							<a href="<?php echo esc_url( $csv_export_url ); ?>" class="button button-secondary" style="background: #10b981 !important; border-color: #10b981 !important; color: #fff !important; line-height: 36px; min-height: 38px;"><?php esc_html_e( 'Export CSV', 'ndizi-project-management' ); ?></a>
 							<a href="edit.php?post_type=ndizi_project&page=ndizi-reports" class="button button-secondary"><?php esc_html_e( 'Reset', 'ndizi-project-management' ); ?></a>
 						</div>
 					</div>
@@ -1598,6 +1663,15 @@ class Ndizi_Admin {
 					<span class="ndizi-kpi-title"><?php esc_html_e( 'Billable Ratio', 'ndizi-project-management' ); ?></span>
 					<span class="ndizi-kpi-val"><?php echo esc_html( $billable_percentage ); ?>%</span>
 					<div class="ndizi-ratio-bar"><div class="ndizi-ratio-fill" style="width: <?php echo esc_attr( $billable_percentage ); ?>%"></div></div>
+				</div>
+				<div class="ndizi-kpi-card">
+					<span class="ndizi-kpi-title"><?php esc_html_e( 'Total Revenue', 'ndizi-project-management' ); ?></span>
+					<span class="ndizi-kpi-val" style="color: #10b981;">$<?php echo esc_html( number_format( $overall_revenue, 2 ) ); ?></span>
+				</div>
+				<div class="ndizi-kpi-card">
+					<span class="ndizi-kpi-title"><?php esc_html_e( 'Net Margin', 'ndizi-project-management' ); ?></span>
+					<span class="ndizi-kpi-val" style="color: #4f46e5;">$<?php echo esc_html( number_format( $overall_margin, 2 ) ); ?></span>
+					<div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500;"><?php echo esc_html( $overall_margin_pct ); ?>% <?php esc_html_e( 'margin', 'ndizi-project-management' ); ?></div>
 				</div>
 			</div>
 
@@ -1680,6 +1754,64 @@ class Ndizi_Admin {
 						</div>
 					<?php endif; ?>
 				</div>
+			</div>
+
+			<!-- Project Profitability & Margins Table -->
+			<div class="ndizi-chart-card" style="margin-top: 25px;">
+				<h3 style="margin-bottom: 20px; font-size: 16px; font-weight: 700; color: #1e293b;"><?php esc_html_e( 'Project Profitability & Margins', 'ndizi-project-management' ); ?></h3>
+				<?php if ( empty( $project_margin_data ) ) : ?>
+					<p class="no-data-msg"><?php esc_html_e( 'No log data available for this range.', 'ndizi-project-management' ); ?></p>
+				<?php else : ?>
+					<table class="wp-list-table widefat fixed striped posts" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: none;">
+						<thead>
+							<tr>
+								<th style="font-weight: 700; padding: 12px;"><?php esc_html_e( 'Project', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Budget', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Tracked Hours', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Billed Revenue', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Internal Cost', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Profit Margin', 'ndizi-project-management' ); ?></th>
+								<th style="font-weight: 700; padding: 12px; text-align: right;"><?php esc_html_e( 'Margin %', 'ndizi-project-management' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php
+							foreach ( $project_margin_data as $p_id => $data ) :
+								$proj = get_post( $p_id );
+								if ( ! $proj ) {
+									continue;
+								}
+								$budget       = floatval( get_post_meta( $p_id, '_ndizi_project_budget', true ) );
+								$p_margin     = $data['revenue'] - $data['cost'];
+								$p_margin_pct = $data['revenue'] > 0 ? round( ( $p_margin / $data['revenue'] ) * 100, 1 ) : 0;
+								?>
+								<tr>
+									<td style="padding: 12px; font-weight: 600;">
+										<a href="<?php echo esc_url( get_edit_post_link( $proj->ID ) ); ?>"><?php echo esc_html( $proj->post_title ); ?></a>
+									</td>
+									<td style="padding: 12px; text-align: right;">
+										<?php echo $budget ? '$' . esc_html( number_format( $budget, 2 ) ) : '<span style="color: #94a3b8;">-</span>'; ?>
+									</td>
+									<td style="padding: 12px; text-align: right; font-weight: 600;">
+										<?php echo esc_html( round( $data['hours'], 2 ) ); ?>h
+									</td>
+									<td style="padding: 12px; text-align: right; color: #10b981; font-weight: 600;">
+										$<?php echo esc_html( number_format( $data['revenue'], 2 ) ); ?>
+									</td>
+									<td style="padding: 12px; text-align: right; color: #475569;">
+										$<?php echo esc_html( number_format( $data['cost'], 2 ) ); ?>
+									</td>
+									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#4f46e5' : '#ef4444'; ?>;">
+										$<?php echo esc_html( number_format( $p_margin, 2 ) ); ?>
+									</td>
+									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#4f46e5' : '#ef4444'; ?>;">
+										<?php echo esc_html( $p_margin_pct ); ?>%
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
 			</div>
 		</div>
 		<?php
