@@ -187,7 +187,7 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 | **Project & task hierarchy** | ✅<br>(client → project → task) | ✅ | ✅ | Add-on |
 | **Team roles / permissions** | ✅<br>(Manager, Team Member) | ✅ | ✅ | ✅ |
 | **Invoice creation** | ✅ | Standard plan+ | All plans | ❌ |
-| **Pre-set billing rates per project/person** | ❌ | ✅ | Starter plan+ | ✅ |
+| **Pre-set billing rates per project/person** | ✅ | ✅ | Starter plan+ | ✅ |
 | **Payment processing** | ❌ | ❌ | ❌ | ❌ |
 | **Invoice export (CSV / JSON)** | ✅ | CSV/PDF | PDF | N/A |
 | **Client-facing portal** | ✅<br>(shortcode/block) | ❌ | ❌ | ❌ |
@@ -195,9 +195,9 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 | **Standalone PWA tracker** | ✅ | Mobile apps | Mobile apps | Mobile apps |
 | **Gantt charts** | ✅<br>(CSS/SVG, no library) | ❌ | ❌ | ❌ |
 | **REST API** | ✅ | ✅ | ✅ | ✅ |
-| **Webhooks** | ❌ | All plans | All plans | All plans |
-| **QuickBooks integration** | ❌ | Standard plan+ | Starter plan+ | Some plans |
-| **Slack integration** | ❌ | ❌ | All plans | ❌ |
+| **Webhooks** | ✅ | All plans | All plans | All plans |
+| **QuickBooks integration** | ✅<br>(CSV export) | Standard plan+ | Starter plan+ | Some plans |
+| **Slack integration** | ✅<br>(webhooks) | ❌ | All plans | ❌ |
 | **Zapier integration** | ❌ | ❌ | ❌ | All plans |
 | **Jira / Asana / project tool integrations** | ❌ | ❌ | Premium plan+ | Some plans |
 | **100+ app browser integrations** | ❌ | ✅ | ✅ | ❌ |
@@ -205,14 +205,15 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 | **AI-assisted time tracking** | ❌ | ❌ | ❌ | ✅ |
 | **Employee monitoring (nannyware)** | ❌ | ❌ | ❌ | ✅ |
 | **Approval workflows** | ❌ | Pro plan+ | ❌ | ❌ |
-| **Utilization / profitability reports** | Basic<br>(admin dashboard) | ✅ | ✅ | ✅ |
-| **Email notifications** | ✅<br>(client task submission) | ✅ | ✅ | ✅ |
+| **Utilization / profitability reports** | ✅<br>(margins + salary tracking) | ✅ | ✅ | ✅ |
+| **Email notifications** | ✅<br>(tasks & status changes) | ✅ | ✅ | ✅ |
 | **Mobile app** | ❌<br>(PWA only, desktop) | ✅ | ✅ | ✅ |
 | **Requires WordPress** | ✅ | ❌ | ❌ | ❌ |
 
 ### Notes
 
 - **Ndizi's fundamental difference** from the SaaS tools above is that it runs inside your own WordPress installation. There are no per-seat fees or subscription tiers, but you are responsible for hosting and maintenance.
-- **Billing rates**: Ndizi tracks billable vs. non-billable time and stores a budget per project, but there is no per-user or per-project hourly rate configuration. Invoice amounts are currently entered manually rather than calculated from tracked hours.
+- **Billing rates**: Ndizi supports hierarchical billing rates configured per user (profile), project, or overridden on specific tasks, which automatically calculates invoice totals based on tracked billable hours.
 - **Mobile**: The standalone tracker is a PWA optimized for desktop use. There is no dedicated native mobile app.
-- **Integrations**: The plugin exposes a REST API with Application Password support, making third-party integrations possible, but no built-in connectors exist for accounting software, Slack, or Zapier.
+- **Integrations**: Includes outbound webhooks (event callbacks on CRUD, CPT transitions, and metadata edits), a Slack incoming webhook alerts integration, and a QuickBooks-compatible CSV report exporter.
+- **Modular Architecture**: Features like Invoicing & Billing, Client Portal, Admin Bar Tracker, Email Notifications, Gantt charts, and Webhooks can be toggled on/off on the settings page to optimize performance.
