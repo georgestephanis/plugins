@@ -10,24 +10,26 @@ Features are delivered through independently toggleable modules controlled by th
 
 ### Codebase Directory Layout
 
-- `Ndizi.php` — Main bootstrap file. Defines constants, wires activation/deactivation hooks, loads module classes conditionally based on `ndizi_active_modules`, and calls each class's `::init()` from within the `init` action.
+- `Ndizi.php` — Main bootstrap file. Defines constants, wires activation/deactivation hooks, loads module classes conditionally based on `ndizi_active_modules`, and calls each class's `::init()` from within the `init` action. Also runs an auto-upgrade check: if `get_option( 'ndizi_db_version' )` does not match `NDIZI_VERSION`, `Ndizi_DB::create_table()` is re-run and the option updated — this keeps the schema current across plugin updates without a separate migration step.
 - `uninstall.php` — Removes the custom `wp_ndizi_time_entries` table and the plugin's roles/caps on uninstall (deactivation no longer tears down roles).
+- `API-AUTHENTICATION.md` — Developer reference for authenticating external tools against the REST API, including Application Passwords, client token auth, and `ndizi_token` query-parameter usage.
 - `composer.json` / `composer.lock` — PHPCS quality controls and local WordPress standards configuration.
 - `package.json` / `package-lock.json` — Asset bundler scripts powered by `@wordpress/scripts`.
 - `webpack.config.js` — Webpack bundle settings compiling separate CSS and JS for Admin and Client Portal.
 - `phpcs.xml` — Coding standard rules tuned for custom DB tables and WordPress standards.
 - `includes/`
-    - `class-ndizi-admin.php` — Admin metabox fields and saving for all CPTs; the Reports dashboard (date/project/user filters, KPI cards, per-user breakdown table, CSV and QuickBooks CSV export buttons); Gantt chart views; Settings page (module toggles, icon selection, lock date, webhook URLs); and list-table column customizations.
+    - `class-ndizi-admin.php` — Admin metabox fields and saving for all CPTs; the Reports dashboard (date/project/user filters, KPI cards, per-user breakdown table, CSV and QuickBooks CSV export buttons); Gantt chart views; Settings page (module toggles, icon selection, lock date, webhook URLs, Google OAuth connect button, Stripe API keys); Google OAuth2 authorization-code callback handler (exchanges `?code=` for a refresh token and stores it); and list-table column customizations.
     - `class-ndizi-admin-bar.php` — Enqueues, registers, and renders the Admin Bar quick-timer widget. Detects timers running longer than 8 hours and injects an idle warning banner into both the admin bar panel and the standalone tracker page.
     - `class-ndizi-cli.php` — Registers the `wp ndizi time` WP-CLI command group with three subcommands: `start`, `stop`, and `status`. Resolves `--project` and `--task` by exact post title via `$wpdb->get_var()` as well as by ID; resolves `--user` by login or ID.
-    - `class-ndizi-cpts.php` — Declares all post types (`ndizi_client`, `ndizi_project`, `ndizi_task`, `ndizi_invoice`, `ndizi_contact`) and registers their REST metadata schemas. The `ndizi_invoice` CPT is only registered when the `invoicing` module is active.
-    - `class-ndizi-db.php` — All CRUD operations on `wp_ndizi_time_entries`. Enforces the lock date (`ndizi_lock_date` option) on every write path via `is_date_locked()`. Fires named action hooks (`ndizi_timer_started`, `ndizi_timer_stopped`, `ndizi_time_logged`, `ndizi_time_entry_updated`, `ndizi_time_entry_deleted`) after each successful write so other classes can react without coupling. `get_time_entries()` and `get_time_totals()` accept `project_id`, `user_id`, `start_date`, and `end_date` filter args.
+    - `class-ndizi-calendar.php` — Google Calendar integration (always loaded, not a module toggle). Hooks into `save_post_ndizi_task`, `ndizi_timer_stopped`, `ndizi_time_logged`, `ndizi_time_entry_updated`, and `ndizi_time_entry_deleted` to push changes to Google Calendar. Uses the Google Calendar REST API via `wp_remote_*`. Credentials (`ndizi_google_client_id`, `ndizi_google_client_secret`) and tokens (`ndizi_google_refresh_token`, `ndizi_google_access_token`, `ndizi_google_token_expiry`) are stored in WordPress options. Access tokens are auto-refreshed on the fly; if no refresh token is stored the sync silently no-ops.
+    - `class-ndizi-cpts.php` — Declares all post types (`ndizi_client`, `ndizi_project`, `ndizi_task`, `ndizi_invoice`, `ndizi_contact`, `ndizi_time_off`) and registers their REST metadata schemas. The `ndizi_invoice` CPT is only registered when the `invoicing` module is active. The `ndizi_time_off` CPT stores client-submitted time-off/absence requests with meta `_ndizi_time_off_start_date`, `_ndizi_time_off_end_date`, `_ndizi_time_off_type`, `_ndizi_time_off_status`, and `_ndizi_time_off_client_id`.
+    - `class-ndizi-db.php` — All CRUD operations on `wp_ndizi_time_entries`. Enforces the lock date (`ndizi_lock_date` option) and entry approval status on every write path. Fires named action hooks (`ndizi_timer_started`, `ndizi_timer_stopped`, `ndizi_time_logged`, `ndizi_time_entry_updated`, `ndizi_time_entry_deleted`) after each successful write. `get_time_entries()` and `get_time_totals()` accept `project_id`, `user_id`, `start_date`, `end_date`, and `approved` filter args. Approved entries (`approved = 1`) cannot be edited or deleted through any non-approval write path.
     - `class-ndizi-integrations.php` — Loaded when the `invoicing` module is active. Renders the printable invoice HTML template; handles invoice CSV and JSON exports from the invoice editor; handles filtered time-report exports (standard CSV and QuickBooks-format CSV) from the Reports dashboard. Exposes the `ndizi_export_invoice_data` filter for third-party customization of the invoice export payload.
     - `class-ndizi-notifications.php` — Loaded when the `notifications` module is active. Sends `wp_mail()` emails on task assignment (new or changed assignee) and task status changes. Uses the `update_post_metadata` filter to capture previous meta values before writes so status-change emails have accurate before/after context.
-    - `class-ndizi-portal.php` — Loaded when the `portal` module is active. Handles shortcode execution, passwordless client token auth (`?ndizi_token=...`), client session cookies, discussion boards (filtered WordPress comments), and file attachment uploads.
-    - `class-ndizi-rest.php` — Registers all `/wp-json/ndizi/v1` routes. Permission callbacks map to Ndizi capabilities. All write routes call `Ndizi_DB` methods, which enforce the lock date. Provides `GET /projects`, `GET /tasks`, `GET /time/active`, `POST /time/start`, `POST /time/stop`, `POST /time/log`, `GET /time`, `PUT /time/<id>`, `DELETE /time/<id>`.
+    - `class-ndizi-portal.php` — Loaded when the `portal` module is active. Handles shortcode execution, passwordless client token auth (`?ndizi_token=...`), client session cookies, discussion boards (filtered WordPress comments), file attachment uploads, time-off/absence request form submission (creates `ndizi_time_off` CPT posts), and Stripe "Pay Online" button rendering for unpaid invoices when `ndizi_stripe_publishable_key` is set. Passes `rest_url` to all enqueued portal scripts.
+    - `class-ndizi-rest.php` — Registers all `/wp-json/ndizi/v1` routes. Permission callbacks map to Ndizi capabilities. All write routes call `Ndizi_DB` methods, which enforce the lock date and approval status. Provides `GET /projects`, `GET /tasks`, `GET /time/active`, `POST /time/start`, `POST /time/stop`, `POST /time/log`, `GET /time`, `PUT /time/<id>`, `DELETE /time/<id>`, `POST /invoices/<id>/pay` (creates Stripe Checkout session), `POST /stripe/webhook` (handles `checkout.session.completed` to mark invoice paid; no auth), and `GET /calendar/ical` (returns iCal feed of tasks and time entries; no auth).
     - `class-ndizi-roles.php` — Registers the `ndizi_manager` and `ndizi_team_member` roles and their custom capabilities on activation. Capabilities are removed on uninstall (not deactivation).
-    - `class-ndizi-standalone-tracker.php` — Loaded when the `tracker` module is active. Registers the `admin.php?page=ndizi-tracker-standalone` PWA tracker page: a distraction-free dark glassmorphic interface with a ticking clock, today's entry list, and delete controls.
+    - `class-ndizi-standalone-tracker.php` — Loaded when the `tracker` module is active. Registers the `admin.php?page=ndizi-tracker-standalone` PWA tracker page: a distraction-free dark glassmorphic interface with a ticking clock, today's entry list, and delete controls. Accepts a `?desc=` query parameter to pre-fill the description input (useful when launched from the Chrome extension). Responsive CSS at ≤480 px. Requests browser notification permission on load and fires a push notification after the active timer exceeds 8 hours.
     - `class-ndizi-webhooks.php` — Loaded when the `integrations` module is active. Listens to `Ndizi_DB` action hooks and WordPress post/meta hooks to dispatch JSON payloads to `ndizi_webhook_url` and formatted messages to `ndizi_slack_webhook_url`. Uses the `update_post_metadata` filter to capture previous meta values (same pattern as notifications) so old/new values are accurate in event payloads. Guards all handlers on `$meta_key` before calling `get_post_type()` to minimize overhead on global meta hooks.
 - `src/`
     - `admin/` — Admin tracker controls (start/stop timer, manual log form), invoice amount calculation (respects the hierarchical billing rate resolution: task → user → project, using attribute-presence checks to allow explicit `0` rates), Gantt interactive scripts, and admin stylesheet modules.
@@ -35,6 +37,7 @@ Features are delivered through independently toggleable modules controlled by th
     - `portal/` — Tab controllers, attachment upload fields, and portal stylesheet modules.
     - `block/` — The `ndizi/client-portal` editor block (`block.json`, `index.js` edit UI, `render.php` dynamic frontend render) wrapping the portal shortcode.
 - `build/` — Generated CSS/JS output from `@wordpress/scripts`, including `build/block/` (the copied `block.json` + `render.php` that `Ndizi_Portal::register_portal_block()` registers from). Committed to the repo so no build step is needed at install time. **Regenerate with `npm run build` after any `src/` change.**
+- `chrome-extension/` — A standalone Chrome extension (`manifest.json`, `popup.html`, `popup.js`) that connects to the site's REST API. Allows users to start/stop timers, browse projects and tasks, and open the standalone tracker (with `?desc=` pre-fill) from any browser tab. Excluded from the shipped plugin ZIP via `.distignore`.
 - `playground/` — Dev-only WordPress Playground blueprint and `mock-data.php` seeder. Excluded from the shipped package via `.distignore`; see `playground/README.md`.
 - `languages/` — Destination for `.po`/`.mo`/`.json` translation files; `Ndizi.php` calls `load_plugin_textdomain( 'ndizi-project-management', …, '…/languages' )` for non-WP.org installs.
 
@@ -63,6 +66,8 @@ All modules are **active by default** when `ndizi_active_modules` is not set.
 4. **Meta key guards on global hooks**: Handlers attached to `added_post_meta` and `updated_post_meta` must check `$meta_key` first — before calling `get_post_type()` — because these hooks fire on every meta operation site-wide.
 5. **Previous meta value capture**: When a handler needs the value that existed before an update, hook into `update_post_metadata` (which fires pre-write) to cache it. Do not rely on `updated_post_meta` passing a previous value — WordPress does not supply one to that hook.
 6. **Billing rate checks**: Hierarchical billing rate resolution uses `'' === $var` guards (not `! $var`) so an explicit `0.00` rate at a higher-priority tier does not fall through to a lower one.
+7. **Approval-aware write paths**: In `Ndizi_DB`, when updating a time entry, determine whether the update is approval-only (only `approved`/`approved_by` keys) before applying lock-date or approval-status guards. Do not conflate the approval operation with other write paths.
+8. **Open REST endpoints**: `POST /stripe/webhook` and `GET /calendar/ical` use `'permission_callback' => '__return_true'` intentionally — Stripe webhook payloads carry their own signature and the iCal feed is designed to be publicly subscribable. Do not add nonce checks to these routes.
 
 ---
 
@@ -82,11 +87,15 @@ CREATE TABLE wp_ndizi_time_entries (
   duration int(11) DEFAULT 0,
   billable tinyint(1) DEFAULT 1,
   invoice_id bigint(20) DEFAULT 0,
+  approved tinyint(1) NOT NULL DEFAULT 0,
+  approved_by bigint(20) NOT NULL DEFAULT 0,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY (id)
 );
 ```
+
+Schema changes are applied automatically on plugin init when `ndizi_db_version` does not match `NDIZI_VERSION` — `dbDelta()` handles adding new columns to existing tables.
 
 All interactions with this table must go through the CRUD helper methods in `Ndizi_DB`. Direct `$wpdb` queries against this table outside of `class-ndizi-db.php` are not permitted.
 
@@ -99,6 +108,7 @@ All interactions with this table must go through the CRUD helper methods in `Ndi
 | `user_id` | int\|null | `null` | Filter to a specific user. |
 | `invoice_id` | int\|null | `null` | Filter to entries linked to a specific invoice. |
 | `billable` | bool\|null | `null` | Filter by billable flag. |
+| `approved` | bool\|null | `null` | Filter by approval status. |
 | `start_date` | string | `''` | ISO date string; returns entries with `start_time >= start_date 00:00:00`. |
 | `end_date` | string | `''` | ISO date string; returns entries with `start_time <= end_date 23:59:59`. |
 | `number` | int | `50` | Entries to return; `-1` for all. |
@@ -109,6 +119,8 @@ All interactions with this table must go through the CRUD helper methods in `Ndi
 ### Lock Date Enforcement
 
 `Ndizi_DB::is_date_locked( $date_string )` compares a datetime string against the `ndizi_lock_date` option. If either `strtotime()` call returns `false` (invalid date string or no lock date set), the function returns `false` (not locked). This is called on every write path — `start_timer`, `stop_timer`, `log_time_manual`, `update_time_entry`, and `delete_time_entry` — so the lock is enforced regardless of the entry point (admin UI, REST API, or WP-CLI).
+
+`update_time_entry` additionally distinguishes between approval-only updates (`approved` / `approved_by` fields) and substantive edits. Approval-only updates bypass the lock-date and approved-status guards; all other updates are blocked if the existing entry is already approved or falls in a locked period. `delete_time_entry` is blocked if the entry is approved.
 
 ---
 
@@ -121,6 +133,7 @@ CPTs handle relational entities. They are registered with `'show_in_rest' => tru
 - `ndizi_task` — Linked to a project (`_ndizi_project_id`), assignable to a WP user (`_ndizi_assigned_user_id`), status (`_ndizi_task_status`: `open`/`in_progress`/`completed`/`cancelled`), priority (`_ndizi_task_priority`), `_ndizi_task_due_date`, and `_ndizi_task_hourly_rate` (overrides user/project rates when set).
 - `ndizi_invoice` — Linked to a project (`_ndizi_project_id`), date (`_ndizi_invoice_date`), due date (`_ndizi_invoice_due_date`), total amount (`_ndizi_invoice_amount`), and status (`_ndizi_invoice_status`). Only registered when the `invoicing` module is active.
 - `ndizi_contact` — Belongs to multiple clients via an array list (`_ndizi_associated_clients`), with phone (`_ndizi_contact_phone`), email (`_ndizi_contact_email`), and role details (`_ndizi_contact_role`).
+- `ndizi_time_off` — Client-submitted absence/time-off requests created from the portal. Meta: `_ndizi_time_off_start_date`, `_ndizi_time_off_end_date`, `_ndizi_time_off_type` (`vacation`, `sick_leave`, `personal`, `other`), `_ndizi_time_off_status` (`pending`/`approved`/`denied`), `_ndizi_time_off_client_id`.
 
 User profile meta:
 - `_ndizi_user_billing_rate` — Billing hourly rate (floor: 0.00).

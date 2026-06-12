@@ -21,7 +21,7 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 *   **Premium Dashboards**: Interactive, responsive HTML/CSS dashboards for managers to analyze team time allocations, billable totals, and project status.
 *   **Gantt Timelines**: Custom CSS Grid and SVG-based Gantt charts directly in your admin dashboard to visualize project schedules — no third-party chart library required.
 *   **Decoupled Time Tracker**: Start, stop, and log timesheets directly in the admin bar, meta boxes, or standalone pages. Projects are neatly grouped by client, and input modes are gated (either/or) to prevent conflicts.
-*   **Standalone PWA Companion App**: A distraction-free companion tracking page stripped of WordPress admin menus/bars. Chrome-installable as a borderless desktop application featuring a dark glassmorphic interface, a ticking digital clock, and today's logged entry feed.
+*   **Standalone PWA Companion App**: A distraction-free companion tracking page stripped of WordPress admin menus/bars. Chrome-installable as a borderless desktop application featuring a dark glassmorphic interface, a ticking digital clock, and today's logged entry feed. Fully responsive at small-screen widths. Supports a `?desc=` URL parameter to pre-fill the description input (used by the Chrome extension). Requests browser notification permission and fires a push notification when the active timer exceeds 8 hours.
 *   **Idle Warning Banner**: When an active timer has been running for more than 8 hours, a warning banner appears in the admin bar panel and on the standalone tracker page prompting the user to verify their logged time.
 *   **Lock Date / Time Entry Locking**: Configure a lock date on the Settings page to prevent creating, editing, or deleting any time entry dated on or before that date. Protects closed billing periods from accidental modification — enforced across the REST API, the DB layer, and the admin UI.
 *   **Customizable Tracker Icons**: A settings dashboard allowing users to select and dynamically render their preferred tracker icon (Banana, Clock, Punch Clock, Hourglass).
@@ -34,6 +34,11 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 *   **Collaborative Discussions**: Task and project comment boxes are filtered and embedded into the Client Portal, allowing team members and clients to exchange feedback and upload file attachments.
 *   **Email Notifications**: Sends emails when a task is assigned or reassigned to a team member, and when a task's status changes.
 *   **Outbound Webhooks & Slack**: Dispatches JSON event payloads to a configurable webhook endpoint and formatted messages to a Slack incoming webhook on timer events, time entry CRUD, CPT status transitions, and task/invoice metadata changes.
+*   **Time Entry Approval Workflow**: Time entries carry `approved` and `approved_by` fields. Once approved, entries cannot be edited or deleted through normal write paths — only the approval status itself can be updated. Approval-only updates bypass lock-date enforcement.
+*   **Google Calendar Sync**: When Google OAuth2 credentials are configured in Settings, tasks with due dates are synced to Google Calendar and time entries are pushed after each stop or manual log. An iCal subscription feed is available at `/wp-json/ndizi/v1/calendar/ical`.
+*   **Stripe Online Payments**: Configure Stripe API keys in Settings to add a "Pay Online" button to unpaid invoices in the client portal. The plugin creates a Stripe Checkout session via the REST API and auto-marks invoices paid via the Stripe webhook endpoint.
+*   **Client Portal Time-Off Requests**: Clients and team members can submit time-off and absence requests directly from the portal sidebar. Requests are stored as `ndizi_time_off` posts with start/end dates, type, and approval status.
+*   **Browser Extension**: A companion Chrome extension (`chrome-extension/`) connects to the site's REST API to start/stop timers, browse projects and tasks, and open the standalone tracker — from any browser tab.
 *   **REST API Integration**: Custom API routes under `/wp-json/ndizi/v1` let desktop widgets or mobile timekeepers start, stop, log, list, edit, and delete timer entries remotely.
 *   **WP-CLI Commands**: Manage timers from the terminal with `wp ndizi time start`, `wp ndizi time stop`, and `wp ndizi time status`. Accepts project/task names or IDs, user login or ID, description, and billable flag.
 *   **Modular Architecture**: Each major feature group (Invoicing, Client Portal, Admin Bar Tracker, Email Notifications, Gantt Charts, Webhooks) can be individually toggled on or off from the Settings page. Inactive modules are not loaded, reducing overhead on sites that don't need every feature.
@@ -88,6 +93,19 @@ Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Unchec
 4.  **Invoice Meta Box**: Aggregating un-invoiced project logs into line-item details with hierarchical billing rate resolution.
 
 == Changelog ==
+
+= 1.0.0-alpha.2 =
+*   Google Calendar integration: tasks and time entries synced via OAuth2; iCal subscription feed at `/wp-json/ndizi/v1/calendar/ical`.
+*   Stripe online payment: "Pay Online" button in client portal, Stripe Checkout session REST endpoint, and webhook auto-mark-paid handler.
+*   Client portal time-off/absence request form (creates `ndizi_time_off` CPT posts).
+*   Time entry approval workflow: `approved` / `approved_by` DB columns; approved entries block edits and deletion.
+*   Chrome browser extension for timer control from any browser tab.
+*   Standalone tracker: responsive CSS at ≤480 px, browser push notifications for idle timer, `?desc=` pre-fill parameter.
+*   Auto DB schema upgrade on plugin init via `ndizi_db_version` version check.
+*   `GET /calendar/ical`, `POST /invoices/<id>/pay`, `POST /stripe/webhook` REST routes added.
+*   Portal scripts now receive `rest_url` for client-side REST calls.
+*   WordPress Abilities API: Ndizi capabilities exposed via `Ndizi_Abilities` for agentic/MCP workflows.
+*   Settings page: Google OAuth connect button, Stripe API key fields.
 
 = 1.0.0-alpha =
 *   Initial release.
