@@ -408,12 +408,13 @@ import './adminbar-style.scss';
 			groups[ clientName ].push( project );
 		} );
 
-		// Sort client names, keeping 'Internal' at the bottom
+		// Sort client names, keeping the internal client label at the bottom
+		const internalLabel = ndizi_adminbar.labels.internal_client;
 		const clientNames = Object.keys( groups ).sort( function ( a, b ) {
-			if ( a === 'Internal' ) {
+			if ( a === internalLabel ) {
 				return 1;
 			}
-			if ( b === 'Internal' ) {
+			if ( b === internalLabel ) {
 				return -1;
 			}
 			return a.localeCompare( b );
