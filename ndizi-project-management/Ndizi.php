@@ -78,6 +78,7 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-rest.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
 
 		// Conditional modules dependencies
 		if ( self::is_module_active( 'portal' ) ) {
@@ -135,6 +136,9 @@ class Ndizi_Project_Management {
 
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();
+
+		// Initialize Abilities API support
+		Ndizi_Abilities::init();
 
 		// Initialize CLI Commands
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
