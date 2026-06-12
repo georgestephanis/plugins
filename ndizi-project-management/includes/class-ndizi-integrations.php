@@ -603,7 +603,7 @@ class Ndizi_Integrations {
 	 * Handle admin filtered time report CSV exports
 	 */
 	public static function handle_report_export_requests() {
-		if ( ! isset( $_GET['ndizi_export_report'] ) || 'csv' !== $_GET['ndizi_export_report'] ) {
+		if ( ! isset( $_GET['ndizi_export_report'] ) || ! in_array( $_GET['ndizi_export_report'], array( 'csv', 'quickbooks_csv' ), true ) ) {
 			return;
 		}
 
@@ -628,6 +628,80 @@ class Ndizi_Integrations {
 				'number'     => -1,
 			)
 		);
+
+		$format = sanitize_text_field( wp_unslash( $_GET['ndizi_export_report'] ) );
+
+		if ( 'quickbooks_csv' === $format ) {
+			header( 'Content-Type: text/csv; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="ndizi_quickbooks_report_' . gmdate( 'Y-m-d' ) . '.csv"' );
+
+			$output = fopen( 'php://output', 'w' );
+
+			fputcsv(
+				$output,
+				array(
+					'Customer',
+					'Item',
+					'Date',
+					'Hours',
+					'Rate',
+					'Description',
+				)
+			);
+
+			foreach ( $time_entries as $entry ) {
+				$proj   = get_post( $entry->project_id );
+				$task   = $entry->task_id ? get_post( $entry->task_id ) : null;
+				$client = null;
+				if ( $proj ) {
+					$client_id = get_post_meta( $proj->ID, '_ndizi_client_id', true );
+					if ( $client_id ) {
+						$client = get_post( $client_id );
+					}
+				}
+
+				$customer_parts = array();
+				if ( $client ) {
+					$customer_parts[] = $client->post_title;
+				}
+				if ( $proj ) {
+					$customer_parts[] = $proj->post_title;
+				}
+				$customer = implode( ': ', $customer_parts );
+
+				$item  = $task ? $task->post_title : __( 'Time Tracking', 'ndizi-project-management' );
+				$date  = gmdate( 'm/d/Y', strtotime( $entry->start_time ) );
+				$hours = round( $entry->duration / 3600, 2 );
+
+				$billing_rate = 0;
+				if ( $entry->task_id ) {
+					$billing_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+				}
+				if ( ! $billing_rate && $entry->user_id ) {
+					$billing_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+				}
+				if ( ! $billing_rate && $entry->project_id ) {
+					$billing_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+				}
+				$billing_rate = floatval( $billing_rate );
+
+				fputcsv(
+					$output,
+					array(
+						self::escape_csv_field( $customer ),
+						self::escape_csv_field( $item ),
+						self::escape_csv_field( $date ),
+						self::escape_csv_field( $hours ),
+						self::escape_csv_field( number_format( $billing_rate, 2 ) ),
+						self::escape_csv_field( $entry->description ),
+					)
+				);
+			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+			fclose( $output );
+			exit;
+		}
 
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="ndizi_time_report_' . gmdate( 'Y-m-d' ) . '.csv"' );
