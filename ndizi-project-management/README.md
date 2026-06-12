@@ -19,7 +19,8 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 - **Admin Dashboards**: Gorgeous, CSS-only reports and responsive visualizations representing team productivity, billable time distributions, and project health.
 - **Client Portal**: A premium, glassmorphic client-facing interface utilizing CSS transitions, visual progress bars, and responsive layouts. Embed it with the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`).
 - **Gantt Charts**: A custom CSS Grid and SVG-based Gantt chart system to render project timelines without loading bloated, slow third-party chart libraries.
-- **Standalone PWA Companion App**: A distraction-free, installable desktop utility page (`admin.php?page=ndizi-tracker-standalone`) that runs without the WordPress admin menu or admin bar. Built with a dark glassmorphic interface, a ticking digital clock, and live lists to review or delete today's entries.
+- **Standalone PWA Companion App**: A distraction-free, installable utility page (`admin.php?page=ndizi-tracker-standalone`) that runs without the WordPress admin menu or admin bar. Built with a dark glassmorphic interface, a ticking digital clock, and live lists to review or delete today's entries. Fully responsive at small-screen sizes. Supports a `?desc=` URL parameter to pre-fill the description field (used by the Chrome extension). Requests browser notification permission on load and fires a push notification when the active timer exceeds 8 hours.
+- **Chrome Extension**: A companion browser extension (`chrome-extension/`) that connects to the site's REST API and lets users start/stop timers, browse projects and tasks, and open the standalone tracker with a pre-filled description — from any browser tab.
 
 ### 📅 Relational Data Model
 
@@ -36,6 +37,7 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 - **Customizable Tracker Icons**: Exposes a Settings page (`admin.php?page=ndizi-settings`) allowing managers to select preferred tracking icons (Banana, Clock, Punch Clock, Hourglass) with live-updating SVG renderings.
 - **Idle Warning Banner**: When an active timer has been running for more than 8 hours, a warning banner appears in the admin bar panel and on the standalone tracker page prompting the user to verify their logged time.
 - **Lock Date / Time Entry Locking**: A configurable lock date prevents creating, editing, or deleting time entries on or before that date — protecting finalized billing periods from accidental modification. Enforced across the REST API, the DB layer, and the admin UI.
+- **Approval Workflow**: Time entries carry `approved` and `approved_by` fields. Once an entry is marked approved, substantive edits and deletion are blocked — only the approval fields themselves can be updated. Approval-only updates bypass the lock-date guard.
 - **WP-CLI Integration**: Manage timers from the terminal using `wp ndizi time start`, `wp ndizi time stop`, and `wp ndizi time status`. Accepts `--project`, `--task`, `--user`, `--description`, and `--billable` flags; resolves names as well as IDs.
 
 ### 💰 Hierarchical Billing Rates
@@ -51,6 +53,7 @@ An explicit rate of `0.00` at any level is honored (pro-bono entries), rather th
 ### 🧾 Invoice Engine & Exports
 
 - **Printable Invoices**: Professional, clean print-friendly template layouts that automatically hide interactive controls when printed or saved to PDF.
+- **Stripe Online Payment**: When `ndizi_stripe_publishable_key` and `ndizi_stripe_secret_key` are configured in Settings, a "Pay Online" button appears on unpaid invoices in the client portal. Clicking it calls `POST /wp-json/ndizi/v1/invoices/<id>/pay` to create a Stripe Checkout session. A `POST /wp-json/ndizi/v1/stripe/webhook` endpoint listens for `checkout.session.completed` events and marks the invoice paid automatically.
 - **Invoice Exports**: Export individual invoice line items as CSV or JSON directly from the invoice editor screen.
 - **Time Report Exports**: From the Reports dashboard, export filtered time entries (by project, team member, and date range) as a standard CSV or as a **QuickBooks-compatible CSV** (`Customer`, `Item`, `Date`, `Hours`, `Rate`, `Description` columns) for direct import into accounting software.
 - **Extensible Export Data**: The `ndizi_export_invoice_data` filter lets third-party plugins customize the invoice export dataset before it is serialized.
@@ -66,6 +69,7 @@ An explicit rate of `0.00` at any level is honored (pro-bono entries), rather th
 ### 🔔 Notifications & Webhooks
 
 - **Email Notifications**: Sends assignment emails when a task is assigned (or reassigned) to a team member, and status-change emails when a task's status is updated.
+- **Google Calendar Sync**: When Google OAuth credentials are configured in Settings (`ndizi_google_client_id` / `ndizi_google_client_secret`), tasks with due dates are automatically created/updated/deleted in Google Calendar. Completed time entries (stopped, manually logged, or updated) are also synced. Access tokens are refreshed automatically using the stored refresh token. Provides a `GET /wp-json/ndizi/v1/calendar/ical` endpoint for a public iCal subscription feed.
 - **Outbound Webhooks**: Posts a JSON event payload to a configurable endpoint URL on timer start/stop, manual time log, time entry CRUD, CPT status transitions, and task/invoice metadata changes.
 - **Slack Integration**: Sends formatted alert messages to a Slack incoming webhook URL on the same events.
 
@@ -104,6 +108,8 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 | `duration` | `int(11)` | Tracked duration in seconds. |
 | `billable` | `tinyint(1)` | `1` if billable, `0` if non-billable. |
 | `invoice_id` | `bigint(20)` | Associated Invoice ID (0 if un-invoiced). |
+| `approved` | `tinyint(1)` | `1` if approved by a manager, `0` if pending. |
+| `approved_by` | `bigint(20)` | WP User ID of the approver (0 if unapproved). |
 | `created_at` | `datetime` | Timestamp of log creation. |
 | `updated_at` | `datetime` | Timestamp of last modification. |
 
@@ -163,6 +169,10 @@ Options configured in the settings dashboard:
 - `ndizi_lock_date` (string) — Date string; time entries on or before this date are locked and cannot be created, edited, or deleted.
 - `ndizi_webhook_url` (string) — Endpoint URL for outbound event payload POST requests.
 - `ndizi_slack_webhook_url` (string) — Target endpoint for formatted Slack incoming webhook alerts.
+- `ndizi_google_client_id` / `ndizi_google_client_secret` (string) — Google OAuth2 application credentials for Calendar sync.
+- `ndizi_google_refresh_token` / `ndizi_google_access_token` / `ndizi_google_token_expiry` (string/int) — Managed automatically after the OAuth flow completes; do not edit manually.
+- `ndizi_stripe_publishable_key` / `ndizi_stripe_secret_key` (string) — Stripe API keys enabling the "Pay Online" button and Checkout session creation.
+- `ndizi_db_version` (string) — Tracks the installed DB schema version; updated to `NDIZI_VERSION` after each `dbDelta()` run.
 
 ### 4. Custom REST API Routes
 
@@ -179,6 +189,9 @@ The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each ro
 | `GET` | `/time` | List time log history for the current user. |
 | `PUT` | `/time/<id>` | Edit a specific historical time entry. |
 | `DELETE` | `/time/<id>` | Delete a specific historical time entry. |
+| `POST` | `/invoices/<id>/pay` | Create a Stripe Checkout session for an invoice (authenticated user or valid `token` param). |
+| `POST` | `/stripe/webhook` | Stripe webhook receiver — marks invoice paid on `checkout.session.completed` (public). |
+| `GET` | `/calendar/ical` | Returns an iCal (`.ics`) feed of tasks and time entries (public). |
 
 ### 5. WP-CLI Commands
 
@@ -263,41 +276,43 @@ This matrix compares Ndizi against three SaaS time-tracking tools reviewed by Be
 | Feature | Ndizi PM | Clockify | Toggl Track | Timely |
 | :--- | :---: | :---: | :---: | :---: |
 | **Pricing** | Free (GPL, self-hosted) | Free–$14.99/seat/mo | Free–$20/seat/mo | $11–$28/seat/mo |
-| **Free tier** | ✅<br>(unlimited users) | ✅<br>(up to 5 users) | ✅<br>(up to 5 users) | ❌<br>(2-week trial only) |
+| **Free tier** | ✅ (unlimited users) | ✅ (up to 5 users) | ✅ (up to 5 users) | ❌ (2-week trial only) |
 | **Self-hosted / data ownership** | ✅ | ❌ | ❌ | ❌ |
 | **Timer-based time tracking** | ✅ | ✅ | ✅ | ✅ |
 | **Manual time entry** | ✅ | ✅ | ✅ | ✅ |
-| **Edit / delete past entries** | ✅<br>(REST API + admin UI) | ✅ | ✅ | ✅ |
+| **Edit / delete past entries** | ✅ (REST API + admin UI) | ✅ | ✅ | ✅ |
 | **Billable / non-billable flag per entry** | ✅ | ✅ | ✅ | ✅ |
 | **Lock date / protected billing periods** | ✅ | ❌ | ❌ | ❌ |
-| **Project & task hierarchy** | ✅<br>(client → project → task) | ✅ | ✅ | Add-on |
-| **Team roles / permissions** | ✅<br>(Manager, Team Member) | ✅ | ✅ | ✅ |
+| **Project & task hierarchy** | ✅ (client → project → task) | ✅ | ✅ | Add-on |
+| **Team roles / permissions** | ✅ (Manager, Team Member) | ✅ | ✅ | ✅ |
 | **Invoice creation** | ✅ | Standard plan+ | All plans | ❌ |
-| **Hierarchical billing rates** | ✅<br>(task → user → project) | ✅ | Starter plan+ | ✅ |
-| **Payment processing** | ❌ | ❌ | ❌ | ❌ |
+| **Hierarchical billing rates** | ✅ (task → user → project) | ✅ | Starter plan+ | ✅ |
+| **Payment processing** | ✅ (Stripe Checkout) | ❌ | ❌ | ❌ |
 | **Invoice export (CSV / JSON)** | ✅ | CSV/PDF | PDF | N/A |
 | **Time report export (CSV)** | ✅ | ✅ | ✅ | ✅ |
 | **QuickBooks CSV export** | ✅ | Standard plan+ | Starter plan+ | Some plans |
 | **Date-range filtered reports** | ✅ | ✅ | ✅ | ✅ |
-| **Profitability / margin reports** | ✅<br>(salary cost tracking) | ✅ | ✅ | ✅ |
-| **Client-facing portal** | ✅<br>(shortcode/block) | ❌ | ❌ | ❌ |
+| **Profitability / margin reports** | ✅ (salary cost tracking) | ✅ | ✅ | ✅ |
+| **Client-facing portal** | ✅ (shortcode/block) | ❌ | ❌ | ❌ |
 | **Admin bar quick logger** | ✅ | ❌ | ❌ | ❌ |
 | **Standalone PWA tracker** | ✅ | Mobile apps | Mobile apps | Mobile apps |
-| **Gantt charts** | ✅<br>(CSS/SVG, no library) | ❌ | ❌ | ❌ |
+| **Gantt charts** | ✅ (CSS/SVG, no library) | ❌ | ❌ | ❌ |
 | **REST API** | ✅ | ✅ | ✅ | ✅ |
 | **WP-CLI** | ✅ | ❌ | ❌ | ❌ |
 | **Webhooks** | ✅ | All plans | All plans | All plans |
-| **Slack integration** | ✅<br>(webhooks) | ❌ | All plans | ❌ |
-| **Email notifications** | ✅<br>(assignment + status) | ✅ | ✅ | ✅ |
+| **Slack integration** | ✅ (webhooks) | ❌ | All plans | ❌ |
+| **Email notifications** | ✅ (assignment + status) | ✅ | ✅ | ✅ |
 | **Modular on/off toggles** | ✅ | ❌ | ❌ | ❌ |
 | **Zapier integration** | ❌ | ❌ | ❌ | All plans |
 | **Jira / Asana / project tool integrations** | ❌ | ❌ | Premium plan+ | Some plans |
+| **Browser extension** | ✅ (Chrome) | ✅ | ✅ | ❌ |
 | **100+ app browser integrations** | ❌ | ✅ | ✅ | ❌ |
-| **Calendar sync** | ❌ | ❌ | ✅ | ✅ |
+| **Calendar sync** | ✅ (Google Calendar + iCal) | ❌ | ✅ | ✅ |
 | **AI-assisted time tracking** | ❌ | ❌ | ❌ | ✅ |
 | **Employee monitoring (nannyware)** | ❌ | ❌ | ❌ | ✅ |
-| **Approval workflows** | ❌ | Pro plan+ | ❌ | ❌ |
-| **Mobile app** | ❌<br>(PWA only, desktop) | ✅ | ✅ | ✅ |
+| **Approval workflows** | ✅ (DB-layer enforcement) | Pro plan+ | ❌ | ❌ |
+| **Time-off requests** | ✅ (via client portal) | ❌ | ❌ | ❌ |
+| **Mobile app** | ❌ (responsive PWA) | ✅ | ✅ | ✅ |
 | **Requires WordPress** | ✅ | ❌ | ❌ | ❌ |
 
 ### Notes

@@ -196,6 +196,9 @@ class Ndizi_Standalone_Tracker {
 		$m           = floor( ( $duration_sec % 3600 ) / 60 );
 		$s           = $duration_sec % 60;
 		$ticker_text = sprintf( '%02d:%02d:%02d', $h, $m, $s );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$prefilled_desc = isset( $_GET['desc'] ) ? sanitize_text_field( wp_unslash( $_GET['desc'] ) ) : '';
 		?>
 		<!DOCTYPE html>
 		<html <?php language_attributes(); ?>>
@@ -780,6 +783,22 @@ class Ndizi_Standalone_Tracker {
 				.footer-link:hover {
 					color: var(--text-secondary);
 				}
+
+				@media (max-width: 480px) {
+					body {
+						padding: 12px 8px;
+					}
+					.app-container {
+						max-width: 100%;
+						gap: 16px;
+					}
+					.glass-card {
+						padding: 20px 16px;
+					}
+					.timer-display {
+						font-size: 40px !important;
+					}
+				}
 			</style>
 		</head>
 		<body class="<?php echo $active_timer ? 'timer-running' : ''; ?>">
@@ -863,7 +882,7 @@ class Ndizi_Standalone_Tracker {
 
 					<div class="form-group">
 						<label class="form-label"><?php esc_html_e( 'Activity Description', 'ndizi-project-management' ); ?></label>
-						<input type="text" id="desc-input" class="form-input" placeholder="<?php esc_attr_e( 'What are you working on?', 'ndizi-project-management' ); ?>" maxlength="255">
+						<input type="text" id="desc-input" class="form-input" placeholder="<?php esc_attr_e( 'What are you working on?', 'ndizi-project-management' ); ?>" value="<?php echo esc_attr( $prefilled_desc ); ?>" maxlength="255">
 					</div>
 
 					<div class="toggle-row">
@@ -1329,6 +1348,7 @@ class Ndizi_Standalone_Tracker {
 						clockInterval = setInterval(function() {
 							activeTimerSeconds++;
 							updateClockText();
+							checkIdleNotification();
 						}, 1000);
 					}
 
@@ -1337,6 +1357,27 @@ class Ndizi_Standalone_Tracker {
 						if (clockInterval) {
 							clearInterval(clockInterval);
 							clockInterval = null;
+						}
+					}
+
+					// Browser Notifications for Idle Timer
+					if ('Notification' in window && Notification.permission === 'default') {
+						Notification.requestPermission();
+					}
+
+					let idleNotificationSent = false;
+					function checkIdleNotification() {
+						if (activeTimerSeconds > 28800) {
+							if (!idleNotificationSent) {
+								if ('Notification' in window && Notification.permission === 'granted') {
+									new Notification('Ndizi Idle Timer Warning', {
+										body: 'Your timer has been running for over 8 hours. Please check in or stop your timer.'
+									});
+									idleNotificationSent = true;
+								}
+							}
+						} else {
+							idleNotificationSent = false;
 						}
 					}
 

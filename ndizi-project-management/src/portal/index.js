@@ -11,6 +11,7 @@ import './portal-style.scss';
 	$( document ).ready( function () {
 		initProjectAccordion();
 		initTaskCommentModal();
+		initStripePayment();
 	} );
 
 	/**
@@ -97,6 +98,56 @@ import './portal-style.scss';
 				$modal.hide();
 				$( '#ndizi_modal_discussion_container' ).empty();
 			}
+		} );
+	}
+
+	/**
+	 * Stripe Payment processing
+	 */
+	function initStripePayment() {
+		$( document ).on( 'click', '.ndizi-pay-invoice-btn', function ( e ) {
+			e.preventDefault();
+			const $btn = $( this );
+			const invoiceId = $btn.data( 'invoice-id' );
+			const token = $btn.data( 'token' );
+
+			$btn.prop( 'disabled', true ).text( 'Redirecting...' );
+
+			const restUrl =
+				typeof window.ndizi_portal !== 'undefined' &&
+				window.ndizi_portal.rest_url
+					? window.ndizi_portal.rest_url
+					: '/wp-json/ndizi/v1';
+
+			$.ajax( {
+				url: `${ restUrl }/invoices/${ invoiceId }/pay`,
+				method: 'POST',
+				dataType: 'json',
+				contentType: 'application/json',
+				data: JSON.stringify( { token } ),
+			} )
+				.done( function ( response ) {
+					if ( response && response.url ) {
+						window.location.href = response.url;
+					} else {
+						// eslint-disable-next-line no-alert
+						window.alert( 'Error generating checkout session.' );
+						$btn.prop( 'disabled', false ).html(
+							'<span class="dashicons dashicons-cart"></span> Pay Online'
+						);
+					}
+				} )
+				.fail( function ( xhr ) {
+					let errorMsg = 'Error initiating payment.';
+					if ( xhr.responseJSON && xhr.responseJSON.message ) {
+						errorMsg = xhr.responseJSON.message;
+					}
+					// eslint-disable-next-line no-alert
+					window.alert( errorMsg );
+					$btn.prop( 'disabled', false ).html(
+						'<span class="dashicons dashicons-cart"></span> Pay Online'
+					);
+				} );
 		} );
 	}
 } )( window.jQuery );
