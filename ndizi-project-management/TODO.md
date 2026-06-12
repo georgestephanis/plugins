@@ -8,28 +8,15 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ## Billing & Invoicing
 
-- [x] **Hourly rate configuration** — per-project and/or per-user billing rates, so invoices can be
-  auto-calculated from tracked hours rather than requiring a manually entered total.
-- [x] **Invoice total auto-calculation** — once rates exist, compute the invoice amount from
-  `billable_duration × hourly_rate` and populate the invoice automatically.
 - [ ] **Payment processing / payment links** — mark invoices paid after online payment (Stripe,
   PayPal, etc.). None of the surveyed SaaS tools offer this either, but it is a common ask.
-- [x] **PDF invoice export** — Clockify and Toggl export print-ready PDFs; Ndizi currently exports
-  CSV and JSON only. A generated PDF (or print-stylesheet polish) would be a direct gap.
 
 ---
 
 ## Integrations
 
-- [x] **Webhooks** — outbound HTTP callbacks when time is logged, invoices change status, tasks are
-  created, etc. Clockify, Toggl, and Timely all offer webhooks on free or base plans. This would
-  unlock Zapier/Make compatibility without a native connector.
 - [ ] **Zapier / Make connector** — Timely includes this on all plans; useful for connecting to
   tools like Slack, Notion, or accounting software without custom code.
-- [x] **QuickBooks / accounting export** — Clockify (Standard+) and Toggl (Starter+) both sync to
-  QuickBooks. Even a structured CSV targeted at QuickBooks import format would narrow the gap.
-- [x] **Slack notifications** — Toggl notifies on free/all plans. Task assignments, timer reminders,
-  or invoice state changes posted to a Slack channel are high-value for teams.
 - [ ] **Calendar sync (Google / iCal)** — Toggl Track and Timely both support calendar integration.
   Useful for comparing scheduled vs. actual time or pre-populating time entries from meetings.
 - [ ] **Browser extension / bookmarklet** — Toggl and Clockify offer one-click tracking from any
@@ -42,13 +29,6 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 - [ ] **Per-user / per-project utilization reports** — the SaaS tools all surface "what percentage
   of this person's tracked time is billable" and similar metrics. Ndizi's admin dashboard shows
   summary charts but lacks drill-down utilization views.
-- [x] **Individual salary rates tracking** — track internal employee hourly salary rates to calculate project costs and margins.
-- [x] **Profitability reports** — once billing rates exist, a report comparing budget vs. actual
-  (time cost vs. project budget) is a natural next step.
-- [x] **Exportable time reports** — a CSV/PDF export of filtered time entries (by date range,
-  project, user, billable flag) is expected by accountants and clients.
-- [x] **Date-range filtering in the admin dashboard** — currently reports appear to be all-time; a
-  selectable time window (this week / this month / custom) is table-stakes for billing workflows.
 
 ---
 
@@ -56,18 +36,8 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 - [ ] **Approval workflow for time entries** — Clockify (Pro plan) requires manager sign-off before
   time is locked for invoicing. Useful for agencies to catch errors before billing.
-- [x] **Time entry locking / period close** — prevent edits to time logged before a given date
-  (after an invoice is issued or a pay period closes).
 - [ ] **Time-off / absence tracking** — not covered by any surveyed tool natively but commonly
   requested alongside time tracking for small agencies.
-
----
-
-## Notifications
-
-- [x] **Email notifications for more events** — added task assignment and task status change notifications.
-- [x] **Idle timer detection** — prompt user when a timer has been running for an unusually long
-  period (e.g. > 8 hours), which is a common data-quality issue.
 
 ---
 
@@ -82,10 +52,38 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ## Infrastructure
 
-- [x] **CLI / WP-CLI commands** — `wp ndizi time start --project=X`, `wp ndizi time stop`, etc.,
-  for developers or automated environments.
 - [ ] **Application Password scope documentation** — the REST API supports Application Passwords,
   but there is no documented example of authenticating external tools against it.
+
+---
+
+## Completed
+
+### Billing & Invoicing
+- [x] **Hourly rate configuration** — per-project and/or per-user billing rates, so invoices can be auto-calculated from tracked hours.
+- [x] **Invoice total auto-calculation** — compute the invoice amount from `billable_duration × hourly_rate` and populate the invoice automatically.
+- [x] **PDF invoice export** — print-ready templates/PDF styling for invoice exports.
+
+### Integrations
+- [x] **Webhooks** — outbound HTTP callbacks when time is logged, invoices change status, tasks are created, etc.
+- [x] **Slack notifications** — post task assignments, timer reminders, or invoice state changes directly to Slack channels.
+- [x] **WordPress Abilities API & MCP Support** — registered core capabilities as native WordPress Core Abilities for agentic workflows using the standalone MCP Adapter plugin.
+
+### Reporting & Analytics
+- [x] **Individual salary rates tracking** — track internal employee hourly salary rates to calculate project costs and margins.
+- [x] **Profitability reports** — compare budget vs. actual (time cost vs. project budget).
+- [x] **Exportable time reports** — CSV/PDF exports of filtered time entries.
+- [x] **Date-range filtering in the admin dashboard** — select custom time windows (this week / this month / custom) for reports.
+
+### Team & Workflow
+- [x] **Time entry locking / period close** — prevent edits to time logged before a given date.
+
+### Notifications
+- [x] **Email notifications for more events** — automated email notifications for task assignment and status updates.
+- [x] **Idle timer detection** — alert users when a timer has been running longer than 8 hours.
+
+### Infrastructure
+- [x] **CLI / WP-CLI commands** — `wp ndizi time start`, `wp ndizi time stop`, and `wp ndizi time status` subcommands.
 
 ---
 
