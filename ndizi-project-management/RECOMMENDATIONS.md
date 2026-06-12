@@ -151,11 +151,14 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   ([class-ndizi-admin.php](includes/class-ndizi-admin.php), [src/admin/admin-style.scss](src/admin/admin-style.scss))
   _(branch: ndizi/fable-review)_
 
-- [ ] **Chrome extension: validate legacy credential migration and document storage risk.**
-  Migration push at [chrome-extension/popup.js:72-86](chrome-extension/popup.js#L72-L86)
-  doesn't validate `authHeader` before storing; Basic-auth credentials sit unencrypted in
-  `chrome.storage.local` for every configured site. Add the validation guard and a note
-  in API-AUTHENTICATION.md recommending dedicated, revocable Application Passwords.
+- [x] **Chrome extension: validate legacy credential migration and document storage risk.**
+  Migration path at [chrome-extension/popup.js:72-86](chrome-extension/popup.js#L72-L86)
+  now validates `authHeader` is a non-empty, well-formed `Basic <base64>` string before
+  migrating. Added section 3 to API-AUTHENTICATION.md documenting that `chrome.storage.local`
+  is unencrypted, recommending dedicated revocable Application Passwords, and noting the
+  future `wp-config.php` constant override for secrets.
+  ([chrome-extension/popup.js](chrome-extension/popup.js), [API-AUTHENTICATION.md](API-AUTHENTICATION.md))
+  _(branch: ndizi/fable-review)_
 
 - [ ] **`Ndizi_Roles::current_user_can()` admin special-case is redundant** — WordPress
   already grants admins everything when caps are added to the role (which activation

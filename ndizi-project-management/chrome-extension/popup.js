@@ -68,17 +68,24 @@
 				let currentSites = data.sites || [];
 				let currentActiveSiteUrl = data.activeSiteUrl || '';
 
-				// Migration of legacy single site credentials
-				if ( currentSites.length === 0 && data.wpUrl && data.username && data.authHeader ) {
+				// Migration of legacy single site credentials.
+				// Validate authHeader is a non-empty Basic token before migrating.
+				const legacyAuthHeader = typeof data.authHeader === 'string' ? data.authHeader.trim() : '';
+				if (
+					currentSites.length === 0 &&
+					data.wpUrl &&
+					data.username &&
+					legacyAuthHeader &&
+					/^Basic [A-Za-z0-9+/]+=*$/.test( legacyAuthHeader )
+				) {
 					const legacySite = {
 						wpUrl: data.wpUrl,
 						username: data.username,
-						authHeader: data.authHeader
+						authHeader: legacyAuthHeader
 					};
 					currentSites.push( legacySite );
 					currentActiveSiteUrl = legacySite.wpUrl;
-					
-					// Save the migrated data
+
 					chrome.storage.local.set( {
 						sites: currentSites,
 						activeSiteUrl: currentActiveSiteUrl
