@@ -89,11 +89,6 @@ class Ndizi_Roles {
 	 * Check if user can perform an action based on capabilities
 	 */
 	public static function current_user_can( $capability ) {
-		// Admins can always do everything
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
 		return current_user_can( $capability );
 	}
 }

@@ -380,6 +380,25 @@ class Ndizi_REST {
 
 		$projects = get_posts( $args );
 
+		if ( ! empty( $projects ) ) {
+			$project_ids = wp_list_pluck( $projects, 'ID' );
+			update_meta_cache( 'post', $project_ids );
+
+			$client_ids = array_filter(
+				array_unique(
+					array_map(
+						function ( $p ) {
+							return (int) get_post_meta( $p->ID, '_ndizi_client_id', true );
+						},
+						$projects
+					)
+				)
+			);
+			if ( ! empty( $client_ids ) ) {
+				_prime_post_caches( $client_ids );
+			}
+		}
+
 		$response = array();
 		foreach ( $projects as $project ) {
 			$client_id = get_post_meta( $project->ID, '_ndizi_client_id', true );
@@ -433,6 +452,25 @@ class Ndizi_REST {
 		}
 
 		$tasks = get_posts( $args );
+
+		if ( ! empty( $tasks ) ) {
+			$task_ids = wp_list_pluck( $tasks, 'ID' );
+			update_meta_cache( 'post', $task_ids );
+
+			$project_ids = array_filter(
+				array_unique(
+					array_map(
+						function ( $t ) {
+							return (int) get_post_meta( $t->ID, '_ndizi_project_id', true );
+						},
+						$tasks
+					)
+				)
+			);
+			if ( ! empty( $project_ids ) ) {
+				_prime_post_caches( $project_ids );
+			}
+		}
 
 		$response = array();
 		foreach ( $tasks as $task ) {

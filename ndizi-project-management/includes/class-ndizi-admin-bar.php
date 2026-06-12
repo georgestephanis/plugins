@@ -330,6 +330,8 @@ class Ndizi_Admin_Bar {
 				)
 			);
 
+			update_meta_cache( 'post', $tasks );
+
 			$project_ids = array();
 			foreach ( $tasks as $task_id ) {
 				$p_id = (int) get_post_meta( $task_id, '_ndizi_project_id', true );
@@ -347,6 +349,25 @@ class Ndizi_Admin_Bar {
 
 		$projects          = get_posts( $project_args );
 		$response_projects = array();
+
+		if ( ! empty( $projects ) ) {
+			$all_project_ids = wp_list_pluck( $projects, 'ID' );
+			update_meta_cache( 'post', $all_project_ids );
+
+			$client_ids = array_filter(
+				array_unique(
+					array_map(
+						function ( $p ) {
+							return (int) get_post_meta( $p->ID, '_ndizi_client_id', true );
+						},
+						$projects
+					)
+				)
+			);
+			if ( ! empty( $client_ids ) ) {
+				_prime_post_caches( $client_ids );
+			}
+		}
 
 		global $wpdb;
 		$time_table = Ndizi_DB::get_table_name();
@@ -477,6 +498,10 @@ class Ndizi_Admin_Bar {
 					),
 				)
 			);
+
+			if ( ! empty( $assigned_tasks ) ) {
+				update_meta_cache( 'post', $assigned_tasks );
+			}
 
 			$allowed_project_ids = array();
 			foreach ( $assigned_tasks as $assigned_task_id ) {

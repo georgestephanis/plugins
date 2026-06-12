@@ -119,11 +119,13 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
 
 ## P3 — Code quality, performance, reliability
 
-- [ ] **N+1 queries in list endpoints.** `Ndizi_REST::get_projects()`/`get_tasks()` fetch
-  client/project posts and meta per row in a loop
-  ([class-ndizi-rest.php:326-340](includes/class-ndizi-rest.php#L326-L340)); the admin-bar
-  tracker data AJAX does the same per-project client fetch. Collect IDs and prime caches
-  (`_prime_post_caches()` / `update_meta_cache()`) before the loop.
+- [x] **N+1 queries in list endpoints.** Added `update_meta_cache()` before all three
+  per-row meta loops and `_prime_post_caches()` before per-row `get_post()` calls in
+  `Ndizi_REST::get_projects()`, `Ndizi_REST::get_tasks()`, and the admin-bar tracker
+  data AJAX (including the assigned-tasks → allowed-projects loop in
+  `ajax_log_time_manual()`).
+  ([class-ndizi-rest.php](includes/class-ndizi-rest.php), [class-ndizi-admin-bar.php](includes/class-ndizi-admin-bar.php))
+  _(branch: ndizi/fable-review)_
 
 - [ ] **Unbounded queries.** `posts_per_page => -1` throughout REST/iCal, and
   `Ndizi_DB::get_time_entries()` defaults to `number => -1`
@@ -160,10 +162,11 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   ([chrome-extension/popup.js](chrome-extension/popup.js), [API-AUTHENTICATION.md](API-AUTHENTICATION.md))
   _(branch: ndizi/fable-review)_
 
-- [ ] **`Ndizi_Roles::current_user_can()` admin special-case is redundant** — WordPress
-  already grants admins everything when caps are added to the role (which activation
-  does). Harmless, but it masks misconfiguration; consider removing the
-  `manage_options` shortcut so missing caps surface in testing.
+- [x] **`Ndizi_Roles::current_user_can()` admin special-case is redundant** — removed
+  the `manage_options` early-return; activation already grants all ndizi caps to the
+  administrator role, so WordPress handles the shortcut naturally and missing caps now
+  surface in testing.
+  ([class-ndizi-roles.php](includes/class-ndizi-roles.php)) _(branch: ndizi/fable-review)_
 
 ## P4 — Packaging / wp.org release readiness
 
