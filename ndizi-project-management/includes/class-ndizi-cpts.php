@@ -106,32 +106,34 @@ class Ndizi_CPTs {
 		);
 
 		// Invoices
-		register_post_type(
-			'ndizi_invoice',
-			array(
-				'labels'          => array(
-					'name'               => __( 'Invoices', 'ndizi-project-management' ),
-					'singular_name'      => __( 'Invoice', 'ndizi-project-management' ),
-					'add_new'            => __( 'Add New Invoice', 'ndizi-project-management' ),
-					'add_new_item'       => __( 'Add New Invoice', 'ndizi-project-management' ),
-					'edit_item'          => __( 'Edit Invoice', 'ndizi-project-management' ),
-					'new_item'           => __( 'New Invoice', 'ndizi-project-management' ),
-					'view_item'          => __( 'View Invoice', 'ndizi-project-management' ),
-					'search_items'       => __( 'Search Invoices', 'ndizi-project-management' ),
-					'not_found'          => __( 'No invoices found', 'ndizi-project-management' ),
-					'not_found_in_trash' => __( 'No invoices found in Trash', 'ndizi-project-management' ),
-				),
-				'public'          => false,
-				'show_ui'         => true,
-				'show_in_menu'    => 'ndizi-pm',
-				'menu_icon'       => 'dashicons-analytics',
-				'capability_type' => 'post',
-				'hierarchical'    => false,
-				'supports'        => array( 'title', 'editor' ),
-				'show_in_rest'    => true,
-				'has_archive'     => false,
-			)
-		);
+		if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) {
+			register_post_type(
+				'ndizi_invoice',
+				array(
+					'labels'          => array(
+						'name'               => __( 'Invoices', 'ndizi-project-management' ),
+						'singular_name'      => __( 'Invoice', 'ndizi-project-management' ),
+						'add_new'            => __( 'Add New Invoice', 'ndizi-project-management' ),
+						'add_new_item'       => __( 'Add New Invoice', 'ndizi-project-management' ),
+						'edit_item'          => __( 'Edit Invoice', 'ndizi-project-management' ),
+						'new_item'           => __( 'New Invoice', 'ndizi-project-management' ),
+						'view_item'          => __( 'View Invoice', 'ndizi-project-management' ),
+						'search_items'       => __( 'Search Invoices', 'ndizi-project-management' ),
+						'not_found'          => __( 'No invoices found', 'ndizi-project-management' ),
+						'not_found_in_trash' => __( 'No invoices found in Trash', 'ndizi-project-management' ),
+					),
+					'public'          => false,
+					'show_ui'         => true,
+					'show_in_menu'    => 'ndizi-pm',
+					'menu_icon'       => 'dashicons-analytics',
+					'capability_type' => 'post',
+					'hierarchical'    => false,
+					'supports'        => array( 'title', 'editor' ),
+					'show_in_rest'    => true,
+					'has_archive'     => false,
+				)
+			);
+		}
 
 		// Contacts
 		register_post_type(
@@ -325,52 +327,54 @@ class Ndizi_CPTs {
 		);
 
 		// Invoice Meta
-		register_post_meta(
-			'ndizi_invoice',
-			'_ndizi_project_id',
-			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'integer',
-			)
-		);
-		register_post_meta(
-			'ndizi_invoice',
-			'_ndizi_invoice_date',
-			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-			)
-		);
-		register_post_meta(
-			'ndizi_invoice',
-			'_ndizi_invoice_due_date',
-			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-			)
-		);
-		register_post_meta(
-			'ndizi_invoice',
-			'_ndizi_invoice_amount',
-			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'number',
-			)
-		);
-		register_post_meta(
-			'ndizi_invoice',
-			'_ndizi_invoice_status',
-			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'string',
-				'default'      => 'draft', // draft, sent, paid, void
-			)
-		);
+		if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) {
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_project_id',
+				array(
+					'show_in_rest' => true,
+					'single'       => true,
+					'type'         => 'integer',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_date',
+				array(
+					'show_in_rest' => true,
+					'single'       => true,
+					'type'         => 'string',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_due_date',
+				array(
+					'show_in_rest' => true,
+					'single'       => true,
+					'type'         => 'string',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_amount',
+				array(
+					'show_in_rest' => true,
+					'single'       => true,
+					'type'         => 'number',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_status',
+				array(
+					'show_in_rest' => true,
+					'single'       => true,
+					'type'         => 'string',
+					'default'      => 'draft', // draft, sent, paid, void
+				)
+			);
+		}
 
 		// Contact Meta
 		register_post_meta(
