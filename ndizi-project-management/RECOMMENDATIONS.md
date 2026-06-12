@@ -10,31 +10,20 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
 
 ## P1 — Security & correctness (fix before any public release)
 
-- [ ] **Portal auth key is exposed via the REST API.**
-  `_ndizi_client_auth_key` is registered with `show_in_rest => true`
-  ([class-ndizi-cpts.php:222](includes/class-ndizi-cpts.php#L222)). This is the client's
-  passwordless portal credential — it must never appear in a REST response. Remove
-  `show_in_rest` for this key (and audit every other registered meta key for
-  secret/sensitive values). Also verify protected-meta (`_`-prefixed) keys have an
-  `auth_callback`; none is registered today.
+- [x] **Portal auth key is exposed via the REST API.** _(verified fixed — already
+  `show_in_rest => false` with a comment; `auth_callback` present.)_
 
-- [ ] **CPTs use `capability_type => 'post'`, so any Author/Editor on the site can edit
-  clients, invoices, and projects.** All six CPTs map to standard post capabilities
-  ([class-ndizi-cpts.php](includes/class-ndizi-cpts.php)), which means the custom
-  `ndizi_manage_*` capability model is bypassed entirely in wp-admin: a vanilla Editor
-  can edit an invoice or read a client's portal key without holding any Ndizi capability.
-  Switch each CPT to a custom `capability_type` (or `capabilities` array) mapped to the
-  existing `ndizi_manage_*` caps, and grant those caps in `Ndizi_Roles`.
+- [x] **CPTs use `capability_type => 'post'`, so any Author/Editor on the site can edit
+  clients, invoices, and projects.** Added explicit `capabilities` arrays mapped to the
+  corresponding `ndizi_manage_*` cap + `map_meta_cap => true` for all six CPTs.
+  ([class-ndizi-cpts.php](includes/class-ndizi-cpts.php)) _(branch: ndizi/fable-review)_
 
-- [ ] **REST write endpoints skip the project/task validation the Abilities API enforces.**
-  `Ndizi_REST::start_timer()` ([class-ndizi-rest.php:427-452](includes/class-ndizi-rest.php#L427-L452))
-  and `log_time_manual()` ([class-ndizi-rest.php:483-511](includes/class-ndizi-rest.php#L483-L511))
-  pass `project_id`/`task_id` straight to `Ndizi_DB` with no check that the project exists,
-  is active, or that a non-manager is assigned to it. The Abilities layer does all of this
-  ([class-ndizi-abilities.php:560-605](includes/class-ndizi-abilities.php#L560-L605)).
-  A team member can log time against any (or a nonexistent) project via REST.
-  Fix by extracting shared validation (see P2 service-layer item) or duplicating the
-  checks into the REST callbacks as a stopgap.
+- [x] **REST write endpoints skip the project/task validation the Abilities API enforces.**
+  Extracted shared `Ndizi_REST::validate_time_project_access()` helper and wired it into
+  `Ndizi_REST::start_timer()`, `Ndizi_REST::log_time_manual()`, and both Abilities
+  callbacks (replacing the duplicated code).
+  ([class-ndizi-rest.php](includes/class-ndizi-rest.php), [class-ndizi-abilities.php](includes/class-ndizi-abilities.php))
+  _(branch: ndizi/fable-review)_
 
 - [ ] **No sanitize callbacks on any `register_post_meta()` call.**
   Zero `sanitize_callback` arguments in [class-ndizi-cpts.php](includes/class-ndizi-cpts.php).
