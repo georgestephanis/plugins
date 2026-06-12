@@ -170,8 +170,8 @@ class Ndizi_CLI {
 			$task_title = $task ? $task->post_title : 'Unknown';
 		}
 
-		$now_mysql = current_time( 'mysql' );
-		$now_ts    = strtotime( $now_mysql );
+		$now_mysql = current_time( 'mysql', true );
+		$now_ts    = time();
 		$start_ts  = strtotime( $active->start_time );
 		$duration  = max( 0, $now_ts - $start_ts );
 		$hours     = round( $duration / 3600, 2 );

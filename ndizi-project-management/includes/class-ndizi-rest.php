@@ -554,7 +554,7 @@ class Ndizi_REST {
 
 		// Calculate current live duration
 		$start_ts             = strtotime( $timer->start_time );
-		$now_ts               = strtotime( current_time( 'mysql' ) );
+		$now_ts               = time();
 		$timer->live_duration = max( 0, $now_ts - $start_ts );
 
 		return new WP_REST_Response(
@@ -581,7 +581,7 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), 403 );
 		}
 
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ), 400 );
 		}
 
@@ -644,7 +644,7 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), 403 );
 		}
 
-		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
+		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
 		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
 			return new WP_REST_Response( array( 'error' => __( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' ) ), 400 );
 		}

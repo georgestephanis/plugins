@@ -1531,7 +1531,7 @@ class Ndizi_Admin {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' ) ) );
 		}
 
@@ -1631,7 +1631,7 @@ class Ndizi_Admin {
 
 		// Add live duration
 		$start_ts             = strtotime( $timer->start_time );
-		$now_ts               = strtotime( current_time( 'mysql' ) );
+		$now_ts               = time();
 		$timer->live_duration = max( 0, $now_ts - $start_ts );
 
 		wp_send_json_success(

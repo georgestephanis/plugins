@@ -509,7 +509,7 @@ class Ndizi_Abilities {
 		}
 
 		$start_ts      = strtotime( $timer->start_time );
-		$now_ts        = strtotime( current_time( 'mysql' ) );
+		$now_ts        = time();
 		$live_duration = max( 0, $now_ts - $start_ts );
 
 		return array(
@@ -545,7 +545,7 @@ class Ndizi_Abilities {
 			return $access;
 		}
 
-		if ( Ndizi_DB::is_date_locked( current_time( 'mysql' ) ) ) {
+		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
 			return new WP_Error(
 				'date_locked',
 				__( 'Cannot start timer. The current date is locked.', 'ndizi-project-management' )
@@ -652,7 +652,7 @@ class Ndizi_Abilities {
 			);
 		}
 
-		$check_time = empty( $start_time ) ? current_time( 'mysql' ) : $start_time;
+		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
 		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
 			return new WP_Error(
 				'date_locked',

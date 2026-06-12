@@ -57,13 +57,16 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
 
 ## P2 — Architecture (do these while the plugin is still pre-1.0)
 
-- [ ] **Store time entries in UTC, not site-local time.** `Ndizi_DB` writes
-  `current_time( 'mysql' )` (site-local) into `start_time`/`end_time`
-  ([class-ndizi-db.php:83-98](includes/class-ndizi-db.php#L83-L98)), then code elsewhere
-  mixes `strtotime()` (server TZ) and `gmdate()` over those values (iCal feed, manual-log
-  estimation). This is a schema-level convention that gets exponentially harder to change
-  once real billing data accumulates — switch to UTC storage
-  (`current_time( 'mysql', true )`) with conversion at the display layer **before 1.0**.
+- [x] **Store time entries in UTC, not site-local time.** Replaced all
+  `current_time('mysql')` (site-local) with `current_time('mysql', true)` (UTC) in
+  every DB write and lock-date check across `Ndizi_DB`, `Ndizi_REST`, `Ndizi_Admin`,
+  `Ndizi_Admin_Bar`, `Ndizi_Abilities`, `Ndizi_CLI`, and `Ndizi_Standalone_Tracker`.
+  Elapsed-time computations that compared `start_time` to "now" now use `time()` directly
+  rather than `strtotime(current_time('mysql'))`. Display calls (`date_i18n(...,
+  strtotime($entry->start_time))`) are already correct: PHP's timezone is UTC, so
+  `strtotime` on a UTC string gives the right Unix timestamp and `date_i18n` applies the
+  site offset for presentation. No data migration needed — no existing installs.
+  _(branch: ndizi/fable-review)_
 
 - [ ] **Introduce a shared service/validation layer for time operations.** There are four
   write paths today — REST, Abilities, admin AJAX, CLI — each implementing (or omitting)

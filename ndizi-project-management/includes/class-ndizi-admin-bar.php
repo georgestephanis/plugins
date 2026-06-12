@@ -98,7 +98,7 @@ class Ndizi_Admin_Bar {
 			$node_class .= ' ndizi-timer-active';
 			// Calculate initial live duration
 			$start_ts     = strtotime( $active_timer->start_time );
-			$now_ts       = strtotime( current_time( 'mysql' ) );
+			$now_ts       = time();
 			$duration_sec = max( 0, $now_ts - $start_ts );
 
 			if ( $duration_sec > 8 * 3600 ) {
