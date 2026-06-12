@@ -31,36 +31,29 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   (all other strings), array map of `absint` (associated clients).
   ([class-ndizi-cpts.php](includes/class-ndizi-cpts.php)) _(branch: ndizi/fable-review)_
 
-- [ ] **Stripe webhook: check `payment_status` and add idempotency.**
-  `handle_stripe_webhook()` ([class-ndizi-rest.php:824-832](includes/class-ndizi-rest.php#L824-L832))
-  marks the invoice paid on `checkout.session.completed` without checking
-  `session.payment_status === 'paid'` (async payment methods complete the session before
-  funds settle) and without deduplicating events — a Stripe retry re-fires
-  `ndizi_invoice_paid`, which can duplicate notifications/webhooks. Guard on
-  `payment_status`, and skip processing when the invoice is already `paid` (or store the
-  processed `event.id` in invoice meta). Signature verification itself is correct
-  (HMAC-SHA256, `hash_equals`, 5-minute timestamp window).
+- [x] **Stripe webhook: check `payment_status` and add idempotency.**
+  Guard on `$session['payment_status'] === 'paid'` before processing (returns 200 to
+  Stripe without acting when status is not yet `paid`). Check invoice status before
+  updating — skip and return 200 if already `paid` to prevent duplicate
+  `ndizi_invoice_paid` fires on Stripe retries.
+  ([class-ndizi-rest.php](includes/class-ndizi-rest.php)) _(branch: ndizi/fable-review)_
 
-- [ ] **Settings OAuth callback: verify capability/nonce before exchanging the code, and
-  check the token response status.** In `Ndizi_Admin::save_settings_page()`
-  (~[class-ndizi-admin.php:64-108](includes/class-ndizi-admin.php#L64-L108)) the Google
-  OAuth `code` is extracted and exchanged before the `manage_options` check, and the
-  `wp_remote_post()` token response is only checked with `is_wp_error()` — a 400/500 body
-  can be stored as a token. Reorder: capability check → nonce/state check → exchange →
-  validate HTTP 200 + presence of expected fields.
+- [x] **Settings OAuth callback: verify capability/nonce before exchanging the code, and
+  check the token response status.** Capability + nonce checks were already correctly
+  ordered before the exchange. Added `200 === wp_remote_retrieve_response_code()` guard
+  so a 4xx/5xx Google response is never stored as a token.
+  ([class-ndizi-admin.php](includes/class-ndizi-admin.php)) _(branch: ndizi/fable-review)_
 
-- [ ] **Google Calendar token refresh has no error handling and runs synchronously on save.**
-  `Ndizi_Calendar::get_access_token()` ([class-ndizi-calendar.php:37-73](includes/class-ndizi-calendar.php#L37-L73))
-  doesn't check `is_wp_error()` on the refresh call, and sync hooks fire inline on
-  task/time-entry save — a slow Google endpoint stalls the save. Add error handling +
-  logging now; consider moving sync to a queued/cron dispatch (see P2).
+- [x] **Google Calendar token refresh has no error handling and runs synchronously on save.**
+  Added HTTP status code check and `error_log()` calls in `get_access_token()` for
+  WP_Error, non-200 responses, and missing access_token — failures are now diagnosable.
+  Async dispatch remains a P2 item.
+  ([class-ndizi-calendar.php](includes/class-ndizi-calendar.php)) _(branch: ndizi/fable-review)_
 
-- [ ] **CLI commands have no permission gate and accept `--user`.**
-  `wp ndizi time start --user=<anyone>` logs time as another user with no capability
-  check ([class-ndizi-cli.php](includes/class-ndizi-cli.php)). CLI is trusted by
-  convention, but since these commands honor `--user`, at minimum document the trust
-  model in the command docblocks; ideally check `ndizi_manage_time` when acting on a
-  user other than the current one.
+- [x] **CLI commands have no permission gate and accept `--user`.**
+  `start` and `stop` now check `ndizi_manage_time` when `--user` targets a different
+  user than the caller; updated docblocks document the trust model.
+  ([class-ndizi-cli.php](includes/class-ndizi-cli.php)) _(branch: ndizi/fable-review)_
 
 ## P2 — Architecture (do these while the plugin is still pre-1.0)
 

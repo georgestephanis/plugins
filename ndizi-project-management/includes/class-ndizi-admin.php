@@ -89,7 +89,7 @@ class Ndizi_Admin {
 					)
 				);
 
-				if ( ! is_wp_error( $response ) ) {
+				if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 					$body = json_decode( wp_remote_retrieve_body( $response ), true );
 					if ( isset( $body['refresh_token'] ) ) {
 						update_option( 'ndizi_google_refresh_token', $body['refresh_token'] );

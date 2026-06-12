@@ -33,7 +33,9 @@ class Ndizi_CLI {
 	 * : Description of the work.
 	 *
 	 * [--user=<user_id_or_login>]
-	 * : The user logging the time. Defaults to the first administrator.
+	 * : The user logging the time. Defaults to the current user (or first administrator
+	 *   when running non-interactively). Logging time as another user requires
+	 *   ndizi_manage_time capability.
 	 *
 	 * [--billable=<billable>]
 	 * : Whether the time is billable (1 or 0). Defaults to 1.
@@ -44,15 +46,22 @@ class Ndizi_CLI {
 	 *     wp ndizi time start --project="Website Redesign" --task="Setup WP" --billable=1
 	 */
 	public function start( $args, $assoc_args ) {
-		$project_string = isset( $assoc_args['project'] ) ? sanitize_text_field( $assoc_args['project'] ) : '';
-		$task_string    = isset( $assoc_args['task'] ) ? sanitize_text_field( $assoc_args['task'] ) : '';
-		$description    = isset( $assoc_args['desc'] ) ? sanitize_text_field( $assoc_args['desc'] ) : '';
-		$user_string    = isset( $assoc_args['user'] ) ? sanitize_text_field( $assoc_args['user'] ) : '';
-		$billable       = ! isset( $assoc_args['billable'] ) || (int) $assoc_args['billable'] !== 0;
+		$project_string    = isset( $assoc_args['project'] ) ? sanitize_text_field( $assoc_args['project'] ) : '';
+		$task_string       = isset( $assoc_args['task'] ) ? sanitize_text_field( $assoc_args['task'] ) : '';
+		$description       = isset( $assoc_args['desc'] ) ? sanitize_text_field( $assoc_args['desc'] ) : '';
+		$user_string       = isset( $assoc_args['user'] ) ? sanitize_text_field( $assoc_args['user'] ) : '';
+		$explicit_user_arg = isset( $assoc_args['user'] );
+		$billable          = ! isset( $assoc_args['billable'] ) || (int) $assoc_args['billable'] !== 0;
 
 		$user_id = $this->get_user_id( $user_string );
 		if ( ! $user_id ) {
 			WP_CLI::error( 'Invalid user specified.' );
+		}
+
+		if ( $explicit_user_arg && (int) $user_id !== (int) get_current_user_id() ) {
+			if ( ! current_user_can( 'ndizi_manage_time' ) ) {
+				WP_CLI::error( 'You need the ndizi_manage_time capability to log time on behalf of another user.' );
+			}
 		}
 
 		$project_id = $this->get_project_id( $project_string );
@@ -88,7 +97,8 @@ class Ndizi_CLI {
 	 * ## OPTIONS
 	 *
 	 * [--user=<user_id_or_login>]
-	 * : The user to stop the timer for.
+	 * : The user to stop the timer for. Stopping another user's timer requires
+	 *   ndizi_manage_time capability.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -96,11 +106,18 @@ class Ndizi_CLI {
 	 *     wp ndizi time stop --user=admin
 	 */
 	public function stop( $args, $assoc_args ) {
-		$user_string = isset( $assoc_args['user'] ) ? sanitize_text_field( $assoc_args['user'] ) : '';
+		$user_string       = isset( $assoc_args['user'] ) ? sanitize_text_field( $assoc_args['user'] ) : '';
+		$explicit_user_arg = isset( $assoc_args['user'] );
 
 		$user_id = $this->get_user_id( $user_string );
 		if ( ! $user_id ) {
 			WP_CLI::error( 'Invalid user specified.' );
+		}
+
+		if ( $explicit_user_arg && (int) $user_id !== (int) get_current_user_id() ) {
+			if ( ! current_user_can( 'ndizi_manage_time' ) ) {
+				WP_CLI::error( 'You need the ndizi_manage_time capability to stop another user\'s timer.' );
+			}
 		}
 
 		$active = Ndizi_DB::get_active_timer( $user_id );

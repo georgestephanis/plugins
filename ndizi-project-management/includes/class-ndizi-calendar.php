@@ -58,10 +58,19 @@ class Ndizi_Calendar {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			error_log( 'Ndizi: Google token refresh failed: ' . $response->get_error_message() );
 			return false;
 		}
 
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$http_code = wp_remote_retrieve_response_code( $response );
+		$body      = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $http_code ) {
+			$error = isset( $body['error'] ) ? $body['error'] : $http_code;
+			error_log( 'Ndizi: Google token refresh returned HTTP ' . $http_code . ': ' . $error );
+			return false;
+		}
+
 		if ( isset( $body['access_token'] ) ) {
 			update_option( 'ndizi_google_access_token', $body['access_token'] );
 			if ( isset( $body['expires_in'] ) ) {
@@ -70,6 +79,7 @@ class Ndizi_Calendar {
 			return $body['access_token'];
 		}
 
+		error_log( 'Ndizi: Google token refresh response missing access_token.' );
 		return false;
 	}
 

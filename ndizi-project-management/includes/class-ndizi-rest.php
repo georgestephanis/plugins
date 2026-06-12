@@ -893,7 +893,20 @@ class Ndizi_REST {
 			$session    = $event['data']['object'] ?? array();
 			$invoice_id = isset( $session['client_reference_id'] ) ? intval( $session['client_reference_id'] ) : 0;
 
+			// Async payment methods (e.g. bank transfers) complete the session before funds
+			// actually settle, so payment_status may still be 'unpaid' here. Only act when
+			// payment is confirmed captured.
+			if ( ( $session['payment_status'] ?? '' ) !== 'paid' ) {
+				return new WP_REST_Response( array( 'received' => true ), 200 );
+			}
+
 			if ( $invoice_id && 'ndizi_invoice' === get_post_type( $invoice_id ) ) {
+				// Idempotency: skip if already marked paid so Stripe retries don't
+				// fire ndizi_invoice_paid a second time (duplicate emails/webhooks).
+				if ( 'paid' === get_post_meta( $invoice_id, '_ndizi_invoice_status', true ) ) {
+					return new WP_REST_Response( array( 'received' => true ), 200 );
+				}
+
 				update_post_meta( $invoice_id, '_ndizi_invoice_status', 'paid' );
 				do_action( 'ndizi_invoice_paid', $invoice_id );
 			}
