@@ -43,11 +43,6 @@ class Ndizi_Project_Management {
 	}
 
 	/**
-	 * Get list of active modules
-	 *
-	 * @return array Slugs of active modules.
-	 */
-	/**
 	 * Get the module registry.
 	 *
 	 * @return array[] Declarative module configuration.
@@ -55,8 +50,8 @@ class Ndizi_Project_Management {
 	public static function get_module_registry() {
 		return array(
 			'invoicing'     => array(
-				'name'        => __( 'Stripe Invoicing', 'ndizi-project-management' ),
-				'desc'        => __( 'Enables invoicing capabilities, Stripe checkout integration, and invoice payment webhooks.', 'ndizi-project-management' ),
+				'name'        => __( 'Invoicing & Billing', 'ndizi-project-management' ),
+				'desc'        => __( 'Invoice CPT, printable template, CSV/JSON and QuickBooks exports, and Stripe online payment.', 'ndizi-project-management' ),
 				'includes'    => array(
 					'includes/class-ndizi-invoicing.php',
 				),
@@ -123,14 +118,21 @@ class Ndizi_Project_Management {
 	 * @return array Slugs of active modules.
 	 */
 	public static function get_active_modules() {
-		$default_modules = array_keys( self::get_module_registry() );
-		$active          = get_option( 'ndizi_active_modules', null );
+		$all_modules = array_keys( self::get_module_registry() );
+		$active      = get_option( 'ndizi_active_modules', null );
 
 		if ( null === $active ) {
-			return $default_modules;
+			return $all_modules;
 		}
 
-		return (array) $active;
+		$stored = (array) $active;
+
+		// Auto-activate any registry module keys not present in the stored option.
+		// This ensures newly-added modules (like 'calendar') are on by default for
+		// existing installs whose stored option predates the module's introduction,
+		// matching the fresh-install behaviour without requiring a DB migration.
+		$new_modules = array_diff( $all_modules, $stored );
+		return array_merge( $stored, $new_modules );
 	}
 
 	/**
