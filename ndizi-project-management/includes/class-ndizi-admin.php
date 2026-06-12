@@ -1201,7 +1201,7 @@ class Ndizi_Admin {
 				update_post_meta( $post_id, '_ndizi_project_budget', floatval( $_POST['ndizi_project_budget'] ) );
 			}
 			if ( isset( $_POST['ndizi_project_hourly_rate'] ) ) {
-				update_post_meta( $post_id, '_ndizi_project_hourly_rate', floatval( $_POST['ndizi_project_hourly_rate'] ) );
+				update_post_meta( $post_id, '_ndizi_project_hourly_rate', max( 0.0, floatval( $_POST['ndizi_project_hourly_rate'] ) ) );
 			}
 			if ( isset( $_POST['ndizi_project_status'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_status', sanitize_text_field( wp_unslash( $_POST['ndizi_project_status'] ) ) );
@@ -1226,7 +1226,7 @@ class Ndizi_Admin {
 				update_post_meta( $post_id, '_ndizi_task_due_date', sanitize_text_field( wp_unslash( $_POST['ndizi_task_due_date'] ) ) );
 			}
 			if ( isset( $_POST['ndizi_task_hourly_rate'] ) ) {
-				update_post_meta( $post_id, '_ndizi_task_hourly_rate', floatval( $_POST['ndizi_task_hourly_rate'] ) );
+				update_post_meta( $post_id, '_ndizi_task_hourly_rate', max( 0.0, floatval( $_POST['ndizi_task_hourly_rate'] ) ) );
 			}
 		}
 
@@ -2275,13 +2275,13 @@ class Ndizi_Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
 		if ( isset( $_POST['ndizi_user_billing_rate'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
-			update_user_meta( $user_id, '_ndizi_user_billing_rate', floatval( $_POST['ndizi_user_billing_rate'] ) );
+			update_user_meta( $user_id, '_ndizi_user_billing_rate', max( 0.0, floatval( $_POST['ndizi_user_billing_rate'] ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
 		if ( isset( $_POST['ndizi_user_salary_rate'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress core handles user profile nonce verification.
-			update_user_meta( $user_id, '_ndizi_user_salary_rate', floatval( $_POST['ndizi_user_salary_rate'] ) );
+			update_user_meta( $user_id, '_ndizi_user_salary_rate', max( 0.0, floatval( $_POST['ndizi_user_salary_rate'] ) ) );
 		}
 	}
 }
