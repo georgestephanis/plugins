@@ -10,18 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Ndizi_Notifications {
 
 	/**
-	 * Stash of old meta values captured before update_post_meta writes.
-	 *
-	 * @var array
-	 */
-
-	/**
 	 * Initialize notification hooks
 	 */
 	public static function init() {
 		add_action( 'ndizi_client_submitted_task', array( __CLASS__, 'notify_admin_on_client_task' ), 10, 3 );
-		// Canonical events fired by Ndizi_Webhooks after its own dispatch — avoids
-		// duplicating the old-value capture and meta-key detection in this class.
+		// Canonical events fired by Ndizi_CPTs (which is always loaded)
 		add_action( 'ndizi_task_assigned', array( __CLASS__, 'on_task_assigned' ), 10, 2 );
 		add_action( 'ndizi_task_status_changed', array( __CLASS__, 'on_task_status_changed' ), 10, 3 );
 	}

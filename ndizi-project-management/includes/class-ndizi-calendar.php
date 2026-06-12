@@ -58,6 +58,7 @@ class Ndizi_Calendar {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Ndizi: Google token refresh failed: ' . $response->get_error_message() );
 			return false;
 		}
@@ -67,6 +68,7 @@ class Ndizi_Calendar {
 
 		if ( 200 !== $http_code ) {
 			$error = isset( $body['error'] ) ? $body['error'] : $http_code;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( 'Ndizi: Google token refresh returned HTTP ' . $http_code . ': ' . $error );
 			return false;
 		}
@@ -79,6 +81,7 @@ class Ndizi_Calendar {
 			return $body['access_token'];
 		}
 
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		error_log( 'Ndizi: Google token refresh response missing access_token.' );
 		return false;
 	}
@@ -120,7 +123,7 @@ class Ndizi_Calendar {
 		}
 
 		$start_date = $due_date;
-		$end_date   = date( 'Y-m-d', strtotime( $due_date . ' +1 day' ) ); // Exclusive.
+		$end_date   = gmdate( 'Y-m-d', strtotime( $due_date . ' +1 day' ) ); // Exclusive.
 
 		$project_id    = get_post_meta( $post_id, '_ndizi_project_id', true );
 		$project_title = $project_id ? get_the_title( $project_id ) : '';

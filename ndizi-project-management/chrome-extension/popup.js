@@ -71,12 +71,24 @@
 				// Migration of legacy single site credentials.
 				// Validate authHeader is a non-empty Basic token before migrating.
 				const legacyAuthHeader = typeof data.authHeader === 'string' ? data.authHeader.trim() : '';
+				let isAuthHeaderValid = false;
+				if ( legacyAuthHeader && /^Basic [A-Za-z0-9+/]+=*$/.test( legacyAuthHeader ) ) {
+					try {
+						const encodedCreds = legacyAuthHeader.substring( 6 );
+						const decodedCreds = atob( encodedCreds );
+						if ( decodedCreds.includes( ':' ) ) {
+							isAuthHeaderValid = true;
+						}
+					} catch ( e ) {
+						isAuthHeaderValid = false;
+					}
+				}
+
 				if (
 					currentSites.length === 0 &&
 					data.wpUrl &&
 					data.username &&
-					legacyAuthHeader &&
-					/^Basic [A-Za-z0-9+/]+=*$/.test( legacyAuthHeader )
+					isAuthHeaderValid
 				) {
 					const legacySite = {
 						wpUrl: data.wpUrl,

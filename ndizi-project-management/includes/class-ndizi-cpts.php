@@ -10,12 +10,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Ndizi_CPTs {
 
 	/**
+	 * Stash of old meta values captured before update_post_meta writes.
+	 *
+	 * @var array
+	 */
+	private static $prev_meta_values = array();
+
+	/**
 	 * Initialize custom post types and taxonomies
 	 */
 	public static function init() {
 		self::register_post_types();
 		self::register_metadata();
 		add_filter( 'use_block_editor_for_post_type', array( __CLASS__, 'disable_block_editor' ), 10, 2 );
+
+		// Meta updates (Assignments and Statuses) to fire canonical events
+		add_action( 'added_post_meta', array( __CLASS__, 'handle_added_post_meta' ), 10, 4 );
+		add_filter( 'update_post_metadata', array( __CLASS__, 'capture_old_task_meta' ), 10, 3 );
+		add_action( 'updated_post_meta', array( __CLASS__, 'handle_updated_post_meta' ), 10, 4 );
 	}
 
 	/**
@@ -654,5 +666,70 @@ class Ndizi_CPTs {
 		}
 
 		return $use_block_editor;
+	}
+
+	/**
+	 * Cache the current meta value before it is overwritten.
+	 *
+	 * @param mixed  $check      Whether to bypass filtering metadata.
+	 * @param int    $object_id  Object ID.
+	 * @param string $meta_key   Meta key.
+	 * @return mixed
+	 */
+	public static function capture_old_task_meta( $check, $object_id, $meta_key ) {
+		if ( in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
+			self::$prev_meta_values[ $object_id . ':' . $meta_key ] = get_post_meta( $object_id, $meta_key, true );
+		}
+		return $check;
+	}
+
+	/**
+	 * Handler for added_post_meta
+	 */
+	public static function handle_added_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
+		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
+			return;
+		}
+		self::handle_meta_change( $object_id, $meta_key, $_meta_value );
+	}
+
+	/**
+	 * Handler for updated_post_meta
+	 */
+	public static function handle_updated_post_meta( $_mid, $object_id, $meta_key, $_meta_value ) {
+		if ( ! in_array( $meta_key, array( '_ndizi_assigned_user_id', '_ndizi_task_status', '_ndizi_invoice_status' ), true ) ) {
+			return;
+		}
+
+		$cache_key = $object_id . ':' . $meta_key;
+		$old_value = isset( self::$prev_meta_values[ $cache_key ] ) ? self::$prev_meta_values[ $cache_key ] : '';
+		unset( self::$prev_meta_values[ $cache_key ] );
+
+		if ( $_meta_value === $old_value ) {
+			return;
+		}
+		self::handle_meta_change( $object_id, $meta_key, $_meta_value, $old_value );
+	}
+
+	/**
+	 * Process meta updates to dispatch core actions
+	 */
+	private static function handle_meta_change( $object_id, $meta_key, $new_val, $old_val = '' ) {
+		$post_type = get_post_type( $object_id );
+
+		if ( 'ndizi_task' === $post_type ) {
+			if ( '_ndizi_assigned_user_id' === $meta_key ) {
+				$assignee_id = intval( $new_val );
+				if ( $assignee_id > 0 ) {
+					do_action( 'ndizi_task_assigned', $object_id, $assignee_id );
+				}
+			} elseif ( '_ndizi_task_status' === $meta_key ) {
+				do_action( 'ndizi_task_status_changed', $object_id, $new_val, $old_val );
+			}
+		} elseif ( 'ndizi_invoice' === $post_type ) {
+			if ( '_ndizi_invoice_status' === $meta_key ) {
+				do_action( 'ndizi_invoice_status_changed', $object_id, $new_val, $old_val );
+			}
+		}
 	}
 }

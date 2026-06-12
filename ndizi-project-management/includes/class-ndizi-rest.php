@@ -301,8 +301,9 @@ class Ndizi_REST {
 				array(
 					'post_type'      => 'ndizi_task',
 					'post_status'    => 'publish',
-					'posts_per_page' => -1,
+					'posts_per_page' => 1,
 					'fields'         => 'ids',
+					'no_found_rows'  => true,
 					'meta_query'     => array(
 						array(
 							'key'   => '_ndizi_project_id',
@@ -406,13 +407,10 @@ class Ndizi_REST {
 			$args['post__in'] = $project_ids;
 		}
 
-		$count_args                    = $args;
-		$count_args['posts_per_page'] = -1;
-		$count_args['fields']         = 'ids';
-		$total                        = count( get_posts( $count_args ) );
-		$total_pages                  = $per_page > 0 ? (int) ceil( $total / $per_page ) : 1;
-
-		$projects = get_posts( $args );
+		$query       = new WP_Query( $args );
+		$projects    = $query->posts;
+		$total       = (int) $query->found_posts;
+		$total_pages = (int) $query->max_num_pages;
 
 		if ( ! empty( $projects ) ) {
 			$project_ids = wp_list_pluck( $projects, 'ID' );
@@ -491,7 +489,10 @@ class Ndizi_REST {
 			);
 		}
 
-		$tasks = get_posts( $args );
+		$query       = new WP_Query( $args );
+		$tasks       = $query->posts;
+		$total       = (int) $query->found_posts;
+		$total_pages = (int) $query->max_num_pages;
 
 		if ( ! empty( $tasks ) ) {
 			$task_ids = wp_list_pluck( $tasks, 'ID' );
@@ -511,12 +512,6 @@ class Ndizi_REST {
 				_prime_post_caches( $project_ids );
 			}
 		}
-
-		$count_args                    = $args;
-		$count_args['posts_per_page'] = -1;
-		$count_args['fields']         = 'ids';
-		$total                        = count( get_posts( $count_args ) );
-		$total_pages                  = $per_page > 0 ? (int) ceil( $total / $per_page ) : 1;
 
 		$response = array();
 		foreach ( $tasks as $task ) {
@@ -578,7 +573,8 @@ class Ndizi_REST {
 
 		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
 		if ( is_wp_error( $access ) ) {
-			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), 403 );
+			$status_code = in_array( $access->get_error_code(), array( 'invalid_project', 'invalid_task' ), true ) ? 400 : 403;
+			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), $status_code );
 		}
 
 		if ( Ndizi_DB::is_date_locked( current_time( 'mysql', true ) ) ) {
@@ -641,7 +637,8 @@ class Ndizi_REST {
 
 		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
 		if ( is_wp_error( $access ) ) {
-			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), 403 );
+			$status_code = in_array( $access->get_error_code(), array( 'invalid_project', 'invalid_task' ), true ) ? 400 : 403;
+			return new WP_REST_Response( array( 'error' => $access->get_error_message() ), $status_code );
 		}
 
 		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;

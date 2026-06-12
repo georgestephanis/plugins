@@ -466,7 +466,7 @@ class Ndizi_Admin {
 				<div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;">
 					<h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;"><?php esc_html_e( 'Views & Reports', 'ndizi-project-management' ); ?></h2>
 					<div style="display: flex; flex-direction: column; gap: 10px;">
-						<a href="#" onclick="window.open('<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>', 'ndizi_tracker', 'width=380,height=640,resizable=yes,scrollbars=yes'); return false;" class="ndizi-qa-link-yellow" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);">
+						<a href="#" class="ndizi-qa-link-yellow ndizi-launch-tracker" data-tracker-url="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-tracker-standalone' ) ); ?>" style="display: block; background: #eab308; color: #0f172a; text-align: center; font-weight: 700; padding: 12px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.15);">
 							<span class="dashicons dashicons-external" style="margin-right: 6px; vertical-align: middle; font-size: 18px; width: 18px; height: 18px; color: #0f172a;"></span>
 							<?php esc_html_e( 'Launch Standalone Tracker', 'ndizi-project-management' ); ?>
 						</a>
@@ -2591,10 +2591,10 @@ class Ndizi_Admin {
 					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ); ?></p>
 
 					<?php
-					$google_cid         = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
-					$google_cid_locked  = defined( 'NDIZI_GOOGLE_CLIENT_ID' );
-					$google_secret      = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
-					$google_sec_locked  = defined( 'NDIZI_GOOGLE_CLIENT_SECRET' );
+					$google_cid        = Ndizi_Project_Management::get_secret( 'ndizi_google_client_id' );
+					$google_cid_locked = defined( 'NDIZI_GOOGLE_CLIENT_ID' );
+					$google_secret     = Ndizi_Project_Management::get_secret( 'ndizi_google_client_secret' );
+					$google_sec_locked = defined( 'NDIZI_GOOGLE_CLIENT_SECRET' );
 					?>
 					<div style="margin-bottom: 20px;">
 						<label for="ndizi_google_client_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Google Client ID', 'ndizi-project-management' ); ?></label>
@@ -2663,7 +2663,7 @@ class Ndizi_Admin {
 						$feed_url = home_url( '/wp-json/ndizi/v1/calendar/ical?token=' . $feed_token );
 						?>
 						<label style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'iCal Subscription URL', 'ndizi-project-management' ); ?></label>
-						<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" onclick="this.select();">
+						<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" class="ndizi-select-on-click">
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Subscribe to this feed URL in Google Calendar, Apple Calendar, or Outlook to view project milestones and task due dates.', 'ndizi-project-management' ); ?></p>
 					</div>
 
