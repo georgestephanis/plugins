@@ -712,14 +712,12 @@ class Ndizi_REST {
 
 		$token = $request->get_param( 'token' );
 		if ( $token ) {
-			$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
-			if ( $project_id ) {
-				$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
-				if ( $client_id ) {
-					$expected_token = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
-					if ( $expected_token && hash_equals( $expected_token, $token ) ) {
-						return true;
-					}
+			$token_client_id = Ndizi_Portal::get_client_id_by_token( $token );
+			if ( $token_client_id ) {
+				$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+				$client_id  = $project_id ? get_post_meta( $project_id, '_ndizi_client_id', true ) : 0;
+				if ( $client_id && (int) $client_id === (int) $token_client_id ) {
+					return true;
 				}
 			}
 		}
@@ -936,20 +934,9 @@ class Ndizi_REST {
 			$is_admin_feed = true;
 		} else {
 			// Check if token matches a client.
-			$clients = get_posts(
-				array(
-					'post_type'      => 'ndizi_client',
-					'posts_per_page' => 1,
-					'meta_query'     => array(
-						array(
-							'key'   => '_ndizi_client_auth_key',
-							'value' => $token,
-						),
-					),
-				)
-			);
-			if ( ! empty( $clients ) ) {
-				$client_id = $clients[0]->ID;
+			$found = Ndizi_Portal::get_client_id_by_token( $token );
+			if ( $found ) {
+				$client_id = $found;
 			}
 		}
 

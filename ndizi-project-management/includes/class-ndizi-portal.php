@@ -173,12 +173,15 @@ class Ndizi_Portal {
 	}
 
 	/**
-	 * Helper: Query client by auth key
+	 * Look up a client by its portal auth token.
+	 *
+	 * Centralised here so every code path (portal pages, REST invoice payment,
+	 * iCal feed) shares one implementation and one place to change.
 	 *
 	 * @param string $token Portal auth key supplied by the visitor.
 	 * @return int|false Client post ID, or false if not found.
 	 */
-	private static function get_client_id_by_token( $token ) {
+	public static function get_client_id_by_token( $token ) {
 		if ( empty( $token ) ) {
 			return false;
 		}

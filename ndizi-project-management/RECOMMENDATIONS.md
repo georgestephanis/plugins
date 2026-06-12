@@ -102,14 +102,14 @@ _Last full review: 2026-06-12 (Claude Code, full-plugin review at 1.0.0-alpha)._
   standalone tracker and chrome extension). Extract a shared `src/shared/timer.js`
   module; webpack already supports it.
 
-- [ ] **Decouple portal-token authentication into one helper.** Client-token validation
-  logic exists in `Ndizi_Portal::get_authenticated_client_id()`, in
-  `Ndizi_REST::check_invoice_pay_permission()`
-  ([class-ndizi-rest.php:635-660](includes/class-ndizi-rest.php#L635-L660)), and in the
-  iCal feed's meta-query lookup ([class-ndizi-rest.php:856-873](includes/class-ndizi-rest.php#L856-L873)).
-  One `Ndizi_Client_Auth::validate_token( $token )` used everywhere; also consider a
-  separate per-client *calendar* token so the portal credential isn't reused in
-  long-lived iCal subscription URLs, plus an admin UI to rotate keys.
+- [x] **Decouple portal-token authentication into one helper.**
+  Made `Ndizi_Portal::get_client_id_by_token()` public (was private). Replaced the
+  inline `get_posts` meta-query in the iCal feed and the manual
+  get_post_meta/hash_equals chain in `check_invoice_pay_permission()` with calls to
+  this shared method. All three lookup paths now go through one function.
+  A separate calendar token and admin key-rotation UI remain future work.
+  ([class-ndizi-portal.php](includes/class-ndizi-portal.php), [class-ndizi-rest.php](includes/class-ndizi-rest.php))
+  _(branch: ndizi/fable-review)_
 
 - [ ] **Support defining secrets as constants.** Stripe secret/webhook keys and Google
   client secret + refresh token live unencrypted in `wp_options`. Standard WP practice:
