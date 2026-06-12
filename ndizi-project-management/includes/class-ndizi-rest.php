@@ -245,6 +245,10 @@ class Ndizi_REST {
 			)
 		);
 
+		if ( ! empty( $tasks ) ) {
+			update_meta_cache( 'post', $tasks );
+		}
+
 		$project_ids = array();
 		foreach ( $tasks as $task_id ) {
 			$project_id = (int) get_post_meta( $task_id, '_ndizi_project_id', true );
