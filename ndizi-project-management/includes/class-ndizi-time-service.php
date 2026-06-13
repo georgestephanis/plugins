@@ -76,15 +76,25 @@ class Ndizi_Time_Service {
 	 *
 	 * Validates project/task access and the date-lock guard before inserting.
 	 *
-	 * @param int    $user_id     User logging the time.
-	 * @param int    $project_id  Project post ID.
-	 * @param int    $task_id     Task post ID (0 = general).
-	 * @param string $description Work description.
-	 * @param int    $billable    1 = billable, 0 = non-billable.
+	 * @param int   $user_id    User logging the time.
+	 * @param int   $project_id Project post ID.
+	 * @param array $args       {
+	 *     Optional. Array of arguments.
+	 *     @type int    $task_id     Task post ID (0 = general).
+	 *     @type string $description Work description.
+	 *     @type int    $billable    1 = billable, 0 = non-billable.
+	 * }
 	 * @return int|WP_Error New timer entry ID on success, WP_Error on failure.
 	 */
-	public static function start_timer( $user_id, $project_id, $task_id, $description, $billable ) {
-		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
+	public static function start_timer( $user_id, $project_id, $args = array() ) {
+		$defaults = array(
+			'task_id'     => 0,
+			'description' => '',
+			'billable'    => 1,
+		);
+		$args     = wp_parse_args( $args, $defaults );
+
+		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id );
 		if ( is_wp_error( $access ) ) {
 			return $access;
 		}
@@ -104,7 +114,7 @@ class Ndizi_Time_Service {
 			}
 		}
 
-		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $task_id, $description, $billable );
+		$timer_id = Ndizi_DB::start_timer( $user_id, $project_id, $args );
 		if ( ! $timer_id ) {
 			return new WP_Error( 'db_error', __( 'Failed to start timer.', 'ndizi-project-management' ) );
 		}
@@ -142,31 +152,56 @@ class Ndizi_Time_Service {
 	 *
 	 * Validates project/task access, duration, and the date-lock guard.
 	 *
-	 * @param int    $user_id     User logging the time.
-	 * @param int    $project_id  Project post ID.
-	 * @param int    $task_id     Task post ID (0 = general).
-	 * @param string $description Work description.
-	 * @param int    $duration    Duration in seconds (must be > 0).
-	 * @param int    $billable    1 = billable, 0 = non-billable.
-	 * @param string $start_time  UTC datetime string; defaults to now.
+	 * @param int   $user_id    User logging the time.
+	 * @param int   $project_id Project post ID.
+	 * @param array $args       {
+	 *     Optional. Array of arguments.
+	 *     @type int    $task_id     Task post ID (0 = general).
+	 *     @type string $description Work description.
+	 *     @type int    $duration    Duration in seconds (must be > 0).
+	 *     @type int    $billable    1 = billable, 0 = non-billable.
+	 *     @type string $start_time  UTC datetime string; defaults to now.
+	 *     @type string $end_time    UTC datetime string; optional.
+	 * }
 	 * @return int|WP_Error New entry ID on success, WP_Error on failure.
 	 */
-	public static function log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time = '' ) {
-		$access = self::validate_time_project_access( $project_id, $task_id, $user_id );
+	public static function log_time_manual( $user_id, $project_id, $args = array() ) {
+		$defaults = array(
+			'task_id'     => 0,
+			'description' => '',
+			'duration'    => 0,
+			'billable'    => 1,
+			'start_time'  => '',
+			'end_time'    => '',
+		);
+		$args     = wp_parse_args( $args, $defaults );
+
+		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id );
 		if ( is_wp_error( $access ) ) {
 			return $access;
 		}
 
-		if ( $duration <= 0 ) {
+		if ( $args['duration'] <= 0 ) {
 			return new WP_Error( 'invalid_duration', __( 'Duration must be greater than zero.', 'ndizi-project-management' ) );
 		}
 
-		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
+		if ( ! empty( $args['start_time'] ) ) {
+			$check_time = $args['start_time'];
+		} elseif ( ! empty( $args['end_time'] ) ) {
+			$end_ts     = strtotime( $args['end_time'] );
+			$duration   = max( 0, intval( $args['duration'] ) );
+			$check_time = gmdate( 'Y-m-d H:i:s', $end_ts - $duration );
+		} else {
+			$now_ts     = time();
+			$duration   = max( 0, intval( $args['duration'] ) );
+			$check_time = gmdate( 'Y-m-d H:i:s', $now_ts - $duration );
+		}
+
 		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
 			return new WP_Error( 'date_locked', __( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' ) );
 		}
 
-		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time );
+		$entry_id = Ndizi_DB::log_time_manual( $user_id, $project_id, $args );
 		if ( ! $entry_id ) {
 			return new WP_Error( 'db_error', __( 'Failed to log time.', 'ndizi-project-management' ) );
 		}

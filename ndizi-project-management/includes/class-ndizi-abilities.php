@@ -540,7 +540,15 @@ class Ndizi_Abilities {
 		$description = isset( $input['description'] ) ? sanitize_text_field( $input['description'] ) : '';
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 
-		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable ? 1 : 0 );
+		$timer_id = Ndizi_Time_Service::start_timer(
+			$user_id,
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'billable'    => $billable ? 1 : 0,
+			)
+		);
 		if ( is_wp_error( $timer_id ) ) {
 			return $timer_id;
 		}
@@ -602,8 +610,20 @@ class Ndizi_Abilities {
 		$duration    = intval( $input['duration'] );
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 		$start_time  = isset( $input['start_time'] ) ? sanitize_text_field( $input['start_time'] ) : '';
+		$end_time    = isset( $input['end_time'] ) ? sanitize_text_field( $input['end_time'] ) : '';
 
-		$entry_id = Ndizi_Time_Service::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable ? 1 : 0, $start_time );
+		$entry_id = Ndizi_Time_Service::log_time_manual(
+			$user_id,
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'duration'    => $duration,
+				'billable'    => $billable ? 1 : 0,
+				'start_time'  => $start_time,
+				'end_time'    => $end_time,
+			)
+		);
 		if ( is_wp_error( $entry_id ) ) {
 			return $entry_id;
 		}

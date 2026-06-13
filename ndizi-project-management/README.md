@@ -94,6 +94,85 @@ All modules default to **active** on a fresh install; no configuration required 
 
 ## Technical Architecture
 
+### Entity Relationships & Time Assignment
+
+The entity diagram below represents how relational entities connect in Ndizi. A Client acts as a top-level container for multiple Projects, which in turn contain Tasks and Invoices. 
+
+Time Entries are logged to a high-efficiency custom SQL database table (`wp_ndizi_time_entries`). Every time entry **must** be assigned directly to a **Project** (which transitively links it to the parent **Client**). A time entry can optionally be assigned to a specific **Task** for granular tracking, and once billed, can be linked to an **Invoice**.
+
+```mermaid
+erDiagram
+    CLIENT ||--o{ PROJECT : contains
+    PROJECT ||--o{ TASK : contains
+    PROJECT ||--o{ INVOICE : invoices
+    PROJECT ||--o{ TIME_ENTRY : "tracks time against"
+    TASK ||--o{ TIME_ENTRY : "tracks time against (optional)"
+    INVOICE ||--o{ TIME_ENTRY : "groups (optional)"
+    USER ||--o{ TIME_ENTRY : logs
+    USER ||--o{ TASK : "assigned to"
+```
+
+### Time Tracking Data Flow
+
+All time-tracking write operations (timer starts, stops, or manual logs) route through a centralized service and validation layer. This ensures consistent business rules (access checks, status checks, date locking) before writing to the database and firing standard WordPress action hooks:
+
+```mermaid
+flowchart TD
+    subgraph Invocations ["Time-Entry Triggers"]
+        rest["REST API Endpoints"]
+        ajax["Admin AJAX Handlers"]
+        ab["Admin Bar Panels"]
+        cli["WP-CLI Commands"]
+        ability["WordPress Abilities"]
+    end
+
+    subgraph ServiceLayer ["Service & Validation Layer"]
+        service["Ndizi_Time_Service"]
+        access_check{"validate_time_project_access"}
+        lock_check{"is_date_locked"}
+    end
+
+    subgraph DBLayer ["Database Layer"]
+        db["Ndizi_DB"]
+        sql[("wp_ndizi_time_entries")]
+    end
+
+    subgraph EventDispatcher ["WordPress Action Hooks"]
+        started_hook["ndizi_timer_started"]
+        logged_hook["ndizi_time_logged"]
+    end
+
+    subgraph Consumers ["Active Listeners / Integrations"]
+        webhooks["Ndizi_Webhooks"]
+        calendar["Ndizi_Calendar"]
+        notifications["Ndizi_Notifications"]
+    end
+
+    rest --> service
+    ajax --> service
+    ab --> service
+    cli --> service
+    ability --> service
+
+    service --> access_check
+    service --> lock_check
+
+    access_check -- "Approved" --> db
+    lock_check -- "Not Locked" --> db
+
+    db --> sql
+
+    db -- "Fires Actions" --> started_hook
+    db -- "Fires Actions" --> logged_hook
+
+    started_hook --> webhooks
+    started_hook --> calendar
+    
+    logged_hook --> webhooks
+    logged_hook --> calendar
+    logged_hook --> notifications
+```
+
 ### 1. Database Schema (`wp_ndizi_time_entries`)
 
 Transactional logs are recorded in a dedicated table to prevent `wp_posts` database bloat:

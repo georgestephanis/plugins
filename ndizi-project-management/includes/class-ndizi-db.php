@@ -69,9 +69,16 @@ class Ndizi_DB {
 	/**
 	 * Start a running timer
 	 */
-	public static function start_timer( $user_id, $project_id, $task_id = 0, $description = '', $billable = 1 ) {
+	public static function start_timer( $user_id, $project_id, $args = array() ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
+
+		$defaults = array(
+			'task_id'     => 0,
+			'description' => '',
+			'billable'    => 1,
+		);
+		$args     = wp_parse_args( $args, $defaults );
 
 		if ( self::is_date_locked( current_time( 'mysql', true ) ) ) {
 			return false;
@@ -86,13 +93,13 @@ class Ndizi_DB {
 			$table_name,
 			array(
 				'project_id'  => $project_id,
-				'task_id'     => $task_id,
+				'task_id'     => intval( $args['task_id'] ),
 				'user_id'     => $user_id,
-				'description' => sanitize_text_field( $description ),
+				'description' => sanitize_text_field( $args['description'] ),
 				'start_time'  => $now,
 				'end_time'    => null,
 				'duration'    => 0,
-				'billable'    => $billable ? 1 : 0,
+				'billable'    => $args['billable'] ? 1 : 0,
 				'invoice_id'  => 0,
 				'created_at'  => $now,
 				'updated_at'  => $now,
@@ -102,7 +109,7 @@ class Ndizi_DB {
 
 		if ( $result ) {
 			$insert_id = $wpdb->insert_id;
-			do_action( 'ndizi_timer_started', $insert_id, $user_id, $project_id, $task_id, $description, $billable );
+			do_action( 'ndizi_timer_started', $insert_id, $user_id, $project_id, $args );
 			return $insert_id;
 		}
 
@@ -153,24 +160,37 @@ class Ndizi_DB {
 	/**
 	 * Log a manual time entry with explicit duration
 	 */
-	public static function log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time = '', $end_time = '' ) {
+	public static function log_time_manual( $user_id, $project_id, $args = array() ) {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
-		$check_time = empty( $start_time ) ? current_time( 'mysql', true ) : $start_time;
-		if ( self::is_date_locked( $check_time ) ) {
-			return false;
-		}
+		$defaults = array(
+			'task_id'     => 0,
+			'description' => '',
+			'duration'    => 0,
+			'billable'    => 1,
+			'start_time'  => '',
+			'end_time'    => '',
+		);
+		$args     = wp_parse_args( $args, $defaults );
 
 		// All timestamps stored in UTC.
 		$now_ts = time();
 		$now    = gmdate( 'Y-m-d H:i:s', $now_ts );
 
 		// If start/end times aren't provided, estimate them based on duration
-		if ( empty( $start_time ) ) {
+		$start_time = $args['start_time'];
+		$end_time   = $args['end_time'];
+		$duration   = $args['duration'];
+
+		if ( empty( $start_time ) && empty( $end_time ) ) {
 			$duration_sec = intval( $duration );
 			$start_time   = gmdate( 'Y-m-d H:i:s', $now_ts - $duration_sec );
 			$end_time     = $now;
+		} elseif ( empty( $start_time ) ) {
+			$duration_sec = intval( $duration );
+			$end_ts       = strtotime( $end_time );
+			$start_time   = gmdate( 'Y-m-d H:i:s', $end_ts - $duration_sec );
 		} elseif ( empty( $end_time ) ) {
 			$duration_sec = intval( $duration );
 			$start_ts     = strtotime( $start_time );
@@ -180,17 +200,21 @@ class Ndizi_DB {
 			$duration = strtotime( $end_time ) - strtotime( $start_time );
 		}
 
+		if ( self::is_date_locked( $start_time ) ) {
+			return false;
+		}
+
 		$result = $wpdb->insert(
 			$table_name,
 			array(
 				'project_id'  => $project_id,
-				'task_id'     => $task_id,
+				'task_id'     => intval( $args['task_id'] ),
 				'user_id'     => $user_id,
-				'description' => sanitize_text_field( $description ),
+				'description' => sanitize_text_field( $args['description'] ),
 				'start_time'  => $start_time,
 				'end_time'    => $end_time,
 				'duration'    => max( 0, intval( $duration ) ),
-				'billable'    => $billable ? 1 : 0,
+				'billable'    => $args['billable'] ? 1 : 0,
 				'invoice_id'  => 0,
 				'created_at'  => $now,
 				'updated_at'  => $now,
@@ -199,8 +223,11 @@ class Ndizi_DB {
 		);
 
 		if ( $result ) {
-			$insert_id = $wpdb->insert_id;
-			do_action( 'ndizi_time_logged', $insert_id, $user_id, $project_id, $task_id, $description, $duration, $billable );
+			$insert_id          = $wpdb->insert_id;
+			$args['start_time'] = $start_time;
+			$args['end_time']   = $end_time;
+			$args['duration']   = max( 0, intval( $duration ) );
+			do_action( 'ndizi_time_logged', $insert_id, $user_id, $project_id, $args );
 			return $insert_id;
 		}
 

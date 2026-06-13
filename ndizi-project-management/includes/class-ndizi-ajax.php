@@ -82,7 +82,15 @@ class Ndizi_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi-project-management' ) ) );
 		}
 
-		$timer_id = Ndizi_Time_Service::start_timer( get_current_user_id(), $project_id, $task_id, $description, $billable );
+		$timer_id = Ndizi_Time_Service::start_timer(
+			get_current_user_id(),
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'billable'    => $billable,
+			)
+		);
 		if ( is_wp_error( $timer_id ) ) {
 			wp_send_json_error( array( 'message' => $timer_id->get_error_message() ) );
 		}
