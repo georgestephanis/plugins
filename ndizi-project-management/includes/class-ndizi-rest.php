@@ -14,6 +14,34 @@ class Ndizi_REST {
 	 */
 	public static function init() {
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+		add_action( 'admin_init', array( __CLASS__, 'register_core_data_entities' ) );
+		add_action( 'template_redirect', array( __CLASS__, 'register_core_data_entities' ) );
+	}
+
+	/**
+	 * Register custom entities with core data.
+	 *
+	 * This will allow us to use WP convenience methods, such as `useEntityRecords`.
+	 */
+	public static function register_core_data_entities() {
+		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
+			return;
+		}
+
+		wp_add_inline_script(
+			'wp-core-data',
+			"wp.data.dispatch( 'core' ).addEntities( [
+				{
+					name: 'time-entry',
+					plural: 'time-entries',
+					label: '" . esc_js( __( 'Time Entries', 'ndizi-project-management' ) ) . "',
+					kind: 'ndizi',
+					baseURL: '/ndizi/v1/time',
+					baseURLParams: { context: 'edit' },
+				}
+			] );",
+			'after'
+		);
 	}
 
 	/**
