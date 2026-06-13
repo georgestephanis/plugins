@@ -610,6 +610,7 @@ class Ndizi_Abilities {
 		$duration    = intval( $input['duration'] );
 		$billable    = isset( $input['billable'] ) ? (bool) $input['billable'] : true;
 		$start_time  = isset( $input['start_time'] ) ? sanitize_text_field( $input['start_time'] ) : '';
+		$end_time    = isset( $input['end_time'] ) ? sanitize_text_field( $input['end_time'] ) : '';
 
 		$entry_id = Ndizi_Time_Service::log_time_manual(
 			$user_id,
@@ -620,6 +621,7 @@ class Ndizi_Abilities {
 				'duration'    => $duration,
 				'billable'    => $billable ? 1 : 0,
 				'start_time'  => $start_time,
+				'end_time'    => $end_time,
 			)
 		);
 		if ( is_wp_error( $entry_id ) ) {

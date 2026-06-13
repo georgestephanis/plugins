@@ -174,11 +174,6 @@ class Ndizi_DB {
 		);
 		$args     = wp_parse_args( $args, $defaults );
 
-		$check_time = empty( $args['start_time'] ) ? current_time( 'mysql', true ) : $args['start_time'];
-		if ( self::is_date_locked( $check_time ) ) {
-			return false;
-		}
-
 		// All timestamps stored in UTC.
 		$now_ts = time();
 		$now    = gmdate( 'Y-m-d H:i:s', $now_ts );
@@ -188,10 +183,14 @@ class Ndizi_DB {
 		$end_time   = $args['end_time'];
 		$duration   = $args['duration'];
 
-		if ( empty( $start_time ) ) {
+		if ( empty( $start_time ) && empty( $end_time ) ) {
 			$duration_sec = intval( $duration );
 			$start_time   = gmdate( 'Y-m-d H:i:s', $now_ts - $duration_sec );
 			$end_time     = $now;
+		} elseif ( empty( $start_time ) ) {
+			$duration_sec = intval( $duration );
+			$end_ts       = strtotime( $end_time );
+			$start_time   = gmdate( 'Y-m-d H:i:s', $end_ts - $duration_sec );
 		} elseif ( empty( $end_time ) ) {
 			$duration_sec = intval( $duration );
 			$start_ts     = strtotime( $start_time );
@@ -199,6 +198,10 @@ class Ndizi_DB {
 		} else {
 			// Both are provided, make sure duration matches the difference
 			$duration = strtotime( $end_time ) - strtotime( $start_time );
+		}
+
+		if ( self::is_date_locked( $start_time ) ) {
+			return false;
 		}
 
 		$result = $wpdb->insert(

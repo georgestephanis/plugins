@@ -673,6 +673,7 @@ foreach ( $time_entries as $entry ) {
 			'duration'    => $duration,
 			'billable'    => $entry['billable'],
 			'start_time'  => $entry['start_time'],
+			'end_time'    => $entry['end_time'],
 		)
 	);
 

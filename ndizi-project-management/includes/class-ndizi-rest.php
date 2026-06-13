@@ -159,6 +159,10 @@ class Ndizi_REST {
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_text_field',
 					),
+					'end_time'    => array(
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
 				),
 			)
 		);
@@ -586,6 +590,7 @@ class Ndizi_REST {
 		$duration    = $request->get_param( 'duration' ); // in seconds
 		$billable    = $request->get_param( 'billable' );
 		$start_time  = $request->get_param( 'start_time' );
+		$end_time    = $request->get_param( 'end_time' );
 
 		$entry_id = Ndizi_Time_Service::log_time_manual(
 			$user_id,
@@ -596,6 +601,7 @@ class Ndizi_REST {
 				'duration'    => $duration,
 				'billable'    => $billable,
 				'start_time'  => $start_time,
+				'end_time'    => $end_time,
 			)
 		);
 		if ( is_wp_error( $entry_id ) ) {

@@ -161,6 +161,7 @@ class Ndizi_Time_Service {
 	 *     @type int    $duration    Duration in seconds (must be > 0).
 	 *     @type int    $billable    1 = billable, 0 = non-billable.
 	 *     @type string $start_time  UTC datetime string; defaults to now.
+	 *     @type string $end_time    UTC datetime string; optional.
 	 * }
 	 * @return int|WP_Error New entry ID on success, WP_Error on failure.
 	 */
@@ -171,6 +172,7 @@ class Ndizi_Time_Service {
 			'duration'    => 0,
 			'billable'    => 1,
 			'start_time'  => '',
+			'end_time'    => '',
 		);
 		$args     = wp_parse_args( $args, $defaults );
 
@@ -183,7 +185,18 @@ class Ndizi_Time_Service {
 			return new WP_Error( 'invalid_duration', __( 'Duration must be greater than zero.', 'ndizi-project-management' ) );
 		}
 
-		$check_time = empty( $args['start_time'] ) ? current_time( 'mysql', true ) : $args['start_time'];
+		if ( ! empty( $args['start_time'] ) ) {
+			$check_time = $args['start_time'];
+		} elseif ( ! empty( $args['end_time'] ) ) {
+			$end_ts     = strtotime( $args['end_time'] );
+			$duration   = max( 0, intval( $args['duration'] ) );
+			$check_time = gmdate( 'Y-m-d H:i:s', $end_ts - $duration );
+		} else {
+			$now_ts     = time();
+			$duration   = max( 0, intval( $args['duration'] ) );
+			$check_time = gmdate( 'Y-m-d H:i:s', $now_ts - $duration );
+		}
+
 		if ( Ndizi_DB::is_date_locked( $check_time ) ) {
 			return new WP_Error( 'date_locked', __( 'Cannot log time. The target start date is locked.', 'ndizi-project-management' ) );
 		}
