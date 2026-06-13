@@ -663,14 +663,15 @@ $time_entries = array(
 );
 
 foreach ( $time_entries as $entry ) {
-	$result = Ndizi_Time_Service::log_time_manual(
+	$duration = strtotime( $entry['end_time'] ) - strtotime( $entry['start_time'] );
+	$result   = Ndizi_Time_Service::log_time_manual(
 		$entry['user_id'],
 		$entry['project_id'],
 		$entry['task_id'],
-		$entry['start_time'],
-		$entry['end_time'],
 		$entry['description'],
-		$entry['billable']
+		$duration,
+		$entry['billable'],
+		$entry['start_time']
 	);
 
 	if ( ! is_wp_error( $result ) && $entry['invoice_id'] ) {
