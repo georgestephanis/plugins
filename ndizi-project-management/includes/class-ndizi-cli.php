@@ -77,7 +77,15 @@ class Ndizi_CLI {
 			}
 		}
 
-		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable ? 1 : 0 );
+		$timer_id = Ndizi_Time_Service::start_timer(
+			$user_id,
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'billable'    => $billable ? 1 : 0,
+			)
+		);
 		if ( is_wp_error( $timer_id ) ) {
 			WP_CLI::error( $timer_id->get_error_message() );
 		}

@@ -14,9 +14,9 @@ class Ndizi_Webhooks {
 	 */
 	public static function init() {
 		// Time Entry Actions
-		add_action( 'ndizi_timer_started', array( __CLASS__, 'timer_started' ), 10, 6 );
+		add_action( 'ndizi_timer_started', array( __CLASS__, 'timer_started' ), 10, 4 );
 		add_action( 'ndizi_timer_stopped', array( __CLASS__, 'timer_stopped' ), 10, 3 );
-		add_action( 'ndizi_time_logged', array( __CLASS__, 'time_logged' ), 10, 7 );
+		add_action( 'ndizi_time_logged', array( __CLASS__, 'time_logged' ), 10, 4 );
 		add_action( 'ndizi_time_entry_updated', array( __CLASS__, 'time_entry_updated' ), 10, 2 );
 		add_action( 'ndizi_time_entry_deleted', array( __CLASS__, 'time_entry_deleted' ), 10, 1 );
 
@@ -97,10 +97,17 @@ class Ndizi_Webhooks {
 	/**
 	 * Handler for ndizi_timer_started
 	 */
-	public static function timer_started( $entry_id, $user_id, $project_id, $task_id, $description, $billable ) {
+	public static function timer_started( $entry_id, $user_id, $project_id, $args = array() ) {
+		$defaults = array(
+			'task_id'     => 0,
+			'description' => '',
+			'billable'    => 1,
+		);
+		$args     = wp_parse_args( $args, $defaults );
+
 		$user = get_userdata( $user_id );
 		$proj = get_post( $project_id );
-		$task = $task_id ? get_post( $task_id ) : null;
+		$task = $args['task_id'] ? get_post( $args['task_id'] ) : null;
 
 		$user_name    = $user ? $user->display_name : __( 'Unknown User', 'ndizi-project-management' );
 		$project_name = $proj ? $proj->post_title : __( 'No Project', 'ndizi-project-management' );
@@ -112,13 +119,13 @@ class Ndizi_Webhooks {
 			'user_name'    => $user_name,
 			'project_id'   => $project_id,
 			'project_name' => $project_name,
-			'task_id'      => $task_id,
+			'task_id'      => $args['task_id'],
 			'task_name'    => $task_name,
-			'description'  => $description,
-			'billable'     => (bool) $billable,
+			'description'  => $args['description'],
+			'billable'     => (bool) $args['billable'],
 		);
 
-		$desc_text     = $description ? $description : '_' . __( 'No description', 'ndizi-project-management' ) . '_';
+		$desc_text     = $args['description'] ? $args['description'] : '_' . __( 'No description', 'ndizi-project-management' ) . '_';
 		$slack_message = sprintf(
 			"⏱️ *Timer Started* by *%s* on *%s*%s\n*Description*: %s",
 			$user_name,
@@ -167,10 +174,18 @@ class Ndizi_Webhooks {
 	/**
 	 * Handler for ndizi_time_logged
 	 */
-	public static function time_logged( $entry_id, $user_id, $project_id, $task_id, $description, $duration, $billable ) {
+	public static function time_logged( $entry_id, $user_id, $project_id, $args = array() ) {
+		$defaults = array(
+			'task_id'     => 0,
+			'description' => '',
+			'duration'    => 0,
+			'billable'    => 1,
+		);
+		$args     = wp_parse_args( $args, $defaults );
+
 		$user = get_userdata( $user_id );
 		$proj = get_post( $project_id );
-		$task = $task_id ? get_post( $task_id ) : null;
+		$task = $args['task_id'] ? get_post( $args['task_id'] ) : null;
 
 		$user_name    = $user ? $user->display_name : __( 'Unknown User', 'ndizi-project-management' );
 		$project_name = $proj ? $proj->post_title : __( 'No Project', 'ndizi-project-management' );
@@ -182,21 +197,21 @@ class Ndizi_Webhooks {
 			'user_name'        => $user_name,
 			'project_id'       => $project_id,
 			'project_name'     => $project_name,
-			'task_id'          => $task_id,
+			'task_id'          => $args['task_id'],
 			'task_name'        => $task_name,
-			'description'      => $description,
-			'duration_seconds' => $duration,
-			'duration_hours'   => round( $duration / 3600, 2 ),
-			'billable'         => (bool) $billable,
+			'description'      => $args['description'],
+			'duration_seconds' => $args['duration'],
+			'duration_hours'   => round( $args['duration'] / 3600, 2 ),
+			'billable'         => (bool) $args['billable'],
 		);
 
-		$desc_text     = $description ? $description : '_' . __( 'No description', 'ndizi-project-management' ) . '_';
+		$desc_text     = $args['description'] ? $args['description'] : '_' . __( 'No description', 'ndizi-project-management' ) . '_';
 		$slack_message = sprintf(
 			"📝 *Time Logged* by *%s* on *%s*%s\n*Duration*: %s hours\n*Description*: %s",
 			$user_name,
 			$project_name,
 			$task_name ? " (Task: *{$task_name}*)" : '',
-			number_format( $duration / 3600, 2 ),
+			number_format( $args['duration'] / 3600, 2 ),
 			$desc_text
 		);
 

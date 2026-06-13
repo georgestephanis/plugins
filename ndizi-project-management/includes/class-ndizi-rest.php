@@ -531,7 +531,15 @@ class Ndizi_REST {
 		$description = $request->get_param( 'description' );
 		$billable    = $request->get_param( 'billable' );
 
-		$timer_id = Ndizi_Time_Service::start_timer( $user_id, $project_id, $task_id, $description, $billable );
+		$timer_id = Ndizi_Time_Service::start_timer(
+			$user_id,
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'billable'    => $billable,
+			)
+		);
 		if ( is_wp_error( $timer_id ) ) {
 			$code        = $timer_id->get_error_code();
 			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
@@ -579,7 +587,17 @@ class Ndizi_REST {
 		$billable    = $request->get_param( 'billable' );
 		$start_time  = $request->get_param( 'start_time' );
 
-		$entry_id = Ndizi_Time_Service::log_time_manual( $user_id, $project_id, $task_id, $description, $duration, $billable, $start_time );
+		$entry_id = Ndizi_Time_Service::log_time_manual(
+			$user_id,
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'duration'    => $duration,
+				'billable'    => $billable,
+				'start_time'  => $start_time,
+			)
+		);
 		if ( is_wp_error( $entry_id ) ) {
 			$code        = $entry_id->get_error_code();
 			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'invalid_duration', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );

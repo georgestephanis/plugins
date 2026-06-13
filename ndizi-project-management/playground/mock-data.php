@@ -667,11 +667,13 @@ foreach ( $time_entries as $entry ) {
 	$result   = Ndizi_Time_Service::log_time_manual(
 		$entry['user_id'],
 		$entry['project_id'],
-		$entry['task_id'],
-		$entry['description'],
-		$duration,
-		$entry['billable'],
-		$entry['start_time']
+		array(
+			'task_id'     => $entry['task_id'],
+			'description' => $entry['description'],
+			'duration'    => $duration,
+			'billable'    => $entry['billable'],
+			'start_time'  => $entry['start_time'],
+		)
 	);
 
 	if ( ! is_wp_error( $result ) && $entry['invoice_id'] ) {

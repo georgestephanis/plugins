@@ -477,7 +477,16 @@ class Ndizi_Admin_Bar {
 			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi-project-management' ) ) );
 		}
 
-		$entry_id = Ndizi_Time_Service::log_time_manual( get_current_user_id(), $project_id, $task_id, $description, $duration, $billable );
+		$entry_id = Ndizi_Time_Service::log_time_manual(
+			get_current_user_id(),
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'duration'    => $duration,
+				'billable'    => $billable,
+			)
+		);
 		if ( is_wp_error( $entry_id ) ) {
 			wp_send_json_error( array( 'message' => $entry_id->get_error_message() ) );
 		}
