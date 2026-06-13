@@ -1,66 +1,32 @@
 /**
  * Vendor build for the shared DataViews bundle.
  *
- * This is intentionally separate from webpack.config.js so the heavy
- * @wordpress/dataviews payload is built once (via `npm run build:vendor`) and
- * left out of the everyday `npm run build`. It emits:
+ * Intentionally separate from webpack.config.js so the heavy @wordpress/dataviews
+ * payload is built once (via `npm run build:vendor`) and left out of the everyday
+ * `npm run build`/`npm start` cycle. It emits:
  *   - build/vendor-dataviews.js        → exposed as window.ndiziDataViews
  *   - build/style-vendor-dataviews.css → DataViews' stylesheet (+ -rtl variant)
  *   - build/vendor-dataviews.asset.php → its external WP script dependencies
  *
  * Rebuild this only when @wordpress/dataviews is upgraded.
  */
-const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
 const path = require( 'path' );
-const DependencyExtractionWebpackPlugin = require( '@wordpress/dependency-extraction-webpack-plugin' );
-const { CleanWebpackPlugin } = require( 'clean-webpack-plugin' );
+const {
+	defaultConfig,
+	VENDOR_ARTIFACTS,
+	buildRules,
+	buildPlugins,
+} = require( './webpack.shared' );
 
-// This build only owns the vendor-dataviews.* outputs. Clean just those so it
-// does not wipe the everyday build's artifacts (admin.js, time-entries.js, …).
-const VENDOR_ARTIFACTS = [
-	'vendor-dataviews.js',
-	'vendor-dataviews.js.map',
-	'vendor-dataviews.asset.php',
-	'style-vendor-dataviews.css',
-	'style-vendor-dataviews-rtl.css',
-];
-
-// Silence the Dart Sass legacy API deprecation warnings (as webpack.config.js
-// does) and mark the CSS rule as having side effects. @wordpress/dataviews ships
-// `"sideEffects": false`, so without this webpack tree-shakes the bare CSS
-// import in src/vendor/dataviews.js and the stylesheet is never extracted.
-const rules = defaultConfig.module.rules.map( ( rule ) => {
-	if ( rule.use && Array.isArray( rule.use ) ) {
-		const sassLoaderIndex = rule.use.findIndex(
-			( loaderEntry ) =>
-				loaderEntry.loader &&
-				loaderEntry.loader.includes( 'sass-loader' )
-		);
-		if ( sassLoaderIndex !== -1 ) {
-			const sassLoader = rule.use[ sassLoaderIndex ];
-			sassLoader.options = {
-				...sassLoader.options,
-				sassOptions: {
-					...sassLoader.options?.sassOptions,
-					silenceDeprecations: [ 'legacy-js-api' ],
-				},
-			};
-		}
-	}
-	if ( rule.test && rule.test.toString().includes( '.css' ) ) {
-		rule.sideEffects = true;
-	}
-	return rule;
-} );
-
-// Bundle every @wordpress/dataviews subpath (the `/wp` entry point AND its
-// `/build-style/style.css`) into this output; keep all other @wordpress/*
-// packages (react, wp-components, wp-private-apis, …) external so the bundle
-// reuses the copies WordPress already ships.
-const plugins = defaultConfig.plugins.map( ( plugin ) => {
-	if ( plugin instanceof DependencyExtractionWebpackPlugin ) {
-		return new DependencyExtractionWebpackPlugin( {
+module.exports = {
+	...defaultConfig,
+	plugins: buildPlugins( {
+		dependencyExtraction: {
 			requestToExternal( request ) {
+				// Bundle every @wordpress/dataviews subpath (the `/wp` entry
+				// point AND its `/build-style/style.css`) into this output; keep
+				// all other @wordpress/* packages (react, wp-data, …) external so
+				// the bundle reuses the copies WordPress already ships.
 				if (
 					request === '@wordpress/dataviews' ||
 					request.startsWith( '@wordpress/dataviews/' )
@@ -71,20 +37,11 @@ const plugins = defaultConfig.plugins.map( ( plugin ) => {
 				}
 				return undefined;
 			},
-		} );
-	}
-	if ( plugin instanceof CleanWebpackPlugin ) {
-		return new CleanWebpackPlugin( {
-			cleanStaleWebpackAssets: false,
-			cleanOnceBeforeBuildPatterns: VENDOR_ARTIFACTS,
-		} );
-	}
-	return plugin;
-} );
-
-module.exports = {
-	...defaultConfig,
-	plugins,
+		},
+		// This build only owns the vendor-dataviews.* outputs; clean just those so
+		// it does not wipe the everyday build's artifacts (admin.js, …).
+		cleanOnceBeforeBuildPatterns: VENDOR_ARTIFACTS,
+	} ),
 	entry: {
 		'vendor-dataviews': {
 			import: './src/vendor/dataviews.js',
@@ -99,6 +56,8 @@ module.exports = {
 	},
 	module: {
 		...defaultConfig.module,
-		rules,
+		// @wordpress/dataviews ships `"sideEffects": false`; mark the CSS rule as
+		// having side effects so the bundled stylesheet import is not tree-shaken.
+		rules: buildRules( { markCssSideEffects: true } ),
 	},
 };

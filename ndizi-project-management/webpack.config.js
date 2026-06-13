@@ -1,40 +1,10 @@
-const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
 const path = require( 'path' );
-const DependencyExtractionWebpackPlugin = require( '@wordpress/dependency-extraction-webpack-plugin' );
-const { CleanWebpackPlugin } = require( 'clean-webpack-plugin' );
-
-// Outputs owned by the separate vendor build (webpack.vendor.js). The everyday
-// build must NOT delete these — they are built once via `npm run build:vendor`.
-const VENDOR_ARTIFACTS = [
-	'vendor-dataviews.js',
-	'vendor-dataviews.js.map',
-	'vendor-dataviews.asset.php',
-	'style-vendor-dataviews.css',
-	'style-vendor-dataviews-rtl.css',
-];
-
-// Modify sass-loader options to silence Dart Sass legacy API deprecation warnings
-const rules = defaultConfig.module.rules.map( ( rule ) => {
-	if ( rule.use && Array.isArray( rule.use ) ) {
-		const sassLoaderIndex = rule.use.findIndex(
-			( loaderEntry ) =>
-				loaderEntry.loader &&
-				loaderEntry.loader.includes( 'sass-loader' )
-		);
-		if ( sassLoaderIndex !== -1 ) {
-			const sassLoader = rule.use[ sassLoaderIndex ];
-			sassLoader.options = {
-				...sassLoader.options,
-				sassOptions: {
-					...sassLoader.options?.sassOptions,
-					silenceDeprecations: [ 'legacy-js-api' ],
-				},
-			};
-		}
-	}
-
-	return rule;
-} );
+const {
+	defaultConfig,
+	VENDOR_ARTIFACTS,
+	buildRules,
+	buildPlugins,
+} = require( './webpack.shared' );
 
 // DataViews is built once into the shared `build/vendor-dataviews.js` bundle
 // (see webpack.vendor.js) and registered in PHP as the `ndizi-dataviews` script
@@ -45,9 +15,11 @@ const rules = defaultConfig.module.rules.map( ( rule ) => {
 // the `ndizi-dataviews` handle. That keeps the heavy DataViews code out of every
 // app rebuild and lets multiple scripts share the one bundle.
 const DATAVIEWS_REQUESTS = [ '@wordpress/dataviews', '@wordpress/dataviews/wp' ];
-const plugins = defaultConfig.plugins.map( ( plugin ) => {
-	if ( plugin instanceof DependencyExtractionWebpackPlugin ) {
-		return new DependencyExtractionWebpackPlugin( {
+
+module.exports = {
+	...defaultConfig,
+	plugins: buildPlugins( {
+		dependencyExtraction: {
 			requestToExternal( request ) {
 				if ( DATAVIEWS_REQUESTS.includes( request ) ) {
 					// Array form → `window.ndiziDataViews` (matches the
@@ -65,25 +37,13 @@ const plugins = defaultConfig.plugins.map( ( plugin ) => {
 				}
 				return undefined;
 			},
-		} );
-	}
-	// wp-scripts wipes the whole build/ dir before each build; keep the
-	// separately-built vendor bundle so the everyday build does not delete it.
-	if ( plugin instanceof CleanWebpackPlugin ) {
-		return new CleanWebpackPlugin( {
-			cleanStaleWebpackAssets: false,
-			cleanOnceBeforeBuildPatterns: [
-				'**/*',
-				...VENDOR_ARTIFACTS.map( ( file ) => `!${ file }` ),
-			],
-		} );
-	}
-	return plugin;
-} );
-
-module.exports = {
-	...defaultConfig,
-	plugins,
+		},
+		// Keep the separately-built vendor bundle; only the vendor build owns it.
+		cleanOnceBeforeBuildPatterns: [
+			'**/*',
+			...VENDOR_ARTIFACTS.map( ( file ) => `!${ file }` ),
+		],
+	} ),
 	entry: {
 		admin: './src/admin/index.js',
 		portal: './src/portal/index.js',
@@ -98,6 +58,6 @@ module.exports = {
 	},
 	module: {
 		...defaultConfig.module,
-		rules,
+		rules: buildRules(),
 	},
 };
