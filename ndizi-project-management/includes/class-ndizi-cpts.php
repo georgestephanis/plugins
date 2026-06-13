@@ -632,6 +632,16 @@ class Ndizi_CPTs {
 				'sanitize_callback' => 'absint',
 			)
 		);
+		register_post_meta(
+			'ndizi_time_off',
+			'_ndizi_time_off_client_id',
+			array(
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'integer',
+				'sanitize_callback' => 'absint',
+			)
+		);
 	}
 
 	/**
