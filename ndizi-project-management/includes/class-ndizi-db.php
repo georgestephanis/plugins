@@ -443,7 +443,13 @@ class Ndizi_DB {
 		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'start_time';
 		$order           = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
-		$sql = "SELECT * FROM $table_name WHERE $where_str ORDER BY $orderby $order";
+		// The Time Entries admin screen merges project and task into one column;
+		// sorting it groups by project first, then task as a secondary key.
+		$order_clause = ( 'project_id' === $orderby )
+			? "project_id $order, task_id $order"
+			: "$orderby $order";
+
+		$sql = "SELECT * FROM $table_name WHERE $where_str ORDER BY $order_clause";
 
 		if ( $args['number'] > 0 ) {
 			$sql         .= ' LIMIT %d OFFSET %d';

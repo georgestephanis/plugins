@@ -42,18 +42,53 @@ const TimeEntriesApp = () => {
 		page: 1,
 		perPage: 20,
 		sort: { field: 'start_time', direction: 'desc' },
+		// Project+Task are merged into the `project_id` column and start/end times
+		// into the `start_time` (Date) column, so `task_id`/`end_time` are not
+		// listed as their own columns.
 		fields: [
 			'project_id',
-			'task_id',
 			'user_id',
 			'description',
 			'start_time',
-			'end_time',
 			'duration',
 			'billable',
 			'approved',
 		],
-		layout: {},
+		// Per-column sizing/alignment. The table is `width: 100%` with native
+		// `table-layout: auto`, so capping every column except Description with a
+		// `maxWidth` concentrates the leftover horizontal space on Description,
+		// which is left uncapped (just a `minWidth`) so it auto-expands to fill
+		// the row. Duration / Billable / Status are pinned narrow (equal width +
+		// maxWidth). `align: 'start'` is required on the text columns because
+		// DataViews right-aligns any field whose `type` is `integer` (which
+		// project_id/user_id/billable/approved are, for filtering) by default.
+		layout: {
+			styles: {
+				project_id: {
+					align: 'start',
+					minWidth: '180px',
+					maxWidth: '300px',
+				},
+				user_id: {
+					align: 'start',
+					minWidth: '110px',
+					maxWidth: '170px',
+				},
+				description: { align: 'start', minWidth: '240px' },
+				start_time: {
+					align: 'start',
+					minWidth: '130px',
+					maxWidth: '170px',
+				},
+				duration: { align: 'end', width: '90px', maxWidth: '90px' },
+				billable: { align: 'center', width: '90px', maxWidth: '90px' },
+				approved: {
+					align: 'center',
+					width: '110px',
+					maxWidth: '110px',
+				},
+			},
+		},
 	} );
 
 	// Construct query args from View state
@@ -193,24 +228,31 @@ const TimeEntriesApp = () => {
 		} ) );
 	}, [ users ] );
 
-	// REST API Helpers
-	const updateEntryApproval = async ( id, approved ) => {
+	// REST API Helpers. Accepts one or more entry IDs so the same path serves
+	// both the single-row action and the bulk (multi-select) action.
+	const setApproval = async ( ids, approved ) => {
 		try {
-			await apiFetch( {
-				path: `/ndizi/v1/time/${ id }`,
-				method: 'PUT',
-				data: {
-					approved: approved ? 1 : 0,
-					approved_by: approved ? currentUserId : 0,
-				},
-			} );
+			await Promise.all(
+				ids.map( ( id ) =>
+					apiFetch( {
+						path: `/ndizi/v1/time/${ id }`,
+						method: 'PUT',
+						data: {
+							approved: approved ? 1 : 0,
+							approved_by: approved ? currentUserId : 0,
+						},
+					} )
+				)
+			);
+			const count = ids.length;
+			const noun = count === 1 ? 'entry' : 'entries';
 			setActionNotice( {
 				status: 'success',
 				content: approved
-					? 'Time entry approved successfully.'
-					: 'Time entry unapproved successfully.',
+					? `${ count } time ${ noun } approved.`
+					: `${ count } time ${ noun } unapproved.`,
 			} );
-			// Force refresh by editing local store cache or refetching
+			// Force a refetch of the current page of records.
 			window.wp.data
 				.dispatch( 'core' )
 				.invalidateResolution( 'getEntityRecords', [
@@ -381,24 +423,37 @@ const TimeEntriesApp = () => {
 					id: 'approve',
 					label: 'Approve',
 					isPrimary: false,
+					// supportsBulk enables the row-selection checkboxes and the
+					// bulk-actions toolbar; the callback receives every selected
+					// (eligible) item.
+					supportsBulk: true,
 					isEligible: ( item ) =>
 						canManage && parseInt( item.approved, 10 ) !== 1,
 					callback: ( items ) =>
-						updateEntryApproval( items[ 0 ].id, true ),
+						setApproval(
+							items.map( ( item ) => item.id ),
+							true
+						),
 				},
 				{
 					id: 'unapprove',
 					label: 'Unapprove',
 					isPrimary: false,
+					supportsBulk: true,
 					isEligible: ( item ) =>
 						canManage && parseInt( item.approved, 10 ) === 1,
 					callback: ( items ) =>
-						updateEntryApproval( items[ 0 ].id, false ),
+						setApproval(
+							items.map( ( item ) => item.id ),
+							false
+						),
 				},
 			];
 		},
+		// queryArgs is included so the post-action cache invalidation in
+		// setApproval targets the currently-viewed query, not a stale one.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[ canManage, currentUserId ]
+		[ canManage, currentUserId, queryArgs ]
 	);
 
 	// Fields configuration for DataViews. In v16 a column's header text comes
@@ -419,24 +474,24 @@ const TimeEntriesApp = () => {
 		return [
 			{
 				id: 'project_id',
-				label: 'Project',
+				label: 'Project / Task',
 				type: 'integer',
 				elements: projectElements,
 				filterBy: { operators: [ 'is' ] },
+				// Sortable: clicking groups by project, then task (the server
+				// adds task_id as a secondary ORDER BY for this column).
+				enableSorting: true,
 				getValue: ( { item } ) => parseInt( item.project_id, 10 ),
 				render: ( { item } ) => (
-					<strong>
-						{ item.project_name || `Project #${ item.project_id }` }
-					</strong>
-				),
-			},
-			{
-				id: 'task_id',
-				label: 'Task',
-				enableHiding: true,
-				filterBy: false,
-				render: ( { item } ) => (
-					<span>{ item.task_name || <em>General / None</em> }</span>
+					<div>
+						<strong>
+							{ item.project_name ||
+								`Project #${ item.project_id }` }
+						</strong>
+						<div style={ { color: '#64748b', fontSize: '0.9em' } }>
+							{ item.task_name || <em>General / None</em> }
+						</div>
+					</div>
 				),
 			},
 			{
@@ -455,38 +510,54 @@ const TimeEntriesApp = () => {
 				label: 'Description',
 				filterBy: false,
 				render: ( { item } ) => (
-					<span>{ item.description || <em>No description</em> }</span>
+					<div
+						style={ {
+							whiteSpace: 'normal',
+							wordBreak: 'break-word',
+						} }
+					>
+						{ item.description || <em>No description</em> }
+					</div>
 				),
 			},
 			{
 				id: 'start_time',
-				label: 'Start Time',
+				label: 'Date',
 				enableSorting: true,
 				filterBy: false,
-				render: ( { item } ) => (
-					<span>
-						{ item.start_time
-							? new Date(
-									item.start_time.replace( /-/g, '/' )
-							  ).toLocaleString()
-							: '-' }
-					</span>
-				),
-			},
-			{
-				id: 'end_time',
-				label: 'End Time',
-				enableSorting: true,
-				filterBy: false,
-				render: ( { item } ) => (
-					<span>
-						{ item.end_time
-							? new Date(
-									item.end_time.replace( /-/g, '/' )
-							  ).toLocaleString()
-							: '-' }
-					</span>
-				),
+				render: ( { item } ) => {
+					if ( ! item.start_time ) {
+						return <span>-</span>;
+					}
+					const start = new Date(
+						item.start_time.replace( /-/g, '/' )
+					);
+					const end = item.end_time
+						? new Date( item.end_time.replace( /-/g, '/' ) )
+						: null;
+					const timeOpts = {
+						hour: 'numeric',
+						minute: '2-digit',
+					};
+					return (
+						<div>
+							<div>{ start.toLocaleDateString() }</div>
+							<div
+								style={ {
+									color: '#64748b',
+									fontSize: '0.9em',
+								} }
+							>
+								{ start.toLocaleTimeString( [], timeOpts ) }
+								{ end &&
+									` – ${ end.toLocaleTimeString(
+										[],
+										timeOpts
+									) }` }
+							</div>
+						</div>
+					);
+				},
 			},
 			{
 				id: 'duration',
@@ -554,7 +625,7 @@ const TimeEntriesApp = () => {
 	return (
 		<div
 			className="ndizi-time-entries-react-app"
-			style={ { maxWidth: '1200px', margin: '20px auto 0 auto' } }
+			style={ { margin: '20px 20px 0 0' } }
 		>
 			<div
 				style={ {
