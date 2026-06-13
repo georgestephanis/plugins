@@ -20,6 +20,8 @@ class Ndizi_Settings {
 		// the CPT submenus; otherwise the first CPT (clients) becomes the top-level
 		// menu's click target instead of the dashboard.
 		add_action( 'admin_menu', array( __CLASS__, 'register_admin_pages' ), 9 );
+		// Priority 12 so we modify the submenu array after core CPTs are registered
+		add_action( 'admin_menu', array( __CLASS__, 'add_submenu_separator' ), 12 );
 
 		// User profile billing rate fields
 		add_action( 'show_user_profile', array( __CLASS__, 'render_user_profile_fields' ) );
@@ -154,6 +156,21 @@ class Ndizi_Settings {
 	 * Enqueue stylesheet and javascript
 	 */
 	public static function enqueue_assets() {
+		$css = '
+			#adminmenu .wp-submenu li:has(a[href*="ndizi-pm-separator"]) {
+				pointer-events: none;
+				border-top: 1px solid rgba(128, 128, 128, 0.15);
+				margin: 6px 0;
+				padding: 0;
+				height: 0;
+				overflow: hidden;
+			}
+			#adminmenu .wp-submenu li:has(a[href*="ndizi-pm-separator"]) a {
+				display: none !important;
+			}
+		';
+		wp_add_inline_style( 'common', $css );
+
 		// Only enqueue on our post types or pages
 		$screen = get_current_screen();
 		if ( ! $screen ) {
@@ -221,6 +238,75 @@ class Ndizi_Settings {
 			array( __CLASS__, 'render_settings_page' )
 		);
 	}
+
+	/**
+	 * Insert a separator/spacer in the Ndizi submenu
+	 */
+	public static function add_submenu_separator() {
+		global $submenu;
+
+		if ( empty( $submenu['ndizi-pm'] ) || ! is_array( $submenu['ndizi-pm'] ) ) {
+			return;
+		}
+
+		$global_pages = array();
+		$cpt_pages    = array();
+
+		foreach ( $submenu['ndizi-pm'] as $item ) {
+			if ( isset( $item[2] ) && 0 === strpos( $item[2], 'edit.php?post_type=' ) ) {
+				$cpt_pages[] = $item;
+			} else {
+				$global_pages[] = $item;
+			}
+		}
+
+		// Sort the global pages based on a preferred order.
+		$preferred_order = array(
+			'ndizi-pm',
+			'ndizi-reports',
+			'ndizi-gantt',
+			'ndizi-tracker-standalone',
+			'ndizi-settings',
+		);
+
+		usort(
+			$global_pages,
+			function ( $a, $b ) use ( $preferred_order ) {
+				$pos_a = array_search( $a[2], $preferred_order, true );
+				$pos_b = array_search( $b[2], $preferred_order, true );
+
+				if ( false === $pos_a && false === $pos_b ) {
+					return 0;
+				}
+				if ( false === $pos_a ) {
+					return 1;
+				}
+				if ( false === $pos_b ) {
+					return -1;
+				}
+
+				return $pos_a - $pos_b;
+			}
+		);
+
+		// Combine them with the separator in the middle.
+		$new_submenu = array_merge(
+			$global_pages,
+			array(
+				array(
+					'',
+					'read',
+					'ndizi-pm-separator',
+				),
+			),
+			$cpt_pages
+		);
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu['ndizi-pm'] = $new_submenu;
+	}
+
+
 
 	/**
 	 * Initialize Gantt module hooks
