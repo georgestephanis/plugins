@@ -220,7 +220,10 @@ class Ndizi_DB {
 		);
 
 		if ( $result ) {
-			$insert_id = $wpdb->insert_id;
+			$insert_id          = $wpdb->insert_id;
+			$args['start_time'] = $start_time;
+			$args['end_time']   = $end_time;
+			$args['duration']   = max( 0, intval( $duration ) );
 			do_action( 'ndizi_time_logged', $insert_id, $user_id, $project_id, $args );
 			return $insert_id;
 		}
