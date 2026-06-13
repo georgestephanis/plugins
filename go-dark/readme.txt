@@ -2,9 +2,9 @@
 Contributors: georgestephanis
 Donate link: https://supporters.eff.org/donate
 Tags: SOPA, PIPA, Internet Censorship, Go Dark
-Requires at least: 2.7
-Tested up to: 3.3.1
-Stable tag: 1.0.7
+Requires at least: 5.3
+Tested up to: 7.0
+Stable tag: 1.0.8
 
 This SEO-Friendly plugin enables websites to 'go dark' on January 18th with a customizable message and start/end times to protest SOPA/PIPA and Internet Censorship
 
