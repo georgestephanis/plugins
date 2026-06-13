@@ -195,14 +195,58 @@ class Ndizi_REST {
 			)
 		);
 
-		// List time logs history
+		// List and create time logs
 		register_rest_route(
 			$namespace,
 			'/time',
 			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( __CLASS__, 'get_time_logs' ),
-				'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( __CLASS__, 'get_time_logs' ),
+					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'create_time_log' ),
+					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
+					'args'                => array(
+						'project_id'  => array(
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'task_id'     => array(
+							'required'          => false,
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'user_id'     => array(
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
+						'description' => array(
+							'required'          => false,
+							'default'           => '',
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'duration'    => array(
+							'required'          => true,
+							'sanitize_callback' => 'absint',
+						),
+						'billable'    => array(
+							'required'          => false,
+							'default'           => 1,
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+						'start_time'  => array(
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'end_time'    => array(
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
 			)
 		);
 
@@ -652,20 +696,87 @@ class Ndizi_REST {
 	 * Get time logs history for the authenticated user
 	 */
 	public static function get_time_logs( $request ) {
-		$user_id = get_current_user_id();
-		$args    = array(
-			'user_id' => $user_id,
-			'number'  => 50, // default limit
+		$per_page = $request->get_param( 'per_page' );
+		if ( ! $per_page ) {
+			$per_page = 20;
+		} else {
+			$per_page = intval( $per_page );
+		}
+
+		$page = $request->get_param( 'page' );
+		if ( ! $page ) {
+			$page = 1;
+		} else {
+			$page = intval( $page );
+		}
+
+		$args = array(
+			'number' => $per_page,
+			'offset' => ( $page - 1 ) * $per_page,
 		);
 
+		// Project filter
 		$project_id = $request->get_param( 'project_id' );
 		if ( $project_id ) {
-			$args['project_id'] = $project_id;
+			$args['project_id'] = intval( $project_id );
 		}
+
+		// User filter (managers only, team members are forced to current user)
+		$can_manage = Ndizi_Roles::current_user_can( 'ndizi_manage_time' );
+		if ( ! $can_manage ) {
+			$args['user_id'] = get_current_user_id();
+		} else {
+			$filter_user = $request->get_param( 'user_id' );
+			if ( $filter_user ) {
+				$args['user_id'] = intval( $filter_user );
+			}
+		}
+
+		// Billable status filter
+		$billable = $request->get_param( 'billable' );
+		if ( null !== $billable && '' !== $billable ) {
+			if ( 'yes' === $billable || '1' === $billable || true === $billable || 1 === intval( $billable ) ) {
+				$args['billable'] = 1;
+			} elseif ( 'no' === $billable || '0' === $billable || false === $billable || 0 === intval( $billable ) ) {
+				$args['billable'] = 0;
+			}
+		}
+
+		// Approved status filter
+		$approved = $request->get_param( 'approved' );
+		if ( null !== $approved && '' !== $approved ) {
+			if ( 'yes' === $approved || '1' === $approved || true === $approved || 1 === intval( $approved ) ) {
+				$args['approved'] = 1;
+			} elseif ( 'no' === $approved || '0' === $approved || false === $approved || 0 === intval( $approved ) ) {
+				$args['approved'] = 0;
+			}
+		}
+
+		// Search filter
+		$search = $request->get_param( 'search' );
+		if ( ! $search ) {
+			$search = $request->get_param( 's' );
+		}
+		if ( $search ) {
+			$args['search'] = sanitize_text_field( $search );
+		}
+
+		// Order & Orderby
+		$orderby = $request->get_param( 'orderby' );
+		if ( $orderby ) {
+			$args['orderby'] = sanitize_key( $orderby );
+		}
+		$order = $request->get_param( 'order' );
+		if ( $order ) {
+			$args['order'] = strtoupper( sanitize_key( $order ) ) === 'ASC' ? 'ASC' : 'DESC';
+		}
+
+		$total_entries = Ndizi_DB::get_time_entries_count( $args );
+		$total_pages   = ceil( $total_entries / $per_page );
 
 		$logs = Ndizi_DB::get_time_entries( $args );
 
-		// Include titles for easier visualization in external apps
+		// Include names for easier rendering in custom table/react views
 		foreach ( $logs as $log ) {
 			$project           = get_post( $log->project_id );
 			$log->project_name = $project ? $project->post_title : __( 'Deleted Project', 'ndizi-project-management' );
@@ -676,9 +787,70 @@ class Ndizi_REST {
 			} else {
 				$log->task_name = '';
 			}
+
+			$user           = get_userdata( $log->user_id );
+			$log->user_name = $user ? $user->display_name : '';
 		}
 
-		return new WP_REST_Response( $logs, 200 );
+		$response = new WP_REST_Response( $logs, 200 );
+		$response->header( 'X-WP-Total', $total_entries );
+		$response->header( 'X-WP-TotalPages', $total_pages );
+
+		return $response;
+	}
+
+	/**
+	 * Create a new time entry
+	 */
+	public static function create_time_log( $request ) {
+		$project_id  = intval( $request->get_param( 'project_id' ) );
+		$task_id     = intval( $request->get_param( 'task_id' ) );
+		$user_id     = intval( $request->get_param( 'user_id' ) );
+		$description = sanitize_text_field( $request->get_param( 'description' ) );
+		$duration    = intval( $request->get_param( 'duration' ) );
+		$billable    = $request->get_param( 'billable' ) ? 1 : 0;
+		$start_time  = sanitize_text_field( $request->get_param( 'start_time' ) );
+		$end_time    = sanitize_text_field( $request->get_param( 'end_time' ) );
+
+		$can_manage = Ndizi_Roles::current_user_can( 'ndizi_manage_time' );
+		if ( ! $can_manage || ! $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		$result = Ndizi_Time_Service::log_time_manual(
+			$user_id,
+			$project_id,
+			array(
+				'task_id'     => $task_id,
+				'description' => $description,
+				'duration'    => $duration,
+				'billable'    => $billable,
+				'start_time'  => $start_time,
+				'end_time'    => $end_time,
+			)
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return new WP_REST_Response( array( 'message' => $result->get_error_message() ), 400 );
+		}
+
+		$new_entry = Ndizi_DB::get_time_entry( $result );
+		if ( ! $new_entry ) {
+			return new WP_REST_Response( array( 'message' => __( 'Failed to retrieve newly created entry.', 'ndizi-project-management' ) ), 500 );
+		}
+
+		$project                 = get_post( $new_entry->project_id );
+		$new_entry->project_name = $project ? $project->post_title : '';
+		if ( $new_entry->task_id ) {
+			$task                 = get_post( $new_entry->task_id );
+			$new_entry->task_name = $task ? $task->post_title : '';
+		} else {
+			$new_entry->task_name = '';
+		}
+		$user                 = get_userdata( $new_entry->user_id );
+		$new_entry->user_name = $user ? $user->display_name : '';
+
+		return new WP_REST_Response( $new_entry, 201 );
 	}
 
 	/**
@@ -710,7 +882,7 @@ class Ndizi_REST {
 		}
 
 		// Build data list from params
-		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
+		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable', 'approved', 'approved_by' );
 		$data   = array();
 
 		foreach ( $params as $param ) {
@@ -725,13 +897,21 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Failed to update time entry', 'ndizi-project-management' ) ), 500 );
 		}
 
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'timer'   => Ndizi_DB::get_time_entry( $id ),
-			),
-			200
-		);
+		$updated_entry = Ndizi_DB::get_time_entry( $id );
+		if ( $updated_entry ) {
+			$project                     = get_post( $updated_entry->project_id );
+			$updated_entry->project_name = $project ? $project->post_title : '';
+			if ( $updated_entry->task_id ) {
+				$task                     = get_post( $updated_entry->task_id );
+				$updated_entry->task_name = $task ? $task->post_title : '';
+			} else {
+				$updated_entry->task_name = '';
+			}
+			$user                     = get_userdata( $updated_entry->user_id );
+			$updated_entry->user_name = $user ? $user->display_name : '';
+		}
+
+		return new WP_REST_Response( $updated_entry, 200 );
 	}
 
 	/**
@@ -761,7 +941,7 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Failed to delete time entry', 'ndizi-project-management' ) ), 500 );
 		}
 
-		return new WP_REST_Response( array( 'success' => true ), 200 );
+		return new WP_REST_Response( array( 'id' => intval( $id ) ), 200 );
 	}
 
 	/**

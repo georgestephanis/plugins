@@ -169,7 +169,6 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-list-tables.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-ajax.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-reports.php';
-		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-time-entries-table.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
@@ -264,6 +263,13 @@ class Ndizi_Project_Management {
 		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
 		if ( is_admin() ) {
 			Ndizi_Admin::init();
+
+			// Dynamic Seeder Check for Developer Playground environment
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET['ndizi_seed'] ) ) {
+				require_once NDIZI_PLUGIN_DIR . 'playground/mock-data.php';
+				wp_die( 'Playground seeding completed successfully!' );
+			}
 		}
 
 		// Dynamically bootstrap active modules
