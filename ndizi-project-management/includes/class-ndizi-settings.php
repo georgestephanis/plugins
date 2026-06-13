@@ -20,6 +20,8 @@ class Ndizi_Settings {
 		// the CPT submenus; otherwise the first CPT (clients) becomes the top-level
 		// menu's click target instead of the dashboard.
 		add_action( 'admin_menu', array( __CLASS__, 'register_admin_pages' ), 9 );
+		// Priority 12 so we modify the submenu array after core CPTs are registered
+		add_action( 'admin_menu', array( __CLASS__, 'add_submenu_separator' ), 12 );
 
 		// User profile billing rate fields
 		add_action( 'show_user_profile', array( __CLASS__, 'render_user_profile_fields' ) );
@@ -154,6 +156,21 @@ class Ndizi_Settings {
 	 * Enqueue stylesheet and javascript
 	 */
 	public static function enqueue_assets() {
+		$css = '
+			#adminmenu .wp-submenu li:has(a[href*="ndizi-pm-separator"]) {
+				pointer-events: none;
+				border-top: 1px solid rgba(128, 128, 128, 0.15);
+				margin: 6px 0;
+				padding: 0;
+				height: 0;
+				overflow: hidden;
+			}
+			#adminmenu .wp-submenu li:has(a[href*="ndizi-pm-separator"]) a {
+				display: none !important;
+			}
+		';
+		wp_add_inline_style( 'common', $css );
+
 		// Only enqueue on our post types or pages
 		$screen = get_current_screen();
 		if ( ! $screen ) {
@@ -165,6 +182,13 @@ class Ndizi_Settings {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current_page  = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		$is_ndizi_page = ( 0 === strpos( $current_page, 'ndizi-' ) );
+
+		// Register (do not enqueue) the shared DataViews bundle so any Ndizi
+		// script can declare `ndizi-dataviews` as a dependency. It is built once
+		// via `npm run build:vendor` (src/vendor/dataviews.js) and exposes the
+		// package on window.ndiziDataViews; webpack maps @wordpress/dataviews to
+		// it, so consuming scripts' .asset.php files list this handle for us.
+		self::register_dataviews_bundle();
 
 		if ( in_array( $screen->post_type, $ndizi_post_types, true ) || $is_ndizi_page ) {
 			wp_enqueue_style( 'ndizi-admin-style', NDIZI_PLUGIN_URL . 'build/admin.css', array(), NDIZI_VERSION );
@@ -183,6 +207,85 @@ class Ndizi_Settings {
 					),
 				)
 			);
+		}
+
+		if ( 'ndizi-time-entries' === $current_page ) {
+			$asset_path = NDIZI_PLUGIN_DIR . 'build/time-entries.asset.php';
+			if ( file_exists( $asset_path ) ) {
+				$asset        = include $asset_path;
+				$dependencies = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
+				wp_enqueue_script(
+					'ndizi-time-entries-app',
+					NDIZI_PLUGIN_URL . 'build/time-entries.js',
+					$dependencies,
+					$asset['version'],
+					true
+				);
+
+				wp_localize_script(
+					'ndizi-time-entries-app',
+					'ndizi_time_entries_admin',
+					array(
+						'rest_url'        => esc_url_raw( rest_url() ),
+						'rest_nonce'      => wp_create_nonce( 'wp_rest' ),
+						'can_manage'      => Ndizi_Roles::current_user_can( 'ndizi_manage_time' ),
+						'current_user_id' => get_current_user_id(),
+						'lock_date'       => get_option( 'ndizi_lock_date', '' ),
+					)
+				);
+			}
+
+			wp_enqueue_style( 'wp-components' );
+
+			// DataViews' stylesheet ships in the shared bundle (registered by
+			// self::register_dataviews_bundle()). The app script already depends
+			// on the `ndizi-dataviews` script handle; styles are not pulled in by
+			// script dependencies, so enqueue the matching style handle here.
+			if ( wp_style_is( 'ndizi-dataviews', 'registered' ) ) {
+				wp_enqueue_style( 'ndizi-dataviews' );
+			}
+		}
+	}
+
+	/**
+	 * Register the shared DataViews bundle as the `ndizi-dataviews` script and
+	 * style handles, reading dependencies/version from its generated asset file.
+	 *
+	 * Registration is idempotent and does not output anything; callers enqueue
+	 * the handles (or depend on the script handle) where DataViews is needed.
+	 * The bundle is produced by `npm run build:vendor` (see webpack.vendor.js).
+	 */
+	public static function register_dataviews_bundle() {
+		if ( wp_script_is( 'ndizi-dataviews', 'registered' ) ) {
+			return;
+		}
+
+		$asset_path = NDIZI_PLUGIN_DIR . 'build/vendor-dataviews.asset.php';
+		$asset      = file_exists( $asset_path )
+			? include $asset_path
+			: array(
+				'dependencies' => array(),
+				'version'      => NDIZI_VERSION,
+			);
+
+		wp_register_script(
+			'ndizi-dataviews',
+			NDIZI_PLUGIN_URL . 'build/vendor-dataviews.js',
+			isset( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+			isset( $asset['version'] ) ? $asset['version'] : NDIZI_VERSION,
+			true
+		);
+
+		$style_path = NDIZI_PLUGIN_DIR . 'build/style-vendor-dataviews.css';
+		if ( file_exists( $style_path ) ) {
+			wp_register_style(
+				'ndizi-dataviews',
+				NDIZI_PLUGIN_URL . 'build/style-vendor-dataviews.css',
+				array( 'wp-components' ),
+				isset( $asset['version'] ) ? $asset['version'] : NDIZI_VERSION,
+				'all'
+			);
+			wp_style_add_data( 'ndizi-dataviews', 'rtl', 'replace' );
 		}
 	}
 
@@ -220,7 +323,86 @@ class Ndizi_Settings {
 			'ndizi-settings',
 			array( __CLASS__, 'render_settings_page' )
 		);
+
+		// Submenu: Time Entries
+		add_submenu_page(
+			'ndizi-pm',
+			__( 'Time Entries', 'ndizi-project-management' ),
+			__( 'Time Entries', 'ndizi-project-management' ),
+			'ndizi_log_time',
+			'ndizi-time-entries',
+			array( __CLASS__, 'render_time_entries_page' )
+		);
 	}
+
+	/**
+	 * Insert a separator/spacer in the Ndizi submenu
+	 */
+	public static function add_submenu_separator() {
+		global $submenu;
+
+		if ( empty( $submenu['ndizi-pm'] ) || ! is_array( $submenu['ndizi-pm'] ) ) {
+			return;
+		}
+
+		$global_pages = array();
+		$cpt_pages    = array();
+
+		foreach ( $submenu['ndizi-pm'] as $item ) {
+			if ( isset( $item[2] ) && ( 0 === strpos( $item[2], 'edit.php?post_type=' ) || 'ndizi-time-entries' === $item[2] ) ) {
+				$cpt_pages[] = $item;
+			} else {
+				$global_pages[] = $item;
+			}
+		}
+
+		// Sort the global pages based on a preferred order.
+		$preferred_order = array(
+			'ndizi-pm',
+			'ndizi-reports',
+			'ndizi-gantt',
+			'ndizi-tracker-standalone',
+			'ndizi-settings',
+		);
+
+		usort(
+			$global_pages,
+			function ( $a, $b ) use ( $preferred_order ) {
+				$pos_a = array_search( $a[2], $preferred_order, true );
+				$pos_b = array_search( $b[2], $preferred_order, true );
+
+				if ( false === $pos_a && false === $pos_b ) {
+					return 0;
+				}
+				if ( false === $pos_a ) {
+					return 1;
+				}
+				if ( false === $pos_b ) {
+					return -1;
+				}
+
+				return $pos_a - $pos_b;
+			}
+		);
+
+		// Combine them with the separator in the middle.
+		$new_submenu = array_merge(
+			$global_pages,
+			array(
+				array(
+					'',
+					'read',
+					'ndizi-pm-separator',
+				),
+			),
+			$cpt_pages
+		);
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$submenu['ndizi-pm'] = $new_submenu;
+	}
+
+
 
 	/**
 	 * Initialize Gantt module hooks
@@ -978,4 +1160,16 @@ class Ndizi_Settings {
 			update_user_meta( $user_id, '_ndizi_user_salary_rate', max( 0.0, floatval( $_POST['ndizi_user_salary_rate'] ) ) );
 		}
 	}
+
+	public static function render_time_entries_page() {
+		if ( ! current_user_can( 'ndizi_log_time' ) ) {
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'ndizi-project-management' ) );
+		}
+		?>
+		<div class="wrap">
+			<div id="ndizi-time-entries-app"></div>
+		</div>
+		<?php
+	}
 }
+

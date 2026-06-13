@@ -263,6 +263,13 @@ class Ndizi_Project_Management {
 		// Initialize Admin Dashboards & Meta Boxes (only in wp-admin)
 		if ( is_admin() ) {
 			Ndizi_Admin::init();
+
+			// Dynamic Seeder Check for Developer Playground environment
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET['ndizi_seed'] ) ) {
+				require_once NDIZI_PLUGIN_DIR . 'playground/mock-data.php';
+				wp_die( 'Playground seeding completed successfully!' );
+			}
 		}
 
 		// Dynamically bootstrap active modules
