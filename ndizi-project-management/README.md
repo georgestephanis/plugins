@@ -32,6 +32,7 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 ### ⏱️ Time Tracking
 
 - Decouples raw, high-frequency time logs from post/postmeta storage into a custom database table (`wp_ndizi_time_entries`).
+- **Time Entries Management Screen**: A dedicated admin page (`admin.php?page=ndizi-time-entries`) built on the core [`@wordpress/dataviews`](https://www.npmjs.com/package/@wordpress/dataviews) component — a sortable, filterable React table of all entries with inline create/edit/delete. Managers can filter by project, user, billable status, and approval status; team members see their own entries. DataViews is shipped as a shared, separately-built bundle (see [Working with Assets](#working-with-assets)).
 - **Nested Project Groupings**: Auto-groups projects under their client names (`<optgroup>`) in project selection lists for simplified, intuitive categorization.
 - **Gated Timer and Manual Modes**: Prevents input conflicts by deactivating and hiding the active timer option when manual duration entry is open.
 - **Auto-Stop on New Timer**: Starting a new timer automatically stops any already-running timer, so you can switch tasks in one click without having to manually stop first — the same UX pattern as Toggl and Harvest. If the running timer started in a locked period, the switch is blocked and you are prompted to stop it manually before starting a new one.
@@ -320,7 +321,7 @@ The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each ro
 
    ```bash
    npm install
-   npm run build
+   npm run build:all   # everyday app bundles + the shared DataViews vendor bundle
    ```
 
 3. Install PHPCS coding standards dependencies:
@@ -333,9 +334,17 @@ The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each ro
 
 We transpile JS (JSX) and compile Sass (SCSS) using Webpack.
 
-- Use `npm run start` to spin up a hot-reloading development watcher.
-- Use `npm run build` to compile minimized production bundles.
+- Use `npm run start` to spin up a hot-reloading development watcher (app bundles only).
+- Use `npm run build` to compile the minimized production app bundles.
 - Styles and scripts compile from `src/` into `build/` (e.g. `build/admin.js`, `build/portal.css`).
+
+#### Shared DataViews vendor bundle
+
+The Time Entries screen uses `@wordpress/dataviews`, which WordPress core does **not** expose as a registerable script handle (it ships DataViews only bundled inside the editor packages — see [Gutenberg #63657](https://github.com/WordPress/gutenberg/issues/63657)). Rather than re-bundle that ~2 MB payload into every script that needs it, it is built **once** into a shared bundle:
+
+- `npm run build:vendor` builds `src/vendor/dataviews.js` → `build/vendor-dataviews.js` (exposed on the `window.ndiziDataViews` global) plus `build/style-vendor-dataviews.css`. PHP registers this as the `ndizi-dataviews` script/style handle, so any Ndizi script can depend on it. **Re-run this only when `@wordpress/dataviews` is upgraded** — it is intentionally left out of the everyday `npm run build`.
+- `npm run build` externalizes `@wordpress/dataviews` to that shared handle, so the app bundles stay small and fast to rebuild. `webpack.config.js` and `webpack.vendor.js` share helpers from `webpack.shared.js`.
+- `npm run build:all` runs both (`build:vendor` then `build`) — use it for a clean, complete build.
 
 ### Running Linters
 

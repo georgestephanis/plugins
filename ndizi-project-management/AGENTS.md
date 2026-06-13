@@ -14,13 +14,15 @@ Features are delivered through independently toggleable modules controlled by th
 - `uninstall.php` — Removes the custom `wp_ndizi_time_entries` table and the plugin's roles/caps on uninstall (deactivation no longer tears down roles).
 - `API-AUTHENTICATION.md` — Developer reference for authenticating external tools against the REST API, including Application Passwords, client token auth, and `ndizi_token` query-parameter usage.
 - `composer.json` / `composer.lock` — PHPCS quality controls and local WordPress standards configuration.
-- `package.json` / `package-lock.json` — Asset bundler scripts powered by `@wordpress/scripts`.
-- `webpack.config.js` — Webpack bundle settings compiling separate CSS and JS for Admin and Client Portal.
+- `package.json` / `package-lock.json` — Asset bundler scripts powered by `@wordpress/scripts`. Scripts: `build` (everyday app bundles), `build:vendor` (the shared DataViews bundle, run only on `@wordpress/dataviews` upgrades), `build:all` (both).
+- `webpack.config.js` — Everyday Webpack config: compiles the app entries (Admin, Client Portal, Admin Bar, standalone tracker, Time Entries) and **externalizes** `@wordpress/dataviews` to the shared `window.ndiziDataViews` global, mapping it to the `ndizi-dataviews` script handle (via `requestToExternal`/`requestToHandle`) so it is kept out of every app rebuild.
+- `webpack.vendor.js` — Separate config that **bundles** `@wordpress/dataviews` (the `/wp` entry point + its stylesheet) once into `build/vendor-dataviews.*`, exposed as `window.ndiziDataViews`. Core has no public `wp-dataviews` handle (see Gutenberg #63657), hence the local shared bundle. Run via `npm run build:vendor`.
+- `webpack.shared.js` — Helpers shared by the two configs above: the `VENDOR_ARTIFACTS` list, `buildRules()` (silences Dart Sass legacy-API warnings; optionally flags the CSS rule with `sideEffects` so DataViews' `sideEffects:false` CSS is not tree-shaken), and `buildPlugins()` (swaps in the custom `DependencyExtractionWebpackPlugin` and a **scoped `CleanWebpackPlugin`** so the two builds do not delete each other's output — wp-scripts' default cleans the whole `build/` dir).
 - `phpcs.xml` — Coding standard rules tuned for custom DB tables and WordPress standards.
 - `includes/`
     - `class-ndizi-time-service.php` — Shared service/validation layer for all time-entry write operations. All four write entry points (REST, Admin AJAX, Admin Bar AJAX, Abilities, CLI) are thin adapters over three static methods: `start_timer()`, `stop_timer()`, and `log_time_manual()`. Each method runs `validate_time_project_access()` (project type/status/assignment + task ownership), the lock-date guard, and delegates to `Ndizi_DB`. `start_timer()` also auto-stops any already-running timer before inserting the new one; if the existing active timer started in a locked period it returns `WP_Error('active_timer_locked')` instead. All methods return the new entry ID / stopped row on success, or a `WP_Error` on failure.
     - `class-ndizi-admin.php` — Thin 26-line coordinator. `init()` calls `Ndizi_Settings::init()`, `Ndizi_Meta_Boxes::init()`, `Ndizi_List_Tables::init()`, `Ndizi_Ajax::init()`, and `Ndizi_Reports::init()` in sequence. `init_gantt()` proxies to `Ndizi_Settings::init_gantt()` and is called by the module registry for the `gantt` module. The full admin implementation lives in the five subclasses below.
-    - `class-ndizi-settings.php` — Settings page (module toggles driven by `get_module_registry()`, icon selection, lock date, webhook URLs, Google OAuth connect button, Stripe API keys); admin asset enqueueing; `admin_menu` registration (priority 9); Reports submenu (delegates page render to `Ndizi_Reports`); user profile billing/salary rate fields; Google OAuth2 callback handler; and `init_gantt()` / `register_gantt_admin_page()`.
+    - `class-ndizi-settings.php` — Settings page (module toggles driven by `get_module_registry()`, icon selection, lock date, webhook URLs, Google OAuth connect button, Stripe API keys); admin asset enqueueing; `admin_menu` registration (priority 9); Reports submenu (delegates page render to `Ndizi_Reports`); the **Time Entries** submenu (`admin.php?page=ndizi-time-entries`) and its `render_time_entries_page()` DataViews app; user profile billing/salary rate fields; Google OAuth2 callback handler; and `init_gantt()` / `register_gantt_admin_page()`. `register_dataviews_bundle()` registers the shared `build/vendor-dataviews.js`/`.css` as the `ndizi-dataviews` script + style handles (reading deps/version from `build/vendor-dataviews.asset.php`); the Time Entries app script lists `ndizi-dataviews` as a dependency so WordPress loads the shared bundle first, and the matching style is enqueued on that page.
     - `class-ndizi-meta-boxes.php` — Meta box registration and rendering for all six CPTs (`ndizi_client`, `ndizi_project`, `ndizi_task`, `ndizi_invoice`, `ndizi_contact`, `ndizi_time_off`) and the `save_post` handler that persists all custom fields.
     - `class-ndizi-list-tables.php` — CPT list-table column additions (client, project, task, invoice), custom column rendering, and the `pre_get_posts` handler that restricts list queries for team-member users.
     - `class-ndizi-ajax.php` — All six `wp_ajax_*` handlers: `ajax_aggregate_invoice_time()`, `ajax_start_timer()`, `ajax_stop_timer()`, `ajax_delete_log()`, `ajax_check_active_timer()`, and `ajax_refresh_logs_table()`. Timer start/stop delegate to `Ndizi_Time_Service`.
@@ -39,14 +41,15 @@ Features are delivered through independently toggleable modules controlled by th
     - `class-ndizi-webhooks.php` — Loaded when the `integrations` module is active. Listens to `Ndizi_DB` action hooks and WordPress post/meta hooks to dispatch JSON payloads to `ndizi_webhook_url` and formatted messages to `ndizi_slack_webhook_url`. Uses the `update_post_metadata` filter to capture previous meta values (same pattern as notifications) so old/new values are accurate in event payloads. Guards all handlers on `$meta_key` before calling `get_post_type()` to minimize overhead on global meta hooks.
 - `src/`
     - `shared/timer.js` — Shared timer utility module imported by `admin/index.js` and `adminbar/index.js`. Exports `formatTime()`, the ticking `setInterval` helper, and timer-state helpers, eliminating the copy-paste that previously existed between the two entry points.
-    - `admin/` — Admin tracker controls (start/stop timer, manual log form), invoice amount calculation (respects the hierarchical billing rate resolution: task → user → project, using attribute-presence checks to allow explicit `0` rates), Gantt interactive scripts, and admin stylesheet modules. Imports from `../shared/timer.js`.
+    - `admin/` — Admin tracker controls (start/stop timer, manual log form), invoice amount calculation (respects the hierarchical billing rate resolution: task → user → project, using attribute-presence checks to allow explicit `0` rates), Gantt interactive scripts, and admin stylesheet modules. Imports from `../shared/timer.js`. Also `admin/time-entries.js` — the React app for the Time Entries screen, built on `@wordpress/dataviews` (v16 API: visible columns in `view.fields`, sorting in `view.sort`, filters declared per-field via `elements`/`filterBy`). It imports `@wordpress/dataviews/wp`, which `webpack.config.js` externalizes to the shared `ndizi-dataviews` bundle. Data is fetched server-side through the core-data store (entity `ndizi`/`time-entry`).
+    - `vendor/dataviews.js` — Source of the shared DataViews bundle: imports the DataViews stylesheet and re-exports `@wordpress/dataviews/wp`. Built **only** by `webpack.vendor.js` (`npm run build:vendor`) into `build/vendor-dataviews.*`; not part of the everyday build.
     - `adminbar/` — Admin bar panel JS (project/task selectors, timer controls, idle warning injection using `ndizi_adminbar.labels.idle_warning`, internal-client sort using the localized `internal_client` label) and SCSS (including pulse animation for the idle warning state). Imports from `../shared/timer.js`.
     - `standalone/` — JS and SCSS for the standalone PWA tracker page (`index.js`, `standalone-style.scss`). Compiled to `build/standalone.*` and enqueued by `Ndizi_Standalone_Tracker`. The HTML markup for this page lives in `templates/standalone-tracker.php`.
     - `portal/` — Tab controllers, attachment upload fields, and portal stylesheet modules.
     - `block/` — The `ndizi/client-portal` editor block (`block.json`, `index.js` edit UI, `render.php` dynamic frontend render) wrapping the portal shortcode.
 - `templates/`
     - `standalone-tracker.php` — Full HTML template for the standalone PWA tracker page. Extracted from the former `Ndizi_Standalone_Tracker` PHP heredocs so it can be edited as a regular PHP/HTML file. PHP is limited to `esc_*` output and `wp_nonce_field()`; all behaviour lives in `src/standalone/index.js`.
-- `build/` — Generated CSS/JS output from `@wordpress/scripts`, including `build/block/` (the copied `block.json` + `render.php` that `Ndizi_Portal::register_portal_block()` registers from) and `build/standalone.*`. Committed to the repo so no build step is needed at install time. **Regenerate with `npm run build` after any `src/` change.**
+- `build/` — Generated CSS/JS output from `@wordpress/scripts`, including `build/block/` (the copied `block.json` + `render.php` that `Ndizi_Portal::register_portal_block()` registers from), `build/standalone.*`, and the shared `build/vendor-dataviews.*` (JS + asset file + `style-vendor-dataviews.css`/`-rtl`). Committed to the repo so no build step is needed at install time. **Regenerate the app bundles with `npm run build` after any `src/` change; regenerate `vendor-dataviews.*` with `npm run build:vendor` only when `@wordpress/dataviews` is upgraded (or run `npm run build:all` for both).**
 - `chrome-extension/` — A standalone Chrome extension (`manifest.json`, `popup.html`, `popup.js`) that connects to the site's REST API. Allows users to start/stop timers, browse projects and tasks, and open the standalone tracker (with `?desc=` pre-fill) from any browser tab. Excluded from the shipped plugin ZIP via `.distignore`.
 - `playground/` — Dev-only WordPress Playground blueprint and `mock-data.php` seeder. Excluded from the shipped package via `.distignore`; see `playground/README.md`.
 - `languages/` — Destination for `.po`/`.mo`/`.json` translation files; `Ndizi.php` calls `load_plugin_textdomain( 'ndizi-project-management', …, '…/languages' )` for non-WP.org installs.
@@ -164,11 +167,24 @@ Asset compilation is powered by `@wordpress/scripts`. The config file `webpack.c
 npm run build
 ```
 
-For active development, use the file watcher:
+For active development, use the file watcher (app bundles only — it does not rebuild the vendor bundle):
 
 ```bash
 npm run start
 ```
+
+#### Shared DataViews vendor bundle (two-config split)
+
+`@wordpress/dataviews` is built **once** into a shared bundle rather than re-bundled into every consumer, because WordPress core exposes no public `wp-dataviews` script handle (it ships DataViews only inside the editor packages — [Gutenberg #63657](https://github.com/WordPress/gutenberg/issues/63657)).
+
+```bash
+npm run build:vendor   # builds src/vendor/dataviews.js → build/vendor-dataviews.* (the ndizi-dataviews handle)
+npm run build:all      # build:vendor + build, for a clean complete build
+```
+
+- `webpack.vendor.js` bundles DataViews and exposes it on `window.ndiziDataViews`; `webpack.config.js` externalizes `@wordpress/dataviews` to that global and maps it to the `ndizi-dataviews` handle, so app `.asset.php` files list it automatically.
+- The two configs share helpers from `webpack.shared.js`, including a **scoped `CleanWebpackPlugin`**: wp-scripts' default wipes the entire `build/` dir before each build, so each config excludes the other's outputs (`VENDOR_ARTIFACTS`) from cleanup. Without this, an everyday `npm run build` would delete `vendor-dataviews.*` (and vice versa).
+- **Run `npm run build:vendor` only when `@wordpress/dataviews` is upgraded.** The everyday `npm run build`/`npm start` cycle leaves the ~2 MB vendor bundle untouched.
 
 ### Formatting and Linting
 
