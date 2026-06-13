@@ -237,6 +237,16 @@ class Ndizi_Settings {
 			'ndizi-settings',
 			array( __CLASS__, 'render_settings_page' )
 		);
+
+		// Submenu: Time Entries
+		add_submenu_page(
+			'ndizi-pm',
+			__( 'Time Entries', 'ndizi-project-management' ),
+			__( 'Time Entries', 'ndizi-project-management' ),
+			'ndizi_log_time',
+			'ndizi-time-entries',
+			array( __CLASS__, 'render_time_entries_page' )
+		);
 	}
 
 	/**
@@ -253,7 +263,7 @@ class Ndizi_Settings {
 		$cpt_pages    = array();
 
 		foreach ( $submenu['ndizi-pm'] as $item ) {
-			if ( isset( $item[2] ) && 0 === strpos( $item[2], 'edit.php?post_type=' ) ) {
+			if ( isset( $item[2] ) && ( 0 === strpos( $item[2], 'edit.php?post_type=' ) || 'ndizi-time-entries' === $item[2] ) ) {
 				$cpt_pages[] = $item;
 			} else {
 				$global_pages[] = $item;
@@ -1064,4 +1074,567 @@ class Ndizi_Settings {
 			update_user_meta( $user_id, '_ndizi_user_salary_rate', max( 0.0, floatval( $_POST['ndizi_user_salary_rate'] ) ) );
 		}
 	}
+
+	/**
+	 * Render the Time Entries admin list / edit / add page
+	 */
+	public static function render_time_entries_page() {
+		if ( ! current_user_can( 'ndizi_log_time' ) ) {
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'ndizi-project-management' ) );
+		}
+
+		$action          = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		$actions_handled = false;
+		$message         = '';
+		$notice_class    = 'notice-success';
+
+		// Handle single delete
+		if ( 'delete' === $action && isset( $_GET['id'] ) ) {
+			$entry_id = intval( $_GET['id'] );
+			if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'ndizi_delete_time_' . $entry_id ) ) {
+				wp_die( esc_html__( 'Security check failed.', 'ndizi-project-management' ) );
+			}
+
+			$entry = Ndizi_DB::get_time_entry( $entry_id );
+			if ( $entry ) {
+				$can_manage = Ndizi_Roles::current_user_can( 'ndizi_manage_time' );
+				$can_edit   = $can_manage || ( Ndizi_Roles::current_user_can( 'ndizi_log_time' ) && (int) $entry->user_id === (int) get_current_user_id() );
+				$is_locked  = Ndizi_DB::is_date_locked( $entry->start_time );
+
+				if ( $can_edit && ! $is_locked && ! $entry->approved ) {
+					if ( Ndizi_DB::delete_time_entry( $entry_id ) ) {
+						$message = __( 'Time entry deleted successfully.', 'ndizi-project-management' );
+					} else {
+						$message      = __( 'Failed to delete time entry.', 'ndizi-project-management' );
+						$notice_class = 'notice-error';
+					}
+				} else {
+					$message      = __( 'You do not have permission to delete this entry or the entry is locked/approved.', 'ndizi-project-management' );
+					$notice_class = 'notice-error';
+				}
+			}
+			$actions_handled = true;
+		}
+
+		// Handle single approve
+		if ( 'approve' === $action && isset( $_GET['id'] ) ) {
+			$entry_id = intval( $_GET['id'] );
+			if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'ndizi_approve_time_' . $entry_id ) ) {
+				wp_die( esc_html__( 'Security check failed.', 'ndizi-project-management' ) );
+			}
+
+			if ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
+				$current_user_id = get_current_user_id();
+				if ( Ndizi_DB::update_time_entry(
+					$entry_id,
+					array(
+						'approved'    => 1,
+						'approved_by' => $current_user_id,
+					)
+				) ) {
+					$message = __( 'Time entry approved successfully.', 'ndizi-project-management' );
+				} else {
+					$message      = __( 'Failed to approve time entry.', 'ndizi-project-management' );
+					$notice_class = 'notice-error';
+				}
+			} else {
+				$message      = __( 'You do not have permission to approve time entries.', 'ndizi-project-management' );
+				$notice_class = 'notice-error';
+			}
+			$actions_handled = true;
+		}
+
+		// Handle single unapprove
+		if ( 'unapprove' === $action && isset( $_GET['id'] ) ) {
+			$entry_id = intval( $_GET['id'] );
+			if ( ! isset( $_GET['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'ndizi_unapprove_time_' . $entry_id ) ) {
+				wp_die( esc_html__( 'Security check failed.', 'ndizi-project-management' ) );
+			}
+
+			if ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
+				if ( Ndizi_DB::update_time_entry(
+					$entry_id,
+					array(
+						'approved'    => 0,
+						'approved_by' => 0,
+					)
+				) ) {
+					$message = __( 'Time entry unapproved successfully.', 'ndizi-project-management' );
+				} else {
+					$message      = __( 'Failed to unapprove time entry.', 'ndizi-project-management' );
+					$notice_class = 'notice-error';
+				}
+			} else {
+				$message      = __( 'You do not have permission to unapprove time entries.', 'ndizi-project-management' );
+				$notice_class = 'notice-error';
+			}
+			$actions_handled = true;
+		}
+
+		// Handle bulk actions
+		$bulk_action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		if ( ! $bulk_action && isset( $_GET['action2'] ) ) {
+			$bulk_action = sanitize_key( wp_unslash( $_GET['action2'] ) );
+		}
+		if ( ( 'bulk-delete' === $bulk_action || 'bulk-approve' === $bulk_action || 'bulk-unapprove' === $bulk_action ) && isset( $_GET['entry_ids'] ) && is_array( $_GET['entry_ids'] ) ) {
+			$entry_ids     = array_map( 'intval', $_GET['entry_ids'] );
+			$success_count = 0;
+			$fail_count    = 0;
+
+			foreach ( $entry_ids as $entry_id ) {
+				if ( 'bulk-delete' === $bulk_action ) {
+					$entry = Ndizi_DB::get_time_entry( $entry_id );
+					if ( $entry ) {
+						$can_manage = Ndizi_Roles::current_user_can( 'ndizi_manage_time' );
+						$can_edit   = $can_manage || ( Ndizi_Roles::current_user_can( 'ndizi_log_time' ) && (int) $entry->user_id === (int) get_current_user_id() );
+						$is_locked  = Ndizi_DB::is_date_locked( $entry->start_time );
+
+						if ( $can_edit && ! $is_locked && ! $entry->approved ) {
+							if ( Ndizi_DB::delete_time_entry( $entry_id ) ) {
+								++$success_count;
+							} else {
+								++$fail_count;
+							}
+						} else {
+							++$fail_count;
+						}
+					} else {
+						++$fail_count;
+					}
+				} elseif ( 'bulk-approve' === $bulk_action ) {
+					if ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
+						$current_user_id = get_current_user_id();
+						if ( Ndizi_DB::update_time_entry(
+							$entry_id,
+							array(
+								'approved'    => 1,
+								'approved_by' => $current_user_id,
+							)
+						) ) {
+							++$success_count;
+						} else {
+							++$fail_count;
+						}
+					} else {
+						++$fail_count;
+					}
+				} elseif ( 'bulk-unapprove' === $bulk_action ) {
+					if ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
+						if ( Ndizi_DB::update_time_entry(
+							$entry_id,
+							array(
+								'approved'    => 0,
+								'approved_by' => 0,
+							)
+						) ) {
+							++$success_count;
+						} else {
+							++$fail_count;
+						}
+					} else {
+						++$fail_count;
+					}
+				}
+			}
+
+			if ( $success_count > 0 ) {
+				/* translators: %s: number of time entries */
+				$message = sprintf( _n( '%s time entry updated.', '%s time entries updated.', $success_count, 'ndizi-project-management' ), $success_count );
+			}
+			if ( $fail_count > 0 ) {
+				/* translators: %s: number of time entries */
+				$message     .= ' ' . sprintf( _n( '%s time entry could not be updated.', '%s time entries could not be updated.', $fail_count, 'ndizi-project-management' ), $fail_count );
+				$notice_class = 'notice-warning';
+			}
+			$actions_handled = true;
+		}
+
+		// Handle Add/Edit save POST requests
+		if ( isset( $_POST['ndizi_save_time_entry_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_save_time_entry_nonce'] ) ), 'ndizi_save_time_entry' ) ) {
+			$entry_id    = isset( $_POST['entry_id'] ) ? intval( wp_unslash( $_POST['entry_id'] ) ) : 0;
+			$project_id  = isset( $_POST['project_id'] ) ? intval( wp_unslash( $_POST['project_id'] ) ) : 0;
+			$task_id     = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
+			$user_id     = isset( $_POST['user_id'] ) ? intval( wp_unslash( $_POST['user_id'] ) ) : get_current_user_id();
+			$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
+			$duration    = isset( $_POST['duration_hours'] ) ? ( 3600 * floatval( wp_unslash( $_POST['duration_hours'] ) ) ) : 0;
+			$billable    = isset( $_POST['billable'] ) ? 1 : 0;
+			$start_time  = isset( $_POST['start_time'] ) ? sanitize_text_field( wp_unslash( $_POST['start_time'] ) ) : '';
+			$end_time    = isset( $_POST['end_time'] ) ? sanitize_text_field( wp_unslash( $_POST['end_time'] ) ) : '';
+
+			// Access control check
+			$can_manage = Ndizi_Roles::current_user_can( 'ndizi_manage_time' );
+			if ( ! $can_manage ) {
+				$user_id = get_current_user_id(); // Team members can only log for themselves
+			}
+
+			if ( ! $project_id ) {
+				$message      = __( 'Project is required.', 'ndizi-project-management' );
+				$notice_class = 'notice-error';
+			} elseif ( $entry_id ) {
+					// Editing existing entry
+					$entry = Ndizi_DB::get_time_entry( $entry_id );
+				if ( $entry ) {
+					$can_edit  = $can_manage || ( Ndizi_Roles::current_user_can( 'ndizi_log_time' ) && (int) $entry->user_id === (int) get_current_user_id() );
+					$is_locked = Ndizi_DB::is_date_locked( $entry->start_time );
+
+					if ( $can_edit && ! $is_locked && ! $entry->approved ) {
+						$update_args = array(
+							'project_id'  => $project_id,
+							'task_id'     => $task_id,
+							'user_id'     => $user_id,
+							'description' => $description,
+							'duration'    => $duration,
+							'billable'    => $billable,
+							'start_time'  => $start_time,
+							'end_time'    => $end_time,
+						);
+						if ( Ndizi_DB::update_time_entry( $entry_id, $update_args ) ) {
+							wp_safe_redirect( admin_url( 'admin.php?page=ndizi-time-entries&updated=true' ) );
+							exit;
+						} else {
+							$message      = __( 'Failed to update time entry.', 'ndizi-project-management' );
+							$notice_class = 'notice-error';
+						}
+					} else {
+						$message      = __( 'You do not have permission to edit this entry, or it is locked/approved.', 'ndizi-project-management' );
+						$notice_class = 'notice-error';
+					}
+				}
+			} else {
+				// Adding new entry
+				$result = Ndizi_Time_Service::log_time_manual(
+					$user_id,
+					$project_id,
+					array(
+						'task_id'     => $task_id,
+						'description' => $description,
+						'duration'    => $duration,
+						'billable'    => $billable,
+						'start_time'  => $start_time,
+						'end_time'    => $end_time,
+					)
+				);
+				if ( ! is_wp_error( $result ) ) {
+					wp_safe_redirect( admin_url( 'admin.php?page=ndizi-time-entries&added=true' ) );
+					exit;
+				} else {
+					$message      = $result->get_error_message();
+					$notice_class = 'notice-error';
+				}
+			}
+		}
+
+		// If actions were handled, redirect to a clean URL
+		if ( $actions_handled ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'message'      => $message,
+						'notice_class' => $notice_class,
+					),
+					admin_url( 'admin.php?page=ndizi-time-entries' )
+				)
+			);
+			exit;
+		}
+
+		// Load redirect notice messages
+		if ( isset( $_GET['message'] ) ) {
+			$message      = sanitize_text_field( wp_unslash( $_GET['message'] ) );
+			$notice_class = isset( $_GET['notice_class'] ) ? sanitize_key( wp_unslash( $_GET['notice_class'] ) ) : 'notice-success';
+		} elseif ( isset( $_GET['updated'] ) && 'true' === $_GET['updated'] ) {
+			$message = __( 'Time entry updated successfully.', 'ndizi-project-management' );
+		} elseif ( isset( $_GET['added'] ) && 'true' === $_GET['added'] ) {
+			$message = __( 'Time entry added successfully.', 'ndizi-project-management' );
+		}
+
+		// RENDER ADD / EDIT FORM
+		if ( 'edit' === $action || 'add' === $action ) {
+			self::render_time_entry_form( $action );
+			return;
+		}
+
+		// RENDER LIST TABLE VIEW
+		$list_table = new Ndizi_Time_Entries_List_Table();
+		$list_table->prepare_items();
+		?>
+		<div class="wrap ndizi-time-entries-wrap" style="max-width: 1200px; margin: 20px auto;">
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'Time Entries', 'ndizi-project-management' ); ?></h1>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-time-entries&action=add' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'ndizi-project-management' ); ?></a>
+			<hr class="wp-header-end">
+
+			<?php if ( ! empty( $message ) ) : ?>
+				<div class="notice <?php echo esc_attr( $notice_class ); ?> is-dismissible">
+					<p><?php echo esc_html( $message ); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<form method="get" action="">
+				<input type="hidden" name="page" value="ndizi-time-entries" />
+				<?php
+				$list_table->search_box( __( 'Search Description', 'ndizi-project-management' ), 'search-id' );
+				self::render_time_entries_filters();
+				$list_table->display();
+				?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the filters toolbar for the time entries list
+	 */
+	public static function render_time_entries_filters() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filtering parameters.
+		$project_id      = isset( $_GET['project_id'] ) ? intval( wp_unslash( $_GET['project_id'] ) ) : 0;
+		$user_id         = isset( $_GET['user_id'] ) ? intval( wp_unslash( $_GET['user_id'] ) ) : 0;
+		$billable_status = isset( $_GET['billable_status'] ) ? sanitize_key( wp_unslash( $_GET['billable_status'] ) ) : '';
+		$approved_status = isset( $_GET['approved_status'] ) ? sanitize_key( wp_unslash( $_GET['approved_status'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$projects = get_posts(
+			array(
+				'post_type'      => 'ndizi_project',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+		?>
+		<div class="alignleft actions bulkactions" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; margin-top: 2px;">
+			<select name="project_id" id="filter_project_id" style="max-width: 200px;">
+				<option value=""><?php esc_html_e( 'All Projects', 'ndizi-project-management' ); ?></option>
+				<?php foreach ( $projects as $proj ) : ?>
+					<option value="<?php echo intval( $proj->ID ); ?>" <?php selected( $project_id, $proj->ID ); ?>><?php echo esc_html( $proj->post_title ); ?></option>
+				<?php endforeach; ?>
+			</select>
+
+			<?php if ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) : ?>
+				<?php
+				$users = get_users(
+					array(
+						'orderby' => 'display_name',
+						'order'   => 'ASC',
+					)
+				);
+				?>
+				<select name="user_id" id="filter_user_id" style="max-width: 150px;">
+					<option value=""><?php esc_html_e( 'All Users', 'ndizi-project-management' ); ?></option>
+					<?php foreach ( $users as $u ) : ?>
+						<option value="<?php echo intval( $u->ID ); ?>" <?php selected( $user_id, $u->ID ); ?>><?php echo esc_html( $u->display_name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			<?php endif; ?>
+
+			<select name="billable_status" id="filter_billable_status">
+				<option value=""><?php esc_html_e( 'All Billable Statuses', 'ndizi-project-management' ); ?></option>
+				<option value="yes" <?php selected( $billable_status, 'yes' ); ?>><?php esc_html_e( 'Billable', 'ndizi-project-management' ); ?></option>
+				<option value="no" <?php selected( $billable_status, 'no' ); ?>><?php esc_html_e( 'Non-Billable', 'ndizi-project-management' ); ?></option>
+			</select>
+
+			<select name="approved_status" id="filter_approved_status">
+				<option value=""><?php esc_html_e( 'All Approval Statuses', 'ndizi-project-management' ); ?></option>
+				<option value="yes" <?php selected( $approved_status, 'yes' ); ?>><?php esc_html_e( 'Approved', 'ndizi-project-management' ); ?></option>
+				<option value="no" <?php selected( $approved_status, 'no' ); ?>><?php esc_html_e( 'Pending', 'ndizi-project-management' ); ?></option>
+			</select>
+
+			<input type="submit" name="filter_action" id="post-query-submit" class="button" value="<?php esc_attr_e( 'Filter', 'ndizi-project-management' ); ?>">
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the add or edit time entry form screen
+	 */
+	public static function render_time_entry_form( $action ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only query parameter.
+		$entry_id   = isset( $_GET['id'] ) ? intval( wp_unslash( $_GET['id'] ) ) : 0;
+		$entry      = null;
+		$can_manage = Ndizi_Roles::current_user_can( 'ndizi_manage_time' );
+		$is_locked  = false;
+
+		if ( 'edit' === $action ) {
+			$entry = Ndizi_DB::get_time_entry( $entry_id );
+			if ( ! $entry ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'Time entry not found.', 'ndizi-project-management' ) . '</p></div>';
+				return;
+			}
+
+			// Edit permission checks
+			$can_edit  = $can_manage || ( Ndizi_Roles::current_user_can( 'ndizi_log_time' ) && (int) $entry->user_id === (int) get_current_user_id() );
+			$is_locked = Ndizi_DB::is_date_locked( $entry->start_time );
+
+			if ( ! $can_edit || $is_locked || $entry->approved ) {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'You do not have permission to edit this entry, or it has been approved/locked.', 'ndizi-project-management' ) . '</p></div>';
+				return;
+			}
+		}
+
+		// Set prefill defaults
+		$project_id     = $entry ? $entry->project_id : 0;
+		$task_id        = $entry ? $entry->task_id : 0;
+		$user_id        = $entry ? $entry->user_id : get_current_user_id();
+		$description    = $entry ? $entry->description : '';
+		$duration_hours = $entry ? round( $entry->duration / 3600, 2 ) : '';
+		$start_time     = $entry ? $entry->start_time : gmdate( 'Y-m-d H:i:s' );
+		$end_time       = $entry ? $entry->end_time : '';
+		$billable       = $entry ? $entry->billable : 1;
+
+		$projects = get_posts(
+			array(
+				'post_type'      => 'ndizi_project',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+		$tasks = get_posts(
+			array(
+				'post_type'      => 'ndizi_task',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
+
+		$users = get_users(
+			array(
+				'orderby' => 'display_name',
+				'order'   => 'ASC',
+			)
+		);
+
+		$title = 'edit' === $action ? __( 'Edit Time Entry', 'ndizi-project-management' ) : __( 'Add New Time Entry', 'ndizi-project-management' );
+		?>
+		<div class="wrap ndizi-edit-time-wrap" style="max-width: 600px; margin: 30px auto 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+			<h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 24px;"><?php echo esc_html( $title ); ?></h1>
+
+			<div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+				<form method="post" action="">
+					<?php wp_nonce_field( 'ndizi_save_time_entry', 'ndizi_save_time_entry_nonce' ); ?>
+					<input type="hidden" name="entry_id" value="<?php echo esc_attr( $entry_id ); ?>" />
+
+					<!-- Project Dropdown -->
+					<div style="margin-bottom: 20px;">
+						<label for="ndizi_project_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'Project', 'ndizi-project-management' ); ?></label>
+						<select name="project_id" id="ndizi_project_id" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;" required>
+							<option value=""><?php esc_html_e( 'Select Project', 'ndizi-project-management' ); ?></option>
+							<?php foreach ( $projects as $proj ) : ?>
+								<option value="<?php echo intval( $proj->ID ); ?>" <?php selected( $project_id, $proj->ID ); ?>><?php echo esc_html( $proj->post_title ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<!-- Task Dropdown -->
+					<div style="margin-bottom: 20px;">
+						<label for="ndizi_task_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'Task (Optional)', 'ndizi-project-management' ); ?></label>
+						<select name="task_id" id="ndizi_task_id" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+							<option value="0"><?php esc_html_e( 'General / None', 'ndizi-project-management' ); ?></option>
+							<?php foreach ( $tasks as $t ) : ?>
+								<?php $t_project_id = get_post_meta( $t->ID, '_ndizi_project_id', true ); ?>
+								<option value="<?php echo intval( $t->ID ); ?>" data-project-id="<?php echo esc_attr( $t_project_id ); ?>" <?php selected( $task_id, $t->ID ); ?>><?php echo esc_html( $t->post_title ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<!-- User (Managers/Admins only) -->
+					<?php if ( $can_manage ) : ?>
+						<div style="margin-bottom: 20px;">
+							<label for="ndizi_user_id" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'User', 'ndizi-project-management' ); ?></label>
+							<select name="user_id" id="ndizi_user_id" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+								<?php foreach ( $users as $u ) : ?>
+									<option value="<?php echo intval( $u->ID ); ?>" <?php selected( $user_id, $u->ID ); ?>><?php echo esc_html( $u->display_name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</div>
+					<?php else : ?>
+						<input type="hidden" name="user_id" value="<?php echo esc_attr( $user_id ); ?>" />
+					<?php endif; ?>
+
+					<!-- Description -->
+					<div style="margin-bottom: 20px;">
+						<label for="ndizi_description" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></label>
+						<textarea name="description" id="ndizi_description" rows="3" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; resize: vertical;" placeholder="<?php esc_attr_e( 'What were you working on?', 'ndizi-project-management' ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
+					</div>
+
+					<!-- Duration (Hours) -->
+					<div style="margin-bottom: 20px;">
+						<label for="ndizi_duration_hours" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'Duration (Hours)', 'ndizi-project-management' ); ?></label>
+						<input type="number" name="duration_hours" id="ndizi_duration_hours" value="<?php echo esc_attr( $duration_hours ); ?>" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;" step="0.01" min="0.01" required placeholder="e.g. 2.5" />
+					</div>
+
+					<!-- Start Time (UTC) -->
+					<div style="margin-bottom: 20px;">
+						<label for="ndizi_start_time" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'Start Time (UTC)', 'ndizi-project-management' ); ?></label>
+						<input type="text" name="start_time" id="ndizi_start_time" value="<?php echo esc_attr( $start_time ); ?>" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-family: monospace;" required placeholder="YYYY-MM-DD HH:MM:SS" />
+						<p class="description" style="margin-top: 4px; font-size: 11px; color: #64748b;"><?php esc_html_e( 'UTC datetime format (e.g. 2026-04-20 22:00:00). Defaults to current UTC time.', 'ndizi-project-management' ); ?></p>
+					</div>
+
+					<!-- End Time (UTC) -->
+					<div style="margin-bottom: 20px;">
+						<label for="ndizi_end_time" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px; font-size: 13px;"><?php esc_html_e( 'End Time (UTC - Optional)', 'ndizi-project-management' ); ?></label>
+						<input type="text" name="end_time" id="ndizi_end_time" value="<?php echo esc_attr( $end_time ); ?>" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-family: monospace;" placeholder="YYYY-MM-DD HH:MM:SS" />
+						<p class="description" style="margin-top: 4px; font-size: 11px; color: #64748b;"><?php esc_html_e( 'Optional UTC datetime format. Left blank, the system will estimate it using start time and duration.', 'ndizi-project-management' ); ?></p>
+					</div>
+
+					<!-- Billable -->
+					<div style="margin-bottom: 25px;">
+						<label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #475569; font-size: 13px; cursor: pointer;">
+							<input type="checkbox" name="billable" value="1" <?php checked( $billable ); ?> style="border: 1px solid #cbd5e1; border-radius: 4px;" />
+							<?php esc_html_e( 'Billable', 'ndizi-project-management' ); ?>
+						</label>
+					</div>
+
+					<!-- Buttons -->
+					<div style="display: flex; gap: 10px; justify-content: flex-end;">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=ndizi-time-entries' ) ); ?>" class="button"><?php esc_html_e( 'Cancel', 'ndizi-project-management' ); ?></a>
+						<button type="submit" class="button button-primary" style="background: #4f46e5 !important; border-color: #4f46e5 !important;"><?php esc_html_e( 'Save Entry', 'ndizi-project-management' ); ?></button>
+					</div>
+				</form>
+			</div>
+
+			<script>
+				jQuery(document).ready(function($) {
+					var $projectSelect = $('#ndizi_project_id');
+					var $taskSelect = $('#ndizi_task_id');
+					var $taskOptions = $taskSelect.find('option');
+
+					function filterTasks() {
+						var selectedProject = $projectSelect.val();
+						$taskSelect.val('0'); // reset
+
+						$taskOptions.each(function() {
+							var taskProj = $(this).attr('data-project-id');
+							if (!taskProj || taskProj === '0' || taskProj === selectedProject) {
+								$(this).show().prop('disabled', false);
+							} else {
+								$(this).hide().prop('disabled', true);
+							}
+						});
+					}
+
+					$projectSelect.on('change', filterTasks);
+
+					// Run once on load
+					var currentProj = $projectSelect.val();
+					if (currentProj) {
+						var selectedTask = $taskSelect.val();
+						$taskOptions.each(function() {
+							var taskProj = $(this).attr('data-project-id');
+							if (!taskProj || taskProj === '0' || taskProj === currentProj) {
+								$(this).show().prop('disabled', false);
+							} else {
+								$(this).hide().prop('disabled', true);
+							}
+						});
+						$taskSelect.val(selectedTask);
+					}
+				});
+			</script>
+		</div>
+		<?php
+	}
 }
+

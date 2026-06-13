@@ -380,9 +380,10 @@ class Ndizi_DB {
 			'start_date' => null,
 			'end_date'   => null,
 			'approved'   => null,
+			'search'     => null,
 			'orderby'    => 'start_time',
 			'order'      => 'DESC',
-			'number'     => 500,
+			'number'     => 50,
 			'offset'     => 0,
 		);
 
@@ -431,6 +432,11 @@ class Ndizi_DB {
 			$query_args[] = $args['end_date'] . ' 23:59:59';
 		}
 
+		if ( ! empty( $args['search'] ) ) {
+			$where[]      = 'description LIKE %s';
+			$query_args[] = '%' . $wpdb->esc_like( sanitize_text_field( $args['search'] ) ) . '%';
+		}
+
 		$where_str = implode( ' AND ', $where );
 
 		$allowed_orderby = array( 'id', 'project_id', 'task_id', 'user_id', 'start_time', 'end_time', 'duration', 'billable' );
@@ -450,6 +456,85 @@ class Ndizi_DB {
 		}
 
 		return $wpdb->get_results( $sql );
+	}
+
+	/**
+	 * Get total count of time entries matching filters
+	 */
+	public static function get_time_entries_count( $args = array() ) {
+		global $wpdb;
+		$table_name = self::get_table_name();
+
+		$defaults = array(
+			'project_id' => null,
+			'task_id'    => null,
+			'user_id'    => null,
+			'invoice_id' => null,
+			'billable'   => null,
+			'start_date' => null,
+			'end_date'   => null,
+			'approved'   => null,
+			'search'     => null,
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$where      = array( '1=1' );
+		$query_args = array();
+
+		if ( null !== $args['project_id'] ) {
+			$where[]      = 'project_id = %d';
+			$query_args[] = intval( $args['project_id'] );
+		}
+
+		if ( null !== $args['task_id'] ) {
+			$where[]      = 'task_id = %d';
+			$query_args[] = intval( $args['task_id'] );
+		}
+
+		if ( null !== $args['user_id'] ) {
+			$where[]      = 'user_id = %d';
+			$query_args[] = intval( $args['user_id'] );
+		}
+
+		if ( null !== $args['invoice_id'] ) {
+			$where[]      = 'invoice_id = %d';
+			$query_args[] = intval( $args['invoice_id'] );
+		}
+
+		if ( null !== $args['billable'] ) {
+			$where[]      = 'billable = %d';
+			$query_args[] = $args['billable'] ? 1 : 0;
+		}
+
+		if ( null !== $args['approved'] ) {
+			$where[]      = 'approved = %d';
+			$query_args[] = $args['approved'] ? 1 : 0;
+		}
+
+		if ( ! empty( $args['start_date'] ) ) {
+			$where[]      = 'start_time >= %s';
+			$query_args[] = $args['start_date'] . ' 00:00:00';
+		}
+
+		if ( ! empty( $args['end_date'] ) ) {
+			$where[]      = 'start_time <= %s';
+			$query_args[] = $args['end_date'] . ' 23:59:59';
+		}
+
+		if ( ! empty( $args['search'] ) ) {
+			$where[]      = 'description LIKE %s';
+			$query_args[] = '%' . $wpdb->esc_like( sanitize_text_field( $args['search'] ) ) . '%';
+		}
+
+		$where_str = implode( ' AND ', $where );
+		$sql       = "SELECT COUNT(*) FROM $table_name WHERE $where_str";
+
+		if ( ! empty( $query_args ) ) {
+			return intval( $wpdb->get_var( $wpdb->prepare( $sql, $query_args ) ) );
+		}
+
+		return intval( $wpdb->get_var( $sql ) );
 	}
 
 	/**

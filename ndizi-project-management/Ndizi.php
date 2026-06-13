@@ -169,6 +169,7 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-list-tables.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-ajax.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-reports.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-time-entries-table.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
