@@ -4,7 +4,7 @@
     "php": "8.0",
     "wp": "latest"
   },
-  "landingPage": "/?p=1",
+  "landingPage": "/?p=1000",
   "steps": [
     {
       "step": "login",
@@ -22,8 +22,11 @@
       }
     },
     {
-      "step": "runPHP",
-      "code": "<?php wp_insert_comment( [ 'comment_post_ID' => 1, 'comment_author' => 'Emoji Fan', 'comment_author_email' => 'fan@example.com', 'comment_content' => '😀 😃 😄', 'comment_type' => 'comment', 'comment_approved' => 1 ] );"
+      "step": "importWxr",
+      "file": {
+        "resource": "url",
+        "url": "https://plugins.svn.wordpress.org/big-emoji-comments/trunk/demo-comments.xml"
+      }
     }
   ]
 }
