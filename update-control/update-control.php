@@ -110,8 +110,12 @@ class Update_Control {
 
 			if ( 'no' === $options['emailactive'] || ! ( $options['successemail'] || $options['failureemail'] || $options['criticalemail'] ) ) {
 				add_filter( 'auto_core_update_send_email', '__return_false', 1 );
+				add_filter( 'auto_plugin_update_send_email', '__return_false', 1 );
+				add_filter( 'auto_theme_update_send_email', '__return_false', 1 );
 			} else {
 				add_filter( 'auto_core_update_send_email', array( __CLASS__, 'filter_email' ), 1, 2 );
+				add_filter( 'auto_plugin_update_send_email', array( __CLASS__, 'filter_plugin_theme_email' ), 1, 2 );
+				add_filter( 'auto_theme_update_send_email', array( __CLASS__, 'filter_plugin_theme_email' ), 1, 2 );
 			}
 
 			if ( $options['debugemail'] ) {
@@ -140,6 +144,56 @@ class Update_Control {
 
 		if ( 'critical' === $type && ! $options['criticalemail'] ) {
 			return false;
+		}
+		return $should_send;
+	}
+
+	/**
+	 * Filters whether to send plugin/theme update emails based on the update results.
+	 *
+	 * @param bool  $should_send    Whether to send the email.
+	 * @param array $update_results Array of update results.
+	 * @return bool True if emails should be sent, false otherwise.
+	 */
+	public static function filter_plugin_theme_email( $should_send, $update_results ) {
+		$options = self::get_options();
+
+		// If email notification is globally disabled, do not send.
+		if ( 'no' === $options['emailactive'] ) {
+			return false;
+		}
+
+		$has_success = false;
+		$has_failure = false;
+
+		if ( is_array( $update_results ) ) {
+			foreach ( $update_results as $result_obj ) {
+				if ( isset( $result_obj->result ) ) {
+					if ( true === $result_obj->result ) {
+						$has_success = true;
+					} else {
+						$has_failure = true;
+					}
+				}
+			}
+		}
+
+		// If we only have successes, check if success emails are disabled.
+		if ( $has_success && ! $has_failure && ! $options['successemail'] ) {
+			return false;
+		}
+
+		// If we only have failures, check if failure and critical emails are disabled.
+		if ( $has_failure && ! $has_success && ! $options['failureemail'] && ! $options['criticalemail'] ) {
+			return false;
+		}
+
+		// If we have both successes and failures.
+		if ( $has_success && $has_failure ) {
+			// If both success emails and failure/critical emails are disabled, then don't send.
+			if ( ! $options['successemail'] && ! $options['failureemail'] && ! $options['criticalemail'] ) {
+				return false;
+			}
 		}
 
 		return $should_send;
