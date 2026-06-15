@@ -1,5 +1,7 @@
 # Big Emoji Comments
 
+[![Try in WordPress Playground](https://img.shields.io/badge/Try%20in-WordPress%20Playground-blue?style=for-the-badge&logo=wordpress)](https://playground.wordpress.net/?blueprint=https://plugins.svn.wordpress.org/big-emoji-comments/trunk/blueprint.json)
+
 A lightweight, high-performance WordPress plugin that automatically scales up emojis in comments when they contain nothing else. Inspired by Slack's "Jumboji" and Twitter's direct messages.
 
 ## Features

@@ -10,6 +10,10 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 If someone leaves a comment comprised entirely of emoji, make it bigger.
 
+== Live Demo ==
+
+Try the plugin instantly in your browser using [WordPress Playground](https://playground.wordpress.net/?blueprint=https://plugins.svn.wordpress.org/big-emoji-comments/trunk/blueprint.json)
+
 == Description ==
 
 It's all the rage.  If someone sends a message comprised of _just_ emoji, make it bigger!  Eye strain is dangerous!
