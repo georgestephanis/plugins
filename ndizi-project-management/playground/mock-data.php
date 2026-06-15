@@ -27,7 +27,7 @@ if ( ! $user_id ) {
 
 // If we still don't have a valid user, we must exit.
 if ( ! get_userdata( $user_id ) ) {
-	echo "Error: Could not determine or fallback to a valid administrator user.\n";
+	echo esc_html( "Error: Could not determine or fallback to a valid administrator user.\n" );
 	exit;
 }
 
@@ -78,7 +78,7 @@ foreach ( $mock_users_definition as $slug => $data ) {
 	$existing_user = get_user_by( 'login', $data['user_login'] );
 	if ( $existing_user ) {
 		$u_id = $existing_user->ID;
-		echo "Found existing user: {$data['first_name']} {$data['last_name']} (ID: $u_id)\n";
+		echo esc_html( "Found existing user: {$data['first_name']} {$data['last_name']} (ID: $u_id)\n" );
 	} else {
 		$u_id = wp_insert_user(
 			array(
@@ -91,10 +91,10 @@ foreach ( $mock_users_definition as $slug => $data ) {
 			)
 		);
 		if ( is_wp_error( $u_id ) ) {
-			echo "Error creating user {$data['user_login']}: " . $u_id->get_error_message() . "\n";
+			echo esc_html( "Error creating user {$data['user_login']}: " . $u_id->get_error_message() . "\n" );
 			continue;
 		}
-		echo "Created User: {$data['first_name']} {$data['last_name']} (ID: $u_id)\n";
+		echo esc_html( "Created User: {$data['first_name']} {$data['last_name']} (ID: $u_id)\n" );
 	}
 
 	// Update billing/salary rates
@@ -122,7 +122,7 @@ foreach ( $post_types as $pt ) {
 		wp_delete_post( $p->ID, true );
 	}
 }
-echo "Cleaned up existing Ndizi Custom Post Type items.\n";
+echo esc_html( "Cleaned up existing Ndizi Custom Post Type items.\n" );
 
 // 2. Create Clients
 // Client 1: Acme Corp
@@ -139,7 +139,7 @@ if ( $client1_id ) {
 	update_post_meta( $client1_id, '_ndizi_client_address', "123 Acme Way\nSuite 100\nMetropolis, NY 10001" );
 	update_post_meta( $client1_id, '_ndizi_client_status', 'active' );
 	update_post_meta( $client1_id, '_ndizi_client_auth_key', 'acme-token-123' );
-	echo "Created Client: Acme Corp (ID: $client1_id)\n";
+	echo esc_html( "Created Client: Acme Corp (ID: $client1_id)\n" );
 }
 
 // Client 2: Stark Industries
@@ -156,7 +156,7 @@ if ( $client2_id ) {
 	update_post_meta( $client2_id, '_ndizi_client_address', "10880 Wilshire Blvd\nLos Angeles, CA 90024" );
 	update_post_meta( $client2_id, '_ndizi_client_status', 'active' );
 	update_post_meta( $client2_id, '_ndizi_client_auth_key', 'stark-token-456' );
-	echo "Created Client: Stark Industries (ID: $client2_id)\n";
+	echo esc_html( "Created Client: Stark Industries (ID: $client2_id)\n" );
 }
 
 // Client 3: Wayne Enterprises (Archived)
@@ -173,7 +173,7 @@ if ( $client3_id ) {
 	update_post_meta( $client3_id, '_ndizi_client_address', "Wayne Tower\nGotham City, NJ 07101" );
 	update_post_meta( $client3_id, '_ndizi_client_status', 'archived' );
 	update_post_meta( $client3_id, '_ndizi_client_auth_key', 'wayne-token-789' );
-	echo "Created Client: Wayne Enterprises (ID: $client3_id)\n";
+	echo esc_html( "Created Client: Wayne Enterprises (ID: $client3_id)\n" );
 }
 
 // 3. Create Contacts
@@ -191,7 +191,7 @@ if ( $contact1_id ) {
 	update_post_meta( $contact1_id, '_ndizi_contact_phone', '555-0199' );
 	update_post_meta( $contact1_id, '_ndizi_contact_role', 'CEO' );
 	update_post_meta( $contact1_id, '_ndizi_associated_clients', array( $client2_id ) );
-	echo "Created Contact: Pepper Potts (ID: $contact1_id)\n";
+	echo esc_html( "Created Contact: Pepper Potts (ID: $contact1_id)\n" );
 }
 
 // Contact 2: Bruce Wayne (Wayne Enterprises)
@@ -208,7 +208,7 @@ if ( $contact2_id ) {
 	update_post_meta( $contact2_id, '_ndizi_contact_phone', '555-0144' );
 	update_post_meta( $contact2_id, '_ndizi_contact_role', 'Chairman' );
 	update_post_meta( $contact2_id, '_ndizi_associated_clients', array( $client3_id ) );
-	echo "Created Contact: Bruce Wayne (ID: $contact2_id)\n";
+	echo esc_html( "Created Contact: Bruce Wayne (ID: $contact2_id)\n" );
 }
 
 // Contact 3: Lucius Fox (Wayne Enterprises)
@@ -225,7 +225,7 @@ if ( $contact3_id ) {
 	update_post_meta( $contact3_id, '_ndizi_contact_phone', '555-0182' );
 	update_post_meta( $contact3_id, '_ndizi_contact_role', 'Business Manager' );
 	update_post_meta( $contact3_id, '_ndizi_associated_clients', array( $client3_id ) );
-	echo "Created Contact: Lucius Fox (ID: $contact3_id)\n";
+	echo esc_html( "Created Contact: Lucius Fox (ID: $contact3_id)\n" );
 }
 
 // Contact 4: John Doe (Acme & Stark)
@@ -242,7 +242,7 @@ if ( $contact4_id ) {
 	update_post_meta( $contact4_id, '_ndizi_contact_phone', '555-0123' );
 	update_post_meta( $contact4_id, '_ndizi_contact_role', 'Project Director' );
 	update_post_meta( $contact4_id, '_ndizi_associated_clients', array( $client1_id, $client2_id ) );
-	echo "Created Contact: John Doe (ID: $contact4_id)\n";
+	echo esc_html( "Created Contact: John Doe (ID: $contact4_id)\n" );
 }
 
 // 4. Create Projects
@@ -261,7 +261,7 @@ if ( $proj1_id ) {
 	update_post_meta( $proj1_id, '_ndizi_project_end_date', '2026-06-30' );
 	update_post_meta( $proj1_id, '_ndizi_project_budget', 5000.00 );
 	update_post_meta( $proj1_id, '_ndizi_project_status', 'active' );
-	echo "Created Project: Acme Website Redesign (ID: $proj1_id)\n";
+	echo esc_html( "Created Project: Acme Website Redesign (ID: $proj1_id)\n" );
 }
 
 // Project 2: Acme Mobile App (Client 1)
@@ -279,7 +279,7 @@ if ( $proj2_id ) {
 	update_post_meta( $proj2_id, '_ndizi_project_end_date', '2026-07-31' );
 	update_post_meta( $proj2_id, '_ndizi_project_budget', 12000.00 );
 	update_post_meta( $proj2_id, '_ndizi_project_status', 'active' );
-	echo "Created Project: Acme Mobile App (ID: $proj2_id)\n";
+	echo esc_html( "Created Project: Acme Mobile App (ID: $proj2_id)\n" );
 }
 
 // Project 3: Stark Arc Reactor Portal (Client 2)
@@ -297,7 +297,7 @@ if ( $proj3_id ) {
 	update_post_meta( $proj3_id, '_ndizi_project_end_date', '2026-08-31' );
 	update_post_meta( $proj3_id, '_ndizi_project_budget', 250000.00 );
 	update_post_meta( $proj3_id, '_ndizi_project_status', 'active' );
-	echo "Created Project: Stark Arc Reactor Portal (ID: $proj3_id)\n";
+	echo esc_html( "Created Project: Stark Arc Reactor Portal (ID: $proj3_id)\n" );
 }
 
 // Project 4: Stark Clean Energy Grid (Client 2 - Archived)
@@ -315,7 +315,7 @@ if ( $proj4_id ) {
 	update_post_meta( $proj4_id, '_ndizi_project_end_date', '2026-05-31' );
 	update_post_meta( $proj4_id, '_ndizi_project_budget', 80000.00 );
 	update_post_meta( $proj4_id, '_ndizi_project_status', 'archived' );
-	echo "Created Project: Stark Clean Energy Grid (ID: $proj4_id)\n";
+	echo esc_html( "Created Project: Stark Clean Energy Grid (ID: $proj4_id)\n" );
 }
 
 // Project 5: Wayne Batcave Security Audit (Client 3 - Archived)
@@ -333,7 +333,7 @@ if ( $proj5_id ) {
 	update_post_meta( $proj5_id, '_ndizi_project_end_date', '2026-05-15' );
 	update_post_meta( $proj5_id, '_ndizi_project_budget', 45000.00 );
 	update_post_meta( $proj5_id, '_ndizi_project_status', 'archived' );
-	echo "Created Project: Wayne Batcave Security Audit (ID: $proj5_id)\n";
+	echo esc_html( "Created Project: Wayne Batcave Security Audit (ID: $proj5_id)\n" );
 }
 
 // 5. Create Tasks
@@ -352,7 +352,7 @@ if ( $task1_id ) {
 	update_post_meta( $task1_id, '_ndizi_task_status', 'in_progress' );
 	update_post_meta( $task1_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task1_id, '_ndizi_task_due_date', '2026-06-15' );
-	echo "Created Task: Design Home Page Layout (ID: $task1_id)\n";
+	echo esc_html( "Created Task: Design Home Page Layout (ID: $task1_id)\n" );
 }
 
 $task2_id = wp_insert_post(
@@ -369,7 +369,7 @@ if ( $task2_id ) {
 	update_post_meta( $task2_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task2_id, '_ndizi_task_priority', 'medium' );
 	update_post_meta( $task2_id, '_ndizi_task_due_date', '2026-06-18' );
-	echo "Created Task: Database Setup (ID: $task2_id)\n";
+	echo esc_html( "Created Task: Database Setup (ID: $task2_id)\n" );
 }
 
 $task3_id = wp_insert_post(
@@ -386,7 +386,7 @@ if ( $task3_id ) {
 	update_post_meta( $task3_id, '_ndizi_task_status', 'completed' );
 	update_post_meta( $task3_id, '_ndizi_task_priority', 'medium' );
 	update_post_meta( $task3_id, '_ndizi_task_due_date', '2026-06-08' );
-	echo "Created Task: Setup REST API Endpoints (ID: $task3_id)\n";
+	echo esc_html( "Created Task: Setup REST API Endpoints (ID: $task3_id)\n" );
 }
 
 // Project 2 Tasks
@@ -404,7 +404,7 @@ if ( $task4_id ) {
 	update_post_meta( $task4_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task4_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task4_id, '_ndizi_task_due_date', '2026-07-10' );
-	echo "Created Task: Push Notifications Integration (ID: $task4_id)\n";
+	echo esc_html( "Created Task: Push Notifications Integration (ID: $task4_id)\n" );
 }
 
 $task5_id = wp_insert_post(
@@ -421,7 +421,7 @@ if ( $task5_id ) {
 	update_post_meta( $task5_id, '_ndizi_task_status', 'open' );
 	update_post_meta( $task5_id, '_ndizi_task_priority', 'low' );
 	update_post_meta( $task5_id, '_ndizi_task_due_date', '2026-07-28' );
-	echo "Created Task: App Store Submission (ID: $task5_id)\n";
+	echo esc_html( "Created Task: App Store Submission (ID: $task5_id)\n" );
 }
 
 // Project 3 Tasks
@@ -439,7 +439,7 @@ if ( $task6_id ) {
 	update_post_meta( $task6_id, '_ndizi_task_status', 'in_progress' );
 	update_post_meta( $task6_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task6_id, '_ndizi_task_due_date', '2026-07-15' );
-	echo "Created Task: Core Thermal Monitoring UI (ID: $task6_id)\n";
+	echo esc_html( "Created Task: Core Thermal Monitoring UI (ID: $task6_id)\n" );
 }
 
 $task7_id = wp_insert_post(
@@ -456,7 +456,7 @@ if ( $task7_id ) {
 	update_post_meta( $task7_id, '_ndizi_task_status', 'completed' );
 	update_post_meta( $task7_id, '_ndizi_task_priority', 'high' );
 	update_post_meta( $task7_id, '_ndizi_task_due_date', '2026-06-05' );
-	echo "Created Task: Vibranium Shielding Check (ID: $task7_id)\n";
+	echo esc_html( "Created Task: Vibranium Shielding Check (ID: $task7_id)\n" );
 }
 
 // 6. Create Invoices
@@ -475,7 +475,7 @@ if ( $inv1_id ) {
 	update_post_meta( $inv1_id, '_ndizi_invoice_due_date', '2026-06-20' );
 	update_post_meta( $inv1_id, '_ndizi_invoice_amount', 1500.00 );
 	update_post_meta( $inv1_id, '_ndizi_invoice_status', 'paid' );
-	echo "Created Invoice: #1001 (ID: $inv1_id)\n";
+	echo esc_html( "Created Invoice: #1001 (ID: $inv1_id)\n" );
 }
 
 // Invoice 2: Acme Redesign Iteration 2
@@ -493,7 +493,7 @@ if ( $inv2_id ) {
 	update_post_meta( $inv2_id, '_ndizi_invoice_due_date', '2026-06-25' );
 	update_post_meta( $inv2_id, '_ndizi_invoice_amount', 2000.00 );
 	update_post_meta( $inv2_id, '_ndizi_invoice_status', 'sent' );
-	echo "Created Invoice: #1002 (ID: $inv2_id)\n";
+	echo esc_html( "Created Invoice: #1002 (ID: $inv2_id)\n" );
 }
 
 // Invoice 3: Stark Phase 1 Approval
@@ -511,7 +511,7 @@ if ( $inv3_id ) {
 	update_post_meta( $inv3_id, '_ndizi_invoice_due_date', '2026-06-15' );
 	update_post_meta( $inv3_id, '_ndizi_invoice_amount', 75000.00 );
 	update_post_meta( $inv3_id, '_ndizi_invoice_status', 'paid' );
-	echo "Created Invoice: #2001 (ID: $inv3_id)\n";
+	echo esc_html( "Created Invoice: #2001 (ID: $inv3_id)\n" );
 }
 
 // Invoice 4: Stark Phase 2 Setup
@@ -529,14 +529,15 @@ if ( $inv4_id ) {
 	update_post_meta( $inv4_id, '_ndizi_invoice_due_date', '2026-06-24' );
 	update_post_meta( $inv4_id, '_ndizi_invoice_amount', 50000.00 );
 	update_post_meta( $inv4_id, '_ndizi_invoice_status', 'draft' );
-	echo "Created Invoice: #2002 (ID: $inv4_id)\n";
+	echo esc_html( "Created Invoice: #2002 (ID: $inv4_id)\n" );
 }
 
 // 7. Create Time Entries in Custom Table
 global $wpdb;
 $table_name = Ndizi_DB::get_table_name();
 
-// Clean up existing entries first to avoid duplicates
+// Clean up existing entries first to avoid duplicates.
+// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Table name derives from $wpdb->prefix and cannot be a placeholder; one-off TRUNCATE of the custom table while seeding Playground demo data.
 $wpdb->query( "TRUNCATE TABLE $table_name" );
 
 // Define a list of logs to insert
@@ -701,7 +702,7 @@ foreach ( $time_entries as $entry ) {
 	}
 }
 
-echo 'Logged ' . count( $time_entries ) . " time entries via Time Service.\n";
+echo esc_html( 'Logged ' . count( $time_entries ) . " time entries via Time Service.\n" );
 
 // Start a live, still-running timer for Bob so the dashboard shows an active entry.
 $active_timer = Ndizi_Time_Service::start_timer(
@@ -714,15 +715,15 @@ $active_timer = Ndizi_Time_Service::start_timer(
 	)
 );
 if ( is_wp_error( $active_timer ) ) {
-	echo 'Skipped active timer for Bob: ' . $active_timer->get_error_message() . "\n";
+	echo esc_html( 'Skipped active timer for Bob: ' . $active_timer->get_error_message() . "\n" );
 } else {
-	echo "Started a live running timer for Bob (ID: $active_timer)\n";
+	echo esc_html( "Started a live running timer for Bob (ID: $active_timer)\n" );
 }
 
 // Lock everything on or before 2026-05-31 so the archived-project entries demonstrate
 // the locked-period state. Set last, since inserts above would be rejected in a locked range.
 update_option( 'ndizi_lock_date', '2026-05-31' );
-echo "Set accounting lock date to 2026-05-31 (archived May/April entries are now locked)\n";
+echo esc_html( "Set accounting lock date to 2026-05-31 (archived May/April entries are now locked)\n" );
 
 // 8. Create Time Off Requests
 $time_off_1 = wp_insert_post(
@@ -739,7 +740,7 @@ if ( $time_off_1 ) {
 	update_post_meta( $time_off_1, '_ndizi_time_off_type', 'vacation' );
 	update_post_meta( $time_off_1, '_ndizi_time_off_status', 'approved' );
 	update_post_meta( $time_off_1, '_ndizi_time_off_client_id', $client1_id );
-	echo "Created Time Off Request: Vacation - John Doe (ID: $time_off_1)\n";
+	echo esc_html( "Created Time Off Request: Vacation - John Doe (ID: $time_off_1)\n" );
 }
 
 $time_off_2 = wp_insert_post(
@@ -756,7 +757,7 @@ if ( $time_off_2 ) {
 	update_post_meta( $time_off_2, '_ndizi_time_off_type', 'sick_leave' );
 	update_post_meta( $time_off_2, '_ndizi_time_off_status', 'pending' );
 	update_post_meta( $time_off_2, '_ndizi_time_off_client_id', $client2_id );
-	echo "Created Time Off Request: Sick Leave - Jane Smith (ID: $time_off_2)\n";
+	echo esc_html( "Created Time Off Request: Sick Leave - Jane Smith (ID: $time_off_2)\n" );
 }
 
 // 9. Create Client Portal Page if it doesn't exist
@@ -771,7 +772,7 @@ if ( ! $portal_page ) {
 			'post_name'    => 'client-portal',
 		)
 	);
-	echo "Created Client Portal Page (ID: $portal_id)\n";
+	echo esc_html( "Created Client Portal Page (ID: $portal_id)\n" );
 } else {
 	// If it exists, make sure it has the block editor layout
 	wp_update_post(
@@ -780,7 +781,7 @@ if ( ! $portal_page ) {
 			'post_content' => '<!-- wp:ndizi/client-portal /-->',
 		)
 	);
-	echo "Client Portal Page verified/updated.\n";
+	echo esc_html( "Client Portal Page verified/updated.\n" );
 }
 
-echo "Staging mock data population complete.\n";
+echo esc_html( "Staging mock data population complete.\n" );

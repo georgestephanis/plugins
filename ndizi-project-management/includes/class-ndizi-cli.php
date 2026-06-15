@@ -234,6 +234,7 @@ class Ndizi_CLI {
 		}
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off lookup resolving a name to a post ID within a WP-CLI command; caching is unnecessary.
 		$id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT ID FROM {$wpdb->posts} WHERE post_title = %s AND post_type = 'ndizi_project' AND post_status != 'trash' LIMIT 1",
@@ -256,6 +257,7 @@ class Ndizi_CLI {
 		}
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off lookup resolving a name to a post ID within a WP-CLI command; caching is unnecessary.
 		$id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT p.ID FROM {$wpdb->posts} p

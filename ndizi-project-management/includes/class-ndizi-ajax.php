@@ -46,13 +46,8 @@ class Ndizi_Ajax {
 		$total_sec = 0;
 		if ( ! empty( $entry_ids ) ) {
 			$ids_placeholders = implode( ',', array_fill( 0, count( $entry_ids ), '%d' ) );
-			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$total_sec = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT SUM(duration) FROM $table_name WHERE id IN ($ids_placeholders)",
-					$entry_ids
-				)
-			);
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix; the IN() list is built from per-id %d placeholders and prepared against $entry_ids.
+			$total_sec = $wpdb->get_var( $wpdb->prepare( "SELECT SUM(duration) FROM $table_name WHERE id IN ($ids_placeholders)", $entry_ids ) );
 		}
 
 		$total_hours       = $total_sec ? ( $total_sec / 3600 ) : 0;

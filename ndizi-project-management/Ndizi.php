@@ -216,8 +216,8 @@ class Ndizi_Project_Management {
 	 * Bootstrap hooks for loaded components
 	 */
 	public static function bootstrap() {
-		// Load translations (kept for older WP targets; wp.org auto-loads when slug matches the text domain).
-		load_plugin_textdomain( 'ndizi-project-management', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+		// Translations are loaded automatically by WordPress.org (and core since 4.6)
+		// once the text domain matches the plugin slug, so no load_plugin_textdomain() call is needed.
 
 		// Initialize Custom Post Types & Meta
 		Ndizi_CPTs::init();

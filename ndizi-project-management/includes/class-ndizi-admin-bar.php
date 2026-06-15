@@ -408,13 +408,8 @@ class Ndizi_Admin_Bar {
 			if ( ! empty( $tasks ) ) {
 				$task_ids     = wp_list_pluck( $tasks, 'ID' );
 				$placeholders = implode( ',', array_fill( 0, count( $task_ids ), '%d' ) );
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-				$duration_rows = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT task_id, SUM(duration) AS total_duration FROM $time_table WHERE task_id IN ($placeholders) GROUP BY task_id",
-						$task_ids
-					)
-				);
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix; the IN() list is built from per-id %d placeholders and prepared against $task_ids.
+				$duration_rows = $wpdb->get_results( $wpdb->prepare( "SELECT task_id, SUM(duration) AS total_duration FROM $time_table WHERE task_id IN ($placeholders) GROUP BY task_id", $task_ids ) );
 				if ( $duration_rows ) {
 					foreach ( $duration_rows as $row ) {
 						$task_durations[ (int) $row->task_id ] = intval( $row->total_duration );
