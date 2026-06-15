@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<ruleset name="georgestephanis-plugins">
+    <description>WordPress Coding Standards for the georgestephanis plugin portfolio.</description>
+
+    <!-- Scan every plugin. Each plugin also ships its own phpcs.xml for targeted,
+         per-plugin tuning (minimum_supported_wp_version, testVersion). -->
+    <file>./add-ids-to-header-tags</file>
+    <file>./automatic-internal-links</file>
+    <file>./big-emoji-comments</file>
+    <file>./category-posts-widget</file>
+    <file>./custom-content-width</file>
+    <file>./footer-on-homepage</file>
+    <file>./go-dark</file>
+    <file>./google-tag-manager</file>
+    <file>./hugh</file>
+    <file>./legacy-jetpack-custom-css-editor</file>
+    <file>./ndizi-project-management</file>
+    <file>./omnisearch</file>
+    <file>./press-this-v2</file>
+    <file>./random-blocks</file>
+    <file>./restrict-block-content</file>
+    <file>./reusable-block-count</file>
+    <file>./simple-404-keyword-insertion</file>
+    <file>./tarot</file>
+    <file>./the</file>
+    <file>./theme-downloader</file>
+    <file>./tuft-feedback</file>
+    <file>./update-control</file>
+
+    <!-- Exclude build artifacts, deps, and VCS internals -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
+    <exclude-pattern>*/.git/*</exclude-pattern>
+
+    <!-- Ruleset -->
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress-Docs"/>
+
+    <!-- Minimum WP version for deprecated-function checks -->
+    <config name="minimum_supported_wp_version" value="6.0"/>
+
+    <!-- PHP compatibility range (advisory; install phpcompatibility-wp to enforce) -->
+    <config name="testVersion" value="7.4-"/>
+
+    <!-- Show sniff codes in reports for easier suppression -->
+    <arg value="ps"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+</ruleset>
