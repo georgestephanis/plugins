@@ -2,7 +2,7 @@
 <ruleset name="simple-404-keyword-insertion">
     <description>WPCS config for simple-404-keyword-insertion.</description>
 
-    <file>./simple-404-keyword-insertion.php</file>
+    <file>.</file>
 
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>

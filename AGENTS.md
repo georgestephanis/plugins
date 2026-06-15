@@ -36,13 +36,28 @@ No repo-wide build system. Each plugin is self-contained.
 
 ## PHP linting (phpcs / WPCS)
 
-Some plugins include a `phpcs.xml` pre-tuned with `minimum_supported_wp_version` and `testVersion` ranges appropriate to that plugin. Install phpcs and WPCS separately (e.g. via Composer globally), then lint a specific plugin:
+The repo root ships a `composer.json` that pins phpcs, WPCS, and the PHPCSStandards utility packages as dev tooling. Install once at the root:
+
+```bash
+composer install
+```
+
+Lint everything against the root `phpcs.xml.dist`:
+
+```bash
+vendor/bin/phpcs          # lint all plugins
+vendor/bin/phpcbf         # auto-fix what it can
+```
+
+Most plugins also ship their own `phpcs.xml`, pre-tuned with `minimum_supported_wp_version` and `testVersion` ranges appropriate to that plugin. To lint a single plugin against its own config, run from inside the plugin directory (the per-plugin `<file>` paths are relative to it):
 
 ```bash
 cd google-tag-manager
-phpcs --standard=phpcs.xml
-phpcbf --standard=phpcs.xml
+../vendor/bin/phpcs --standard=phpcs.xml
+../vendor/bin/phpcbf --standard=phpcs.xml
 ```
+
+Note: the per-plugin `testVersion` lines are advisory — PHPCompatibility is not in the dev requirements, so PHP cross-version sniffs do not fire. Add `phpcompatibility/phpcompatibility-wp` and a `<rule ref="PHPCompatibilityWP"/>` if you want them enforced (a few older plugins have known PHP 8 issues, so this is opt-in).
 
 `restrict-block-content/` has its own `composer.json` for its JS build toolchain (`@wordpress/scripts`); it is unrelated to phpcs.
 
