@@ -4,9 +4,6 @@
 [submodule "automatic-internal-links"]
 	path = automatic-internal-links
 	url = https://github.com/georgestephanis/automatic-internal-links
-[submodule "big-emoji-comments"]
-	path = big-emoji-comments
-	url = https://github.com/georgestephanis/big-emoji-comments
 [submodule "custom-content-width"]
 	path = custom-content-width
 	url = https://github.com/georgestephanis/Custom-Content-Width
