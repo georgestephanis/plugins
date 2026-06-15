@@ -926,18 +926,19 @@ class Ndizi_REST {
 		}
 
 		$updated_entry = Ndizi_DB::get_time_entry( $id );
-		if ( $updated_entry ) {
-			$project                     = get_post( $updated_entry->project_id );
-			$updated_entry->project_name = $project ? $project->post_title : '';
-			if ( $updated_entry->task_id ) {
-				$task                     = get_post( $updated_entry->task_id );
-				$updated_entry->task_name = $task ? $task->post_title : '';
-			} else {
-				$updated_entry->task_name = '';
-			}
-			$user                     = get_userdata( $updated_entry->user_id );
-			$updated_entry->user_name = $user ? $user->display_name : '';
+		if ( ! $updated_entry ) {
+			return new WP_REST_Response( array( 'error' => __( 'Failed to retrieve updated entry.', 'ndizi-project-management' ) ), 500 );
 		}
+		$project                     = get_post( $updated_entry->project_id );
+		$updated_entry->project_name = $project ? $project->post_title : '';
+		if ( $updated_entry->task_id ) {
+			$task                     = get_post( $updated_entry->task_id );
+			$updated_entry->task_name = $task ? $task->post_title : '';
+		} else {
+			$updated_entry->task_name = '';
+		}
+		$user                     = get_userdata( $updated_entry->user_id );
+		$updated_entry->user_name = $user ? $user->display_name : '';
 
 		return new WP_REST_Response( $updated_entry, 200 );
 	}
