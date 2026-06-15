@@ -133,16 +133,27 @@ jobs:
           fi
           COMMITS=$(git log "$RANGE" --no-merges --pretty=format:'- %s' -- "$SLUG/" | head -100 || true)
 
-          # --- GitHub's auto-generated PR list for the range ---
+          # --- Pull requests that actually touched this plugin's directory ---
+          # GitHub's generate-notes lists every PR in the tag window, which in a
+          # monorepo includes unrelated plugins. Instead, map the directory-scoped
+          # commits to their PRs via the commit->PR association API (reliable for
+          # this repo's merge style; direct-to-main commits resolve to none), then
+          # render a deduped list. The cap bounds API calls on a first release.
+          PR_NUMS=$(
+            git log "$RANGE" --no-merges --format='%H' -- "$SLUG/" \
+              | head -500 \
+              | while read -r sha; do
+                  gh api "repos/$REPO/commits/$sha/pulls" --jq '.[].number' 2>/dev/null || true
+                done \
+              | sort -un
+          )
           PR_NOTES=""
-          if [ -n "$PREV_TAG" ]; then
-            PR_NOTES=$(gh api "repos/$REPO/releases/generate-notes" \
-              -f tag_name="$TAG" -f previous_tag_name="$PREV_TAG" \
-              --jq '.body' 2>/dev/null || true)
-          else
-            PR_NOTES=$(gh api "repos/$REPO/releases/generate-notes" \
-              -f tag_name="$TAG" --jq '.body' 2>/dev/null || true)
-          fi
+          for n in $PR_NUMS; do
+            line=$(gh pr view "$n" --repo "$REPO" --json number,title,author,url \
+              --jq '"- #\(.number) \(.title) — @\(.author.login) (\(.url))"' 2>/dev/null) || continue
+            PR_NOTES="${PR_NOTES}${line}"$'\n'
+          done
+          PR_NOTES="${PR_NOTES%$'\n'}"
 
           # --- Build the LLM context and request a summary (best-effort) ---
           {
