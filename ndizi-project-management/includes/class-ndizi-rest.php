@@ -874,17 +874,6 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Unauthorized to edit this entry', 'ndizi-project-management' ) ), 403 );
 		}
 
-		if ( Ndizi_DB::is_date_locked( $log->start_time ) ) {
-			return new WP_REST_Response( array( 'error' => __( 'Cannot update time entry. The existing time entry is in a locked period.', 'ndizi-project-management' ) ), 400 );
-		}
-
-		if ( $request->has_param( 'start_time' ) ) {
-			$new_start = $request->get_param( 'start_time' );
-			if ( Ndizi_DB::is_date_locked( $new_start ) ) {
-				return new WP_REST_Response( array( 'error' => __( 'Cannot update time entry. The new start date is locked.', 'ndizi-project-management' ) ), 400 );
-			}
-		}
-
 		// Build data list from params.
 		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
 		$data   = array();
@@ -895,6 +884,9 @@ class Ndizi_REST {
 			}
 		}
 
+		// Whether any substantive (non-approval) field is being written.
+		$updating_other_fields = ! empty( $data );
+
 		// Approval is a manager-only action: only users who can manage all time
 		// may set the approved flag, and `approved_by` is always recorded as the
 		// acting manager (never trusted from client input) to prevent a team
@@ -903,6 +895,23 @@ class Ndizi_REST {
 			$is_approved         = rest_sanitize_boolean( $request->get_param( 'approved' ) );
 			$data['approved']    = $is_approved ? 1 : 0;
 			$data['approved_by'] = $is_approved ? get_current_user_id() : 0;
+		}
+
+		// Lock-date guards only apply to substantive edits. Approval-only updates
+		// (approve/unapprove) are intentionally allowed on locked entries, matching
+		// Ndizi_DB::update_time_entry() and the approval-aware write-path contract
+		// in AGENTS.md, so managers can still approve entries in locked periods.
+		if ( $updating_other_fields ) {
+			if ( Ndizi_DB::is_date_locked( $log->start_time ) ) {
+				return new WP_REST_Response( array( 'error' => __( 'Cannot update time entry. The existing time entry is in a locked period.', 'ndizi-project-management' ) ), 400 );
+			}
+
+			if ( $request->has_param( 'start_time' ) ) {
+				$new_start = $request->get_param( 'start_time' );
+				if ( Ndizi_DB::is_date_locked( $new_start ) ) {
+					return new WP_REST_Response( array( 'error' => __( 'Cannot update time entry. The new start date is locked.', 'ndizi-project-management' ) ), 400 );
+				}
+			}
 		}
 
 		$updated = Ndizi_DB::update_time_entry( $id, $data );
