@@ -1,1 +1,1 @@
-<?php return array('dependencies' => array('ndizi-dataviews', 'react', 'wp-api-fetch', 'wp-components', 'wp-core-data', 'wp-data', 'wp-element', 'wp-html-entities'), 'version' => '41636738197a77d63fff');
+<?php return array('dependencies' => array('ndizi-dataviews', 'react', 'wp-api-fetch', 'wp-components', 'wp-core-data', 'wp-data', 'wp-element', 'wp-html-entities'), 'version' => 'c3beec0bd34c9177976d');

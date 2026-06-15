@@ -186,7 +186,12 @@ const TimeEntriesApp = () => {
 		if ( ! lockDateStr || ! dateStr ) {
 			return false;
 		}
-		const lockDate = new Date( lockDateStr.replace( /-/g, '/' ) );
+		// Lock the entire lock date, not just its midnight boundary, so an entry
+		// recorded later on the lock day (e.g. 14:30) still counts as locked.
+		// Mirrors Ndizi_DB::is_date_locked(), which compares against 23:59:59.
+		const lockDate = new Date(
+			( lockDateStr + ' 23:59:59' ).replace( /-/g, '/' )
+		);
 		const checkDate = new Date( dateStr.replace( /-/g, '/' ) );
 		return checkDate <= lockDate;
 	};
