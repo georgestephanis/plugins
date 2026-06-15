@@ -11,9 +11,12 @@ if ( ! class_exists( 'Ndizi_Project_Management' ) ) {
 	return;
 }
 
-// Defense-in-depth: Prevent accidental execution of this destructive script on production environments.
-// extension_loaded('vrzno') is loaded with WebAssembly in WordPress Playground.
-if ( ! extension_loaded('vrzno') && 'production' === wp_get_environment_type() ) {
+// Defense-in-depth: never run this destructive seeder on a production environment.
+// The bundled Playground blueprints set WP_ENVIRONMENT_TYPE to 'local', so this only
+// blocks real sites. (The previous extension_loaded('vrzno') Playground check was
+// unreliable — vrzno is not consistently loaded in current Playground builds, which made
+// this guard wp_die() in Playground and silently skip all seeding.)
+if ( 'production' === wp_get_environment_type() ) {
 	wp_die( 'Destructive seeding is disabled in production environments.' );
 }
 

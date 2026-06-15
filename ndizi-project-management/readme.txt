@@ -101,6 +101,7 @@ Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Unchec
 
 = 1.0.1 =
 *   Fixed a `_load_textdomain_just_in_time` notice (WP 6.7+) caused by translations running before the `init` action; the module registry is now translation-free and labels load at display time.
+*   Fixed the Playground demo not seeding mock data: the destructive-seed guard keyed on an unreliable Playground check, so it blocked seeding. It now gates on the environment type, and the demo blueprints declare a non-production environment.
 *   WordPress.org Plugin Check pass: direct-file-access guards on block render and seed templates, prefixed/scoped file-scope variables, and documented database-query annotations.
 *   Added a WordPress Playground live demo (Live Preview blueprint).
 *   Now requires WordPress 6.9 or later (for the Abilities API integration).
