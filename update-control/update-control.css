@@ -1,4 +1,4 @@
-.update_control_dependency[readonly],
-.update_control_email_dependency[readonly] {
+.update_control_dependency[disabled],
+.update_control_email_dependency[disabled] {
 	opacity: 0.4;
 }
