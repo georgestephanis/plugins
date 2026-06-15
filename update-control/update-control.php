@@ -9,8 +9,14 @@
  * Text Domain: update-control
  * Domain Path: /languages
  *
- * @package UpdateControl
+ * @package StephanisUpdateControl
  */
+
+namespace Stephanis\UpdateControl;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 /**
  * Update Control Class
@@ -456,6 +462,6 @@ class Update_Control {
 		return $options;
 	}
 }
-add_action( 'admin_init', array( 'Update_Control', 'register_settings' ) );
-add_action( 'init', array( 'Update_Control', 'setup_upgrade_filters' ) );
-add_action( 'admin_enqueue_scripts', array( 'Update_Control', 'enqueue_admin_scripts' ) );
+add_action( 'admin_init', array( __NAMESPACE__ . '\Update_Control', 'register_settings' ) );
+add_action( 'init', array( __NAMESPACE__ . '\Update_Control', 'setup_upgrade_filters' ) );
+add_action( 'admin_enqueue_scripts', array( __NAMESPACE__ . '\Update_Control', 'enqueue_admin_scripts' ) );
