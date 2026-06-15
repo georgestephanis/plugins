@@ -7,7 +7,8 @@
  * Version: 1.5.1
  * Author URI: http://chipbennett.net
  * Text Domain: update-control
- * Domain Path: /languages
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  *
  * @package StephanisUpdateControl
  */
@@ -277,7 +278,7 @@ class Update_Control {
 			'update-control'
 		);
 
-		$wp_version = function_exists( 'wp_get_wp_version' ) ? wp_get_wp_version() : $GLOBALS['wp_version'];
+		$wp_version = $GLOBALS['wp_version'];
 		if ( false !== strpos( $wp_version, '-' ) ) {
 			add_settings_field(
 				'update_control_email_debug',
