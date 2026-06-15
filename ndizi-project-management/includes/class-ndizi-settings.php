@@ -226,8 +226,9 @@ class Ndizi_Settings {
 					'ndizi-time-entries-app',
 					'ndizi_time_entries_admin',
 					array(
-						'rest_url'        => esc_url_raw( rest_url() ),
-						'rest_nonce'      => wp_create_nonce( 'wp_rest' ),
+						// apiFetch sources its REST root and nonce from the core
+						// wp-api-fetch localization, so the app only needs these
+						// view-specific values.
 						'can_manage'      => Ndizi_Roles::current_user_can( 'ndizi_manage_time' ),
 						'current_user_id' => get_current_user_id(),
 						'lock_date'       => get_option( 'ndizi_lock_date', '' ),
