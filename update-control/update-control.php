@@ -232,7 +232,7 @@ class Update_Control {
 
 		add_settings_field(
 			'update_control_toggleadvanced',
-			sprintf( '<label for="update_control_toggleadvanced">%1$s</label>', esc_html__( 'Advanced Settings', 'update-control' ) ),
+			esc_html__( 'Advanced Settings', 'update-control' ),
 			array( __CLASS__, 'update_control_toggleadvanced_cb' ),
 			'general',
 			'update-control'
@@ -373,11 +373,16 @@ class Update_Control {
 	 * Output markup for 'Advanced Settings' field.
 	 */
 	public static function update_control_toggleadvanced_cb() {
+		$options = self::get_options();
+		$is_open = 'show' === $options['toggleadvanced'];
 		?>
-		<select class="update_control_dependency" id="update_control_toggleadvanced" name="update_control_options[toggleadvanced]">
-			<option <?php selected( 'show' === self::get_option( 'toggleadvanced' ) ); ?> value="show"><?php esc_html_e( 'Show', 'update-control' ); ?></option>
-			<option <?php selected( 'hide' === self::get_option( 'toggleadvanced' ) ); ?> value="hide"><?php esc_html_e( 'Hide', 'update-control' ); ?></option>
-		</select>
+		<details id="update_control_toggleadvanced_details" class="update_control_dependency"<?php echo $is_open ? ' open' : ''; ?>>
+			<summary style="cursor: pointer; font-weight: 600; outline: none; user-select: none;">
+				<span class="open-text"><?php esc_html_e( 'Hide settings', 'update-control' ); ?></span>
+				<span class="closed-text"><?php esc_html_e( 'Show settings', 'update-control' ); ?></span>
+			</summary>
+		</details>
+		<input type="hidden" id="update_control_toggleadvanced" name="update_control_options[toggleadvanced]" value="<?php echo esc_attr( $options['toggleadvanced'] ); ?>" />
 		<?php
 	}
 
