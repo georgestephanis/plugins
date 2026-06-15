@@ -27,6 +27,7 @@ API-AUTHENTICATION.md
 TODO.md
 README.md
 REVIEW.md
+DOTORG_REVIEW.md
 /chrome-extension
 
 # Keep the languages/ dir and .pot, but drop the placeholder

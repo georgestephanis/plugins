@@ -583,8 +583,7 @@ class Ndizi_Invoicing {
 				);
 			}
 
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing the php://output stream after a CSV download; WP_Filesystem cannot target the output stream.
-			fclose( $output );
+			// No fclose(): the php://output stream is closed automatically when the request ends at exit.
 			exit;
 		}
 
@@ -690,8 +689,7 @@ class Ndizi_Invoicing {
 				);
 			}
 
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing the php://output stream after a CSV download; WP_Filesystem cannot target the output stream.
-			fclose( $output );
+			// No fclose(): the php://output stream is closed automatically when the request ends at exit.
 			exit;
 		}
 
@@ -784,8 +782,7 @@ class Ndizi_Invoicing {
 			);
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing the php://output stream after a CSV download; WP_Filesystem cannot target the output stream.
-		fclose( $output );
+		// No fclose(): the php://output stream is closed automatically when the request ends at exit.
 		exit;
 	}
 
