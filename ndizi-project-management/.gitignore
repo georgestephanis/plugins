@@ -1,2 +1,5 @@
 /vendor
 /node_modules
+
+# Plugin Check report exports (local working notes, never committed)
+ndizi-project-management-ndizi-php-*.md

@@ -93,13 +93,9 @@ class Ndizi_Invoicing {
 
 		// Fetch linked time entries
 		global $wpdb;
-		$table_name   = Ndizi_DB::get_table_name();
-		$time_entries = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC",
-				$invoice_id
-			)
-		);
+		$table_name = Ndizi_DB::get_table_name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; invoice_id is prepared; entries read directly from the custom table.
+		$time_entries = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC", $invoice_id ) );
 
 		// Calculate total hours
 		$total_seconds = 0;
@@ -519,13 +515,9 @@ class Ndizi_Invoicing {
 
 		// Load logs
 		global $wpdb;
-		$table_name   = Ndizi_DB::get_table_name();
-		$time_entries = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC",
-				$invoice_id
-			)
-		);
+		$table_name = Ndizi_DB::get_table_name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; invoice_id is prepared; entries read directly from the custom table.
+		$time_entries = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC", $invoice_id ) );
 
 		$export_data = array(
 			'invoice_id'     => $invoice_id,
@@ -591,8 +583,7 @@ class Ndizi_Invoicing {
 				);
 			}
 
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-			fclose( $output );
+			// No fclose(): the php://output stream is closed automatically when the request ends at exit.
 			exit;
 		}
 
@@ -698,8 +689,7 @@ class Ndizi_Invoicing {
 				);
 			}
 
-			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-			fclose( $output );
+			// No fclose(): the php://output stream is closed automatically when the request ends at exit.
 			exit;
 		}
 
@@ -792,8 +782,7 @@ class Ndizi_Invoicing {
 			);
 		}
 
-		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-		fclose( $output );
+		// No fclose(): the php://output stream is closed automatically when the request ends at exit.
 		exit;
 	}
 

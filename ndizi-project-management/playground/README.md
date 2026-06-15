@@ -1,16 +1,22 @@
 # Ndizi PM — WordPress Playground
 
-Dev-only tooling for spinning up a disposable WordPress with Ndizi Project Management
-installed and seeded with demo data. **Not shipped in the WordPress.org package** (see
-[`.distignore`](../.distignore)).
+Tooling for spinning up a disposable WordPress with Ndizi Project Management installed and
+seeded with demo data.
 
 ## What's here
 
-- **`blueprint.json`** — a [Playground Blueprint](https://wordpress.github.io/wordpress-playground/blueprints/)
-  that installs this plugin straight from its subdirectory in the monorepo via the
+- **`blueprint.json`** — the **GitHub** [Playground Blueprint](https://wordpress.github.io/wordpress-playground/blueprints/).
+  Installs this plugin straight from its subdirectory in the monorepo via the
   `git:directory` resource, activates it, also installs [User Switching](https://wordpress.org/plugins/user-switching/)
   (so you can hop between the seeded admin, manager, and team-member accounts to see the
-  plugin from each role), then seeds mock data.
+  plugin from each role), then seeds mock data. This reflects the last pushed commit on
+  `main`, so it's the one to use while developing.
+- **`../.wordpress-org/blueprints/blueprint.json`** — the **wp.org** Blueprint. Identical,
+  except it installs the plugin from the WordPress.org directory
+  (`resource: "wordpress.org/plugins"`) instead of from GitHub. The `.wordpress-org/`
+  directory is deployed to the SVN **`assets/`** dir (not the plugin ZIP); WordPress.org's
+  "Live Preview" feature reads `assets/blueprints/blueprint.json`, so that file powers the
+  Live Preview button on the directory page once it reflects the published release.
 - **`mock-data.php`** — wipes all `ndizi_*` posts and the custom time-entry table, then
   re-seeds three clients, four contacts, five projects, tasks, invoices, time entries, and
   a Client Portal page. **Destructive** — it is meant only for throwaway Playground/staging

@@ -206,28 +206,41 @@ composer run format
 
 ### PHPCS Ruleset Overrides (`phpcs.xml`)
 
-The ruleset extends `WordPress` and runs against `Ndizi.php` and `includes/`. The
-**`WordPress.Security` sniffs (escaping, nonce, sanitization) are intentionally left
-enabled** — `vendor/bin/phpcs --standard=phpcs.xml` passes clean with them on, and
-new code is expected to keep it that way. Where a security sniff is a genuine false
-positive (e.g. an already-`esc_url()`'d value echoed inline), use a narrowly scoped
-inline `// phpcs:ignore` with a reason rather than excluding the sniff globally.
+The ruleset extends `WordPress` and runs against `Ndizi.php` and `includes/`. It is kept
+**aligned with the WordPress.org Plugin Check**: the security **and** DB sniffs are left
+enabled so local `phpcs` surfaces what Plugin Check would flag, and genuine exceptions carry
+narrowly scoped inline `// phpcs:ignore` annotations (with a `-- Reason:`) rather than global
+exclusions. `vendor/bin/phpcs --standard=phpcs.xml` passes clean (0/0) and new code is expected
+to keep it that way.
 
-Only the following are tuned, due to the custom table and CSV streaming:
+> **Plugin Check does not read `phpcs.xml`** — it runs its own standard but honors inline
+> `phpcs:ignore`/`disable` annotations. Local `phpcs` and Plugin Check can therefore disagree;
+> the authoritative pre-submission gate is Plugin Check against the built ZIP. The full
+> rationale for every recurring finding — which ignores stay, why, and what was removed
+> instead (e.g. the redundant `fclose()` calls) — lives in
+> [`DOTORG_REVIEW.md`](DOTORG_REVIEW.md). **Read that before re-investigating a Plugin Check
+> finding**, and record genuinely new categories there.
+
+Only the following are tuned in the ruleset:
 
 - `WordPress.Files.FileName` — Excluded to support the main `Ndizi.php` bootstrap filename.
 - `WordPress.PHP.YodaConditions` — Excluded for readable conditional structures.
-- `WordPress.DB.DirectDatabaseQuery`, `WordPress.DB.PreparedSQL`,
-  `WordPress.DB.PreparedSQLPlaceholders`, `WordPress.DB.SlowDBQuery` — Excluded because
-  querying the custom `wp_ndizi_time_entries` table directly via `$wpdb` (including
-  dynamic `IN()` placeholder lists) is inherent; individual queries still carry inline
-  `phpcs:ignore` annotations where needed.
-- `WordPress.WP.AlternativeFunctions` — Excluded to allow `fopen()`/`fputcsv()`/`fclose()`
-  to `php://output` for browser CSV streaming.
+- `WordPress.DB.SlowDBQuery` — Excluded because `meta_query` usage is intrinsic to this
+  CRM-style plugin and Plugin Check does not flag it (keeps local output from being stricter
+  than the gate).
+- `WordPress.WP.AlternativeFunctions` — Excluded to allow `fopen()`/`fputcsv()` to
+  `php://output` for browser CSV streaming. (Plugin Check only flagged `fclose()`, which has
+  been removed entirely — `php://output` closes on request end.)
 - `Squiz.Commenting.FileComment` / `ClassComment` / `FunctionComment` / `InlineComment`
   — Severity set to `0` to avoid verbose doc-block warnings.
 - `Universal.Operators.DisallowShortTernary` — Severity `0` to allow short ternaries.
 
+The `WordPress.DB.DirectDatabaseQuery`, `WordPress.DB.PreparedSQL`, and
+`WordPress.DB.PreparedSQLPlaceholders` sniffs are **enabled** (not excluded); the custom-table
+queries that require them carry documented inline ignores — see `DOTORG_REVIEW.md`.
+
 Additionally, the ruleset registers the plugin's custom capabilities with
 `WordPress.WP.Capabilities` (so capability checks like `ndizi_manage_time` aren't flagged
-as typos) and sets `minimum_supported_wp_version` to `6.0`.
+as typos), declares the `ndizi`/`Ndizi` global prefixes and the `ndizi-project-management`
+text domain, and sets `minimum_supported_wp_version` to `6.9` (the floor required by the
+Abilities API — see `DOTORG_REVIEW.md`).

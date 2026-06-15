@@ -497,11 +497,13 @@ class Ndizi_Settings {
 			$query_args[] = $end_date . ' 23:59:59';
 		}
 
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $query is assembled from prepared placeholders over the custom time-entries table; dashboard reporting aggregate.
 		if ( ! empty( $query_args ) ) {
 			$total_sec = $wpdb->get_var( $wpdb->prepare( $query, $query_args ) );
 		} else {
 			$total_sec = $wpdb->get_var( $query );
 		}
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		$total_hours = $total_sec ? round( $total_sec / 3600, 1 ) : 0;
 

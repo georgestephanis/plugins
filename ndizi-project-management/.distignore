@@ -2,15 +2,15 @@
 # Honored by the 10up WordPress.org deploy action; for the manual rsync→SVN
 # flow add matching --exclude entries.
 
-# Playground / mock-data dev tooling
-/playground
-
 # Build sources (only the compiled /build is shipped)
 /src
 /node_modules
 webpack.config.js
+webpack.shared.js
+webpack.vendor.js
 package.json
 package-lock.json
+.eslintignore
 
 # PHP dev tooling
 /vendor
@@ -23,6 +23,12 @@ phpcs.xml
 .gitignore
 .distignore
 AGENTS.md
+API-AUTHENTICATION.md
+TODO.md
 README.md
 REVIEW.md
+DOTORG_REVIEW.md
 /chrome-extension
+
+# Keep the languages/ dir and .pot, but drop the placeholder
+languages/.gitkeep

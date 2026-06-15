@@ -177,12 +177,8 @@ class Ndizi_List_Tables {
 					global $wpdb;
 					$table_name       = Ndizi_DB::get_table_name();
 					$ids_placeholders = implode( ',', array_fill( 0, count( $project_ids ), '%d' ) );
-					$results          = $wpdb->get_results(
-						$wpdb->prepare(
-							"SELECT project_id, SUM(duration) as total_duration FROM $table_name WHERE project_id IN ($ids_placeholders) GROUP BY project_id", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-							$project_ids
-						)
-					);
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name from $wpdb->prefix; the IN() list is built from per-id %d placeholders and prepared against $project_ids.
+					$results = $wpdb->get_results( $wpdb->prepare( "SELECT project_id, SUM(duration) as total_duration FROM $table_name WHERE project_id IN ($ids_placeholders) GROUP BY project_id", $project_ids ) );
 					if ( is_array( $results ) ) {
 						foreach ( $results as $row ) {
 							$cached_totals[ (int) $row->project_id ] = (int) $row->total_duration;
