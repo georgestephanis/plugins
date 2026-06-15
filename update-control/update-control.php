@@ -121,6 +121,11 @@ class Update_Control {
 			if ( $options['debugemail'] ) {
 				add_filter( 'automatic_updates_send_debug_email', '__return_false', 1 );
 			}
+
+			if ( ! empty( $options['notification_email'] ) ) {
+				add_filter( 'auto_core_update_email', array( __CLASS__, 'filter_email_recipient' ), 10, 1 );
+				add_filter( 'auto_plugin_theme_update_email', array( __CLASS__, 'filter_email_recipient' ), 10, 1 );
+			}
 		}
 	}
 
@@ -206,18 +211,19 @@ class Update_Control {
 	 */
 	public static function get_options() {
 		$defaults = array(
-			'active'         => 'yes',
-			'core'           => 'minor',
-			'plugin'         => false,
-			'theme'          => false,
-			'translation'    => true,
-			'toggleadvanced' => 'hide',
-			'vcscheck'       => false,
-			'emailactive'    => 'yes',
-			'successemail'   => true,
-			'failureemail'   => true,
-			'criticalemail'  => true,
-			'debugemail'     => false,
+			'active'             => 'yes',
+			'core'               => 'minor',
+			'plugin'             => false,
+			'theme'              => false,
+			'translation'        => true,
+			'toggleadvanced'     => 'hide',
+			'vcscheck'           => false,
+			'emailactive'        => 'yes',
+			'successemail'       => true,
+			'failureemail'       => true,
+			'criticalemail'      => true,
+			'debugemail'         => false,
+			'notification_email' => '',
 		);
 		$args     = get_option( 'update_control_options', array() );
 		return wp_parse_args( $args, $defaults );
@@ -320,6 +326,14 @@ class Update_Control {
 			'update_control_email_active',
 			sprintf( '<label for="update_control_email_active">%1$s</label>', esc_html__( 'Update Emails Enabled?', 'update-control' ) ),
 			array( __CLASS__, 'update_control_email_active_cb' ),
+			'general',
+			'update-control'
+		);
+
+		add_settings_field(
+			'update_control_email_recipient',
+			sprintf( '<label for="update_control_email_recipient">%1$s</label>', esc_html__( 'Notification Email Address', 'update-control' ) ),
+			array( __CLASS__, 'update_control_email_recipient_cb' ),
 			'general',
 			'update-control'
 		);
@@ -514,6 +528,29 @@ class Update_Control {
 	}
 
 	/**
+	 * Output markup for 'Notification Email Address' field.
+	 */
+	public static function update_control_email_recipient_cb() {
+		?>
+		<input type="email" class="update_control_email_dependency update_control_advanced regular-text" id="update_control_email_recipient" name="update_control_options[notification_email]" value="<?php echo esc_attr( self::get_option( 'notification_email' ) ); ?>" placeholder="<?php esc_attr_e( 'Leave empty for default admin email', 'update-control' ); ?>" />
+		<?php
+	}
+
+	/**
+	 * Overrides the recipient email address for auto-update notifications.
+	 *
+	 * @param array $email Email arguments.
+	 * @return array Modified email arguments.
+	 */
+	public static function filter_email_recipient( $email ) {
+		$options = self::get_options();
+		if ( ! empty( $options['notification_email'] ) && is_email( $options['notification_email'] ) ) {
+			$email['to'] = $options['notification_email'];
+		}
+		return $email;
+	}
+
+	/**
 	 * Sanitize plugin options on save.
 	 *
 	 * @param array $options Raw options sent by option page.
@@ -522,18 +559,19 @@ class Update_Control {
 	public static function sanitize_options( $options ) {
 		$options = wp_parse_args( (array) $options, self::get_options() );
 
-		$options['active']         = ( in_array( $options['active'], array( 'yes', 'no' ), true ) ? $options['active'] : 'yes' );
-		$options['core']           = ( in_array( $options['core'], array( 'minor', 'major', 'dev' ), true ) ? $options['core'] : 'minor' );
-		$options['plugin']         = ! empty( $options['plugin'] );
-		$options['theme']          = ! empty( $options['theme'] );
-		$options['translation']    = ! empty( $options['translation'] );
-		$options['toggleadvanced'] = ( isset( $options['toggleadvanced'] ) && in_array( $options['toggleadvanced'], array( 'show', 'hide' ), true ) ? $options['toggleadvanced'] : 'hide' );
-		$options['vcscheck']       = ! empty( $options['vcscheck'] );
-		$options['emailactive']    = ( in_array( $options['emailactive'], array( 'yes', 'no' ), true ) ? $options['emailactive'] : 'yes' );
-		$options['successemail']   = ! empty( $options['successemail'] );
-		$options['failureemail']   = ! empty( $options['failureemail'] );
-		$options['criticalemail']  = ! empty( $options['criticalemail'] );
-		$options['debugemail']     = ! empty( $options['debugemail'] );
+		$options['active']             = ( in_array( $options['active'], array( 'yes', 'no' ), true ) ? $options['active'] : 'yes' );
+		$options['core']               = ( in_array( $options['core'], array( 'minor', 'major', 'dev' ), true ) ? $options['core'] : 'minor' );
+		$options['plugin']             = ! empty( $options['plugin'] );
+		$options['theme']              = ! empty( $options['theme'] );
+		$options['translation']        = ! empty( $options['translation'] );
+		$options['toggleadvanced']     = ( isset( $options['toggleadvanced'] ) && in_array( $options['toggleadvanced'], array( 'show', 'hide' ), true ) ? $options['toggleadvanced'] : 'hide' );
+		$options['vcscheck']           = ! empty( $options['vcscheck'] );
+		$options['emailactive']        = ( in_array( $options['emailactive'], array( 'yes', 'no' ), true ) ? $options['emailactive'] : 'yes' );
+		$options['successemail']       = ! empty( $options['successemail'] );
+		$options['failureemail']       = ! empty( $options['failureemail'] );
+		$options['criticalemail']      = ! empty( $options['criticalemail'] );
+		$options['debugemail']         = ! empty( $options['debugemail'] );
+		$options['notification_email'] = ! empty( $options['notification_email'] ) ? sanitize_email( $options['notification_email'] ) : '';
 
 		return $options;
 	}
