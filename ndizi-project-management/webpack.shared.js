@@ -47,6 +47,8 @@ function buildRules( { markCssSideEffects = false } = {} ) {
 				: rule.use,
 		};
 		if ( rule.use && Array.isArray( rule.use ) ) {
+			const sassLoaderIndex = rule.use.findIndex(
+				( loaderEntry ) =>
 					loaderEntry.loader &&
 					loaderEntry.loader.includes( 'sass-loader' )
 			);
