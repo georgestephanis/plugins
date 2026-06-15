@@ -13,18 +13,13 @@
 /**
  * Update Control Class
  */
-class Stephanis_Update_Control {
-
-	public static function go() {
-		if ( ! is_multisite() || is_main_site() ) {
-			// Let's roll!
-			add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
-			add_action( 'init', array( __CLASS__, 'setup_upgrade_filters' ) );
-			add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_scripts' ) );
-		}
-	}
+class Update_Control {
 
 	public static function enqueue_admin_scripts( $hook ) {
+		if ( is_multisite() && ! is_main_site() ) {
+			return;
+		}
+
 		if ( 'options-general.php' !== $hook ) {
 			return;
 		}
@@ -46,6 +41,10 @@ class Stephanis_Update_Control {
 	}
 
 	public static function setup_upgrade_filters() {
+		if ( is_multisite() && ! is_main_site() ) {
+			return;
+		}
+
 		$options = self::get_options();
 
 		// Do these at priority 1, so other folks can easily override it.
@@ -136,6 +135,10 @@ class Stephanis_Update_Control {
 	}
 
 	public static function register_settings() {
+		if ( is_multisite() && ! is_main_site() ) {
+			return;
+		}
+
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
@@ -239,7 +242,7 @@ class Stephanis_Update_Control {
 			'update-control'
 		);
 
-		global $wp_version;
+		$wp_version = wp_get_wp_version();
 		if ( false !== strpos( $wp_version, '-' ) ) {
 			add_settings_field(
 				'update_control_email_debug',
@@ -379,4 +382,6 @@ class Stephanis_Update_Control {
 	}
 
 }
-add_action( 'init', array( 'Stephanis_Update_Control', 'go' ), 0 );
+add_action( 'admin_init', array( 'Update_Control', 'register_settings' ) );
+add_action( 'init', array( 'Update_Control', 'setup_upgrade_filters' ) );
+add_action( 'admin_enqueue_scripts', array( 'Update_Control', 'enqueue_admin_scripts' ) );
