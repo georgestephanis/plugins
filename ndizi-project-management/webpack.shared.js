@@ -35,9 +35,18 @@ const VENDOR_ARTIFACTS = [
  */
 function buildRules( { markCssSideEffects = false } = {} ) {
 	return defaultConfig.module.rules.map( ( rule ) => {
+		// Avoid mutating @wordpress/scripts' shared defaultConfig in-place.
+		rule = {
+			...rule,
+			use: Array.isArray( rule.use )
+				? rule.use.map( ( loaderEntry ) =>
+						typeof loaderEntry === 'object'
+							? { ...loaderEntry }
+							: loaderEntry
+				  )
+				: rule.use,
+		};
 		if ( rule.use && Array.isArray( rule.use ) ) {
-			const sassLoaderIndex = rule.use.findIndex(
-				( loaderEntry ) =>
 					loaderEntry.loader &&
 					loaderEntry.loader.includes( 'sass-loader' )
 			);
