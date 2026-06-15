@@ -881,14 +881,24 @@ class Ndizi_REST {
 			}
 		}
 
-		// Build data list from params
-		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable', 'approved', 'approved_by' );
+		// Build data list from params.
+		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
 		$data   = array();
 
 		foreach ( $params as $param ) {
 			if ( $request->has_param( $param ) ) {
 				$data[ $param ] = $request->get_param( $param );
 			}
+		}
+
+		// Approval is a manager-only action: only users who can manage all time
+		// may set the approved flag, and `approved_by` is always recorded as the
+		// acting manager (never trusted from client input) to prevent a team
+		// member from self-approving their own entries.
+		if ( $request->has_param( 'approved' ) && Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
+			$is_approved         = rest_sanitize_boolean( $request->get_param( 'approved' ) );
+			$data['approved']    = $is_approved ? 1 : 0;
+			$data['approved_by'] = $is_approved ? get_current_user_id() : 0;
 		}
 
 		$updated = Ndizi_DB::update_time_entry( $id, $data );
