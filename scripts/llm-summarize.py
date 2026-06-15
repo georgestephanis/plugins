@@ -71,6 +71,24 @@ def resolve_model(base, token, cached):
     return available[0], "detected"
 
 
+def extract_summary(message):
+    """Pull the assistant text out of a chat message, tolerating reasoning models.
+
+    Standard completions put the answer in `content`. Reasoning models (e.g. Qwen3)
+    may return `content: null` with the text in `reasoning_content`, and/or wrap a
+    chain-of-thought in <think>…</think>. Returns a stripped string (possibly empty).
+    """
+    if not isinstance(message, dict):
+        return ""
+    text = message.get("content")
+    if not (text and text.strip()):
+        text = message.get("reasoning_content") or ""
+    # Drop a leading <think>…</think> block if the model inlined its reasoning.
+    if "</think>" in text:
+        text = text.rsplit("</think>", 1)[1]
+    return text.strip()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True, help="OpenAI-compatible base URL, e.g. http://host:port/v1/")
@@ -123,7 +141,9 @@ def main():
             {"role": "user", "content": user},
         ],
         "temperature": 0.3,
-        "max_tokens": 600,
+        # Generous budget: reasoning models can spend much of the allowance on
+        # hidden chain-of-thought before emitting the answer.
+        "max_tokens": 2000,
     }
 
     try:
@@ -133,13 +153,15 @@ def main():
         return 1
 
     try:
-        summary = result["choices"][0]["message"]["content"].strip()
+        message = result["choices"][0]["message"]
     except (KeyError, IndexError, TypeError) as exc:
         sys.stderr.write(f"unexpected completion shape: {exc}\n")
         return 1
 
+    summary = extract_summary(message)
     if not summary:
-        sys.stderr.write("model returned an empty summary\n")
+        finish = (result.get("choices") or [{}])[0].get("finish_reason")
+        sys.stderr.write(f"model returned an empty summary (finish_reason={finish})\n")
         return 1
 
     print(summary)
