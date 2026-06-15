@@ -325,14 +325,26 @@ class Ndizi_Settings {
 			array( __CLASS__, 'render_settings_page' )
 		);
 
+		$time_entries_cap = current_user_can( 'ndizi_manage_time' ) ? 'ndizi_manage_time' : 'ndizi_log_time';
+
 		// Submenu: Time Entries
 		add_submenu_page(
 			'ndizi-pm',
 			__( 'Time Entries', 'ndizi-project-management' ),
 			__( 'Time Entries', 'ndizi-project-management' ),
-			'ndizi_log_time',
+			$time_entries_cap,
 			'ndizi-time-entries',
 			array( __CLASS__, 'render_time_entries_page' )
+		);
+
+		// Register a hidden fallback target for the visual separator entry.
+		add_submenu_page(
+			null,
+			__( 'Ndizi PM', 'ndizi-project-management' ),
+			__( 'Ndizi PM', 'ndizi-project-management' ),
+			'read',
+			'ndizi-pm-separator',
+			array( __CLASS__, 'render_submenu_separator_page' )
 		);
 	}
 
@@ -1172,5 +1184,12 @@ class Ndizi_Settings {
 		</div>
 		<?php
 	}
-}
 
+	/**
+	 * Redirect clicks on the visual separator back to the dashboard.
+	 */
+	public static function render_submenu_separator_page() {
+		wp_safe_redirect( admin_url( 'admin.php?page=ndizi-pm' ) );
+		exit;
+	}
+}
