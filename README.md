@@ -4,12 +4,6 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 
 <!-- deploy-status-start -->
 
-> **⚠ Pending deploys** — the following plugins have trunk versions ahead of the last WordPress.org release.
->
-> | Plugin | Deployed | Trunk | Action |
-> |--------|----------|-------|--------|
-> | `simple-404-keyword-insertion` | 1.0 | **1.0.1** | [Run deploy →](https://github.com/georgestephanis/plugins/actions/workflows/deploy.yml) |
-
 <!-- deploy-status-end -->
 
 ## Plugins

@@ -5,7 +5,7 @@
  * Description: This builds a custom 404 page based off the request string.
  * Author:      George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com
- * Version:     1.0.1
+ * Version: 1.0.1
  * License:     GPL-2.0-or-later
  * Text Domain: simple-404-keyword-insertion
  *
