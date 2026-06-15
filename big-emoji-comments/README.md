@@ -48,7 +48,7 @@ add_filter( 'big_emoji_comments_output', function( $output, $content, $percent, 
 ## Developer Tooling
 
 ### Regenerating the Emoji Regex Table
-The plugin contains an helper generator script, `regex-builder.php`, which downloads the latest official Unicode Emoji specification and builds/optimizes the character class ranges used in detection. 
+The plugin contains a helper generator script, `regex-builder.php`, which downloads the latest official Unicode Emoji specification and builds/optimizes the character class ranges used in detection. 
 
 To run it:
 ```bash

@@ -258,7 +258,7 @@ def main():
 
     # 8. Ensure phpcs.xml and package.json exist in subtree
     print(f"---> Ensuring project metadata files (phpcs.xml, package.json) exist in '{submodule_path}'...")
-    files_created = False
+    created_files = []
 
     phpcs_file = os.path.join(repo_root, submodule_path, "phpcs.xml")
     if not os.path.exists(phpcs_file):
@@ -288,7 +288,7 @@ def main():
         else:
             with open(phpcs_file, "w", encoding="utf-8") as f:
                 f.write(phpcs_content)
-            files_created = True
+            created_files.append(os.path.relpath(phpcs_file, repo_root))
 
     package_json = os.path.join(repo_root, submodule_path, "package.json")
     if not os.path.exists(package_json):
@@ -309,15 +309,15 @@ def main():
         else:
             with open(package_json, "w", encoding="utf-8") as f:
                 f.write(package_content)
-            files_created = True
+            created_files.append(os.path.relpath(package_json, repo_root))
 
-    if files_created:
+    if created_files:
         print("---> Committing new project metadata files...")
         if args.dry_run:
             print("[DRY RUN] Would stage and commit metadata files.")
         else:
-            run_cmd(["git", "add", phpcs_file, package_json])
-            run_cmd(["git", "commit", "-m", f"Add default phpcs.xml and package.json configurations for {submodule_path}"])
+            run_cmd(["git", "add"] + created_files)
+            run_cmd(["git", "commit", "-m", f"Add default project metadata configurations for {submodule_path}"])
 
     # 9. Archive GitHub repo
     if should_archive:

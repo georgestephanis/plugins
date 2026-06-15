@@ -11,11 +11,12 @@
 // phpcs:disable WordPress.WP.AlternativeFunctions
 // phpcs:disable WordPress.Security.EscapeOutput
 // phpcs:disable Generic.PHP.DeprecatedFunctions
+// phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged
 
 $url  = 'https://www.unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt';
-$data = file_get_contents( $url );
+$data = @file_get_contents( $url );
 
-if ( ! $data ) {
+if ( ! $data && function_exists( 'curl_init' ) ) {
 	$ch = curl_init();
 	curl_setopt( $ch, CURLOPT_URL, $url );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
@@ -25,7 +26,10 @@ if ( ! $data ) {
 }
 
 if ( ! $data ) {
-	die( "Error: Could not retrieve emoji data.\n" );
+	if ( ! ini_get( 'allow_url_fopen' ) && ! function_exists( 'curl_init' ) ) {
+		die( 'Error: Could not retrieve emoji data. Both \'allow_url_fopen\' and the cURL extension are disabled.' . "\n" );
+	}
+	die( 'Error: Could not retrieve emoji data from ' . $url . "\n" );
 }
 
 $lines     = preg_split( "/\r\n|\n|\r/", $data );
@@ -33,13 +37,13 @@ $intervals = array();
 
 foreach ( $lines as $line ) {
 	$line = trim( $line );
-	if ( empty( $line ) || str_starts_with( $line, '#' ) ) {
+	if ( empty( $line ) || 0 === strpos( $line, '#' ) ) {
 		continue;
 	}
 	// Format: codepoint(s) ; property # comment.
 	if ( preg_match( '/^([A-F\d\.]+) +; ([A-Za-z_]+)/i', $line, $match ) ) {
 		$codepoint = $match[1];
-		if ( str_contains( $codepoint, '..' ) ) {
+		if ( false !== strpos( $codepoint, '..' ) ) {
 			$parts = explode( '..', $codepoint );
 			$start = hexdec( $parts[0] );
 			$end   = hexdec( $parts[1] );

@@ -34,7 +34,7 @@ if ( ! function_exists( 'big_emoji_comments' ) ) {
 	function big_emoji_comments( $content ) {
 		$no_markup = trim( wp_kses( $content, array() ) );
 
-		$all_emoji_regex = '/^[ ' .
+		$all_emoji_regex = '/^[\s' .
 			// Regex generated from https://www.unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt.
 			'\x{0023}' .
 			'\x{002A}' .
@@ -200,26 +200,29 @@ if ( ! function_exists( 'big_emoji_comments' ) ) {
 			'\x{E0020}-\x{E007F}' .
 			']+$/u';
 
-		$char_count = function_exists( 'grapheme_strlen' ) ? grapheme_strlen( $no_markup ) : mb_strlen( $no_markup );
-
-		$percent = BIG_EMOJI_DEFAULT_SIZE;
-		switch ( $char_count ) {
-			case 1:
-				$percent = BIG_EMOJI_SINGLE_SIZE;
-				break;
-			case 2:
-				// no break.
-			case 3:
-				// no break.
-			case 4:
-				$percent = BIG_EMOJI_MULTI_SIZE;
-				break;
-		}
-
-		$percent = apply_filters( 'big_emoji_comments_percent', $percent, $no_markup );
-
 		if ( preg_match( $all_emoji_regex, $no_markup ) ) {
-			$output = sprintf( '<span class="big-emoji" style="font-size:%1$d%%;">%2$s</span>', $percent, wp_kses_post( $content ) );
+			$emoji_only = preg_replace( '/\s+/u', '', $no_markup );
+			if ( function_exists( 'grapheme_strlen' ) ) {
+				$char_count = grapheme_strlen( $emoji_only );
+			} else {
+				$char_count = preg_match_all( '/\X/u', $emoji_only, $matches );
+			}
+
+			$percent = BIG_EMOJI_DEFAULT_SIZE;
+			switch ( $char_count ) {
+				case 1:
+					$percent = BIG_EMOJI_SINGLE_SIZE;
+					break;
+				case 2:
+				case 3:
+				case 4:
+					$percent = BIG_EMOJI_MULTI_SIZE;
+					break;
+			}
+
+			$percent = apply_filters( 'big_emoji_comments_percent', $percent, $no_markup );
+
+			$output = sprintf( '<span class="big-emoji" style="font-size:%1$d%%;">%2$s</span>', $percent, $content );
 			return apply_filters( 'big_emoji_comments_output', $output, $content, $percent, $no_markup );
 		}
 
