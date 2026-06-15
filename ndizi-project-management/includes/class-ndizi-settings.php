@@ -1163,7 +1163,7 @@ class Ndizi_Settings {
 	}
 
 	public static function render_time_entries_page() {
-		if ( ! current_user_can( 'ndizi_log_time' ) ) {
+		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
 			wp_die( esc_html__( 'You do not have permission to view this page.', 'ndizi-project-management' ) );
 		}
 		?>
