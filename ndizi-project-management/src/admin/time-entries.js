@@ -552,11 +552,15 @@ const TimeEntriesApp = () => {
 					if ( ! item.start_time ) {
 						return <span>-</span>;
 					}
-					const start = new Date(
-						item.start_time.replace( /-/g, '/' )
-					);
+					// Stored datetimes are MySQL UTC strings (the write paths use
+					// current_time( 'mysql', true ) / gmdate, and the manual form
+					// takes UTC input). Parse them as UTC so toLocale*() renders
+					// the correct instant in the viewer's local time zone.
+					const parseUTC = ( mysql ) =>
+						new Date( mysql.replace( ' ', 'T' ) + 'Z' );
+					const start = parseUTC( item.start_time );
 					const end = item.end_time
-						? new Date( item.end_time.replace( /-/g, '/' ) )
+						? parseUTC( item.end_time )
 						: null;
 					const timeOpts = {
 						hour: 'numeric',
