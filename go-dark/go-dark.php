@@ -5,7 +5,9 @@
  * Description: Enables websites to 'go dark' with a customizable message, premium design presets, and start/end times to protest various causes.
  * Author:      George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com
- * Version: 1.1.0
+ * Version:     1.1.0
+ * License:     GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: go-dark
  *
  * @package go-dark

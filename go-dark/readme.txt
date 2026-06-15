@@ -5,8 +5,10 @@ Tags: Protest, Internet Freedom, Maintenance, Blackout, Go Dark
 Requires at least: 5.3
 Tested up to: 7.0
 Stable tag: 1.1.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A general-purpose, SEO-friendly protest and blackout utility for WordPress. Schedule a period or manually force your website to go dark with customizable messages and premium theme designs.
+SEO-friendly protest and blackout utility. Schedule a window or manually force your site dark with custom themes and messages.
 
 == Description ==
 
