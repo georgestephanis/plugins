@@ -150,10 +150,13 @@ jobs:
             done < "$SRC/.gitattributes"
           fi
 
-          # Sync plugin files into SVN trunk
-          rsync -rc --delete $EXCLUDES "$SRC/" "$SVN_DIR/trunk/"
+          # Sync plugin files into SVN trunk.
+          # --delete-excluded also removes excluded files (e.g. things newly added to
+          # .distignore) that were committed to trunk in a previous deploy, so they
+          # get cleaned up here instead of lingering in the wp.org checkout forever.
+          rsync -rc --delete --delete-excluded $EXCLUDES "$SRC/" "$SVN_DIR/trunk/"
 
-          # Stage new and removed files
+          # Stage new and removed files (removals include any files rsync just deleted above)
           svn status "$SVN_DIR/trunk" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
           svn status "$SVN_DIR/trunk" | grep '^!' | awk '{print $2}' | xargs -r svn delete
 

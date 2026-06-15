@@ -1,6 +1,6 @@
 # GitHub Actions for WordPress.org Deployment
 
-All three workflows in `.github/workflows/` use custom shell steps that talk to SVN directly. They require `SVN_USERNAME` and `SVN_PASSWORD` stored as repository secrets (Settings → Secrets and variables → Actions).
+All workflows in `.github/workflows/` use custom shell steps that talk to SVN directly. They require `SVN_USERNAME` and `SVN_PASSWORD` stored as repository secrets (Settings → Secrets and variables → Actions).
 
 ## Workflows
 
@@ -8,6 +8,7 @@ All three workflows in `.github/workflows/` use custom shell steps that talk to 
 |------|---------|---------|
 | `.github/workflows/deploy.yml` | Manual (`workflow_dispatch`) | Version bump → optional JS build → SVN deploy → tag → update `versions.json` → Git commit/PR → **GitHub tag + Release** → **AI release summary** |
 | `.github/workflows/release-summary.yml` | Reusable (`workflow_call`) | Called by `deploy.yml` after a Release is created: gathers commits + PRs, asks a self-hosted LLM for a summary, and rewrites the release notes |
+| `.github/workflows/sync-trunk.yml` | Manual (`workflow_dispatch`) | Push current source into SVN trunk with **no version bump and no tag** — a "catch up" deploy. Mainly to flush files newly added to `.distignore` that still linger in the wp.org checkout. |
 | `.github/workflows/asset-update.yml` | Manual (`workflow_dispatch`) | Sync readme + `.wordpress-org/` assets to SVN trunk and stable tag |
 | `.github/workflows/version-check.yml` | Manual (`workflow_dispatch`) | Regenerate the pending-deploys table in `README.md` from the current state of `versions.json` |
 
