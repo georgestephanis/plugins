@@ -892,17 +892,22 @@ class Ndizi_Settings {
 
 					<div style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 16px;">
 						<?php
-						$modules_list = Ndizi_Project_Management::get_module_registry();
+						$modules_list  = Ndizi_Project_Management::get_module_registry();
+						$module_labels = Ndizi_Project_Management::get_module_labels();
 
 						$active_modules = Ndizi_Project_Management::get_active_modules();
 						foreach ( $modules_list as $slug => $mod ) :
 							$checked = in_array( $slug, $active_modules, true );
+							$label   = isset( $module_labels[ $slug ] ) ? $module_labels[ $slug ] : array(
+								'name' => $slug,
+								'desc' => '',
+							);
 							?>
 							<label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px 18px; border: 1px solid <?php echo $checked ? '#e0e7ff' : '#e2e8f0'; ?>; background: <?php echo $checked ? '#f8fafc' : '#fff'; ?>; border-radius: 10px; transition: all 0.2s;">
 								<input type="checkbox" name="ndizi_active_modules[]" value="<?php echo esc_attr( $slug ); ?>" <?php checked( $checked ); ?> style="margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
 								<div>
-									<strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 2px;"><?php echo esc_html( $mod['name'] ); ?></strong>
-									<span style="display: block; font-size: 12px; color: #64748b; line-height: 1.4;"><?php echo esc_html( $mod['desc'] ); ?></span>
+									<strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 2px;"><?php echo esc_html( $label['name'] ); ?></strong>
+									<span style="display: block; font-size: 12px; color: #64748b; line-height: 1.4;"><?php echo esc_html( $label['desc'] ); ?></span>
 								</div>
 							</label>
 						<?php endforeach; ?>

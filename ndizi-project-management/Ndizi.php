@@ -45,13 +45,15 @@ class Ndizi_Project_Management {
 	/**
 	 * Get the module registry.
 	 *
+	 * Structural only — no translated strings, so this is safe to call before the
+	 * `init` action (it runs during plugin load via includes()). Human-readable,
+	 * translatable labels live in get_module_labels() and are merged in at display time.
+	 *
 	 * @return array[] Declarative module configuration.
 	 */
 	public static function get_module_registry() {
 		return array(
 			'invoicing'     => array(
-				'name'        => __( 'Invoicing & Billing', 'ndizi-project-management' ),
-				'desc'        => __( 'Invoice CPT, printable template, CSV/JSON and QuickBooks exports, and Stripe online payment.', 'ndizi-project-management' ),
 				'includes'    => array(
 					'includes/class-ndizi-invoicing.php',
 				),
@@ -59,16 +61,12 @@ class Ndizi_Project_Management {
 				'rest_routes' => array( 'Ndizi_REST', 'register_invoicing_routes' ),
 			),
 			'portal'        => array(
-				'name'     => __( 'Client Portal', 'ndizi-project-management' ),
-				'desc'     => __( 'Enables frontend portal block and shortcodes for client reviews, task updates, and comments.', 'ndizi-project-management' ),
 				'includes' => array(
 					'includes/class-ndizi-portal.php',
 				),
 				'init'     => array( 'Ndizi_Portal', 'init' ),
 			),
 			'tracker'       => array(
-				'name'     => __( 'Admin Bar & Quick Tracker', 'ndizi-project-management' ),
-				'desc'     => __( 'Adds the admin bar quick-timer toggle and a dedicated quick-tracker logger page.', 'ndizi-project-management' ),
 				'includes' => array(
 					'includes/class-ndizi-admin-bar.php',
 					'includes/class-ndizi-standalone-tracker.php',
@@ -79,35 +77,69 @@ class Ndizi_Project_Management {
 				),
 			),
 			'notifications' => array(
-				'name'     => __( 'Email Notifications', 'ndizi-project-management' ),
-				'desc'     => __( 'Sends automated email notifications when tasks are assigned or their status changes.', 'ndizi-project-management' ),
 				'includes' => array(
 					'includes/class-ndizi-notifications.php',
 				),
 				'init'     => array( 'Ndizi_Notifications', 'init' ),
 			),
 			'gantt'         => array(
-				'name'     => __( 'Gantt Timeline Charts', 'ndizi-project-management' ),
-				'desc'     => __( 'Provides interactive timelines for project scheduling and visually tracking completion status.', 'ndizi-project-management' ),
 				'includes' => array(),
 				'init'     => array( 'Ndizi_Admin', 'init_gantt' ),
 			),
 			'integrations'  => array(
-				'name'     => __( 'Webhooks & Slack Integrations', 'ndizi-project-management' ),
-				'desc'     => __( 'Sends outbound JSON payloads and formatted Slack alerts when time is logged, tasks change, or invoices transition.', 'ndizi-project-management' ),
 				'includes' => array(
 					'includes/class-ndizi-webhooks.php',
 				),
 				'init'     => array( 'Ndizi_Webhooks', 'init' ),
 			),
 			'calendar'      => array(
-				'name'        => __( 'Google Calendar Sync', 'ndizi-project-management' ),
-				'desc'        => __( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ),
 				'includes'    => array(
 					'includes/class-ndizi-calendar.php',
 				),
 				'init'        => array( 'Ndizi_Calendar', 'init' ),
 				'rest_routes' => array( 'Ndizi_REST', 'register_calendar_routes' ),
+			),
+		);
+	}
+
+	/**
+	 * Get translatable display labels for each module, keyed by module slug.
+	 *
+	 * Kept separate from get_module_registry() so the registry stays free of
+	 * translation calls (which must not run before the `init` action). Only call
+	 * this at display time, e.g. when rendering the Settings screen.
+	 *
+	 * @return array[] Map of slug => array( 'name' => string, 'desc' => string ).
+	 */
+	public static function get_module_labels() {
+		return array(
+			'invoicing'     => array(
+				'name' => __( 'Invoicing & Billing', 'ndizi-project-management' ),
+				'desc' => __( 'Invoice CPT, printable template, CSV/JSON and QuickBooks exports, and Stripe online payment.', 'ndizi-project-management' ),
+			),
+			'portal'        => array(
+				'name' => __( 'Client Portal', 'ndizi-project-management' ),
+				'desc' => __( 'Enables frontend portal block and shortcodes for client reviews, task updates, and comments.', 'ndizi-project-management' ),
+			),
+			'tracker'       => array(
+				'name' => __( 'Admin Bar & Quick Tracker', 'ndizi-project-management' ),
+				'desc' => __( 'Adds the admin bar quick-timer toggle and a dedicated quick-tracker logger page.', 'ndizi-project-management' ),
+			),
+			'notifications' => array(
+				'name' => __( 'Email Notifications', 'ndizi-project-management' ),
+				'desc' => __( 'Sends automated email notifications when tasks are assigned or their status changes.', 'ndizi-project-management' ),
+			),
+			'gantt'         => array(
+				'name' => __( 'Gantt Timeline Charts', 'ndizi-project-management' ),
+				'desc' => __( 'Provides interactive timelines for project scheduling and visually tracking completion status.', 'ndizi-project-management' ),
+			),
+			'integrations'  => array(
+				'name' => __( 'Webhooks & Slack Integrations', 'ndizi-project-management' ),
+				'desc' => __( 'Sends outbound JSON payloads and formatted Slack alerts when time is logged, tasks change, or invoices transition.', 'ndizi-project-management' ),
+			),
+			'calendar'      => array(
+				'name' => __( 'Google Calendar Sync', 'ndizi-project-management' ),
+				'desc' => __( 'Sync due tasks and project milestones with Google Calendar.', 'ndizi-project-management' ),
 			),
 		);
 	}
