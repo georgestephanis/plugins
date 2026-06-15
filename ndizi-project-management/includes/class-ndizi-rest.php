@@ -700,14 +700,18 @@ class Ndizi_REST {
 		if ( ! $per_page ) {
 			$per_page = 20;
 		} else {
-			$per_page = intval( $per_page );
+			// Cap the page size so a client cannot request an unbounded result
+			// set (which would amplify the per-row lookups below) and clamp to
+			// at least 1.
+			$per_page = min( 100, max( 1, intval( $per_page ) ) );
 		}
 
 		$page = $request->get_param( 'page' );
 		if ( ! $page ) {
 			$page = 1;
 		} else {
-			$page = intval( $page );
+			// Force a valid page so the computed offset can never go negative.
+			$page = max( 1, intval( $page ) );
 		}
 
 		$args = array(
