@@ -264,11 +264,30 @@ class Ndizi_Project_Management {
 		if ( is_admin() ) {
 			Ndizi_Admin::init();
 
-			// Dynamic Seeder Check for Developer Playground environment
+			// Dynamic Seeder Check for Developer Playground environment.
+			//
+			// This is a destructive developer convenience: it dumps mock data into
+			// the database. It must never run on a production site or for an
+			// unprivileged visitor, so it is gated on (a) an administrator, (b) a
+			// non-production environment, (c) a valid nonce to prevent CSRF, and
+			// (d) the dev-only mock-data file actually being present (it is excluded
+			// from the shipped package via .distignore).
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( isset( $_GET['ndizi_seed'] ) ) {
-				require_once NDIZI_PLUGIN_DIR . 'playground/mock-data.php';
-				wp_die( 'Playground seeding completed successfully!' );
+				$mock_data_file = NDIZI_PLUGIN_DIR . 'playground/mock-data.php';
+
+				if (
+					current_user_can( 'manage_options' )
+					&& 'production' !== wp_get_environment_type()
+					&& isset( $_GET['_wpnonce'] )
+					&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'ndizi_seed' )
+					&& file_exists( $mock_data_file )
+				) {
+					require_once $mock_data_file;
+					wp_die( 'Playground seeding completed successfully!' );
+				}
+
+				wp_die( esc_html__( 'Seeding is not available in this environment.', 'ndizi-project-management' ), '', array( 'response' => 403 ) );
 			}
 		}
 
