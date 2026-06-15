@@ -4,9 +4,6 @@
 [submodule "automatic-internal-links"]
 	path = automatic-internal-links
 	url = https://github.com/georgestephanis/automatic-internal-links
-[submodule "custom-content-width"]
-	path = custom-content-width
-	url = https://github.com/georgestephanis/Custom-Content-Width
 [submodule "legacy-jetpack-custom-css-editor"]
 	path = legacy-jetpack-custom-css-editor
 	url = https://github.com/georgestephanis/legacy-jetpack-custom-css-editor
