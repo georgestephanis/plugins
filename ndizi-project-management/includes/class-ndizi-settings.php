@@ -503,7 +503,7 @@ class Ndizi_Settings {
 		} else {
 			$total_sec = $wpdb->get_var( $query );
 		}
-		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		$total_hours = $total_sec ? round( $total_sec / 3600, 1 ) : 0;
 
