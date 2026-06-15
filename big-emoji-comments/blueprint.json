@@ -1,0 +1,32 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": {
+    "php": "8.0",
+    "wp": "latest"
+  },
+  "landingPage": "/?p=1000",
+  "steps": [
+    {
+      "step": "login",
+      "username": "admin",
+      "password": "password"
+    },
+    {
+      "step": "installPlugin",
+      "pluginZipFile": {
+        "resource": "wordpress.org/plugins",
+        "slug": "big-emoji-comments"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "importWxr",
+      "file": {
+        "resource": "url",
+        "url": "https://plugins.svn.wordpress.org/big-emoji-comments/trunk/demo-comments.xml"
+      }
+    }
+  ]
+}

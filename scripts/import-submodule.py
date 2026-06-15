@@ -197,11 +197,12 @@ def main():
     print(f"  2. Import Submodule History (git subtree):")
     print(f"     - Prefix: {submodule_path}")
     print(f"     - Branch: {branch}")
+    print(f"  3. Ensure metadata files exist (phpcs.xml, package.json)")
     if should_archive:
-        print(f"  3. Archive GitHub Repository:")
+        print(f"  4. Archive GitHub Repository:")
         print(f"     - Repository: {gh_repo}")
     else:
-        print(f"  3. Archive GitHub Repository: SKIPPED (not a GitHub repo, or --no-archive passed)")
+        print(f"  4. Archive GitHub Repository: SKIPPED (not a GitHub repo, or --no-archive passed)")
     print("=" * 60 + "\n")
 
     if not confirm("Do you want to proceed with these actions?", default_yes=False, bypass=args.yes):
@@ -255,7 +256,70 @@ def main():
     print(f"---> Importing history from {sub_url} (branch: {branch}) as subtree under '{submodule_path}'...")
     run_cmd(["git", "subtree", "add", f"--prefix={submodule_path}", sub_url, branch], dry_run=args.dry_run)
 
-    # 8. Archive GitHub repo
+    # 8. Ensure phpcs.xml and package.json exist in subtree
+    print(f"---> Ensuring project metadata files (phpcs.xml, package.json) exist in '{submodule_path}'...")
+    created_files = []
+
+    phpcs_file = os.path.join(repo_root, submodule_path, "phpcs.xml")
+    if not os.path.exists(phpcs_file):
+        print(f"Creating default phpcs.xml in '{submodule_path}'...")
+        phpcs_content = f"""<?xml version="1.0"?>
+<ruleset name="{sub_name}">
+	<description>WPCS config for {sub_name}.</description>
+
+	<file>./</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs"/>
+
+	<config name="minimum_supported_wp_version" value="6.0"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<arg value="ps"/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+</ruleset>
+"""
+        if args.dry_run:
+            print(f"[DRY RUN] Would write default phpcs.xml to {phpcs_file}")
+        else:
+            with open(phpcs_file, "w", encoding="utf-8") as f:
+                f.write(phpcs_content)
+            created_files.append(os.path.relpath(phpcs_file, repo_root))
+
+    package_json = os.path.join(repo_root, submodule_path, "package.json")
+    if not os.path.exists(package_json):
+        print(f"Creating default package.json in '{submodule_path}'...")
+        package_content = f"""{{
+  "name": "{sub_name}",
+  "version": "1.0.0",
+  "private": true,
+  "license": "GPL-2.0-or-later",
+  "description": "Build the WordPress.org distribution ZIP via @wordpress/scripts. The shipped plugin version lives in the PHP header and readme; this version field is a static placeholder required only because plugin-zip rejects a non-semver value.",
+  "scripts": {{
+    "plugin-zip": "wp-scripts plugin-zip"
+  }}
+}}
+"""
+        if args.dry_run:
+            print(f"[DRY RUN] Would write default package.json to {package_json}")
+        else:
+            with open(package_json, "w", encoding="utf-8") as f:
+                f.write(package_content)
+            created_files.append(os.path.relpath(package_json, repo_root))
+
+    if created_files:
+        print("---> Committing new project metadata files...")
+        if args.dry_run:
+            print("[DRY RUN] Would stage and commit metadata files.")
+        else:
+            run_cmd(["git", "add"] + created_files)
+            run_cmd(["git", "commit", "-m", f"Add default project metadata configurations for {submodule_path}"])
+
+    # 9. Archive GitHub repo
     if should_archive:
         print(f"---> Archiving GitHub repository '{gh_repo}'...")
         # Clear GITHUB_TOKEN to fallback to active keyring session if necessary
