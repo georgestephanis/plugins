@@ -14,6 +14,8 @@ A scalable, beautiful, and native WordPress project management system to track c
 
 **Ndizi Project Management** is a professional, native WordPress system built for freelancers, designers, and small agencies to coordinate client work, manage tasks, record project hours, and generate invoices—all inside a single WordPress environment.
 
+**Try it live:** [Launch a pre-seeded demo in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://ps.w.org/ndizi-project-management/assets/blueprints/blueprint.json) — a disposable, in-browser WordPress that installs Ndizi PM and fills it with sample clients, projects, tasks, invoices, and time entries. Nothing to install, and nothing is saved.
+
 Decoupling high-frequency data from standard WordPress posts storage, Ndizi records all time logs in a dedicated custom SQL table (`wp_ndizi_time_entries`). This architectural choice keeps your database queries fast and completely avoids `wp_posts` and `wp_postmeta` database inflation.
 
 ### Key Features
@@ -51,6 +53,9 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 4.  Navigate to **Ndizi PM** -> **Clients** in your admin panel, register a new client, and generate a portal access key.
 
 == Frequently Asked Questions ==
+
+= Can I try the plugin before installing it? =
+Yes. Use the **Live Preview** button on this page, or [launch the demo directly in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://ps.w.org/ndizi-project-management/assets/blueprints/blueprint.json). Either way you get a disposable, in-browser WordPress with Ndizi PM activated and seeded with sample clients, projects, tasks, invoices, and time entries (including a live running timer and a locked accounting period). It runs entirely in your browser and nothing is saved.
 
 = Where is the time tracking data stored? =
 High-frequency time entries (timer starts, stops, descriptions, and durations) are logged in the dedicated `wp_ndizi_time_entries` table. Relational objects like Projects and Tasks utilize standard Custom Post Types to maintain editing workflows, list filters, and default REST support.
