@@ -28,9 +28,6 @@
 [submodule "theme-downloader"]
 	path = theme-downloader
 	url = https://github.com/georgestephanis/theme-downloader
-[submodule "update-control"]
-	path = update-control
-	url = https://github.com/chipbennett/update-control
 [submodule "tuft-feedback"]
 	path = tuft-feedback
 	url = https://github.com/georgestephanis/tuft
