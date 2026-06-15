@@ -143,18 +143,23 @@ const TimeEntriesApp = () => {
 						'getEntityRecords',
 						[ 'ndizi', 'time-entry', queryArgs ]
 					),
+					// Core REST controllers cap per_page at 100 and reject -1
+					// outright (rest_invalid_param), which would leave the
+					// dropdowns/filters empty. Request the maximum allowed page
+					// instead. (If an install ever exceeds 100 projects/tasks/
+					// users these lists would need real pagination.)
 					projects: selector.getEntityRecords(
 						'postType',
 						'ndizi_project',
-						{ per_page: -1 }
+						{ per_page: 100 }
 					),
 					tasks: selector.getEntityRecords(
 						'postType',
 						'ndizi_task',
-						{ per_page: -1 }
+						{ per_page: 100 }
 					),
 					users: selector.getEntityRecords( 'root', 'user', {
-						per_page: -1,
+						per_page: 100,
 					} ),
 				};
 			},
