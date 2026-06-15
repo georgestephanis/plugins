@@ -15,27 +15,29 @@ on:
   workflow_call:
     inputs:
       plugin:
-        description: Plugin slug
-        required: true
+        description: Plugin slug (derived from the tag if omitted)
+        required: false
         type: string
+        default: ""
       version:
-        description: Released version
-        required: true
+        description: Released version (derived from the tag if omitted)
+        required: false
         type: string
+        default: ""
       tag:
         description: Release tag (e.g. my-plugin/v1.2.3)
         required: true
         type: string
       prev_tag:
-        description: Previous release tag for this plugin, if any
+        description: Previous release tag for this plugin (auto-detected if omitted)
         required: false
         type: string
         default: ""
       repository:
-        description: owner/repo the release lives in
+        description: owner/repo the release lives in (defaults to this repo)
         required: false
         type: string
-        default: ${{ github.repository }}
+        default: ""
     secrets:
       LLM_URL:
         description: OpenAI-compatible base URL (e.g. http://host:port/v1/)
@@ -49,6 +51,31 @@ on:
           resolved model is cached back into the LLM_MODEL repo variable. The
           default GITHUB_TOKEN cannot write Actions variables.
         required: false
+
+  # Manual re-run: (re)summarize an existing release. Only the tag is required;
+  # the plugin slug and version are derived from it, and the previous tag is
+  # auto-detected. Secrets (LLM_URL/LLM_TOKEN/GH_PAT) are read from the repo.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to (re)summarize, e.g. my-plugin/v1.2.3
+        required: true
+        type: string
+      plugin:
+        description: Plugin slug (derived from the tag if omitted)
+        required: false
+        type: string
+        default: ""
+      version:
+        description: Released version (derived from the tag if omitted)
+        required: false
+        type: string
+        default: ""
+      prev_tag:
+        description: Previous release tag (auto-detected if omitted)
+        required: false
+        type: string
+        default: ""
 
 jobs:
   summarize:
@@ -68,13 +95,23 @@ jobs:
           LLM_URL: ${{ secrets.LLM_URL }}
           LLM_TOKEN: ${{ secrets.LLM_TOKEN }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
-          REPO: ${{ inputs.repository }}
+          REPO: ${{ inputs.repository || github.repository }}
           SLUG: ${{ inputs.plugin }}
           VERSION: ${{ inputs.version }}
           TAG: ${{ inputs.tag }}
           PREV_TAG: ${{ inputs.prev_tag }}
         run: |
           set -euo pipefail
+
+          # --- Derive omitted inputs from the tag (<slug>/v<version>) ---
+          # Lets a manual workflow_dispatch run get by with just the tag.
+          : "${TAG:?tag is required}"
+          [ -n "${SLUG:-}" ] || SLUG="${TAG%/v*}"
+          [ -n "${VERSION:-}" ] || VERSION="${TAG##*/v}"
+          if [ -z "${PREV_TAG:-}" ]; then
+            PREV_TAG=$(git tag -l "$SLUG/v*" --sort=-v:refname | grep -vFx "$TAG" | head -1 || true)
+          fi
+          echo "plugin=$SLUG version=$VERSION tag=$TAG prev_tag=${PREV_TAG:-(none)}"
 
           # --- Existing release body (the readme changelog extract from deploy.yml) ---
           CHANGELOG=$(gh release view "$TAG" --repo "$REPO" --json body --jq '.body' 2>/dev/null || true)
