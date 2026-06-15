@@ -1,0 +1,12 @@
+# Python bytecode (generated when scripts/ helpers are imported)
+__pycache__/
+*.py[cod]
+
+# Node dependencies (each plugin's package.json installs into its own tree;
+# the wp.org build pulls these in CI, they are never committed)
+node_modules/
+
+# Composer dev tooling (phpcs/WPCS). composer.json + composer.lock are committed;
+# the installed packages are not.
+/vendor/
+composer.phar

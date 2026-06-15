@@ -32,6 +32,7 @@ on:
           - tarot
           - the
           - theme-downloader
+          - tuft-feedback
           - update-control
       dry_run:
         description: Dry run — show what would change without committing
@@ -44,9 +45,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        uses: actions/checkout@v6
+
+      - name: Initialize submodule if needed
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
+            echo "$SLUG is a submodule — initializing only this one"
+            git submodule update --init "$SLUG"
+          else
+            echo "$SLUG is a direct-directory plugin — no submodule init needed"
+          fi
 
       - name: Install SVN
         run: sudo apt-get install -y subversion

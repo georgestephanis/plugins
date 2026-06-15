@@ -1,0 +1,37 @@
+name: Refresh deploy status in README
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run — show pending deploys without committing
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run version check
+        run: python3 scripts/update-readme-status.py
+
+      - name: Commit README update
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet README.md versions.json; then
+            echo "README.md and versions.json are already up to date."
+          else
+            git add README.md versions.json
+            git commit -m "Refresh deploy status in README"
+            git push
+          fi

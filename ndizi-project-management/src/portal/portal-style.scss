@@ -1,0 +1,782 @@
+/* stylelint-disable no-descending-specificity */
+
+/*
+ * Frontend Client Portal Styles - Ndizi Project Management
+ * Curated color theme: Slate & Violet Glassmorphism
+ */
+
+:root {
+	--ndizi-bg-main: #0f172a;
+	--ndizi-bg-card: rgba(30, 41, 59, 0.7);
+	--ndizi-border-color: rgba(255, 255, 255, 0.08);
+	--ndizi-text-main: #f1f5f9;
+	--ndizi-text-muted: #94a3b8;
+	--ndizi-primary: #818cf8;
+	--ndizi-primary-hover: #6366f1;
+	--ndizi-accent: #c084fc;
+	--ndizi-success: #34d399;
+	--ndizi-warning: #fbbf24;
+	--ndizi-danger: #f87171;
+	--ndizi-font: "Outfit", -apple-system, blinkmacsystemfont, "Segoe UI", roboto, sans-serif;
+}
+
+.ndizi-portal-container {
+	font-family: var(--ndizi-font);
+	background-color: var(--ndizi-bg-main);
+	color: var(--ndizi-text-main);
+	min-height: 100vh;
+	padding: 40px 20px;
+	border-radius: 16px;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+	position: relative;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.ndizi-portal-container *,
+.ndizi-portal-container *::before,
+.ndizi-portal-container *::after {
+	box-sizing: border-box;
+}
+
+/* Background blob aesthetics */
+.ndizi-portal-container::before {
+	content: "";
+	position: absolute;
+	top: -10%;
+	right: -10%;
+	width: 500px;
+	height: 500px;
+	background: radial-gradient(circle, rgba(129, 140, 248, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+	z-index: 1;
+	pointer-events: none;
+}
+
+.ndizi-portal-container::after {
+	content: "";
+	position: absolute;
+	bottom: -10%;
+	left: -10%;
+	width: 500px;
+	height: 500px;
+	background: radial-gradient(circle, rgba(192, 132, 252, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+	z-index: 1;
+	pointer-events: none;
+}
+
+/* Alert Boxes */
+.ndizi-portal-alert {
+	padding: 16px 20px;
+	border-radius: 12px;
+	font-size: 14px;
+	font-weight: 500;
+	margin-bottom: 30px;
+	backdrop-filter: blur(10px);
+	z-index: 2;
+	position: relative;
+}
+
+.alert-success {
+	background: rgba(52, 211, 153, 0.1);
+	border: 1px solid rgba(52, 211, 153, 0.25);
+	color: #a7f3d0;
+}
+
+.alert-error {
+	background: rgba(248, 113, 113, 0.1);
+	border: 1px solid rgba(248, 113, 113, 0.25);
+	color: #fca5a5;
+}
+
+/* Login Card View */
+.ndizi-portal-login-card {
+	max-width: 420px;
+	margin: 100px auto;
+	background: var(--ndizi-bg-card);
+	border: 1px solid var(--ndizi-border-color);
+	backdrop-filter: blur(16px);
+	padding: 40px;
+	border-radius: 20px;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+	text-align: center;
+	position: relative;
+	z-index: 2;
+}
+
+.ndizi-portal-logo-glow {
+	width: 64px;
+	height: 64px;
+	background: linear-gradient(135deg, var(--ndizi-primary), var(--ndizi-accent));
+	border-radius: 16px;
+	margin: 0 auto 24px;
+	box-shadow: 0 0 20px rgba(129, 140, 248, 0.6);
+}
+
+.ndizi-portal-login-card h2 {
+	margin-top: 0;
+	font-weight: 800;
+	font-size: 24px;
+	color: #fff;
+	letter-spacing: -0.02em;
+}
+
+.ndizi-portal-login-card p {
+	color: var(--ndizi-text-muted);
+	font-size: 14px;
+	line-height: 1.5;
+	margin-bottom: 30px;
+}
+
+/* Button & Form Inputs */
+.ndizi-form-group {
+	margin-bottom: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	text-align: left;
+}
+
+.ndizi-form-group label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--ndizi-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.ndizi-portal-login-card input[type="password"],
+.ndizi-form-group select,
+.ndizi-form-group input[type="text"],
+.ndizi-form-group textarea {
+	width: 100%;
+	padding: 12px 16px;
+	background: rgba(15, 23, 42, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 10px;
+	color: #fff;
+	font-size: 14px;
+	transition: all 0.3s ease;
+	min-height: 44px;
+}
+
+.ndizi-portal-login-card input[type="password"]:focus,
+.ndizi-form-group select:focus,
+.ndizi-form-group input[type="text"]:focus,
+.ndizi-form-group textarea:focus {
+	outline: none;
+	border-color: var(--ndizi-primary);
+	box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+}
+
+.ndizi-portal-btn {
+	width: 100%;
+	padding: 14px;
+	background: linear-gradient(135deg, var(--ndizi-primary), var(--ndizi-primary-hover));
+	color: #fff;
+	border: none;
+	border-radius: 10px;
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+	transition: all 0.3s ease;
+}
+
+.ndizi-portal-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 16px rgba(99, 102, 241, 0.5);
+}
+
+/* Header dashboard layout */
+.ndizi-portal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 30px;
+	border-bottom: 1px solid var(--ndizi-border-color);
+	margin-bottom: 40px;
+	z-index: 2;
+	position: relative;
+}
+
+.ndizi-portal-header h1 {
+	margin: 0;
+	font-size: 32px;
+	font-weight: 900;
+	letter-spacing: -0.03em;
+	background: linear-gradient(to right, #fff, #cbd5e1);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.ndizi-portal-header .subtitle {
+	color: var(--ndizi-text-muted);
+	margin: 5px 0 0;
+	font-size: 15px;
+}
+
+.ndizi-portal-btn-secondary {
+	padding: 10px 18px;
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 8px;
+	color: var(--ndizi-text-main);
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 13px;
+	transition: all 0.3s ease;
+}
+
+.ndizi-portal-btn-secondary:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Dashboard Columns */
+.ndizi-portal-layout {
+	display: flex;
+	gap: 40px;
+	position: relative;
+	z-index: 2;
+	flex-wrap: wrap;
+}
+
+.ndizi-portal-layout-col {
+	flex: 1;
+}
+
+.ndizi-portal-main {
+	flex-grow: 1;
+	flex-basis: 65%;
+}
+
+.ndizi-portal-sidebar {
+	flex-grow: 1;
+	flex-basis: 30%;
+	max-width: 400px;
+}
+
+.ndizi-portal-main h2 {
+	margin-top: 0;
+	font-size: 20px;
+	font-weight: 800;
+	color: #fff;
+	margin-bottom: 20px;
+}
+
+/* Glassmorphic Cards */
+.ndizi-portal-card {
+	background: var(--ndizi-bg-card);
+	border: 1px solid var(--ndizi-border-color);
+	border-radius: 16px;
+	padding: 24px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+	margin-bottom: 20px;
+	backdrop-filter: blur(12px);
+}
+
+.ndizi-sidebar-form-card h3 {
+	margin-top: 0;
+	font-weight: 800;
+	font-size: 18px;
+	color: #fff;
+}
+
+.ndizi-sidebar-form-card .desc {
+	font-size: 13px;
+	color: var(--ndizi-text-muted);
+	line-height: 1.5;
+	margin-bottom: 20px;
+}
+
+/* Accordion cards for projects */
+.ndizi-project-card {
+	padding: 0;
+	overflow: hidden;
+}
+
+.ndizi-project-card-header {
+	padding: 24px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	cursor: pointer;
+	user-select: none;
+}
+
+.ndizi-project-card-header h3 {
+	margin: 0 0 6px 0;
+	font-size: 18px;
+	font-weight: 800;
+	color: #fff;
+	transition: color 0.3s ease;
+}
+
+.ndizi-project-card-header:hover h3 {
+	color: var(--ndizi-primary);
+}
+
+.ndizi-project-summary-meta {
+	font-size: 13px;
+	color: var(--ndizi-text-muted);
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.ndizi-meta-hours strong {
+	color: var(--ndizi-primary);
+	font-weight: 700;
+}
+
+.ndizi-meta-divider {
+	color: rgba(255, 255, 255, 0.15);
+}
+
+.ndizi-accordion-toggle-btn {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--ndizi-border-color);
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--ndizi-text-main);
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.ndizi-project-card.ndizi-active-project .ndizi-accordion-toggle-btn {
+	transform: rotate(180deg);
+	background: var(--ndizi-primary);
+	border-color: var(--ndizi-primary);
+}
+
+.ndizi-project-card-content {
+	padding: 0 24px 24px;
+	border-top: 1px solid var(--ndizi-border-color);
+	animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.ndizi-project-details-text {
+	font-size: 14px;
+	color: #cbd5e1;
+	line-height: 1.6;
+	margin-bottom: 25px;
+}
+
+.ndizi-card-divider {
+	border: 0;
+	height: 1px;
+	background: var(--ndizi-border-color);
+	margin: 25px 0;
+}
+
+/* Tasks checklists */
+.ndizi-portal-tasks-section h4,
+.ndizi-portal-invoices-section h4,
+.ndizi-portal-discussion-section h4 {
+	font-size: 14px;
+	font-weight: 700;
+	color: #fff;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-top: 0;
+	margin-bottom: 16px;
+}
+
+.ndizi-portal-task-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.ndizi-portal-task-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: rgba(15, 23, 42, 0.4);
+	border: 1px solid var(--ndizi-border-color);
+	padding: 12px 18px;
+	border-radius: 10px;
+}
+
+.ndizi-task-details-col {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.ndizi-task-title {
+	font-size: 14px;
+	font-weight: 600;
+	color: #fff;
+}
+
+.ndizi-task-due {
+	font-size: 11px;
+	color: var(--ndizi-text-muted);
+}
+
+.ndizi-task-badges-col {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+
+/* Discussion modal comment button */
+.ndizi-btn-comment-dialog {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--ndizi-border-color);
+	color: var(--ndizi-text-muted);
+	width: 32px;
+	height: 32px;
+	border-radius: 6px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+}
+
+.ndizi-btn-comment-dialog:hover {
+	background: rgba(129, 140, 248, 0.15);
+	border-color: var(--ndizi-primary);
+	color: var(--ndizi-primary);
+}
+
+.ndizi-btn-comment-dialog .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* Portal table design (Invoices) */
+.ndizi-portal-table-wrapper {
+	overflow-x: auto;
+}
+
+.ndizi-portal-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.ndizi-portal-table th {
+	padding: 12px 15px;
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--ndizi-text-muted);
+	text-transform: uppercase;
+	border-bottom: 1px solid var(--ndizi-border-color);
+}
+
+.ndizi-portal-table td {
+	padding: 14px 15px;
+	font-size: 13px;
+	color: var(--ndizi-text-main);
+	border-bottom: 1px solid var(--ndizi-border-color);
+}
+
+.ndizi-portal-table tr:last-child td {
+	border-bottom: none;
+}
+
+.ndizi-portal-btn-table {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: rgba(129, 140, 248, 0.1);
+	border: 1px solid rgba(129, 140, 248, 0.2);
+	color: var(--ndizi-primary);
+	padding: 6px 12px;
+	border-radius: 6px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 11px;
+	text-transform: uppercase;
+	transition: all 0.3s ease;
+}
+
+.ndizi-portal-btn-table:hover {
+	background: var(--ndizi-primary);
+	color: #fff;
+}
+
+.ndizi-portal-btn-table .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+}
+
+/* Threaded project messages */
+.ndizi-comments-list {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 20px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.ndizi-comment-item {
+	background: rgba(15, 23, 42, 0.3);
+	border: 1px solid var(--ndizi-border-color);
+	padding: 16px;
+	border-radius: 12px;
+}
+
+.ndizi-comment-meta {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 8px;
+	font-size: 12px;
+}
+
+.ndizi-comment-author {
+	color: var(--ndizi-accent);
+}
+
+.ndizi-comment-date {
+	color: var(--ndizi-text-muted);
+}
+
+.ndizi-comment-text {
+	font-size: 13px;
+	line-height: 1.6;
+	color: #e2e8f0;
+}
+
+.ndizi-comment-attachments {
+	margin-top: 12px;
+	border-top: 1px dashed rgba(255, 255, 255, 0.06);
+	padding-top: 10px;
+	font-size: 11px;
+}
+
+.ndizi-comment-attachments strong {
+	color: var(--ndizi-text-muted);
+}
+
+.ndizi-comment-attachments ul {
+	list-style: none;
+	padding: 0;
+	margin: 5px 0 0 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.ndizi-comment-attachments li {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.ndizi-comment-attachments a {
+	color: var(--ndizi-primary);
+	text-decoration: none;
+}
+
+.ndizi-comment-attachments a:hover {
+	text-decoration: underline;
+}
+
+.ndizi-comment-attachments .dashicons {
+	font-size: 12px;
+	width: 12px;
+	height: 12px;
+	color: var(--ndizi-text-muted);
+}
+
+.ndizi-comment-form {
+	margin-top: 20px;
+}
+
+.ndizi-form-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 20px;
+	flex-wrap: wrap;
+}
+
+.flex-grow {
+	flex-grow: 1;
+}
+
+.ndizi-file-upload-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--ndizi-border-color);
+	padding: 8px 14px;
+	border-radius: 8px;
+	color: var(--ndizi-text-main);
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 600;
+	transition: all 0.3s ease;
+}
+
+.ndizi-file-upload-label:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.3);
+}
+
+.ndizi-file-upload-label .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.ndizi-portal-btn-sm {
+	padding: 8px 16px;
+	background: var(--ndizi-primary);
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	font-weight: 700;
+	font-size: 12px;
+	cursor: pointer;
+	box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+	transition: all 0.3s ease;
+}
+
+.ndizi-portal-btn-sm:hover {
+	background: var(--ndizi-primary-hover);
+	transform: translateY(-1px);
+}
+
+/* Modal Dialog Overlay for Task Comments */
+.ndizi-portal-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(15, 23, 42, 0.7);
+	backdrop-filter: blur(8px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+	animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.ndizi-portal-modal-content {
+	background: #1e293b;
+	border: 1px solid var(--ndizi-border-color);
+	border-radius: 20px;
+	width: 600px;
+	max-width: 90%;
+	max-height: 80vh;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+	animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUp {
+
+	from {
+		transform: scale(0.95);
+		opacity: 0;
+	}
+
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+.ndizi-portal-modal-header {
+	padding: 20px 24px;
+	border-bottom: 1px solid var(--ndizi-border-color);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ndizi-portal-modal-header h3 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 800;
+	color: #fff;
+}
+
+.ndizi-portal-modal-close-btn {
+	background: transparent;
+	border: none;
+	color: var(--ndizi-text-muted);
+	font-size: 28px;
+	cursor: pointer;
+	padding: 0;
+	line-height: 1;
+}
+
+.ndizi-portal-modal-close-btn:hover {
+	color: #fff;
+}
+
+.ndizi-portal-modal-body {
+	padding: 24px;
+	overflow-y: auto;
+	flex-grow: 1;
+}
+
+.no-items-desc {
+	font-style: italic;
+	color: var(--ndizi-text-muted);
+	font-size: 13px;
+	margin: 0;
+}
+
+.no-items {
+	text-align: center;
+	color: var(--ndizi-text-muted);
+	font-style: italic;
+	padding: 40px 0;
+}
+
+.ndizi-portal-btn-table.ndizi-pay-invoice-btn {
+	background: rgba(52, 211, 153, 0.1);
+	border: 1px solid rgba(52, 211, 153, 0.2);
+	color: var(--ndizi-success);
+	margin-left: 8px;
+	cursor: pointer;
+}
+
+.ndizi-portal-btn-table.ndizi-pay-invoice-btn:hover {
+	background: var(--ndizi-success);
+	color: #0f172a;
+	box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+}

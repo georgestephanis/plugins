@@ -28,6 +28,7 @@ on:
           - tarot
           - the
           - theme-downloader
+          - tuft-feedback
           - update-control
       version:
         description: Version number to release (e.g. 1.2.3)
@@ -42,11 +43,29 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      tag: ${{ steps.release.outputs.tag }}
+      prev_tag: ${{ steps.release.outputs.prev_tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          submodules: recursive
+          # Full history + tags so the release step can find the previous
+          # slug/v* tag and target the freshly pushed version-bump commit.
+          fetch-depth: 0
+
+      - name: Initialize submodule if needed
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
+            echo "$SLUG is a submodule — initializing only this one"
+            git submodule update --init "$SLUG"
+          else
+            echo "$SLUG is a direct-directory plugin — no submodule init needed"
+          fi
 
       - name: Bump version in plugin files
         run: |
@@ -74,8 +93,15 @@ jobs:
           if [ -f "./$SLUG/package.json" ]; then
             echo "Building $SLUG..."
             cd "./$SLUG"
-            npm ci
-            npm run build
+            # Lock-aware: real build plugins ship a lockfile (use npm ci for
+            # reproducibility); the minimal package.json plugins added only to
+            # enable plugin-zip have none, so fall back to npm install.
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install --no-audit --no-fund
+            fi
+            npm run build --if-present
           else
             echo "No package.json found — skipping build."
           fi
@@ -94,9 +120,16 @@ jobs:
           SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
           SVN_DIR="/tmp/svn-$SLUG"
 
-          # Shallow checkout — only trunk, no tags/branches
+          # If the SVN tag already exists, skip the deploy but let downstream steps update records.
+          if svn ls "$SVN_URL/tags/$VERSION" > /dev/null 2>&1; then
+            echo "SVN tag $VERSION already exists for $SLUG — skipping deploy, updating records only."
+            exit 0
+          fi
+
+          # Shallow checkout — trunk and assets
           svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
           svn update --set-depth infinity "$SVN_DIR/trunk"
+          svn update --set-depth infinity "$SVN_DIR/assets"
 
           # Build rsync exclusions from .distignore (preferred) or .gitattributes
           EXCLUDES="--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore"
@@ -105,7 +138,7 @@ jobs:
             while IFS= read -r line; do
               [[ -z "$line" || "$line" == \#* ]] && continue
               echo "  excluding: $line"
-              EXCLUDES="$EXCLUDES --exclude=${line#/}"
+              EXCLUDES="$EXCLUDES --exclude=$line"
             done < "$SRC/.distignore"
           elif [ -f "$SRC/.gitattributes" ]; then
             echo "Using .gitattributes export-ignore for exclusions:"
@@ -113,28 +146,41 @@ jobs:
               [[ "$line" == *"export-ignore"* ]] || continue
               path=$(echo "$line" | awk '{print $1}')
               echo "  excluding: $path"
-              EXCLUDES="$EXCLUDES --exclude=${path#/}"
+              EXCLUDES="$EXCLUDES --exclude=$path"
             done < "$SRC/.gitattributes"
           fi
 
-          # Sync plugin files into SVN trunk
-          rsync -rc --delete $EXCLUDES "$SRC/" "$SVN_DIR/trunk/"
+          # Sync plugin files into SVN trunk.
+          # --delete-excluded also removes excluded files (e.g. things newly added to
+          # .distignore) that were committed to trunk in a previous deploy, so they
+          # get cleaned up here instead of lingering in the wp.org checkout forever.
+          rsync -rc --delete --delete-excluded $EXCLUDES "$SRC/" "$SVN_DIR/trunk/"
 
-          # Stage new and removed files
+          # Stage new and removed files (removals include any files rsync just deleted above)
           svn status "$SVN_DIR/trunk" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
           svn status "$SVN_DIR/trunk" | grep '^!' | awk '{print $2}' | xargs -r svn delete
+
+          # Sync .wordpress-org/ into SVN assets/ (banners, icons, screenshots)
+          if [ -d "$SRC/.wordpress-org" ]; then
+            rsync -rc "$SRC/.wordpress-org/" "$SVN_DIR/assets/"
+            svn status "$SVN_DIR/assets" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
+            svn status "$SVN_DIR/assets" | grep '^!' | awk '{print $2}' | xargs -r svn delete
+          else
+            echo "No .wordpress-org directory found — skipping asset sync."
+          fi
 
           # Show what would be committed
           echo "--- SVN diff summary ---"
           svn status "$SVN_DIR/trunk"
+          svn status "$SVN_DIR/assets"
 
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "Dry run — skipping SVN commit and tag."
             exit 0
           fi
 
-          # Commit trunk
-          svn commit "$SVN_DIR/trunk" \
+          # Commit trunk and assets
+          svn commit "$SVN_DIR" \
             --username "$SVN_USERNAME" \
             --password "$SVN_PASSWORD" \
             --no-auth-cache \
@@ -151,6 +197,23 @@ jobs:
 
           echo "Deployed $SLUG v$VERSION to WordPress.org"
 
+      - name: Update versions.json
+        if: ${{ !inputs.dry_run }}
+        run: |
+          python3 -c "
+          import json
+          with open('versions.json') as f:
+              data = json.load(f)
+          data['${{ inputs.plugin }}'] = '${{ inputs.version }}'
+          with open('versions.json', 'w') as f:
+              json.dump(data, f, indent=2, sort_keys=True)
+              f.write('\n')
+          "
+
+      - name: Refresh README deploy status
+        if: ${{ !inputs.dry_run }}
+        run: python3 scripts/update-readme-status.py
+
       - name: Commit version bump back to Git
         # Direct-directory plugins: commits the bump to the monorepo.
         # Submodule plugins: pushes a branch to the upstream repo and opens a PR.
@@ -162,8 +225,8 @@ jobs:
           SLUG="${{ inputs.plugin }}"
           VERSION="${{ inputs.version }}"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
             # Submodule plugin — push a branch and open a PR upstream
@@ -173,26 +236,112 @@ jobs:
             DEFAULT_BRANCH=$(gh repo view "$REPO" --json defaultBranchRef --jq '.defaultBranchRef.name')
 
             cd "./$SLUG"
+            # actions/checkout injects GITHUB_TOKEN into http.extraheader for every submodule,
+            # which overrides inline credentials in the remote URL. Unset it so GH_PAT is used.
+            git config --local --unset-all "http.https://github.com/.extraheader" 2>/dev/null || true
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+            git fetch origin "$DEFAULT_BRANCH"
+            git checkout "$DEFAULT_BRANCH"
             git checkout -b "$BRANCH"
             git add -A
-            git commit -m "Bump version to $VERSION"
-            git push origin "$BRANCH"
+            if git diff --cached --quiet; then
+              echo "Version already at $VERSION in $REPO — no bump needed, skipping PR."
+            else
+              git commit -m "Bump version to $VERSION"
+              git push origin "$BRANCH"
 
-            gh pr create \
-              --repo "$REPO" \
-              --title "Bump $SLUG to v$VERSION" \
-              --body "Version bump to \`$VERSION\` for WordPress.org release, deployed via the [plugins monorepo](https://github.com/${{ github.repository }})." \
-              --base "$DEFAULT_BRANCH" \
-              --head "$BRANCH"
+              gh pr create \
+                --repo "$REPO" \
+                --title "Bump $SLUG to v$VERSION" \
+                --body "Version bump to \`$VERSION\` for WordPress.org release, deployed via the [plugins monorepo](https://github.com/${{ github.repository }})." \
+                --base "$DEFAULT_BRANCH" \
+                --head "$BRANCH"
 
-            echo "PR opened in $REPO"
+              echo "PR opened in $REPO"
+            fi
+
+            # Back to monorepo root — commit versions.json + README.md
+            cd "$GITHUB_WORKSPACE"
+            if ! git diff --quiet versions.json README.md; then
+              git add versions.json README.md
+              git commit -m "Update deploy status for $SLUG v$VERSION"
+              git push
+            fi
           else
             # Direct-directory plugin — commit bump to the monorepo
-            if git diff --quiet "./$SLUG"; then
+            if git diff --quiet "./$SLUG" versions.json README.md; then
               echo "No changes to commit in ./$SLUG"
             else
-              git add "./$SLUG"
+              git add "./$SLUG" versions.json README.md
               git commit -m "Bump $SLUG to v$VERSION"
               git push
             fi
           fi
+
+      - name: Create GitHub release
+        id: release
+        # Tags the monorepo as <slug>/v<version>, builds the plugin ZIP, and
+        # publishes a GitHub Release with the readme changelog as its notes.
+        # The release/summary jobs are skipped on a dry run.
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          VERSION="${{ inputs.version }}"
+          TAG="$SLUG/v$VERSION"
+
+          # Highest existing tag for this plugin, for the release-notes range.
+          PREV_TAG=$(git tag -l "$SLUG/v*" --sort=-v:refname | head -1)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prev_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+
+          # Idempotent: if the release already exists, leave it and let the
+          # summarize job refresh its notes.
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping creation."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Build the distributable ZIP (wp-scripts plugin-zip, or rsync fallback).
+          ZIP="/tmp/$SLUG.zip"
+          bash scripts/build-zip.sh "$SLUG" "$ZIP"
+
+          # Release notes: this version's changelog block, if present.
+          NOTES="/tmp/notes-$SLUG.md"
+          README=""
+          [ -f "./$SLUG/readme.txt" ] && README="./$SLUG/readme.txt"
+          [ -z "$README" ] && [ -f "./$SLUG/README.md" ] && README="./$SLUG/README.md"
+          : > "$NOTES"
+          if [ -n "$README" ]; then
+            python3 scripts/extract-changelog.py "$README" "$VERSION" > "$NOTES" || true
+          fi
+          if [ ! -s "$NOTES" ]; then
+            echo "Release of $SLUG v$VERSION. See [WordPress.org](https://wordpress.org/plugins/$SLUG/) for details." > "$NOTES"
+          fi
+
+          gh release create "$TAG" "$ZIP" \
+            --repo "${{ github.repository }}" \
+            --title "$SLUG v$VERSION" \
+            --notes-file "$NOTES" \
+            --target "$(git rev-parse HEAD)"
+
+          echo "Created GitHub release $TAG"
+          echo "released=true" >> "$GITHUB_OUTPUT"
+
+  summarize:
+    needs: deploy
+    if: ${{ needs.deploy.outputs.released == 'true' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-summary.yml
+    with:
+      plugin: ${{ inputs.plugin }}
+      version: ${{ inputs.version }}
+      tag: ${{ needs.deploy.outputs.tag }}
+      prev_tag: ${{ needs.deploy.outputs.prev_tag }}
+    secrets:
+      LLM_URL: ${{ secrets.LLM_URL }}
+      LLM_TOKEN: ${{ secrets.LLM_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}

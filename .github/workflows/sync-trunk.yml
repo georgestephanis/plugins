@@ -1,0 +1,140 @@
+name: Sync plugin trunk to WordPress.org
+
+# Manually-triggerable "catch up" deploy: pushes the current source into SVN
+# trunk without bumping a version or cutting a tag. Useful when files have been
+# added to .distignore after a previous release — this run removes the now-ignored
+# files that are still lingering in the wp.org checkout. Tags are completely ignored.
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin to sync
+        required: true
+        type: choice
+        options:
+          - add-ids-to-header-tags
+          - automatic-internal-links
+          - big-emoji-comments
+          - category-posts-widget
+          - custom-content-width
+          - footer-on-homepage
+          - go-dark
+          - google-tag-manager
+          - hugh
+          - legacy-jetpack-custom-css-editor
+          - ndizi-project-management
+          - omnisearch
+          - press-this-v2
+          - random-blocks
+          - restrict-block-content
+          - reusable-block-count
+          - simple-404-keyword-insertion
+          - tarot
+          - the
+          - theme-downloader
+          - tuft-feedback
+          - update-control
+      dry_run:
+        description: Dry run — skip the SVN commit
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Initialize submodule if needed
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
+            echo "$SLUG is a submodule — initializing only this one"
+            git submodule update --init "$SLUG"
+          else
+            echo "$SLUG is a direct-directory plugin — no submodule init needed"
+          fi
+
+      - name: Build assets (if package.json present)
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          if [ -f "./$SLUG/package.json" ]; then
+            echo "Building $SLUG..."
+            cd "./$SLUG"
+            # Lock-aware: real build plugins ship a lockfile (use npm ci for
+            # reproducibility); the minimal package.json plugins added only to
+            # enable plugin-zip have none, so fall back to npm install.
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install --no-audit --no-fund
+            fi
+            npm run build --if-present
+          else
+            echo "No package.json found — skipping build."
+          fi
+
+      - name: Install SVN
+        run: sudo apt-get install -y subversion
+
+      - name: Sync trunk to WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ vars.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          SRC="./$SLUG"
+          SVN_URL="https://plugins.svn.wordpress.org/$SLUG"
+          SVN_DIR="/tmp/svn-$SLUG"
+
+          # Shallow checkout — trunk only (we never touch tags here)
+          svn checkout --depth immediates "$SVN_URL" "$SVN_DIR"
+          svn update --set-depth infinity "$SVN_DIR/trunk"
+
+          # Build rsync exclusions from .distignore (preferred) or .gitattributes
+          EXCLUDES="--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore"
+          if [ -f "$SRC/.distignore" ]; then
+            echo "Using .distignore for exclusions:"
+            while IFS= read -r line; do
+              [[ -z "$line" || "$line" == \#* ]] && continue
+              echo "  excluding: $line"
+              EXCLUDES="$EXCLUDES --exclude=$line"
+            done < "$SRC/.distignore"
+          elif [ -f "$SRC/.gitattributes" ]; then
+            echo "Using .gitattributes export-ignore for exclusions:"
+            while IFS= read -r line; do
+              [[ "$line" == *"export-ignore"* ]] || continue
+              path=$(echo "$line" | awk '{print $1}')
+              echo "  excluding: $path"
+              EXCLUDES="$EXCLUDES --exclude=$path"
+            done < "$SRC/.gitattributes"
+          fi
+
+          # Sync plugin files into SVN trunk.
+          # --delete-excluded also removes excluded files (e.g. things newly added to
+          # .distignore) that were committed to trunk in a previous deploy, so they
+          # get cleaned up here instead of lingering in the wp.org checkout forever.
+          rsync -rc --delete --delete-excluded $EXCLUDES "$SRC/" "$SVN_DIR/trunk/"
+
+          # Stage new and removed files (removals include any files rsync just deleted above)
+          svn status "$SVN_DIR/trunk" | grep '^?' | awk '{print $2}' | xargs -r svn add --force
+          svn status "$SVN_DIR/trunk" | grep '^!' | awk '{print $2}' | xargs -r svn delete
+
+          # Show what would be committed
+          echo "--- SVN diff summary ---"
+          svn status "$SVN_DIR/trunk"
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run — skipping SVN commit."
+            exit 0
+          fi
+
+          # Commit trunk only — no version bump, no tag.
+          svn commit "$SVN_DIR/trunk" \
+            --username "$SVN_USERNAME" \
+            --password "$SVN_PASSWORD" \
+            --no-auth-cache \
+            -m "Syncing $SLUG trunk (housekeeping, no version change)"

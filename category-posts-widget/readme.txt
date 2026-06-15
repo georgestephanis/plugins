@@ -2,9 +2,9 @@
 Contributors: georgestephanis
 Donate link: http://www.charitywater.org/donate/
 Tags: category, categories, widget
-Requires at least: 2.7
-Tested up to: 3.4.1
-Stable tag: 2.0
+Requires at least: 2.8
+Tested up to: 7.0
+Stable tag: 2.0.1
 
 This widget will let you display a list of the most recent posts in a single category in your sidebar.
 
@@ -27,6 +27,9 @@ Nope.  Really.
 
 == Changelog ==
 
+= 2.0.1 =
+* Maintenance release for current PHP/WordPress coding standards and safer widget setting handling.
+
 = 2.0 =
 * Now Multi-Widget Friendly, with 200% more awesome!
 
@@ -35,9 +38,11 @@ Nope.  Really.
 
 == Upgrade Notice ==
 
+= 2.0.1 =
+Minor maintenance release with compatibility and hardening updates.
+
 = 2.0 =
 When you upgrade, you will need to re-create your widget from version 1.0 -- there is no clean upgrade path.
 
 = 1.0 =
 Not Applicable.  Initial Release.
-

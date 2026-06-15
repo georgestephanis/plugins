@@ -1,0 +1,221 @@
+<?php
+/**
+ * Standalone PWA Time Tracker for Ndizi Project Management
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class Ndizi_Standalone_Tracker {
+
+	/**
+	 * Initialize hooks
+	 */
+	public static function init() {
+		if ( is_admin() ) {
+			add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
+			add_action( 'admin_init', array( __CLASS__, 'handle_requests' ) );
+		}
+		add_action( 'wp_ajax_ndizi_get_recent_user_logs', array( __CLASS__, 'ajax_get_recent_user_logs' ) );
+	}
+
+	/**
+	 * Register Standalone Tracker submenu page under Ndizi PM
+	 */
+	public static function register_page() {
+		add_submenu_page(
+			'ndizi-pm',
+			__( 'Standalone Tracker', 'ndizi-project-management' ),
+			__( 'Standalone Tracker', 'ndizi-project-management' ),
+			'ndizi_log_time',
+			'ndizi-tracker-standalone',
+			array( __CLASS__, 'render_standalone_page' )
+		);
+	}
+
+	/**
+	 * Intercept early PWA/Standalone requests on admin_init
+	 */
+	public static function handle_requests() {
+		// 1. Dynamic Web App Manifest
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['ndizi-action'] ) && 'manifest' === $_GET['ndizi-action'] ) {
+			self::serve_manifest();
+			exit;
+		}
+
+		// 2. Service Worker File
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['ndizi-action'] ) && 'service-worker' === $_GET['ndizi-action'] ) {
+			self::serve_service_worker();
+			exit;
+		}
+
+		// 3. Standalone Tracker Page View
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['page'] ) && 'ndizi-tracker-standalone' === $_GET['page'] ) {
+			if ( ! Ndizi_Roles::current_user_can( 'ndizi_log_time' ) ) {
+				wp_die( esc_html__( 'You do not have permission to log time.', 'ndizi-project-management' ) );
+			}
+			self::render_standalone_page();
+			exit;
+		}
+	}
+
+	/**
+	 * Serve the manifest JSON
+	 */
+	private static function serve_manifest() {
+		header( 'Content-Type: application/manifest+json; charset=utf-8' );
+		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+
+		$manifest = array(
+			'name'             => __( 'Ndizi Time Tracker', 'ndizi-project-management' ),
+			'short_name'       => __( 'Ndizi Tracker', 'ndizi-project-management' ),
+			'description'      => __( 'Standalone distraction-free companion time tracker app.', 'ndizi-project-management' ),
+			'start_url'        => admin_url( 'admin.php?page=ndizi-tracker-standalone' ),
+			'display'          => 'standalone',
+			'background_color' => '#0b0f19',
+			'theme_color'      => '#4f46e5',
+			'icons'            => array(
+				array(
+					'src'   => NDIZI_PLUGIN_URL . 'build/icon-192.png',
+					'sizes' => '192x192',
+					'type'  => 'image/png',
+				),
+				array(
+					'src'   => NDIZI_PLUGIN_URL . 'build/icon-512.png',
+					'sizes' => '512x512',
+					'type'  => 'image/png',
+				),
+			),
+		);
+
+		echo wp_json_encode( $manifest );
+	}
+
+	/**
+	 * Serve the Service Worker script
+	 */
+	private static function serve_service_worker() {
+		header( 'Content-Type: application/javascript; charset=utf-8' );
+		header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+
+		$standalone_url = admin_url( 'admin.php?page=ndizi-tracker-standalone' );
+		?>
+		const CACHE_NAME = 'ndizi-tracker-v1';
+		const ASSETS = [
+			'<?php echo esc_js( $standalone_url ); ?>'
+		];
+
+		self.addEventListener('install', (event) => {
+			event.waitUntil(
+				caches.open(CACHE_NAME).then((cache) => {
+					return cache.addAll(ASSETS).catch(() => {});
+				})
+			);
+			self.skipWaiting();
+		});
+
+		self.addEventListener('activate', (event) => {
+			event.waitUntil(
+				caches.keys().then((keys) => {
+					return Promise.all(
+						keys.map((key) => {
+							if (key !== CACHE_NAME) {
+								return caches.delete(key);
+							}
+						})
+					);
+				})
+			);
+			self.clients.claim();
+		});
+
+		self.addEventListener('fetch', (event) => {
+			// Don't intercept POST requests or admin-ajax.php calls
+			if (event.request.method !== 'GET' || event.request.url.includes('admin-ajax.php')) {
+				return;
+			}
+			event.respondWith(
+				fetch(event.request)
+					.catch(() => {
+						return caches.match(event.request);
+					})
+			);
+		});
+		<?php
+	}
+
+	/**
+	 * AJAX logic to fetch the current user's logs for today
+	 */
+	public static function ajax_get_recent_user_logs() {
+		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
+
+		if ( ! current_user_can( 'ndizi_log_time' ) && ! current_user_can( 'ndizi_manage_time' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
+		}
+
+		$user_id = get_current_user_id();
+		$today   = current_time( 'Y-m-d' );
+		$entries = Ndizi_DB::get_time_entries(
+			array(
+				'user_id'    => $user_id,
+				'start_date' => $today,
+				'end_date'   => $today,
+				'number'     => 10,
+			)
+		);
+
+		$response = array();
+		foreach ( $entries as $entry ) {
+			if ( is_null( $entry->end_time ) ) {
+				continue; // skip active running timer
+			}
+			$project = get_post( $entry->project_id );
+			$task    = $entry->task_id ? get_post( $entry->task_id ) : null;
+
+			$h            = floor( $entry->duration / 3600 );
+			$m            = floor( ( $entry->duration % 3600 ) / 60 );
+			$duration_str = sprintf( '%02dh %02dm', $h, $m );
+
+			$response[] = array(
+				'id'          => $entry->id,
+				'project'     => $project ? $project->post_title : __( 'Unknown Project', 'ndizi-project-management' ),
+				'task'        => $task ? $task->post_title : '',
+				'description' => $entry->description,
+				'duration'    => $duration_str,
+				'billable'    => (bool) $entry->billable,
+				'time'        => date_i18n( get_option( 'time_format' ), strtotime( $entry->start_time ) ),
+			);
+		}
+
+		wp_send_json_success( array( 'entries' => $response ) );
+	}
+
+	/**
+	 * Output the standalone PWA tracker HTML page
+	 */
+	public static function render_standalone_page() {
+		$user_id      = get_current_user_id();
+		$active_timer = Ndizi_DB::get_active_timer( $user_id );
+		$duration_sec = 0;
+
+		if ( $active_timer ) {
+			$start_ts     = strtotime( $active_timer->start_time );
+			$duration_sec = max( 0, time() - $start_ts );
+		}
+
+		$h           = floor( $duration_sec / 3600 );
+		$m           = floor( ( $duration_sec % 3600 ) / 60 );
+		$s           = $duration_sec % 60;
+		$ticker_text = sprintf( '%02d:%02d:%02d', $h, $m, $s );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$prefilled_desc = isset( $_GET['desc'] ) ? sanitize_text_field( wp_unslash( $_GET['desc'] ) ) : '';
+
+		include NDIZI_PLUGIN_DIR . 'templates/standalone-tracker.php';
+	}
+}

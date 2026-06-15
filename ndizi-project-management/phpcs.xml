@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<ruleset name="Ndizi">
+    <description>Ndizi Project Management PHP Coding Standards ruleset.</description>
+
+    <!-- Exclude third party or build folders -->
+    <exclude-pattern>/node_modules/*</exclude-pattern>
+    <exclude-pattern>/vendor/*</exclude-pattern>
+
+    <!-- Lint PHP files in these directories -->
+    <file>Ndizi.php</file>
+    <file>includes/</file>
+
+    <!-- Use WordPress coding standards -->
+    <rule ref="WordPress">
+        <!-- Exclude filename checks since the main plugin bootstrap is Ndizi.php -->
+        <exclude name="WordPress.Files.FileName" />
+
+        <!-- Exclude Yoda conditions for readability -->
+        <exclude name="WordPress.PHP.YodaConditions" />
+
+        <!-- NOTE: The WordPress.DB.* sniffs are intentionally kept ENABLED so that
+             local phpcs matches what the WordPress.org Plugin Checker enforces
+             (Plugin Check ignores this ruleset but honors inline annotations).
+             The custom wp_ndizi_time_entries table requires direct queries and
+             table-name interpolation; each such query carries a documented inline
+             phpcs:ignore explaining why it is safe. -->
+
+        <!-- WP_Query meta_query usage is intrinsic to this CRM-style plugin and is
+             not flagged by the Plugin Checker; keep local output aligned with it. -->
+        <exclude name="WordPress.DB.SlowDBQuery" />
+
+        <!-- fopen/fputcsv/fclose to php://output are required for streaming CSV
+             exports (WP_Filesystem cannot target an output stream). All filesystem
+             use is confined to the invoicing exporter and the fclose() calls also
+             carry inline phpcs:ignore annotations for the Plugin Checker. -->
+        <exclude name="WordPress.WP.AlternativeFunctions" />
+    </rule>
+
+    <!-- Validate the text domain matches the plugin slug (Plugin Check enforces this). -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="ndizi-project-management" />
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Teach the prefix sniff about the plugin's global prefixes. -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="ndizi" />
+                <element value="Ndizi" />
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Teach WPCS about the plugin's custom capabilities so capability checks
+         don't flag them as typos. -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="ndizi_manage_clients" />
+                <element value="ndizi_manage_projects" />
+                <element value="ndizi_manage_tasks" />
+                <element value="ndizi_manage_invoices" />
+                <element value="ndizi_manage_contacts" />
+                <element value="ndizi_manage_time" />
+                <element value="ndizi_view_reports" />
+                <element value="ndizi_view_projects" />
+                <element value="ndizi_view_tasks" />
+                <element value="ndizi_log_time" />
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Exclude Squiz commenting checks which are overly verbose -->
+    <rule ref="Squiz.Commenting.FileComment"><severity>0</severity></rule>
+    <rule ref="Squiz.Commenting.ClassComment"><severity>0</severity></rule>
+    <rule ref="Squiz.Commenting.FunctionComment"><severity>0</severity></rule>
+    <rule ref="Squiz.Commenting.InlineComment"><severity>0</severity></rule>
+
+    <!-- Exclude short ternary check from Universal standard -->
+    <rule ref="Universal.Operators.DisallowShortTernary"><severity>0</severity></rule>
+
+    <!-- Minimum WordPress version supported -->
+    <config name="minimum_supported_wp_version" value="6.9" />
+</ruleset>

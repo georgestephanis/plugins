@@ -1,0 +1,4 @@
+chrome-extension/
+vendor/
+node_modules/
+build/
