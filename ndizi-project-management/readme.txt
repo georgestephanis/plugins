@@ -1,7 +1,7 @@
 === Ndizi Project Management ===
 Contributors: georgestephanis
 Tags: project management, time tracking, clients, tasks, invoices
-Requires at least: 6.0
+Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 1.0.0

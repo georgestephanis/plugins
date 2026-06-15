@@ -32,7 +32,8 @@ narrowly scoped ignore + a `-- Reason:` explaining why it is safe.
 | Sniff | Where | Why it is ignored (not a bug) |
 |-------|-------|-------------------------------|
 | `WordPress.DB.DirectDatabaseQuery.DirectQuery` / `NoCaching` | every `$wpdb` call on `wp_ndizi_time_entries` (`class-ndizi-db.php`, `-invoicing.php`, `-settings.php`, `-meta-boxes.php`, `-admin-bar.php`, `-ajax.php`, `-list-tables.php`, `-cli.php`) | The custom time-entries table has no `WP_Query`/core-API equivalent. Adding `wp_cache_*` would silence `NoCaching` but `DirectQuery` still fires, so the ignore survives regardless — net-zero for real effort and cache-invalidation complexity. |
-| `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` | `"… FROM $table_name …"` interpolations | The table name derives from `$wpdb->prefix` and **cannot** be a `%s`/`%d` placeholder. WP 6.2's `%i` identifier placeholder could replace it, but those lines also carry `DirectQuery`/`NoCaching` (which `%i` does not address), so the ignore line stays regardless — and it would cost a min-WP bump (6.0 → 6.2). Not worth it. |
+| `WordPress.DB.PreparedSQL.InterpolatedNotPrepared` | `"… FROM $table_name …"` interpolations | The table name derives from `$wpdb->prefix` and **cannot** be a `%s`/`%d` placeholder. The min-WP floor is now `6.9`, so `%i` *is* available — but those lines also carry `DirectQuery`/`NoCaching` (which `%i` does not address), so the ignore line stays regardless. Not worth refactoring. |
+| `PluginCheck.Security.DirectDB.UnescapedDBParameter` | same custom-table query lines as the `WordPress.DB.*` rows above | Plugin Check's **own** sniff (not part of WPCS), flagging the interpolated `$table_name`/`$sql`. Appended to each existing inline ignore alongside the `WordPress.DB.*` codes. Same justification: table name from `$wpdb->prefix`, values prepared. |
 | `WordPress.DB.PreparedSQL.NotPrepared` | dynamic-`$sql` read tails in `get_time_entries()`, `get_time_entries_count()`, `get_time_totals()` (`class-ndizi-db.php`), `class-ndizi-settings.php` | The query string is assembled from a dynamic `WHERE`/`LIMIT` built only from hardcoded clauses + prepared placeholders. phpcs can't statically prove a variable `$sql` is safe; inlining literals would mean duplicating each query per filter combination. |
 | `WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare` | `… IN ($placeholders)` built with `array_fill( 0, count(...), '%d' )` | Canonical false positive for dynamic `IN()` lists. The per-id `%d` placeholders **are** prepared against the id array. |
 | `WordPress.PHP.DevelopmentFunctions.error_log_error_log` | `class-ndizi-calendar.php`, `class-ndizi-webhooks.php` | Genuine operational logging (OAuth token-refresh failures, SSRF-guard blocks). Deleting loses diagnostics; `WP_DEBUG`-guarding does **not** satisfy the sniff. |
@@ -53,6 +54,33 @@ narrowly scoped ignore + a `-- Reason:` explaining why it is safe.
 predate this review. Most are legitimate read-only admin-display patterns (list-table
 filters/sorting). Confirming each is truly safe is a **security audit**, not lint cleanup —
 track that separately (see `REVIEW.md`).
+
+## Fixed by code change (not ignored)
+
+These were resolved properly rather than suppressed — apply the same patterns to new code:
+
+- **`missing_direct_file_access_protection`** — every PHP file needs a direct-access guard.
+  Block render templates (`src`/`build/block/render.php`) use `defined( 'ABSPATH' ) || exit;`.
+  `playground/mock-data.php` needs the `ABSPATH` check as a **standalone** statement — a
+  compound `if ( ! defined( 'ABSPATH' ) || ! class_exists( … ) )` is *not* recognized by the
+  checker, so split it into separate guards.
+- **`wp_function_not_compatible_with_requires_wp`** (Abilities API) — `wp_register_ability()`
+  / `wp_register_ability_category()` require WP **6.9**. This check compares against the
+  `Requires at least` header and **cannot** be silenced by `function_exists()` guards *or*
+  inline `phpcs:ignore` (it's a Plugin Check check, not a PHPCS sniff). Resolved by bumping
+  **Requires at least to 6.9** in `Ndizi.php`, `readme.txt`, and `phpcs.xml`. (The calls are
+  still `function_exists()`-guarded + hooked to 6.9-only actions for defense in depth.) If a
+  future feature needs an even newer function, the same decision applies: bump the floor or
+  drop the feature — there is no per-feature "requires" header.
+- **`PrefixAllGlobals.NonPrefixedVariableFound`** — any variable *assigned at file scope* in a
+  file WordPress includes globally (block `render.php`, page templates, the seed script) is
+  treated as a global and must be prefixed or scoped. Two patterns used here:
+  - **Templates** (`render.php`, `standalone-tracker.php`): prefix the assigned vars `ndizi_`
+    (leave WordPress-injected vars like `$attributes`/`$block`/`$content` alone — they aren't
+    assigned here so they aren't flagged).
+  - **Seed script** (`mock-data.php`): the whole body is wrapped in an IIFE
+    (`( function () { … } )();`) so every working variable is function-scoped at once. Only
+    works because the file declares no top-level functions.
 
 ## Packaging checks (`.distignore`)
 

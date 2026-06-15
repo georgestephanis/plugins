@@ -84,5 +84,5 @@
     <rule ref="Universal.Operators.DisallowShortTernary"><severity>0</severity></rule>
 
     <!-- Minimum WordPress version supported -->
-    <config name="minimum_supported_wp_version" value="6.0" />
+    <config name="minimum_supported_wp_version" value="6.9" />
 </ruleset>

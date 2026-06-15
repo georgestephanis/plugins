@@ -94,7 +94,7 @@ class Ndizi_Invoicing {
 		// Fetch linked time entries
 		global $wpdb;
 		$table_name = Ndizi_DB::get_table_name();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name derives from $wpdb->prefix and cannot be a placeholder; invoice_id is prepared; entries read directly from the custom table.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; invoice_id is prepared; entries read directly from the custom table.
 		$time_entries = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC", $invoice_id ) );
 
 		// Calculate total hours
@@ -516,7 +516,7 @@ class Ndizi_Invoicing {
 		// Load logs
 		global $wpdb;
 		$table_name = Ndizi_DB::get_table_name();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name derives from $wpdb->prefix and cannot be a placeholder; invoice_id is prepared; entries read directly from the custom table.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; invoice_id is prepared; entries read directly from the custom table.
 		$time_entries = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC", $invoice_id ) );
 
 		$export_data = array(

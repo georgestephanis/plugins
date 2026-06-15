@@ -385,7 +385,7 @@ class Ndizi_Meta_Boxes {
 		if ( $project_id ) {
 			global $wpdb;
 			$table_name = Ndizi_DB::get_table_name();
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix; ids are prepared; unbilled entries read from the custom table for the meta box.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name from $wpdb->prefix; ids are prepared; unbilled entries read from the custom table for the meta box.
 			$time_entries = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE project_id = %d AND billable = 1 AND (invoice_id = 0 OR invoice_id = %d) ORDER BY start_time DESC", $project_id, $post->ID ) );
 		}
 		?>
@@ -736,7 +736,7 @@ class Ndizi_Meta_Boxes {
 			// Clear all existing time entries linked to this invoice first, then relink selected ones
 			global $wpdb;
 			$table_name = Ndizi_DB::get_table_name();
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Unlinking time entries from an invoice on the plugin's custom table.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Unlinking time entries from an invoice on the plugin's custom table.
 			$wpdb->update(
 				$table_name,
 				array( 'invoice_id' => 0 ),
@@ -750,7 +750,7 @@ class Ndizi_Meta_Boxes {
 				if ( ! empty( $selected_entry_ids ) ) {
 					// Relink all selected entries in a single bulk query rather than one query per entry.
 					$placeholders = implode( ',', array_fill( 0, count( $selected_entry_ids ), '%d' ) );
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix; the IN() list is built from per-id %d placeholders and prepared against the selected ids.
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name from $wpdb->prefix; the IN() list is built from per-id %d placeholders and prepared against the selected ids.
 					$wpdb->query( $wpdb->prepare( "UPDATE $table_name SET invoice_id = %d WHERE id IN ($placeholders)", array_merge( array( $post_id ), $selected_entry_ids ) ) );
 				}
 			}

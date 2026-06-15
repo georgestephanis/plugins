@@ -242,4 +242,5 @@ queries that require them carry documented inline ignores — see `DOTORG_REVIEW
 Additionally, the ruleset registers the plugin's custom capabilities with
 `WordPress.WP.Capabilities` (so capability checks like `ndizi_manage_time` aren't flagged
 as typos), declares the `ndizi`/`Ndizi` global prefixes and the `ndizi-project-management`
-text domain, and sets `minimum_supported_wp_version` to `6.0`.
+text domain, and sets `minimum_supported_wp_version` to `6.9` (the floor required by the
+Abilities API — see `DOTORG_REVIEW.md`).

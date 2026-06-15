@@ -58,7 +58,7 @@ class Ndizi_DB {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name derives from $wpdb->prefix and cannot be a placeholder; value is prepared; live timer lookup must not be cached.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; value is prepared; live timer lookup must not be cached.
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE user_id = %d AND end_time IS NULL ORDER BY start_time DESC LIMIT 1", $user_id ) );
 	}
 
@@ -85,7 +85,7 @@ class Ndizi_DB {
 
 		$now = current_time( 'mysql', true );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Writing to the plugin's custom time-entries table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Writing to the plugin's custom time-entries table.
 		$result = $wpdb->insert(
 			$table_name,
 			array(
@@ -134,7 +134,7 @@ class Ndizi_DB {
 		$start_ts  = strtotime( $active_timer->start_time );
 		$duration  = max( 0, $now_ts - $start_ts );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Updating the plugin's custom time-entries table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Updating the plugin's custom time-entries table.
 		$result = $wpdb->update(
 			$table_name,
 			array(
@@ -202,7 +202,7 @@ class Ndizi_DB {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Writing to the plugin's custom time-entries table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Writing to the plugin's custom time-entries table.
 		$result = $wpdb->insert(
 			$table_name,
 			array(
@@ -303,7 +303,7 @@ class Ndizi_DB {
 		$update_data['updated_at'] = current_time( 'mysql', true );
 		$formats[]                 = '%s';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Updating the plugin's custom time-entries table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Updating the plugin's custom time-entries table.
 		$result = $wpdb->update(
 			$table_name,
 			$update_data,
@@ -327,7 +327,7 @@ class Ndizi_DB {
 		global $wpdb;
 		$table_name = self::get_table_name();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name derives from $wpdb->prefix and cannot be a placeholder; id is prepared; row read directly from the custom table.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; id is prepared; row read directly from the custom table.
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $id ) );
 	}
 
@@ -347,7 +347,7 @@ class Ndizi_DB {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Deleting from the plugin's custom time-entries table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Deleting from the plugin's custom time-entries table.
 		$result = $wpdb->delete(
 			$table_name,
 			array( 'id' => $id ),
@@ -454,7 +454,7 @@ class Ndizi_DB {
 			$query_args[] = intval( $args['offset'] );
 		}
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is assembled from prepared placeholders and an allowlisted ORDER BY; custom-table reporting read.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is assembled from prepared placeholders and an allowlisted ORDER BY; custom-table reporting read.
 		if ( ! empty( $query_args ) ) {
 			return $wpdb->get_results( $wpdb->prepare( $sql, $query_args ) );
 		}
@@ -535,7 +535,7 @@ class Ndizi_DB {
 		$where_str = implode( ' AND ', $where );
 		$sql       = "SELECT COUNT(*) FROM $table_name WHERE $where_str";
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is assembled from prepared placeholders over a custom table; count read for reporting.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is assembled from prepared placeholders over a custom table; count read for reporting.
 		if ( ! empty( $query_args ) ) {
 			return intval( $wpdb->get_var( $wpdb->prepare( $sql, $query_args ) ) );
 		}
@@ -608,7 +608,7 @@ class Ndizi_DB {
 
 		$sql = "SELECT $select FROM $table_name WHERE $where_str GROUP BY $groupby";
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is assembled from prepared placeholders and an allowlisted SELECT/GROUP BY; custom-table reporting aggregate.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is assembled from prepared placeholders and an allowlisted SELECT/GROUP BY; custom-table reporting aggregate.
 		if ( ! empty( $query_args ) ) {
 			return $wpdb->get_results( $wpdb->prepare( $sql, $query_args ) );
 		}

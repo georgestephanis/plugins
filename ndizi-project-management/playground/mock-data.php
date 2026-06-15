@@ -3,9 +3,20 @@
  * Create Mock Data / Reset Staging Ground for Ndizi Project Management
  */
 
-if ( ! defined( 'ABSPATH' ) || ! class_exists( 'Ndizi_Project_Management' ) ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+if ( ! class_exists( 'Ndizi_Project_Management' ) ) {
+	return;
+}
+
+/*
+ * The seed routine runs inside an IIFE so its working variables stay
+ * function-scoped instead of leaking into the global namespace.
+ */
+( function () {
+	global $wpdb;
 
 // Get the current user to assign tasks and time to.
 $user_id = get_current_user_id();
@@ -537,7 +548,7 @@ global $wpdb;
 $table_name = Ndizi_DB::get_table_name();
 
 // Clean up existing entries first to avoid duplicates.
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Table name derives from $wpdb->prefix and cannot be a placeholder; one-off TRUNCATE of the custom table while seeding Playground demo data.
+// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name derives from $wpdb->prefix and cannot be a placeholder; one-off TRUNCATE of the custom table while seeding Playground demo data.
 $wpdb->query( "TRUNCATE TABLE $table_name" );
 
 // Define a list of logs to insert
@@ -785,3 +796,5 @@ if ( ! $portal_page ) {
 }
 
 echo esc_html( "Staging mock data population complete.\n" );
+
+} )();

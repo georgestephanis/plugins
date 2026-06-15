@@ -497,7 +497,7 @@ class Ndizi_Settings {
 			$query_args[] = $end_date . ' 23:59:59';
 		}
 
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $query is assembled from prepared placeholders over the custom time-entries table; dashboard reporting aggregate.
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $query is assembled from prepared placeholders over the custom time-entries table; dashboard reporting aggregate.
 		if ( ! empty( $query_args ) ) {
 			$total_sec = $wpdb->get_var( $wpdb->prepare( $query, $query_args ) );
 		} else {

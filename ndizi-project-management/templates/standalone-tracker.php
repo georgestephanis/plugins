@@ -15,8 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$standalone_css_url = NDIZI_PLUGIN_URL . 'build/standalone.css';
-$standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
+$ndizi_standalone_css_url = NDIZI_PLUGIN_URL . 'build/standalone.css';
+$ndizi_standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -30,7 +30,7 @@ $standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-	<link rel="stylesheet" href="<?php echo esc_url( $standalone_css_url ); ?>">
+	<link rel="stylesheet" href="<?php echo esc_url( $ndizi_standalone_css_url ); ?>">
 </head>
 <body class="<?php echo esc_attr( $active_timer ? 'timer-running' : '' ); ?>">
 
@@ -193,6 +193,6 @@ $standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 	};
 	</script>
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript ?>
-	<script src="<?php echo esc_url( $standalone_js_url ); ?>"></script>
+	<script src="<?php echo esc_url( $ndizi_standalone_js_url ); ?>"></script>
 </body>
 </html>
