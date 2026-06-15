@@ -1,0 +1,170 @@
+name: Summarize a plugin release
+
+# Reusable workflow: given an existing GitHub Release (created by deploy.yml), gather the
+# commits and pull requests behind it, ask a self-hosted OpenAI-compatible LLM for a readable
+# summary, and rewrite the release body as:
+#
+#   ## Summary        <- AI-generated (omitted if the LLM is unavailable)
+#   ## Changelog      <- the release's existing notes (the readme changelog extract)
+#   ## Pull requests  <- GitHub's auto-generated PR list
+#
+# The summary is strictly best-effort: if the LLM endpoint is unreachable or errors, the
+# release keeps its Changelog + Pull-request sections and this workflow still succeeds.
+
+on:
+  workflow_call:
+    inputs:
+      plugin:
+        description: Plugin slug
+        required: true
+        type: string
+      version:
+        description: Released version
+        required: true
+        type: string
+      tag:
+        description: Release tag (e.g. my-plugin/v1.2.3)
+        required: true
+        type: string
+      prev_tag:
+        description: Previous release tag for this plugin, if any
+        required: false
+        type: string
+        default: ""
+      repository:
+        description: owner/repo the release lives in
+        required: false
+        type: string
+        default: ${{ github.repository }}
+    secrets:
+      LLM_URL:
+        description: OpenAI-compatible base URL (e.g. http://host:port/v1/)
+        required: true
+      LLM_TOKEN:
+        description: Bearer token for the LLM endpoint
+        required: true
+      GH_PAT:
+        description: >-
+          Optional PAT with repo (variable write) scope. If provided, the
+          resolved model is cached back into the LLM_MODEL repo variable. The
+          default GITHUB_TOKEN cannot write Actions variables.
+        required: false
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Assemble release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          LLM_URL: ${{ secrets.LLM_URL }}
+          LLM_TOKEN: ${{ secrets.LLM_TOKEN }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          REPO: ${{ inputs.repository }}
+          SLUG: ${{ inputs.plugin }}
+          VERSION: ${{ inputs.version }}
+          TAG: ${{ inputs.tag }}
+          PREV_TAG: ${{ inputs.prev_tag }}
+        run: |
+          set -euo pipefail
+
+          # --- Existing release body (the readme changelog extract from deploy.yml) ---
+          CHANGELOG=$(gh release view "$TAG" --repo "$REPO" --json body --jq '.body' 2>/dev/null || true)
+
+          # --- Commits scoped to this plugin's directory since the previous tag ---
+          if [ -n "$PREV_TAG" ] && git rev-parse -q --verify "refs/tags/$PREV_TAG" > /dev/null; then
+            RANGE="$PREV_TAG..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+          COMMITS=$(git log "$RANGE" --no-merges --pretty=format:'- %s' -- "$SLUG/" | head -100 || true)
+
+          # --- GitHub's auto-generated PR list for the range ---
+          PR_NOTES=""
+          if [ -n "$PREV_TAG" ]; then
+            PR_NOTES=$(gh api "repos/$REPO/releases/generate-notes" \
+              -f tag_name="$TAG" -f previous_tag_name="$PREV_TAG" \
+              --jq '.body' 2>/dev/null || true)
+          else
+            PR_NOTES=$(gh api "repos/$REPO/releases/generate-notes" \
+              -f tag_name="$TAG" --jq '.body' 2>/dev/null || true)
+          fi
+
+          # --- Build the LLM context and request a summary (best-effort) ---
+          {
+            echo "Commits:"
+            echo "${COMMITS:-(none)}"
+            echo
+            echo "Pull requests / contributors:"
+            echo "${PR_NOTES:-(none)}"
+            echo
+            echo "Changelog:"
+            echo "${CHANGELOG:-(none)}"
+          } > /tmp/llm-context.txt
+
+          SUMMARY=""
+          if [ -n "${LLM_URL:-}" ]; then
+            if SUMMARY=$(python3 scripts/llm-summarize.py \
+                  --url "$LLM_URL" --token "$LLM_TOKEN" --model "${LLM_MODEL:-}" \
+                  --model-out /tmp/resolved-model.txt \
+                  --plugin "$SLUG" --version "$VERSION" < /tmp/llm-context.txt); then
+              echo "LLM summary generated."
+            else
+              echo "LLM summary unavailable — proceeding with changelog + PR notes only." >&2
+              SUMMARY=""
+            fi
+
+            # Cache the resolved model back into the LLM_MODEL repo variable so
+            # future runs pin it, re-detecting only when it's no longer served.
+            RESOLVED=$(cat /tmp/resolved-model.txt 2>/dev/null || true)
+            if [ -n "$RESOLVED" ] && [ "$RESOLVED" != "${LLM_MODEL:-}" ]; then
+              if [ -n "${GH_PAT:-}" ]; then
+                if GH_TOKEN="$GH_PAT" gh variable set LLM_MODEL --repo "$REPO" --body "$RESOLVED"; then
+                  echo "Cached resolved model in LLM_MODEL variable: $RESOLVED"
+                else
+                  echo "Could not update LLM_MODEL variable (check the PAT's variable-write scope)." >&2
+                fi
+              else
+                echo "Resolved model is '$RESOLVED' but no GH_PAT provided — not caching to LLM_MODEL." >&2
+              fi
+            fi
+          else
+            echo "LLM_URL not set — skipping AI summary." >&2
+          fi
+
+          # --- Compose the final release body ---
+          {
+            if [ -n "$SUMMARY" ]; then
+              echo "## Summary"
+              echo
+              echo "$SUMMARY"
+              echo
+            fi
+            if [ -n "$CHANGELOG" ]; then
+              echo "## Changelog"
+              echo
+              echo "$CHANGELOG"
+              echo
+            fi
+            if [ -n "$PR_NOTES" ]; then
+              echo "## Pull requests"
+              echo
+              echo "$PR_NOTES"
+            fi
+          } > /tmp/release-body.md
+
+          if [ ! -s /tmp/release-body.md ]; then
+            echo "Nothing to write — leaving the release body unchanged."
+            exit 0
+          fi
+
+          gh release edit "$TAG" --repo "$REPO" --notes-file /tmp/release-body.md
+          echo "Updated release notes for $TAG"

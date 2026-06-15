@@ -45,9 +45,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      tag: ${{ steps.release.outputs.tag }}
+      prev_tag: ${{ steps.release.outputs.prev_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # Full history + tags so the release step can find the previous
+          # slug/v* tag and target the freshly pushed version-bump commit.
+          fetch-depth: 0
 
       - name: Initialize submodule if needed
         run: |
@@ -85,7 +93,14 @@ jobs:
           if [ -f "./$SLUG/package.json" ]; then
             echo "Building $SLUG..."
             cd "./$SLUG"
-            npm ci
+            # Lock-aware: real build plugins ship a lockfile (use npm ci for
+            # reproducibility); the minimal package.json plugins added only to
+            # enable plugin-zip have none, so fall back to npm install.
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install --no-audit --no-fund
+            fi
             npm run build --if-present
           else
             echo "No package.json found — skipping build."
@@ -259,3 +274,69 @@ jobs:
               git push
             fi
           fi
+
+      - name: Create GitHub release
+        id: release
+        # Tags the monorepo as <slug>/v<version>, builds the plugin ZIP, and
+        # publishes a GitHub Release with the readme changelog as its notes.
+        # The release/summary jobs are skipped on a dry run.
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SLUG="${{ inputs.plugin }}"
+          VERSION="${{ inputs.version }}"
+          TAG="$SLUG/v$VERSION"
+
+          # Highest existing tag for this plugin, for the release-notes range.
+          PREV_TAG=$(git tag -l "$SLUG/v*" --sort=-v:refname | head -1)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prev_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+
+          # Idempotent: if the release already exists, leave it and let the
+          # summarize job refresh its notes.
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping creation."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Build the distributable ZIP (wp-scripts plugin-zip, or rsync fallback).
+          ZIP="/tmp/$SLUG.zip"
+          bash scripts/build-zip.sh "$SLUG" "$ZIP"
+
+          # Release notes: this version's changelog block, if present.
+          NOTES="/tmp/notes-$SLUG.md"
+          README=""
+          [ -f "./$SLUG/readme.txt" ] && README="./$SLUG/readme.txt"
+          [ -z "$README" ] && [ -f "./$SLUG/README.md" ] && README="./$SLUG/README.md"
+          : > "$NOTES"
+          if [ -n "$README" ]; then
+            python3 scripts/extract-changelog.py "$README" "$VERSION" > "$NOTES" || true
+          fi
+          if [ ! -s "$NOTES" ]; then
+            echo "Release of $SLUG v$VERSION. See [WordPress.org](https://wordpress.org/plugins/$SLUG/) for details." > "$NOTES"
+          fi
+
+          gh release create "$TAG" "$ZIP" \
+            --repo "${{ github.repository }}" \
+            --title "$SLUG v$VERSION" \
+            --notes-file "$NOTES" \
+            --target "$(git rev-parse HEAD)"
+
+          echo "Created GitHub release $TAG"
+          echo "released=true" >> "$GITHUB_OUTPUT"
+
+  summarize:
+    needs: deploy
+    if: ${{ needs.deploy.outputs.released == 'true' }}
+    uses: ./.github/workflows/release-summary.yml
+    with:
+      plugin: ${{ inputs.plugin }}
+      version: ${{ inputs.version }}
+      tag: ${{ needs.deploy.outputs.tag }}
+      prev_tag: ${{ needs.deploy.outputs.prev_tag }}
+    secrets:
+      LLM_URL: ${{ secrets.LLM_URL }}
+      LLM_TOKEN: ${{ secrets.LLM_TOKEN }}
+      GH_PAT: ${{ secrets.GH_PAT }}

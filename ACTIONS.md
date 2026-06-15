@@ -6,7 +6,8 @@ All three workflows in `.github/workflows/` use custom shell steps that talk to 
 
 | File | Trigger | Purpose |
 |------|---------|---------|
-| `.github/workflows/deploy.yml` | Manual (`workflow_dispatch`) | Version bump → optional JS build → SVN deploy → tag → update `versions.json` → Git commit/PR |
+| `.github/workflows/deploy.yml` | Manual (`workflow_dispatch`) | Version bump → optional JS build → SVN deploy → tag → update `versions.json` → Git commit/PR → **GitHub tag + Release** → **AI release summary** |
+| `.github/workflows/release-summary.yml` | Reusable (`workflow_call`) | Called by `deploy.yml` after a Release is created: gathers commits + PRs, asks a self-hosted LLM for a summary, and rewrites the release notes |
 | `.github/workflows/asset-update.yml` | Manual (`workflow_dispatch`) | Sync readme + `.wordpress-org/` assets to SVN trunk and stable tag |
 | `.github/workflows/version-check.yml` | Manual (`workflow_dispatch`) | Regenerate the pending-deploys table in `README.md` from the current state of `versions.json` |
 
@@ -18,7 +19,42 @@ Configure these under Settings → Secrets and variables → Actions in `georges
 |------|------|---------|
 | `SVN_USERNAME` | Variable | WordPress.org SVN username (not sensitive) |
 | `SVN_PASSWORD` | Secret | WordPress.org SVN password |
-| `GH_PAT` | Secret | Personal Access Token with `repo` scope. Used by the deploy workflow to push a version-bump branch and open a PR in the upstream repo when deploying a **submodule plugin**. Not required for direct-directory plugins. Must have write access to the target repo — for `bethinkstudio/restrict-block-content` and `chipbennett/update-control` the PAT owner must have been granted access by those orgs/users. |
+| `GH_PAT` | Secret | Personal Access Token with `repo` scope. Used by the deploy workflow to push a version-bump branch and open a PR in the upstream repo when deploying a **submodule plugin**. Also used by `release-summary.yml` to write the resolved model back into the `LLM_MODEL` variable (the default `GITHUB_TOKEN` cannot manage Actions variables). Not required for direct-directory plugins; if absent, model auto-detection still runs each time but the result isn't cached. Must have write access to the target repo — for `bethinkstudio/restrict-block-content` and `chipbennett/update-control` the PAT owner must have been granted access by those orgs/users. |
+| `LLM_URL` | Secret | Base URL of an OpenAI-compatible LLM endpoint (e.g. `http://home.example.me:36428/v1/`). Used by `release-summary.yml` to generate the AI release summary. If unset, the summary is skipped and the release keeps its changelog + PR notes. |
+| `LLM_TOKEN` | Secret | Bearer token for the `LLM_URL` endpoint. |
+| `LLM_MODEL` | Variable (optional) | Model id to request. Acts as a self-maintaining cache: each run validates it against `GET {LLM_URL}/models` and, if it's no longer served (or unset), picks the first available model and writes that choice back to this variable (requires `GH_PAT` — see below). You may also set it by hand to pin a model. |
+
+## GitHub tags and Releases
+
+After a successful (non-dry-run) deploy, `deploy.yml` also publishes a GitHub Release in this
+monorepo — uniformly for both direct and submodule plugins:
+
+1. Tags the monorepo `<slug>/v<version>` (e.g. `ndizi-project-management/v0.9.7.0`), targeting the
+   version-bump commit.
+2. Builds the distributable ZIP and attaches it as a release asset. The ZIP is built by
+   `scripts/build-zip.sh`, which prefers `@wordpress/scripts plugin-zip` when the plugin has a
+   `package.json` and otherwise falls back to an rsync build honouring `.distignore` /
+   `.gitattributes` export-ignore.
+3. Sets the release notes from the plugin's `readme.txt` (or `README.md`) `== Changelog ==` block
+   for that version, via `scripts/extract-changelog.py`.
+4. Triggers the `summarize` job (`release-summary.yml`), which gathers the commits scoped to the
+   plugin's directory plus GitHub's auto-generated PR list, asks the LLM for a short overview, and
+   rewrites the body as **Summary → Changelog → Pull requests**. This step is best-effort: if the
+   LLM is unreachable the release simply keeps its Changelog + Pull-request sections.
+
+For **submodule plugins** the tag/release live in the monorepo and point at the monorepo commit, so
+the per-directory commit log shows only submodule-pointer bumps — those summaries lean on the PR
+list and changelog rather than file-level history.
+
+### `package.json` requirement for `plugin-zip`
+
+`@wordpress/scripts plugin-zip` requires every plugin to carry a `package.json` whose `version` is a
+**valid semver** value. WordPress plugin versions are often not semver (`1.1`, `2.0`, `0.9.7.0`), so
+the direct-directory plugins use a minimal `package.json` with a static `"version": "0.0.0"`
+placeholder — the real shipped version always lives in the PHP header and readme `Stable tag` and is
+never read from `package.json`. These minimal manifests have no dependencies or lockfile; the deploy
+build step is lock-aware (`npm ci` when a lockfile exists, otherwise `npm install`) and the ZIP is
+built with `npx @wordpress/scripts plugin-zip`.
 
 ### Submodule version bump flow
 
