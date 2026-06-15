@@ -252,9 +252,11 @@ const TimeEntriesApp = () => {
 					apiFetch( {
 						path: `/ndizi/v1/time/${ id }`,
 						method: 'PUT',
+						// `approved_by` is set server-side (manager-only) and the
+						// REST endpoint ignores any client-supplied value, so we
+						// only send the approved flag.
 						data: {
 							approved: approved ? 1 : 0,
-							approved_by: approved ? currentUserId : 0,
 						},
 					} )
 				)
