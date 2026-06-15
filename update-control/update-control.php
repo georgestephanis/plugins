@@ -4,8 +4,10 @@
  * Plugin URI: http://github.com/chipbennett/update-control/
  * Description: Adds a manual toggle to the WordPress Admin Interface for managing auto-updates.
  * Author: George Stephanis, Chip Bennett
- * Version: 1.5
+ * Version: 1.5.1
  * Author URI: http://chipbennett.net
+ * Text Domain: update-control
+ * Domain Path: /languages
  */
 
 /**
@@ -229,11 +231,20 @@ class Stephanis_Update_Control {
 	public static function update_control_settings_section() {
 		if ( defined( 'AUTOMATIC_UPDATER_DISABLED' ) && AUTOMATIC_UPDATER_DISABLED ) : ?>
 			<p id="update-control-settings-section">
-				<?php _e( 'You have the <code>AUTOMATIC_UPDATER_DISABLED</code> constant set.  Automatic updates are disabled.', 'update-control' ); ?>
+				<?php
+				echo wp_kses(
+					sprintf(
+						/* translators: %s: PHP constant name */
+						__( 'You have the %s constant set. Automatic updates are disabled.', 'update-control' ),
+						'<code>AUTOMATIC_UPDATER_DISABLED</code>'
+					),
+					array( 'code' => array() )
+				);
+				?>
 			</p>
 		<?php else : ?>
 			<p id="update-control-settings-section">
-				<?php _e( 'This section lets you specify what areas of your WordPress install will be permitted to auto-update.', 'update-control' ); ?>
+				<?php esc_html_e( 'This section lets you specify what areas of your WordPress install will be permitted to auto-update.', 'update-control' ); ?>
 			</p>
 			<?php
 			$update_core_obj = get_site_transient( 'update_core' );
