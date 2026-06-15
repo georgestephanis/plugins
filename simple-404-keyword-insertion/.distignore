@@ -1,0 +1,16 @@
+# Directories that should never ship in the WordPress.org ZIP.
+/.git
+/.github
+/.wordpress-org
+/node_modules
+/vendor
+
+# Dev-only files.
+.distignore
+.gitignore
+.editorconfig
+AGENTS.md
+README.md
+package.json
+package-lock.json
+phpcs.xml
