@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Update_Control {
 
 	/**
-	 * Enqueue admin script and style stylesheets for General settings page.
+	 * Enqueue admin script and stylesheets for General settings page.
 	 *
 	 * @param string $hook The current admin page hook.
 	 */
@@ -444,7 +444,7 @@ class Update_Control {
 	 * @return array Sanitized options.
 	 */
 	public static function sanitize_options( $options ) {
-		$options = (array) $options;
+		$options = wp_parse_args( (array) $options, self::get_options() );
 
 		$options['active']         = ( in_array( $options['active'], array( 'yes', 'no' ), true ) ? $options['active'] : 'yes' );
 		$options['core']           = ( in_array( $options['core'], array( 'minor', 'major', 'dev' ), true ) ? $options['core'] : 'minor' );
