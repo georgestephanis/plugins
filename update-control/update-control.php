@@ -16,11 +16,7 @@
 class Stephanis_Update_Control {
 
 	public static function go() {
-		if ( is_multisite() && ! is_main_site() ) {
-			// Multisite check
-			// only run on the main site of a multisite network
-			return;
-		} else {
+		if ( ! is_multisite() || is_main_site() ) {
 			// Let's roll!
 			add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
 			add_action( 'init', array( __CLASS__, 'setup_upgrade_filters' ) );
@@ -32,13 +28,13 @@ class Stephanis_Update_Control {
 
 		// Do these at priority 1, so other folks can easily override it.
 
-		if ( 'no' == $options['active'] ) {
+		if ( 'no' === $options['active'] ) {
 		
 			add_filter( 'automatic_updater_disabled', '__return_true', 1 );
 			
 		} else {
 
-			if ( in_array( $options['core'], array( 'dev', 'major', 'minor' ) ) ) {
+			if ( in_array( $options['core'], array( 'dev', 'major', 'minor' ), true ) ) {
 				add_filter( 'allow_' . $options['core'] . '_auto_core_updates', '__return_true', 1 );
 			}
 
@@ -58,7 +54,7 @@ class Stephanis_Update_Control {
 				add_filter( 'automatic_updates_is_vcs_checkout', '__return_false', 1 );
 			}
 
-			if ( 'no' == $options['emailactive'] || ! ( $options['successemail'] || $options['failureemail'] || $options['criticalemail'] ) ) {
+			if ( 'no' === $options['emailactive'] || ! ( $options['successemail'] || $options['failureemail'] || $options['criticalemail'] ) ) {
 				add_filter( 'auto_core_update_send_email', '__return_false', 1 );
 			} else {
 				add_filter( 'auto_core_update_send_email', array( __CLASS__, 'filter_email' ), 1, 2 );
@@ -75,14 +71,17 @@ class Stephanis_Update_Control {
 	public static function filter_email( $bool, $type ) {
 		$options = self::get_options();
 
-		if ( 'success' == $type && ! $options['successemail'] )
+		if ( 'success' === $type && ! $options['successemail'] ) {
 			return false;
+		}
 
-		if ( 'fail' == $type && ! $options['failureemail'] )
+		if ( 'fail' === $type && ! $options['failureemail'] ) {
 			return false;
+		}
 
-		if ( 'critical' == $type && ! $options['criticalemail'] )
+		if ( 'critical' === $type && ! $options['criticalemail'] ) {
 			return false;
+		}
 
 		return $bool;
 	}
@@ -294,8 +293,8 @@ class Stephanis_Update_Control {
 	public static function update_control_active_cb() {
 		?>
 		<select id="update_control_active" name="update_control_options[active]">
-			<option <?php selected( 'yes' == self::get_option( 'active' ) ); ?> value="yes"><?php _e( 'Yes', 'update-control' ); ?></option>
-			<option <?php selected( 'no' == self::get_option( 'active' ) ); ?> value="no"><?php _e( 'No', 'update-control' ); ?></option>
+			<option <?php selected( 'yes' === self::get_option( 'active' ) ); ?> value="yes"><?php _e( 'Yes', 'update-control' ); ?></option>
+			<option <?php selected( 'no' === self::get_option( 'active' ) ); ?> value="no"><?php _e( 'No', 'update-control' ); ?></option>
 		</select>
 		<?php
 	}
@@ -303,9 +302,9 @@ class Stephanis_Update_Control {
 	public static function update_control_core_cb() {
 		?>
 		<select class="update_control_dependency" id="update_control_core" name="update_control_options[core]">
-			<option <?php selected( 'minor' == self::get_option( 'core' ) ); ?> value="minor"><?php _e( 'Minor Updates', 'update-control' ); ?></option>
-			<option <?php selected( 'major' == self::get_option( 'core' ) ); ?> value="major"><?php _e( 'Major Updates', 'update-control' ); ?></option>
-			<option <?php selected( 'dev' == self::get_option( 'core' ) ); ?> value="dev"><?php _e( 'Development Updates', 'update-control' ); ?></option>
+			<option <?php selected( 'minor' === self::get_option( 'core' ) ); ?> value="minor"><?php _e( 'Minor Updates', 'update-control' ); ?></option>
+			<option <?php selected( 'major' === self::get_option( 'core' ) ); ?> value="major"><?php _e( 'Major Updates', 'update-control' ); ?></option>
+			<option <?php selected( 'dev' === self::get_option( 'core' ) ); ?> value="dev"><?php _e( 'Development Updates', 'update-control' ); ?></option>
 		</select>
 		<?php
 	}
@@ -331,8 +330,8 @@ class Stephanis_Update_Control {
 	public static function update_control_toggleadvanced_cb() {
 		?>
 		<select class="update_control_dependency" id="update_control_toggleadvanced" name="update_control_options[toggleadvanced]">
-			<option <?php selected( 'show' == self::get_option( 'toggleadvanced' ) ); ?> value="show"><?php _e( 'Show', 'update-control' ); ?></option>
-			<option <?php selected( 'hide' == self::get_option( 'toggleadvanced' ) ); ?> value="hide"><?php _e( 'Hide', 'update-control' ); ?></option>
+			<option <?php selected( 'show' === self::get_option( 'toggleadvanced' ) ); ?> value="show"><?php _e( 'Show', 'update-control' ); ?></option>
+			<option <?php selected( 'hide' === self::get_option( 'toggleadvanced' ) ); ?> value="hide"><?php _e( 'Hide', 'update-control' ); ?></option>
 		</select>
 		<?php
 	}
@@ -346,8 +345,8 @@ class Stephanis_Update_Control {
 	public static function update_control_email_active_cb() {
 		?>
 		<select class="update_control_advanced" id="update_control_email_active" name="update_control_options[emailactive]">
-			<option <?php selected( 'yes' == self::get_option( 'emailactive' ) ); ?> value="yes"><?php _e( 'Yes', 'update-control' ); ?></option>
-			<option <?php selected( 'no' == self::get_option( 'emailactive' ) ); ?> value="no"><?php _e( 'No', 'update-control' ); ?></option>
+			<option <?php selected( 'yes' === self::get_option( 'emailactive' ) ); ?> value="yes"><?php _e( 'Yes', 'update-control' ); ?></option>
+			<option <?php selected( 'no' === self::get_option( 'emailactive' ) ); ?> value="no"><?php _e( 'No', 'update-control' ); ?></option>
 		</select>
 		<?php
 	}
@@ -379,18 +378,18 @@ class Stephanis_Update_Control {
 	public static function sanitize_options( $options ) { 
 		$options = (array) $options;
 
-		$options['active'] = ( in_array( $options['active'], array( 'yes', 'no' ) ) ? $options['active'] : 'yes' );
-		$options['core'] = ( in_array( $options['core'], array( 'minor', 'major', 'dev' ) ) ? $options['core'] : 'minor' );
-		$options['plugin'] = ! empty( $options['plugin'] );
-		$options['theme']  = ! empty( $options['theme']  );
-		$options['translation']  = ! empty( $options['translation']  );
-		$options['toggleadvanced'] = 'hide';
-		$options['vcscheck']  = ! empty( $options['vcscheck']  );
-		$options['emailactive'] = ( in_array( $options['emailactive'], array( 'yes', 'no' ) ) ? $options['emailactive'] : 'yes' );
-		$options['successemail'] = ! empty( $options['successemail'] );
-		$options['failureemail'] = ! empty( $options['failureemail'] );
-		$options['criticalemail']  = ! empty( $options['criticalemail']  );
-		$options['debugemail']  = ! empty( $options['debugemail']  );
+		$options['active']         = ( in_array( $options['active'], array( 'yes', 'no' ), true ) ? $options['active'] : 'yes' );
+		$options['core']           = ( in_array( $options['core'], array( 'minor', 'major', 'dev' ), true ) ? $options['core'] : 'minor' );
+		$options['plugin']         = ! empty( $options['plugin'] );
+		$options['theme']          = ! empty( $options['theme'] );
+		$options['translation']    = ! empty( $options['translation'] );
+		$options['toggleadvanced'] = ( isset( $options['toggleadvanced'] ) && in_array( $options['toggleadvanced'], array( 'show', 'hide' ), true ) ? $options['toggleadvanced'] : 'hide' );
+		$options['vcscheck']       = ! empty( $options['vcscheck'] );
+		$options['emailactive']    = ( in_array( $options['emailactive'], array( 'yes', 'no' ), true ) ? $options['emailactive'] : 'yes' );
+		$options['successemail']   = ! empty( $options['successemail'] );
+		$options['failureemail']   = ! empty( $options['failureemail'] );
+		$options['criticalemail']  = ! empty( $options['criticalemail'] );
+		$options['debugemail']     = ! empty( $options['debugemail'] );
 
 		return $options;
 	}
