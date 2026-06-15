@@ -55,6 +55,23 @@ predate this review. Most are legitimate read-only admin-display patterns (list-
 filters/sorting). Confirming each is truly safe is a **security audit**, not lint cleanup —
 track that separately (see `REVIEW.md`).
 
+## Runtime: don't translate before `init` (WP 6.7+)
+
+WP 6.7+ emits a `_load_textdomain_just_in_time was called incorrectly` notice when any
+`__()`/`_e()`/`esc_html__()` for the plugin's text domain runs **before the `init` action**.
+Because `Ndizi_Project_Management::init()` runs at plugin load (it calls `includes()`), any
+translation reached from that path fires on **every request** and trips the notice.
+
+- The original offender was `get_module_registry()`: its `__()`-laden `name`/`desc` values
+  were evaluated at load time (via `includes()` → `get_active_modules()`).
+- Fix: `get_module_registry()` is now **structural only** (slugs, `includes`, `init`,
+  `rest_routes` — no translation calls), so it's safe to call any time. The translatable
+  `name`/`desc` labels moved to `get_module_labels()`, which is only called at display time
+  (the Settings screen, well after `init`). String extraction still works because the
+  `__()` literals remain.
+- Rule for new code: **nothing reachable from plugin load may call a translation function.**
+  Keep registries/config structural; defer `__()` to `init`-or-later hooks and render paths.
+
 ## Fixed by code change (not ignored)
 
 These were resolved properly rather than suppressed — apply the same patterns to new code:
