@@ -551,6 +551,7 @@ $time_entries = array(
 		'end_time'    => '2026-06-03 14:00:00',
 		'billable'    => 1,
 		'invoice_id'  => $inv1_id,
+		'approved'    => 1,
 	),
 	array(
 		'project_id'  => $proj1_id,
@@ -561,6 +562,7 @@ $time_entries = array(
 		'end_time'    => '2026-06-04 13:00:00',
 		'billable'    => 1,
 		'invoice_id'  => $inv1_id,
+		'approved'    => 1,
 	),
 	// Project 1 - Invoiced to Invoice #1002 (inv2)
 	array(
@@ -572,6 +574,7 @@ $time_entries = array(
 		'end_time'    => '2026-06-06 13:00:00',
 		'billable'    => 1,
 		'invoice_id'  => $inv2_id,
+		'approved'    => 1,
 	),
 	array(
 		'project_id'  => $proj1_id,
@@ -582,6 +585,7 @@ $time_entries = array(
 		'end_time'    => '2026-06-07 18:30:00',
 		'billable'    => 1,
 		'invoice_id'  => $inv2_id,
+		'approved'    => 1,
 	),
 	// Project 1 - Uninvoiced & Billable
 	array(
@@ -626,6 +630,7 @@ $time_entries = array(
 		'end_time'    => '2026-06-02 18:00:00',
 		'billable'    => 1,
 		'invoice_id'  => $inv3_id,
+		'approved'    => 1,
 	),
 	// Project 3 - Uninvoiced & Billable
 	array(
@@ -637,6 +642,7 @@ $time_entries = array(
 		'end_time'    => '2026-06-08 17:00:00',
 		'billable'    => 1,
 		'invoice_id'  => 0,
+		'approved'    => 1,
 	),
 	// Project 4 (Stark Energy Grid) - Uninvoiced (Archived project)
 	array(
@@ -677,17 +683,46 @@ foreach ( $time_entries as $entry ) {
 		)
 	);
 
-	if ( ! is_wp_error( $result ) && $entry['invoice_id'] ) {
-		Ndizi_DB::update_time_entry(
-			$result,
-			array(
-				'invoice_id' => $entry['invoice_id'],
-			)
-		);
+	if ( is_wp_error( $result ) ) {
+		continue;
+	}
+
+	// Apply post-insert metadata (invoice link and/or manager approval) in a single update.
+	$post_insert = array();
+	if ( $entry['invoice_id'] ) {
+		$post_insert['invoice_id'] = $entry['invoice_id'];
+	}
+	if ( ! empty( $entry['approved'] ) ) {
+		$post_insert['approved']    = 1;
+		$post_insert['approved_by'] = $alice_id;
+	}
+	if ( $post_insert ) {
+		Ndizi_DB::update_time_entry( $result, $post_insert );
 	}
 }
 
 echo 'Logged ' . count( $time_entries ) . " time entries via Time Service.\n";
+
+// Start a live, still-running timer for Bob so the dashboard shows an active entry.
+$active_timer = Ndizi_Time_Service::start_timer(
+	$bob_id,
+	$proj2_id,
+	array(
+		'task_id'     => $task4_id,
+		'description' => 'Currently debugging push-notification delivery (live timer)',
+		'billable'    => 1,
+	)
+);
+if ( is_wp_error( $active_timer ) ) {
+	echo 'Skipped active timer for Bob: ' . $active_timer->get_error_message() . "\n";
+} else {
+	echo "Started a live running timer for Bob (ID: $active_timer)\n";
+}
+
+// Lock everything on or before 2026-05-31 so the archived-project entries demonstrate
+// the locked-period state. Set last, since inserts above would be rejected in a locked range.
+update_option( 'ndizi_lock_date', '2026-05-31' );
+echo "Set accounting lock date to 2026-05-31 (archived May/April entries are now locked)\n";
 
 // 8. Create Time Off Requests
 $time_off_1 = wp_insert_post(

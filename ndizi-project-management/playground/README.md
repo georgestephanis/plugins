@@ -8,12 +8,19 @@ installed and seeded with demo data. **Not shipped in the WordPress.org package*
 
 - **`blueprint.json`** — a [Playground Blueprint](https://wordpress.github.io/wordpress-playground/blueprints/)
   that installs this plugin straight from its subdirectory in the monorepo via the
-  `git:directory` resource, activates it, then seeds mock data.
+  `git:directory` resource, activates it, also installs [User Switching](https://wordpress.org/plugins/user-switching/)
+  (so you can hop between the seeded admin, manager, and team-member accounts to see the
+  plugin from each role), then seeds mock data.
 - **`mock-data.php`** — wipes all `ndizi_*` posts and the custom time-entry table, then
   re-seeds three clients, four contacts, five projects, tasks, invoices, time entries, and
   a Client Portal page. **Destructive** — it is meant only for throwaway Playground/staging
   installs. (Relocated here from the plugin root so it can never be triggered in a shipped
   install.)
+
+  The time entries exercise the full Time Entries UI: a mix of **approved** (manager-signed)
+  and pending rows, billable/non-billable, invoiced/uninvoiced, a **live running timer** for
+  Bob, and an **accounting lock date** of `2026-05-31` that freezes the two archived-project
+  entries so the locked-period state is visible.
 
 ## Run it in the browser
 
