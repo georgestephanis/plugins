@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -98,6 +98,12 @@ Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Unchec
 4.  **Invoice Meta Box**: Aggregating un-invoiced project logs into line-item details with hierarchical billing rate resolution.
 
 == Changelog ==
+
+= 1.0.1 =
+*   Fixed a `_load_textdomain_just_in_time` notice (WP 6.7+) caused by translations running before the `init` action; the module registry is now translation-free and labels load at display time.
+*   WordPress.org Plugin Check pass: direct-file-access guards on block render and seed templates, prefixed/scoped file-scope variables, and documented database-query annotations.
+*   Added a WordPress Playground live demo (Live Preview blueprint).
+*   Now requires WordPress 6.9 or later (for the Abilities API integration).
 
 = 1.0.0 =
 *   First stable release.
