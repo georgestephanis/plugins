@@ -3,7 +3,7 @@
  * Plugin Name: Big Emoji Comments
  * Plugin URI:  https://github.com/georgestephanis/big-emoji-comments
  * Description: If someone leaves a comment comprised entirely of emoji, make it bigger.
- * Version:     1.1.0
+ * Version: 1.1.0
  * Author:      George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com/
  * License:     GPL-2.0+
