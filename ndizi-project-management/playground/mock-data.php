@@ -11,6 +11,12 @@ if ( ! class_exists( 'Ndizi_Project_Management' ) ) {
 	return;
 }
 
+// Defense-in-depth: Prevent accidental execution of this destructive script on production environments.
+// extension_loaded('vrzno') is loaded with WebAssembly in WordPress Playground.
+if ( ! extension_loaded('vrzno') && 'production' === wp_get_environment_type() ) {
+	wp_die( 'Destructive seeding is disabled in production environments.' );
+}
+
 /*
  * The seed routine runs inside an IIFE so its working variables stay
  * function-scoped instead of leaking into the global namespace.
