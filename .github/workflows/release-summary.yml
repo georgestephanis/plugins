@@ -113,8 +113,17 @@ jobs:
           fi
           echo "plugin=$SLUG version=$VERSION tag=$TAG prev_tag=${PREV_TAG:-(none)}"
 
-          # --- Existing release body (the readme changelog extract from deploy.yml) ---
-          CHANGELOG=$(gh release view "$TAG" --repo "$REPO" --json body --jq '.body' 2>/dev/null || true)
+          # --- Changelog from the plugin's readme (the source of truth) ---
+          # Re-extract rather than reading the live release body, so re-runs are
+          # idempotent and don't nest the previously-composed notes inside a new
+          # "## Changelog" section.
+          README=""
+          [ -f "$SLUG/readme.txt" ] && README="$SLUG/readme.txt"
+          [ -z "$README" ] && [ -f "$SLUG/README.md" ] && README="$SLUG/README.md"
+          CHANGELOG=""
+          if [ -n "$README" ]; then
+            CHANGELOG=$(python3 scripts/extract-changelog.py "$README" "$VERSION" || true)
+          fi
 
           # --- Commits scoped to this plugin's directory since the previous tag ---
           if [ -n "$PREV_TAG" ] && git rev-parse -q --verify "refs/tags/$PREV_TAG" > /dev/null; then
