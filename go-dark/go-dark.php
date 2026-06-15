@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Go Dark
  * Plugin URI:  https://wordpress.org/plugins/go-dark/
- * Description: plugin enables websites to 'go dark' on January 18th to protest SOPA/PIPA and Internet Censorship
+ * Description: Enables websites to 'go dark' with a customizable message and start/end times to protest SOPA/PIPA and Internet Censorship.
  * Author:      George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com
  * Version:     1.0.8
@@ -157,7 +157,7 @@ if ( ! class_exists( 'go_dark' ) ) :
 				wp_die( esc_html__( 'You do not have sufficient permissions.', 'go-dark' ) );
 			}
 
-			if ( ! isset( $_POST['go_dark_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['go_dark_nonce'] ), 'go_dark_settings' ) ) {
+			if ( ! isset( $_POST['go_dark_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['go_dark_nonce'] ) ), 'go_dark_settings' ) ) {
 				wp_die( esc_html__( 'Nonce verification failed.', 'go-dark' ) );
 			}
 
@@ -212,7 +212,7 @@ if ( ! class_exists( 'go_dark' ) ) :
 		<head>
 		<meta charset="<?php bloginfo( 'charset' ); ?>">
 		<title><?php esc_html_e( 'Site Temporarily Unavailable', 'go-dark' ); ?></title>
-		<link href="<?php echo esc_url( 'https://fonts.googleapis.com/css?family=' . rawurlencode( $font ) ); ?>" rel="stylesheet" type="text/css"> <?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Custom standalone 503 page; wp_head() is not called. ?>
+		<link href="<?php echo esc_url( 'https://fonts.googleapis.com/css?family=' . str_replace( ' ', '+', $font ) ); ?>" rel="stylesheet" type="text/css"> <?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Custom standalone 503 page; wp_head() is not called. ?>
 		<style>
 		* { margin:0; padding:0; }
 		html {
@@ -239,7 +239,7 @@ if ( ! class_exists( 'go_dark' ) ) :
 					echo '<img src="' . esc_url( self::get_img( 'seal' ) ) . '" alt="' . esc_attr__( 'Gone Dark', 'go-dark' ) . '" /><br />';
 					break;
 			}
-			echo wp_kses( get_option( 'go_dark_text', self::get_default_text() ), self::get_allowed_tags() );
+			echo wp_kses( wpautop( get_option( 'go_dark_text', self::get_default_text() ) ), self::get_allowed_tags() );
 			?>
 		</div>
 		</body>

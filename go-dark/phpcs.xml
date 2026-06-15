@@ -20,7 +20,7 @@
         <exclude-pattern>*/go-dark.php</exclude-pattern>
     </rule>
 
-    <config name="minimum_supported_wp_version" value="5.0"/>
+    <config name="minimum_supported_wp_version" value="5.3"/>
     <config name="testVersion" value="7.4-"/>
 
     <arg value="ps"/>
