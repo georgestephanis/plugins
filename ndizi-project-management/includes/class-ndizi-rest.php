@@ -835,12 +835,17 @@ class Ndizi_REST {
 		);
 
 		if ( is_wp_error( $result ) ) {
-			return new WP_REST_Response( array( 'message' => $result->get_error_message() ), 400 );
+			// Map service error codes to HTTP statuses (and use the `error` key)
+			// the same way the other write endpoints in this class do, so clients
+			// don't misread permission/DB failures as validation errors.
+			$code        = $result->get_error_code();
+			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'invalid_duration', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
+			return new WP_REST_Response( array( 'error' => $result->get_error_message() ), $status_code );
 		}
 
 		$new_entry = Ndizi_DB::get_time_entry( $result );
 		if ( ! $new_entry ) {
-			return new WP_REST_Response( array( 'message' => __( 'Failed to retrieve newly created entry.', 'ndizi-project-management' ) ), 500 );
+			return new WP_REST_Response( array( 'error' => __( 'Failed to retrieve newly created entry.', 'ndizi-project-management' ) ), 500 );
 		}
 
 		$project                 = get_post( $new_entry->project_id );
