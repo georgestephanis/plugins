@@ -72,16 +72,32 @@ class Update_Control {
 
 		} else {
 
-			if ( in_array( $options['core'], array( 'dev', 'major', 'minor' ), true ) ) {
-				add_filter( 'allow_' . $options['core'] . '_auto_core_updates', '__return_true', 1 );
+			if ( 'dev' === $options['core'] ) {
+				add_filter( 'allow_dev_auto_core_updates', '__return_true', 1 );
+				add_filter( 'allow_major_auto_core_updates', '__return_true', 1 );
+				add_filter( 'allow_minor_auto_core_updates', '__return_true', 1 );
+			} elseif ( 'major' === $options['core'] ) {
+				add_filter( 'allow_dev_auto_core_updates', '__return_false', 1 );
+				add_filter( 'allow_major_auto_core_updates', '__return_true', 1 );
+				add_filter( 'allow_minor_auto_core_updates', '__return_true', 1 );
+			} else {
+				add_filter( 'allow_dev_auto_core_updates', '__return_false', 1 );
+				add_filter( 'allow_major_auto_core_updates', '__return_false', 1 );
+				add_filter( 'allow_minor_auto_core_updates', '__return_true', 1 );
 			}
 
 			if ( $options['plugin'] ) {
 				add_filter( 'auto_update_plugin', '__return_true', 1 );
+			} else {
+				add_filter( 'auto_update_plugin', '__return_false', 1 );
+				add_filter( 'plugins_auto_update_enabled', '__return_false', 1 );
 			}
 
 			if ( $options['theme'] ) {
 				add_filter( 'auto_update_theme', '__return_true', 1 );
+			} else {
+				add_filter( 'auto_update_theme', '__return_false', 1 );
+				add_filter( 'themes_auto_update_enabled', '__return_false', 1 );
 			}
 
 			if ( ! $options['translation'] ) {
