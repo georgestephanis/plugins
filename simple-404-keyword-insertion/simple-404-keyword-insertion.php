@@ -40,11 +40,9 @@ if ( ! class_exists( 'Simple_404_Keyword_Insertion' ) ) :
 			status_header( 200 );
 
 			// Override the global $wp_query so the template's main loop renders the 404-page post.
+			// We intentionally do not call the_post() here; the template's own loop advances the cursor.
 			global $wp_query;
 			$wp_query = new WP_Query( array( 'pagename' => '404-page' ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			if ( $wp_query->have_posts() ) {
-				$wp_query->the_post();
-			}
 
 			add_shortcode( '404-keywords', array( __CLASS__, 'get_keywords' ) );
 
@@ -73,7 +71,7 @@ if ( ! class_exists( 'Simple_404_Keyword_Insertion' ) ) :
 				$current_user = wp_get_current_user();
 				wp_insert_post(
 					array(
-						'post_title'   => '[404-keywords]',
+						'post_title'   => 'Page Not Found',
 						'post_content' => 'Here are the keywords: `[404-keywords]`.  Wow, isn&rsquo;t that neato?',
 						'post_status'  => 'publish',
 						'post_author'  => $current_user->ID,
