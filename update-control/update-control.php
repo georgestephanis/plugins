@@ -277,7 +277,7 @@ class Update_Control {
 			'update-control'
 		);
 
-		$wp_version = wp_get_wp_version();
+		$wp_version = function_exists( 'wp_get_wp_version' ) ? wp_get_wp_version() : $GLOBALS['wp_version'];
 		if ( false !== strpos( $wp_version, '-' ) ) {
 			add_settings_field(
 				'update_control_email_debug',
