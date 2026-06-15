@@ -2,9 +2,9 @@
 Contributors: georgestephanis
 Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.0
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0-alpha.2
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,14 @@ Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Unchec
 4.  **Invoice Meta Box**: Aggregating un-invoiced project logs into line-item details with hierarchical billing rate resolution.
 
 == Changelog ==
+
+= 1.0.0 =
+*   First stable release.
+*   New **Time Entries** management screen (Ndizi PM → Time Entries) built on `@wordpress/dataviews`: sortable, filterable table of all time logs with merged Project/Task and Date columns.
+*   Manager-facing approval workflow UI: multi-select bulk **Approve** / **Unapprove** actions on the Time Entries screen (manager-only). Approval-only updates are permitted even inside locked billing periods.
+*   Time-entry datetimes now render from UTC to site-local time in the table.
+*   Shared DataViews vendor bundle (`build/vendor-dataviews.js`/`.css`) registered as the `ndizi-dataviews` script/style handles for reuse across admin screens.
+*   Hardening and correctness fixes: time-entry approval restricted to managers with `approved_by` controlled server-side, dev seeder (`?ndizi_seed`) guarded against unauthorized use, REST error codes/statuses mapped correctly for time-log writes, and `per_page`/`page` clamped on time-log queries.
 
 = 1.0.0-alpha.2 =
 *   Google Calendar integration: tasks and time entries synced via OAuth2; iCal subscription feed at `/wp-json/ndizi/v1/calendar/ical`.

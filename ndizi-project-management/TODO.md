@@ -27,12 +27,6 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 
 ---
 
-## Team & Workflow
-
-- [ ] **Approval workflow admin UI** — `approved` / `approved_by` DB columns and write guards are in place; a manager-facing UI to review and approve individual entries (e.g. a list-table with bulk approve action) still needs to be built.
-
----
-
 ## Mobile & Access
 
 - [ ] **Full native mobile app** — Clockify, Toggl, and Timely all have dedicated iOS/Android apps.
@@ -70,6 +64,7 @@ Items are grouped by area and roughly ordered by how often the gap appeared acro
 ### Team & Workflow
 - [x] **Time entry locking / period close** — prevent edits to time logged before a given date.
 - [x] **Approval workflow (DB layer)** — `approved` / `approved_by` fields added; approved entries block edits and deletion via all write paths.
+- [x] **Approval workflow admin UI** — manager-facing Time Entries screen (`admin.php?page=ndizi-time-entries`) built on `@wordpress/dataviews` with multi-select bulk approve/unapprove actions; approval restricted to managers with `approved_by` set server-side.
 - [x] **Time-off / absence tracking** — time-off request form in the client portal sidebar creates `ndizi_time_off` CPT posts with type, dates, and status.
 
 ### Notifications
