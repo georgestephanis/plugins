@@ -6,6 +6,11 @@
 // and its stylesheet load without being part of this script's build.
 import { render, useState, useMemo } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
+// Registers the `core` data store used below via select/dispatch and
+// getEntityRecords. Importing it here makes wp-scripts add `wp-core-data` to
+// time-entries.asset.php so the store is guaranteed to load on this standalone
+// admin page (the block editor is not present to register it for us).
+import '@wordpress/core-data';
 import { DataViews } from '@wordpress/dataviews/wp';
 import {
 	Modal,
