@@ -158,9 +158,15 @@ const TimeEntriesApp = () => {
 						'ndizi_task',
 						{ per_page: 100 }
 					),
-					users: selector.getEntityRecords( 'root', 'user', {
-						per_page: 100,
-					} ),
+					// The user list only drives the manager-only assignee
+					// dropdown/filter, and non-managers typically lack
+					// `list_users` (so the request would 403). Only fetch it when
+					// the current user can manage all time.
+					users: canManage
+						? selector.getEntityRecords( 'root', 'user', {
+								per_page: 100,
+						  } )
+						: [],
 				};
 			},
 			[ queryArgs ]
