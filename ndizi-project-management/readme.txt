@@ -16,6 +16,8 @@ A scalable, beautiful, and native WordPress project management system to track c
 
 **Try it live:** [Launch a pre-seeded demo in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://ps.w.org/ndizi-project-management/assets/blueprints/blueprint.json) — a disposable, in-browser WordPress that installs Ndizi PM and fills it with sample clients, projects, tasks, invoices, and time entries. Nothing to install, and nothing is saved.
 
+**Source &amp; development:** The full, human-readable source (including the uncompressed `src/` for every compiled asset) lives on GitHub at [github.com/georgestephanis/plugins](https://github.com/georgestephanis/plugins/tree/main/ndizi-project-management#readme).
+
 Decoupling high-frequency data from standard WordPress posts storage, Ndizi records all time logs in a dedicated custom SQL table (`wp_ndizi_time_entries`). This architectural choice keeps your database queries fast and completely avoids `wp_posts` and `wp_postmeta` database inflation.
 
 ### Key Features
