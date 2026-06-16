@@ -2,8 +2,10 @@
 # Honored by the 10up WordPress.org deploy action; for the manual rsync→SVN
 # flow add matching --exclude entries.
 
-# Build sources (only the compiled /build is shipped)
-/src
+# Build sources
+# NOTE: /src is intentionally shipped alongside /build so the human-readable
+# source for every compiled JS/CSS asset is available in the package, per the
+# WordPress.org guideline that compressed code must have a public source.
 /node_modules
 webpack.config.js
 webpack.shared.js

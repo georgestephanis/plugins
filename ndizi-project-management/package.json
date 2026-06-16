@@ -4,6 +4,18 @@
 	"description": "Ndizi Project Management builds a complete project management system in WordPress.",
 	"license": "GPL-2.0-or-later",
 	"main": "build/index.js",
+	"files": [
+		"Ndizi.php",
+		"uninstall.php",
+		"readme.txt",
+		"LICENSE",
+		"build",
+		"includes",
+		"templates",
+		"languages",
+		"playground",
+		"src"
+	],
 	"scripts": {
 		"start": "wp-scripts start",
 		"build": "wp-scripts build",

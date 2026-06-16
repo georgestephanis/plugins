@@ -90,6 +90,9 @@ Yes. The Integrations module posts JSON webhook payloads to a configurable URL o
 = Can I turn off features I don't need? =
 Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Uncheck any module to disable it. Inactive modules are not loaded by the plugin, so their CPTs, hooks, and admin pages simply don't exist — useful for keeping things lean on sites that only need time tracking without the full feature set.
 
+= Where is the source code for the compiled JavaScript and CSS? =
+The uncompressed, human-readable source for every compiled asset in `build/` ships alongside it in the `src/` directory of the plugin (and is mirrored in the public Git repository at https://github.com/georgestephanis/plugins). The assets are built with [@wordpress/scripts](https://www.npmjs.com/package/@wordpress/scripts): run `npm install` followed by `npm run build:all` (which runs `npm run build:vendor` and `npm run build`) to regenerate the contents of `build/` from `src/`.
+
 == Screenshots ==
 
 1.  **Reports Dashboard**: Interactive, responsive summaries of billable time allocations and user productivity, with date-range and project/user filters.
