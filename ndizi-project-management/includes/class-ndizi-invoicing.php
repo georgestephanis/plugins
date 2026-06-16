@@ -115,10 +115,27 @@ class Ndizi_Invoicing {
 			<?php if ( Ndizi_Project_Management::google_fonts_enabled() ) : ?>
 				<link rel="preconnect" href="https://fonts.googleapis.com">
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-				<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- Standalone invoice print template, not a WordPress theme page ?>
-				<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 			<?php endif; ?>
-			<style>
+			<?php
+			// This standalone print document does not run wp_head(), so the
+			// invoice CSS is attached to a token (src-less) style handle via
+			// wp_add_inline_style() and printed below with wp_print_styles(),
+			// rather than emitting a raw inline <style> block.
+			wp_register_style( 'ndizi-invoice-print', false, array(), NDIZI_VERSION );
+			wp_enqueue_style( 'ndizi-invoice-print' );
+
+			if ( Ndizi_Project_Management::google_fonts_enabled() ) {
+				wp_register_style(
+					'ndizi-invoice-fonts',
+					'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
+					array(),
+					null // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Google Fonts is a versionless external stylesheet; appending a plugin version query would be incorrect.
+				);
+				wp_enqueue_style( 'ndizi-invoice-fonts' );
+			}
+
+			ob_start();
+			?>
 				body {
 					font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 					color: #1e293b;
@@ -359,7 +376,10 @@ class Ndizi_Invoicing {
 						page-break-inside: avoid;
 					}
 				}
-			</style>
+			<?php
+			wp_add_inline_style( 'ndizi-invoice-print', ob_get_clean() );
+			wp_print_styles( array( 'ndizi-invoice-fonts', 'ndizi-invoice-print' ) );
+			?>
 		</head>
 		<body>
 			<div class="invoice-wrapper">

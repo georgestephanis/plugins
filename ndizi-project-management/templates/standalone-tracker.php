@@ -15,8 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$ndizi_standalone_css_url = NDIZI_PLUGIN_URL . 'build/standalone.css';
-$ndizi_standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
+// Assets are registered/enqueued by Ndizi_Standalone_Tracker::enqueue_standalone_assets()
+// and printed below via wp_print_styles()/wp_print_scripts(), since this standalone
+// document does not run wp_head()/wp_footer().
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -28,11 +29,8 @@ $ndizi_standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 	<?php if ( Ndizi_Project_Management::google_fonts_enabled() ) : ?>
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 	<?php endif; ?>
-	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-	<link rel="stylesheet" href="<?php echo esc_url( $ndizi_standalone_css_url ); ?>">
+	<?php wp_print_styles( array( 'ndizi-standalone-fonts', 'ndizi-standalone' ) ); ?>
 </head>
 <body class="<?php echo esc_attr( $active_timer ? 'timer-running' : '' ); ?>">
 
@@ -174,27 +172,11 @@ $ndizi_standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 
 	</div>
 
-	<?php wp_print_scripts( array( 'jquery' ) ); ?>
-	<script>
-	window.ndizi_standalone = {
-		ajax_url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-		nonce: '<?php echo esc_js( wp_create_nonce( 'ndizi-admin-nonce' ) ); ?>',
-		active_timer_seconds: <?php echo intval( $duration_sec ); ?>,
-		labels: {
-			no_active_projects: '<?php echo esc_js( __( 'No active projects found.', 'ndizi-project-management' ) ); ?>',
-			select_project: '<?php echo esc_js( __( '-- Select Project --', 'ndizi-project-management' ) ); ?>',
-			general_task: '<?php echo esc_js( __( '-- General --', 'ndizi-project-management' ) ); ?>',
-			internal_client: '<?php echo esc_js( __( 'Internal', 'ndizi-project-management' ) ); ?>',
-			please_select_project: '<?php echo esc_js( __( 'Please select a project.', 'ndizi-project-management' ) ); ?>',
-			please_enter_duration: '<?php echo esc_js( __( 'Please specify hours or minutes.', 'ndizi-project-management' ) ); ?>',
-			entry_logged: '<?php echo esc_js( __( 'Time entry logged successfully!', 'ndizi-project-management' ) ); ?>',
-			no_description: '<?php echo esc_js( __( 'No description', 'ndizi-project-management' ) ); ?>',
-			no_entries: '<?php echo esc_js( __( 'No entries recorded today.', 'ndizi-project-management' ) ); ?>',
-			confirm_delete: '<?php echo esc_js( __( 'Are you sure you want to delete this time entry?', 'ndizi-project-management' ) ); ?>'
-		}
-	};
-	</script>
-	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript ?>
-	<script src="<?php echo esc_url( $ndizi_standalone_js_url ); ?>"></script>
+	<?php
+	// Prints jQuery (a dependency), the wp_localize_script() ndizi_standalone
+	// config object, and build/standalone.js — all registered/enqueued in
+	// Ndizi_Standalone_Tracker::enqueue_standalone_assets().
+	wp_print_scripts( array( 'ndizi-standalone' ) );
+	?>
 </body>
 </html>

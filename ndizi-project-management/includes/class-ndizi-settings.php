@@ -1101,39 +1101,42 @@ class Ndizi_Settings {
 					</button>
 				</form>
 			</div>
-
-			<script>
-				jQuery(document).ready(function($) {
-					$('input[name="ndizi_adminbar_icon"]').on('change', function() {
-						$('input[name="ndizi_adminbar_icon"]').next('.ndizi-icon-card').css({
-							'border-color': '#e2e8f0',
-							'background': '#fff'
-						}).find('div').css('color', '#64748b');
-
-						if($(this).is(':checked')) {
-							$(this).next('.ndizi-icon-card').css({
-								'border-color': '#4f46e5',
-								'background': '#f5f3ff'
-							}).find('div').css('color', '#4f46e5');
-
-							// Swap the SVG in the admin bar live!
-							var iconVal = $(this).val();
-							var iconClass = iconVal === 'punch_clock' ? 'punch' : iconVal;
-							var $newSvg = $(this).next('.ndizi-icon-card').find('svg').clone();
-							$newSvg.attr('class', 'ndizi-ab-icon-svg ndizi-ab-icon-' + iconClass);
-							$newSvg.attr('width', '16');
-							$newSvg.attr('height', '16');
-
-							var $iconWrapper = $('#wp-admin-bar-ndizi-time-tracker .ndizi-ab-icon-wrapper');
-							if ($iconWrapper.length) {
-								$iconWrapper.find('svg').replaceWith($newSvg);
-							}
-						}
-					});
-				});
-			</script>
 		</div>
 		<?php
+		// Attach the admin-bar icon-picker live-preview behavior as an inline
+		// script on the already-enqueued ndizi-admin-script handle instead of
+		// printing a raw <script> tag.
+		$icon_picker_js = <<<'JS'
+jQuery(document).ready(function($) {
+	$('input[name="ndizi_adminbar_icon"]').on('change', function() {
+		$('input[name="ndizi_adminbar_icon"]').next('.ndizi-icon-card').css({
+			'border-color': '#e2e8f0',
+			'background': '#fff'
+		}).find('div').css('color', '#64748b');
+
+		if($(this).is(':checked')) {
+			$(this).next('.ndizi-icon-card').css({
+				'border-color': '#4f46e5',
+				'background': '#f5f3ff'
+			}).find('div').css('color', '#4f46e5');
+
+			// Swap the SVG in the admin bar live!
+			var iconVal = $(this).val();
+			var iconClass = iconVal === 'punch_clock' ? 'punch' : iconVal;
+			var $newSvg = $(this).next('.ndizi-icon-card').find('svg').clone();
+			$newSvg.attr('class', 'ndizi-ab-icon-svg ndizi-ab-icon-' + iconClass);
+			$newSvg.attr('width', '16');
+			$newSvg.attr('height', '16');
+
+			var $iconWrapper = $('#wp-admin-bar-ndizi-time-tracker .ndizi-ab-icon-wrapper');
+			if ($iconWrapper.length) {
+				$iconWrapper.find('svg').replaceWith($newSvg);
+			}
+		}
+	});
+});
+JS;
+		wp_add_inline_script( 'ndizi-admin-script', $icon_picker_js );
 	}
 
 	/**
