@@ -1,0 +1,18 @@
+.update_control_dependency[disabled],
+.update_control_email_dependency[disabled] {
+	opacity: 0.4;
+}
+
+#update_control_toggleadvanced_details .open-text {
+	display: none;
+}
+#update_control_toggleadvanced_details[open] .open-text {
+	display: inline;
+}
+#update_control_toggleadvanced_details[open] .closed-text {
+	display: none;
+}
+
+#update_control_toggleadvanced_details[disabled] summary {
+	pointer-events: none;
+}

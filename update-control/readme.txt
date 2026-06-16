@@ -1,9 +1,9 @@
 === Update Control ===
 Contributors: georgestephanis, chipbennett
 Tags: automatic updates, updates
-Requires at least: 3.7
-Tested up to: 4.5
-Stable tag: 1.5
+Requires at least: 6.0
+Tested up to: 7.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,8 +59,12 @@ Core Updates:
 
 Plugin/Theme/Translation Updates:
 
-* If you disable updates, Plugin, Theme, and Translation updates will also be disabled
-* Separately enable Plugin, Theme, and Translation updates via the appropriate checkboxes
+* If you disable updates globally, Plugin, Theme, and Translation updates will also be disabled.
+* Configure "Automatic Plugin Updates" and "Automatic Theme Updates" via the radio buttons:
+  * "Auto-update all": forces all plugins or themes to update automatically (hides individual core toggles).
+  * "Disable all": prevents all automatic updates for plugins or themes (hides individual core toggles).
+  * "Choose individually": lets you manage them per-item on the Plugins page or Themes page using standard WordPress core toggles.
+* Permit Translation updates via the checkbox.
 
 = What are advanced settings? =
 
@@ -84,6 +88,12 @@ You may find that you receive an update notification, but automatic updates don'
 Also, core now has two separate types of updates: manual updates and automatic updates. When you see the manual upgrade notice, WordPress has received the manual update offer, but has not yet received the automatic update offer. The two offers are fetched based on two different transients, and do not happen at the same time. Automatic core updates are served on a staggered rollout, which means that it may take up to 36 hours for the automatic update to execute after receiving the manual upgrade notice. For Plugins and Themes, you should normally see the automatic update routine execute within 12 hours of receiving the manual upgrade notice.
 
 == Changelog ==
+
+= 1.5.1 =
+* Security and coding standards modernization.
+* Enqueue admin script and style rather than using inline output.
+* Safe output escaping and i18n improvements.
+* Strict comparisons and capability checks implemented.
 
 = 1.5 =
 * Bugfix. Fixes filtering of debug email sent when using a development version of WordPress.
