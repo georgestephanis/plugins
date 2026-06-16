@@ -25,10 +25,12 @@ $ndizi_standalone_js_url  = NDIZI_PLUGIN_URL . 'build/standalone.js';
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php esc_html_e( 'Ndizi Time Tracker', 'ndizi-project-management' ); ?></title>
 	<link rel="manifest" href="admin.php?ndizi-action=manifest">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+	<?php if ( Ndizi_Project_Management::google_fonts_enabled() ) : ?>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+	<?php endif; ?>
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet ?>
 	<link rel="stylesheet" href="<?php echo esc_url( $ndizi_standalone_css_url ); ?>">
 </head>

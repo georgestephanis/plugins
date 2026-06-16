@@ -100,6 +100,11 @@ class Ndizi_Settings {
 				$updated = true;
 			}
 
+			// Google Fonts opt-in. Checkbox absence means unchecked, so this is
+			// always recorded (it is part of the main settings form).
+			update_option( 'ndizi_enable_google_fonts', isset( $_POST['ndizi_enable_google_fonts'] ) ? 1 : 0 );
+			$updated = true;
+
 			if ( isset( $_POST['ndizi_stripe_secret_key'] ) ) {
 				update_option( 'ndizi_stripe_secret_key', sanitize_text_field( wp_unslash( $_POST['ndizi_stripe_secret_key'] ) ) );
 				$updated = true;
@@ -921,6 +926,20 @@ class Ndizi_Settings {
 						<label for="ndizi_lock_date" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Lock Date', 'ndizi-project-management' ); ?></label>
 						<input type="date" name="ndizi_lock_date" id="ndizi_lock_date" value="<?php echo esc_attr( $lock_date ); ?>" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
+					</div>
+
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Typography', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Control whether the plugin loads webfonts from a third party.', 'ndizi-project-management' ); ?></p>
+
+					<div style="margin-bottom: 30px;">
+						<?php $enable_google_fonts = Ndizi_Project_Management::google_fonts_enabled(); ?>
+						<label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px 18px; border: 1px solid <?php echo $enable_google_fonts ? '#e0e7ff' : '#e2e8f0'; ?>; background: <?php echo $enable_google_fonts ? '#f8fafc' : '#fff'; ?>; border-radius: 10px; transition: all 0.2s;">
+							<input type="checkbox" name="ndizi_enable_google_fonts" value="1" <?php checked( $enable_google_fonts ); ?> style="margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
+							<div>
+								<strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 2px;"><?php esc_html_e( 'Load Google Fonts (Inter &amp; Outfit)', 'ndizi-project-management' ); ?></strong>
+								<span style="display: block; font-size: 12px; color: #64748b; line-height: 1.4;"><?php esc_html_e( 'Off by default. When enabled, the client portal, standalone time tracker, and printable invoices load the Inter and Outfit typefaces from Google\'s servers (fonts.googleapis.com / fonts.gstatic.com), which transmits the visitor\'s IP address to Google. When disabled, the plugin uses a web-safe system font stack and makes no requests to Google.', 'ndizi-project-management' ); ?></span>
+							</div>
+						</label>
 					</div>
 
 					<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>

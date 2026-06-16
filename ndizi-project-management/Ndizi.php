@@ -188,6 +188,20 @@ class Ndizi_Project_Management {
 	}
 
 	/**
+	 * Whether the admin has opted in to loading webfonts from Google's servers.
+	 *
+	 * Off by default. When disabled, the plugin's UI falls back to a web-safe
+	 * system font stack and makes no third-party requests to fonts.googleapis.com
+	 * / fonts.gstatic.com. Keeps the plugin private-by-default per the
+	 * WordPress.org guidelines on third-party services.
+	 *
+	 * @return bool True if Google Fonts loading is enabled.
+	 */
+	public static function google_fonts_enabled() {
+		return (bool) get_option( 'ndizi_enable_google_fonts', false );
+	}
+
+	/**
 	 * Include plugin dependencies
 	 */
 	private static function includes() {
