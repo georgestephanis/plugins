@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,13 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.0.2 =
+*   Google Fonts (Inter & Outfit) are now opt-in: a new Settings → Typography toggle, off by default, gates all requests to Google's font servers. When disabled, the UI uses a web-safe system font stack.
+*   Compiled assets now ship with their human-readable source: the `src/` directory is included in the package, and the readme documents how to rebuild `build/` from it.
+*   Inline scripts and styles are now routed through the WordPress enqueue system (`wp_enqueue_*`, `wp_localize_script()`, `wp_add_inline_script()`, `wp_add_inline_style()`, `wp_print_styles()`/`wp_print_scripts()`) instead of hardcoded `<link>`/`<script>` tags or echoed `<style>` blocks.
+*   REST URLs are now built with `rest_url()` (and `add_query_arg()`) instead of hardcoding the `/wp-json/` path, so the iCal feed and Stripe webhook URLs work across custom REST prefixes.
+*   Documented all third-party services (Google Calendar, Google OAuth, Stripe, Google Fonts) in a new "External services" readme section.
 
 = 1.0.1 =
 *   Fixed a `_load_textdomain_just_in_time` notice (WP 6.7+) caused by translations running before the `init` action; the module registry is now translation-free and labels load at display time.
