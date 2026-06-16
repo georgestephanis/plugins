@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Update Control
- * Plugin URI: http://github.com/chipbennett/update-control/
+ * Plugin URI: https://github.com/georgestephanis/plugins/tree/main/update-control
  * Description: Adds a manual toggle to the WordPress Admin Interface for managing auto-updates.
  * Author: George Stephanis, Chip Bennett
  * Version: 1.5.1
- * Author URI: http://chipbennett.net
+ * Author URI: https://georgestephanis.wordpress.com/
  * Text Domain: update-control
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
