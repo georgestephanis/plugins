@@ -100,6 +100,38 @@ The uncompressed, human-readable source for every compiled asset in `build/` shi
 3.  **Client Portal**: Responsive frontend client portal featuring glassmorphic style controls.
 4.  **Invoice Meta Box**: Aggregating un-invoiced project logs into line-item details with hierarchical billing rate resolution.
 
+== External services ==
+
+This plugin can connect to third-party services, but **only after a site administrator explicitly configures and enables the relevant integration**. Out of the box, with no credentials entered and the optional features left at their defaults, the plugin makes **no** requests to any external service. Each integration below is opt-in: it stays dormant until you supply its API keys / credentials (or, for Google Fonts, tick its checkbox) on the Ndizi PM → Settings screen.
+
+= Google Calendar API =
+
+Used by the optional "Google Calendar Sync" module to mirror task due dates and project milestones to your Google Calendar. It is only active after an administrator enters Google OAuth credentials and connects an account on the Settings screen.
+
+When a task with a due date is created, updated, or deleted, the plugin sends that task's title, description, and start/end date-times to the Google Calendar API (`https://www.googleapis.com/calendar/v3/...`) authenticated with the connected account's access token. No data is sent until an account is connected, and nothing is sent for sites that never enable the integration.
+
+Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
+
+= Google OAuth 2.0 =
+
+Used to authenticate the Google Calendar integration above. When an administrator clicks "Connect to Google Calendar," the plugin exchanges the authorization code, and later refreshes the access token, against Google's OAuth token endpoint (`https://oauth2.googleapis.com/token`). The data sent is the OAuth client ID, client secret, and authorization/refresh token that the administrator configured. This only happens during the connect flow and subsequent token refreshes for a connected account.
+
+Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
+
+= Stripe API =
+
+Used by the optional "Invoicing & Billing" module to let clients pay invoices online. It is only active after an administrator enters Stripe API keys on the Settings screen.
+
+When a client chooses to pay an invoice, the plugin creates a Stripe Checkout session by sending the invoice amount, currency, description, invoice ID, and success/cancel URLs to the Stripe API (`https://api.stripe.com/v1/checkout/sessions`), authenticated with the configured Stripe secret key. The plugin also receives Stripe webhook callbacks to mark invoices paid. No data is sent until Stripe keys are configured and a client initiates a payment.
+
+Stripe's terms and privacy policy: https://stripe.com/legal/ssa and https://stripe.com/privacy
+
+= Google Fonts =
+
+The client portal, the standalone time tracker, and printable invoices can use the Inter and Outfit webfonts served by Google Fonts. This is **off by default**. When an administrator enables "Load Google Fonts" under Ndizi PM → Settings → Typography, the affected pages request stylesheets and font files from Google's servers (`https://fonts.googleapis.com` and `https://fonts.gstatic.com`); as with any web request, this exposes the visitor's IP address and user agent to Google. When the setting is disabled (the default), the plugin uses a web-safe system font stack and makes no requests to Google.
+
+Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
+
 == Changelog ==
 
 = 1.0.1 =
