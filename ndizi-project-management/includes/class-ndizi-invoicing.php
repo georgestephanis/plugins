@@ -378,7 +378,11 @@ class Ndizi_Invoicing {
 				}
 			<?php
 			wp_add_inline_style( 'ndizi-invoice-print', ob_get_clean() );
-			wp_print_styles( array( 'ndizi-invoice-fonts', 'ndizi-invoice-print' ) );
+			$ndizi_invoice_styles = array( 'ndizi-invoice-print' );
+			if ( Ndizi_Project_Management::google_fonts_enabled() ) {
+				$ndizi_invoice_styles[] = 'ndizi-invoice-fonts';
+			}
+			wp_print_styles( $ndizi_invoice_styles );
 			?>
 		</head>
 		<body>

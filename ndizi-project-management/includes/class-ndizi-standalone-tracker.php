@@ -249,7 +249,11 @@ class Ndizi_Standalone_Tracker {
 
 		wp_enqueue_style( 'ndizi-standalone' );
 
-		wp_register_script( 'ndizi-standalone', NDIZI_PLUGIN_URL . 'build/standalone.js', array( 'jquery' ), NDIZI_VERSION, true );
+		// Registered in the head group (not the footer): this page has no
+		// wp_footer(), and the template prints the handle manually with
+		// wp_print_scripts() — which prints group 0. A footer (group 1)
+		// registration could be skipped, leaving build/standalone.js unprinted.
+		wp_register_script( 'ndizi-standalone', NDIZI_PLUGIN_URL . 'build/standalone.js', array( 'jquery' ), NDIZI_VERSION, false );
 		wp_localize_script(
 			'ndizi-standalone',
 			'ndizi_standalone',

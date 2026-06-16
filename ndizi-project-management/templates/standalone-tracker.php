@@ -30,7 +30,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<?php endif; ?>
-	<?php wp_print_styles( array( 'ndizi-standalone-fonts', 'ndizi-standalone' ) ); ?>
+	<?php
+	$ndizi_standalone_styles = array( 'ndizi-standalone' );
+	if ( Ndizi_Project_Management::google_fonts_enabled() ) {
+		$ndizi_standalone_styles[] = 'ndizi-standalone-fonts';
+	}
+	wp_print_styles( $ndizi_standalone_styles );
+	?>
 </head>
 <body class="<?php echo esc_attr( $active_timer ? 'timer-running' : '' ); ?>">
 
