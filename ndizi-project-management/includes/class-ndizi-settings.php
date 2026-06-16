@@ -962,7 +962,7 @@ class Ndizi_Settings {
 							<?php endif; ?>
 							<p class="description" style="margin-top: 5px; color: #64748b;">
 								<?php esc_html_e( 'Webhook URL for Stripe Dashboard:', 'ndizi-project-management' ); ?>
-								<code><?php echo esc_url( home_url( '/wp-json/ndizi/v1/stripe/webhook' ) ); ?></code>
+								<code><?php echo esc_url( rest_url( 'ndizi/v1/stripe/webhook' ) ); ?></code>
 							</p>
 						</div>
 					<?php endif; ?>
@@ -1041,7 +1041,7 @@ class Ndizi_Settings {
 								$feed_token = wp_hash( time() . wp_generate_password( 20, false ) );
 								update_option( 'ndizi_calendar_feed_token', $feed_token );
 							}
-							$feed_url = home_url( '/wp-json/ndizi/v1/calendar/ical?token=' . $feed_token );
+							$feed_url = add_query_arg( 'token', $feed_token, rest_url( 'ndizi/v1/calendar/ical' ) );
 							?>
 							<label style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'iCal Subscription URL', 'ndizi-project-management' ); ?></label>
 							<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" class="ndizi-select-on-click">
