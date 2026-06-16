@@ -34,9 +34,10 @@ $ndizi_input_border = $ndizi_is_light ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 
 $ndizi_item_bg      = $ndizi_is_light ? 'rgba(0, 0, 0, 0.02)' : 'rgba(15, 23, 42, 0.4)';
 $ndizi_item_border  = $ndizi_is_light ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.06)';
 
-// Build scoped styles
-$ndizi_inline_css  = "<style>\n";
-$ndizi_inline_css .= "#{$ndizi_wrapper_id} {\n";
+// Build scoped styles. Collected as a plain CSS string and attached to the
+// enqueued portal stylesheet via wp_add_inline_style() (below) rather than
+// echoed inside a raw <style> tag.
+$ndizi_inline_css  = "#{$ndizi_wrapper_id} {\n";
 $ndizi_inline_css .= '  --ndizi-bg-main: ' . esc_attr( $ndizi_bg_color ) . " !important;\n";
 $ndizi_inline_css .= '  --ndizi-bg-card: ' . esc_attr( $ndizi_card_bg ) . " !important;\n";
 $ndizi_inline_css .= '  --ndizi-border-color: ' . esc_attr( $ndizi_border_color ) . " !important;\n";
@@ -152,8 +153,19 @@ $ndizi_inline_css .= "#{$ndizi_wrapper_id} .no-items {\n";
 $ndizi_inline_css .= '  color: ' . esc_attr( $ndizi_text_muted ) . " !important;\n";
 $ndizi_inline_css .= "}\n";
 
-$ndizi_inline_css .= "</style>\n";
+// Attach the scoped overrides to a dedicated token style handle so the CSS
+// goes out through the styles pipeline instead of a raw inline <style> tag.
+// A separate (src-less) handle is used rather than 'ndizi-portal-style'
+// because that base stylesheet is enqueued on wp_enqueue_scripts and may
+// already be printed in <head> by the time this render callback runs; a fresh
+// handle enqueued here is emitted as a late style in the footer. Multiple
+// portal blocks on one page each append their scoped rules to this handle.
+if ( ! wp_style_is( 'ndizi-portal-inline', 'registered' ) ) {
+	wp_register_style( 'ndizi-portal-inline', false, array( 'ndizi-portal-style' ), NDIZI_VERSION );
+}
+wp_enqueue_style( 'ndizi-portal-inline' );
+wp_add_inline_style( 'ndizi-portal-inline', $ndizi_inline_css );
 
 $ndizi_portal_content = Ndizi_Portal::render_portal_shortcode();
 
-echo $ndizi_inline_css . '<div id="' . esc_attr( $ndizi_wrapper_id ) . '" class="ndizi-custom-branded-portal">' . $ndizi_portal_content . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo '<div id="' . esc_attr( $ndizi_wrapper_id ) . '" class="ndizi-custom-branded-portal">' . $ndizi_portal_content . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

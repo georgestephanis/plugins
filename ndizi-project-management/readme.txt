@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,6 +15,8 @@ A scalable, beautiful, and native WordPress project management system to track c
 **Ndizi Project Management** is a professional, native WordPress system built for freelancers, designers, and small agencies to coordinate client work, manage tasks, record project hours, and generate invoices—all inside a single WordPress environment.
 
 **Try it live:** [Launch a pre-seeded demo in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://ps.w.org/ndizi-project-management/assets/blueprints/blueprint.json) — a disposable, in-browser WordPress that installs Ndizi PM and fills it with sample clients, projects, tasks, invoices, and time entries. Nothing to install, and nothing is saved.
+
+**Source &amp; development:** The full, human-readable source (including the uncompressed `src/` for every compiled asset) lives on GitHub at [github.com/georgestephanis/plugins](https://github.com/georgestephanis/plugins/tree/main/ndizi-project-management#readme).
 
 Decoupling high-frequency data from standard WordPress posts storage, Ndizi records all time logs in a dedicated custom SQL table (`wp_ndizi_time_entries`). This architectural choice keeps your database queries fast and completely avoids `wp_posts` and `wp_postmeta` database inflation.
 
@@ -90,6 +92,9 @@ Yes. The Integrations module posts JSON webhook payloads to a configurable URL o
 = Can I turn off features I don't need? =
 Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Uncheck any module to disable it. Inactive modules are not loaded by the plugin, so their CPTs, hooks, and admin pages simply don't exist — useful for keeping things lean on sites that only need time tracking without the full feature set.
 
+= Where is the source code for the compiled JavaScript and CSS? =
+The uncompressed, human-readable source for every compiled asset in `build/` ships alongside it in the `src/` directory of the plugin (and is mirrored in the public Git repository at https://github.com/georgestephanis/plugins). The assets are built with [@wordpress/scripts](https://www.npmjs.com/package/@wordpress/scripts): run `npm install` followed by `npm run build:all` (which runs `npm run build:vendor` and `npm run build`) to regenerate the contents of `build/` from `src/`.
+
 == Screenshots ==
 
 1.  **Reports Dashboard**: Interactive, responsive summaries of billable time allocations and user productivity, with date-range and project/user filters.
@@ -97,7 +102,46 @@ Yes. The Settings page (Ndizi PM → Settings) lists all feature modules. Unchec
 3.  **Client Portal**: Responsive frontend client portal featuring glassmorphic style controls.
 4.  **Invoice Meta Box**: Aggregating un-invoiced project logs into line-item details with hierarchical billing rate resolution.
 
+== External services ==
+
+This plugin can connect to third-party services, but **only after a site administrator explicitly configures and enables the relevant integration**. Out of the box, with no credentials entered and the optional features left at their defaults, the plugin makes **no** requests to any external service. Each integration below is opt-in: it stays dormant until you supply its API keys / credentials (or, for Google Fonts, tick its checkbox) on the Ndizi PM → Settings screen.
+
+= Google Calendar API =
+
+Used by the optional "Google Calendar Sync" module to mirror task due dates and project milestones to your Google Calendar. It is only active after an administrator enters Google OAuth credentials and connects an account on the Settings screen.
+
+When a task with a due date is created, updated, or deleted, the plugin sends that task's title, description, and start/end date-times to the Google Calendar API (`https://www.googleapis.com/calendar/v3/...`) authenticated with the connected account's access token. No data is sent until an account is connected, and nothing is sent for sites that never enable the integration.
+
+Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
+
+= Google OAuth 2.0 =
+
+Used to authenticate the Google Calendar integration above. When an administrator clicks "Connect to Google Calendar," the plugin exchanges the authorization code, and later refreshes the access token, against Google's OAuth token endpoint (`https://oauth2.googleapis.com/token`). The data sent is the OAuth client ID, client secret, and authorization/refresh token that the administrator configured. This only happens during the connect flow and subsequent token refreshes for a connected account.
+
+Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
+
+= Stripe API =
+
+Used by the optional "Invoicing & Billing" module to let clients pay invoices online. It is only active after an administrator enters Stripe API keys on the Settings screen.
+
+When a client chooses to pay an invoice, the plugin creates a Stripe Checkout session by sending the invoice amount, currency, description, invoice ID, and success/cancel URLs to the Stripe API (`https://api.stripe.com/v1/checkout/sessions`), authenticated with the configured Stripe secret key. The plugin also receives Stripe webhook callbacks to mark invoices paid. No data is sent until Stripe keys are configured and a client initiates a payment.
+
+Stripe's terms and privacy policy: https://stripe.com/legal/ssa and https://stripe.com/privacy
+
+= Google Fonts =
+
+The client portal, the standalone time tracker, and printable invoices can use the Inter and Outfit webfonts served by Google Fonts. This is **off by default**. When an administrator enables "Load Google Fonts" under Ndizi PM → Settings → Typography, the affected pages request stylesheets and font files from Google's servers (`https://fonts.googleapis.com` and `https://fonts.gstatic.com`); as with any web request, this exposes the visitor's IP address and user agent to Google. When the setting is disabled (the default), the plugin uses a web-safe system font stack and makes no requests to Google.
+
+Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
+
 == Changelog ==
+
+= 1.0.2 =
+*   Google Fonts (Inter & Outfit) are now opt-in: a new Settings → Typography toggle, off by default, gates all requests to Google's font servers. When disabled, the UI uses a web-safe system font stack.
+*   Compiled assets now ship with their human-readable source: the `src/` directory is included in the package, and the readme documents how to rebuild `build/` from it.
+*   Inline scripts and styles are now routed through the WordPress enqueue system (`wp_enqueue_*`, `wp_localize_script()`, `wp_add_inline_script()`, `wp_add_inline_style()`, `wp_print_styles()`/`wp_print_scripts()`) instead of hardcoded `<link>`/`<script>` tags or echoed `<style>` blocks.
+*   REST URLs are now built with `rest_url()` (and `add_query_arg()`) instead of hardcoding the `/wp-json/` path, so the iCal feed and Stripe webhook URLs work across custom REST prefixes.
+*   Documented all third-party services (Google Calendar, Google OAuth, Stripe, Google Fonts) in a new "External services" readme section.
 
 = 1.0.1 =
 *   Fixed a `_load_textdomain_just_in_time` notice (WP 6.7+) caused by translations running before the `init` action; the module registry is now translation-free and labels load at display time.

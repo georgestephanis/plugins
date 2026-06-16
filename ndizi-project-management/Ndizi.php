@@ -5,7 +5,7 @@ Plugin URI: https://wordpress.org/plugins/ndizi-project-management/
 Description: Ndizi Project Management adds a complete project management system to WordPress.
 Author: George Stephanis
 Author URI: https://georgestephanis.wordpress.com
-Version: 1.0.1
+Version: 1.0.2
 Requires at least: 6.9
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin constants
 define( 'NDIZI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NDIZI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'NDIZI_VERSION', '1.0.1' );
+define( 'NDIZI_VERSION', '1.0.2' );
 
 /**
  * Main Plugin Class
@@ -185,6 +185,20 @@ class Ndizi_Project_Management {
 			return (string) constant( $constant );
 		}
 		return (string) get_option( $option_name, '' );
+	}
+
+	/**
+	 * Whether the admin has opted in to loading webfonts from Google's servers.
+	 *
+	 * Off by default. When disabled, the plugin's UI falls back to a web-safe
+	 * system font stack and makes no third-party requests to fonts.googleapis.com
+	 * / fonts.gstatic.com. Keeps the plugin private-by-default per the
+	 * WordPress.org guidelines on third-party services.
+	 *
+	 * @return bool True if Google Fonts loading is enabled.
+	 */
+	public static function google_fonts_enabled() {
+		return (bool) get_option( 'ndizi_enable_google_fonts', false );
 	}
 
 	/**

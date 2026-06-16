@@ -216,6 +216,65 @@ class Ndizi_Standalone_Tracker {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$prefilled_desc = isset( $_GET['desc'] ) ? sanitize_text_field( wp_unslash( $_GET['desc'] ) ) : '';
 
+		self::enqueue_standalone_assets( $duration_sec );
+
 		include NDIZI_PLUGIN_DIR . 'templates/standalone-tracker.php';
+	}
+
+	/**
+	 * Register and enqueue the standalone tracker's CSS/JS.
+	 *
+	 * This page renders its own complete HTML document (it does not run
+	 * wp_head()/wp_footer()), so the template prints these handles explicitly
+	 * via wp_print_styles()/wp_print_scripts(). Routing the assets through the
+	 * enqueue system — rather than hardcoded <link>/<script> tags — keeps the
+	 * page consistent with WordPress's dependency, versioning, and inline-data
+	 * handling, and lets the Google Fonts request stay opt-in.
+	 *
+	 * @param int $duration_sec Seconds elapsed on the active timer (0 if none).
+	 */
+	private static function enqueue_standalone_assets( $duration_sec ) {
+		wp_register_style( 'ndizi-standalone', NDIZI_PLUGIN_URL . 'build/standalone.css', array(), NDIZI_VERSION );
+		wp_style_add_data( 'ndizi-standalone', 'rtl', 'replace' );
+
+		if ( Ndizi_Project_Management::google_fonts_enabled() ) {
+			wp_register_style(
+				'ndizi-standalone-fonts',
+				'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap',
+				array(),
+				null // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Google Fonts is a versionless external stylesheet; appending a plugin version query would be incorrect.
+			);
+			wp_enqueue_style( 'ndizi-standalone-fonts' );
+		}
+
+		wp_enqueue_style( 'ndizi-standalone' );
+
+		// Registered in the head group (not the footer): this page has no
+		// wp_footer(), and the template prints the handle manually with
+		// wp_print_scripts() — which prints group 0. A footer (group 1)
+		// registration could be skipped, leaving build/standalone.js unprinted.
+		wp_register_script( 'ndizi-standalone', NDIZI_PLUGIN_URL . 'build/standalone.js', array( 'jquery' ), NDIZI_VERSION, false );
+		wp_localize_script(
+			'ndizi-standalone',
+			'ndizi_standalone',
+			array(
+				'ajax_url'             => admin_url( 'admin-ajax.php' ),
+				'nonce'                => wp_create_nonce( 'ndizi-admin-nonce' ),
+				'active_timer_seconds' => (int) $duration_sec,
+				'labels'               => array(
+					'no_active_projects'    => __( 'No active projects found.', 'ndizi-project-management' ),
+					'select_project'        => __( '-- Select Project --', 'ndizi-project-management' ),
+					'general_task'          => __( '-- General --', 'ndizi-project-management' ),
+					'internal_client'       => __( 'Internal', 'ndizi-project-management' ),
+					'please_select_project' => __( 'Please select a project.', 'ndizi-project-management' ),
+					'please_enter_duration' => __( 'Please specify hours or minutes.', 'ndizi-project-management' ),
+					'entry_logged'          => __( 'Time entry logged successfully!', 'ndizi-project-management' ),
+					'no_description'        => __( 'No description', 'ndizi-project-management' ),
+					'no_entries'            => __( 'No entries recorded today.', 'ndizi-project-management' ),
+					'confirm_delete'        => __( 'Are you sure you want to delete this time entry?', 'ndizi-project-management' ),
+				),
+			)
+		);
+		wp_enqueue_script( 'ndizi-standalone' );
 	}
 }

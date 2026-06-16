@@ -100,6 +100,11 @@ class Ndizi_Settings {
 				$updated = true;
 			}
 
+			// Google Fonts opt-in. Checkbox absence means unchecked, so this is
+			// always recorded (it is part of the main settings form).
+			update_option( 'ndizi_enable_google_fonts', isset( $_POST['ndizi_enable_google_fonts'] ) ? 1 : 0 );
+			$updated = true;
+
 			if ( isset( $_POST['ndizi_stripe_secret_key'] ) ) {
 				update_option( 'ndizi_stripe_secret_key', sanitize_text_field( wp_unslash( $_POST['ndizi_stripe_secret_key'] ) ) );
 				$updated = true;
@@ -923,6 +928,20 @@ class Ndizi_Settings {
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
 					</div>
 
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Typography', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Control whether the plugin loads webfonts from a third party.', 'ndizi-project-management' ); ?></p>
+
+					<div style="margin-bottom: 30px;">
+						<?php $enable_google_fonts = Ndizi_Project_Management::google_fonts_enabled(); ?>
+						<label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 14px 18px; border: 1px solid <?php echo $enable_google_fonts ? '#e0e7ff' : '#e2e8f0'; ?>; background: <?php echo $enable_google_fonts ? '#f8fafc' : '#fff'; ?>; border-radius: 10px; transition: all 0.2s;">
+							<input type="checkbox" name="ndizi_enable_google_fonts" value="1" <?php checked( $enable_google_fonts ); ?> style="margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;">
+							<div>
+								<strong style="display: block; font-size: 14px; color: #1e293b; margin-bottom: 2px;"><?php esc_html_e( 'Load Google Fonts (Inter &amp; Outfit)', 'ndizi-project-management' ); ?></strong>
+								<span style="display: block; font-size: 12px; color: #64748b; line-height: 1.4;"><?php esc_html_e( 'Off by default. When enabled, the client portal, standalone time tracker, and printable invoices load the Inter and Outfit typefaces from Google\'s servers (fonts.googleapis.com / fonts.gstatic.com), which transmits the visitor\'s IP address to Google. When disabled, the plugin uses a web-safe system font stack and makes no requests to Google.', 'ndizi-project-management' ); ?></span>
+							</div>
+						</label>
+					</div>
+
 					<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>
 						<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Stripe Invoicing Settings', 'ndizi-project-management' ); ?></h2>
 						<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Configure Stripe payment gateway integration to allow clients to pay invoices online.', 'ndizi-project-management' ); ?></p>
@@ -962,7 +981,7 @@ class Ndizi_Settings {
 							<?php endif; ?>
 							<p class="description" style="margin-top: 5px; color: #64748b;">
 								<?php esc_html_e( 'Webhook URL for Stripe Dashboard:', 'ndizi-project-management' ); ?>
-								<code><?php echo esc_url( home_url( '/wp-json/ndizi/v1/stripe/webhook' ) ); ?></code>
+								<code><?php echo esc_url( rest_url( 'ndizi/v1/stripe/webhook' ) ); ?></code>
 							</p>
 						</div>
 					<?php endif; ?>
@@ -1041,7 +1060,7 @@ class Ndizi_Settings {
 								$feed_token = wp_hash( time() . wp_generate_password( 20, false ) );
 								update_option( 'ndizi_calendar_feed_token', $feed_token );
 							}
-							$feed_url = home_url( '/wp-json/ndizi/v1/calendar/ical?token=' . $feed_token );
+							$feed_url = add_query_arg( 'token', $feed_token, rest_url( 'ndizi/v1/calendar/ical' ) );
 							?>
 							<label style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'iCal Subscription URL', 'ndizi-project-management' ); ?></label>
 							<input type="text" value="<?php echo esc_url( $feed_url ); ?>" readonly style="width: 100%; max-width: 500px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #f8fafc;" class="ndizi-select-on-click">
@@ -1082,39 +1101,42 @@ class Ndizi_Settings {
 					</button>
 				</form>
 			</div>
-
-			<script>
-				jQuery(document).ready(function($) {
-					$('input[name="ndizi_adminbar_icon"]').on('change', function() {
-						$('input[name="ndizi_adminbar_icon"]').next('.ndizi-icon-card').css({
-							'border-color': '#e2e8f0',
-							'background': '#fff'
-						}).find('div').css('color', '#64748b');
-
-						if($(this).is(':checked')) {
-							$(this).next('.ndizi-icon-card').css({
-								'border-color': '#4f46e5',
-								'background': '#f5f3ff'
-							}).find('div').css('color', '#4f46e5');
-
-							// Swap the SVG in the admin bar live!
-							var iconVal = $(this).val();
-							var iconClass = iconVal === 'punch_clock' ? 'punch' : iconVal;
-							var $newSvg = $(this).next('.ndizi-icon-card').find('svg').clone();
-							$newSvg.attr('class', 'ndizi-ab-icon-svg ndizi-ab-icon-' + iconClass);
-							$newSvg.attr('width', '16');
-							$newSvg.attr('height', '16');
-
-							var $iconWrapper = $('#wp-admin-bar-ndizi-time-tracker .ndizi-ab-icon-wrapper');
-							if ($iconWrapper.length) {
-								$iconWrapper.find('svg').replaceWith($newSvg);
-							}
-						}
-					});
-				});
-			</script>
 		</div>
 		<?php
+		// Attach the admin-bar icon-picker live-preview behavior as an inline
+		// script on the already-enqueued ndizi-admin-script handle instead of
+		// printing a raw <script> tag.
+		$icon_picker_js = <<<'JS'
+jQuery(document).ready(function($) {
+	$('input[name="ndizi_adminbar_icon"]').on('change', function() {
+		$('input[name="ndizi_adminbar_icon"]').next('.ndizi-icon-card').css({
+			'border-color': '#e2e8f0',
+			'background': '#fff'
+		}).find('div').css('color', '#64748b');
+
+		if($(this).is(':checked')) {
+			$(this).next('.ndizi-icon-card').css({
+				'border-color': '#4f46e5',
+				'background': '#f5f3ff'
+			}).find('div').css('color', '#4f46e5');
+
+			// Swap the SVG in the admin bar live!
+			var iconVal = $(this).val();
+			var iconClass = iconVal === 'punch_clock' ? 'punch' : iconVal;
+			var $newSvg = $(this).next('.ndizi-icon-card').find('svg').clone();
+			$newSvg.attr('class', 'ndizi-ab-icon-svg ndizi-ab-icon-' + iconClass);
+			$newSvg.attr('width', '16');
+			$newSvg.attr('height', '16');
+
+			var $iconWrapper = $('#wp-admin-bar-ndizi-time-tracker .ndizi-ab-icon-wrapper');
+			if ($iconWrapper.length) {
+				$iconWrapper.find('svg').replaceWith($newSvg);
+			}
+		}
+	});
+});
+JS;
+		wp_add_inline_script( 'ndizi-admin-script', $icon_picker_js );
 	}
 
 	/**
