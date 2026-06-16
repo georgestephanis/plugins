@@ -10,17 +10,19 @@ This plugin is a single-file classically-structured PHP plugin utilizing separat
 - **`update-control.css`** — Declares simple stylesheet rules adjusting the opacity of disabled settings options.
 - **`readme.txt`** — Standard WordPress.org metadata and changelog document.
 
-## No Build Step
+## No Asset Compilation
 
-This plugin uses pure Vanilla JavaScript and CSS. There is **no compilation, bundler, or build pipeline** (no npm build steps).
+The plugin's assets are shipped as-is — `update-control.js` is a jQuery-based script and `update-control.css` is hand-written CSS. There is **no asset compilation, bundling, or transpilation** (no Babel/webpack/wp-scripts build of the source).
+
+There is, however, an npm packaging step: `package.json` defines a `plugin-zip` script (`wp-scripts plugin-zip`) used only to assemble the WordPress.org distribution ZIP. It does not transform the assets.
 
 ## Database Options Schema
 
 All configuration options are stored as a single associative array option in the database under the key `update_control_options`. Defaults are merged on retrieval via `get_options()`:
 - `active` (`yes` | `no`) — Globally enables/disables automatic updates.
 - `core` (`minor` | `major` | `dev`) — Core update level filters.
-- `plugin` (bool) — Permit automatic plugin updates.
-- `theme` (bool) — Permit automatic theme updates.
+- `plugin` (`yes` | `no` | `core`) — Auto-update all plugins, disable all plugin auto-updates, or defer to WordPress's per-plugin defaults.
+- `theme` (`yes` | `no` | `core`) — Auto-update all themes, disable all theme auto-updates, or defer to WordPress's per-theme defaults.
 - `translation` (bool) — Permit automatic translation updates.
 - `toggleadvanced` (`show` | `hide`) — Toggle visibility of advanced settings.
 - `vcscheck` (bool) — Bypasses VCS directory checkups to force updates on version controlled codebases.
@@ -29,6 +31,7 @@ All configuration options are stored as a single associative array option in the
 - `failureemail` (bool) — Send email for failed updates.
 - `criticalemail` (bool) — Send email for critically failed updates.
 - `debugemail` (bool) — Disable debug emails for development builds of WordPress.
+- `notification_email` (string) — Optional email address to send auto-update notifications to; empty falls back to the site admin email.
 
 ## Coding Conventions & Linting
 

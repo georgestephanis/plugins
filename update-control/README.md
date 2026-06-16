@@ -9,8 +9,8 @@
 - **Global Toggle**: Enable or disable all automatic updates entirely with a single select field.
 - **Granular Update Control**:
   - **Core Update Level**: Limit auto-updates to *Minor Updates* (default), *Major Updates*, or opt-in to *Development Updates* (bleeding-edge nightlies).
-  - **Plugins**: Toggle automatic updates for all plugins.
-  - **Themes**: Toggle automatic updates for all themes.
+  - **Plugins**: Auto-update *all* plugins, disable plugin auto-updates entirely, or defer to WordPress's per-plugin defaults (choose individually).
+  - **Themes**: Auto-update *all* themes, disable theme auto-updates entirely, or defer to WordPress's per-theme defaults (choose individually).
   - **Translations**: Choose whether translation files should auto-update.
 - **Advanced Options**:
   - **VCS Check Bypass**: Force WordPress auto-updates even if version control files (e.g. Git, SVN) are detected in the installation directory.

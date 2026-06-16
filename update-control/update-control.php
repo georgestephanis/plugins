@@ -494,7 +494,7 @@ class Update_Control {
 		$is_open = 'show' === $options['toggleadvanced'];
 		?>
 		<details id="update_control_toggleadvanced_details" class="update_control_dependency"<?php echo $is_open ? ' open' : ''; ?>>
-			<summary style="cursor: pointer; font-weight: 600; outline: none; user-select: none;">
+			<summary style="cursor: pointer; font-weight: 600; user-select: none;">
 				<span class="open-text"><?php esc_html_e( 'Hide settings', 'update-control' ); ?></span>
 				<span class="closed-text"><?php esc_html_e( 'Show settings', 'update-control' ); ?></span>
 			</summary>
