@@ -507,9 +507,110 @@ class Update_Control {
 	 * Output markup for 'Enable updates for VCS installations?' field.
 	 */
 	public static function update_control_vcscheck_cb() {
+		$is_vcs = self::is_vcs_checkout();
 		?>
 		<input type="checkbox" class="update_control_advanced" id="update_control_vcscheck" name="update_control_options[vcscheck]" <?php checked( self::get_option( 'vcscheck' ) ); ?> />
+		<p class="description">
+			<?php
+			if ( null === $is_vcs ) {
+				esc_html_e( 'Unable to determine whether this site is under version control.', 'update-control' );
+			} elseif ( $is_vcs ) {
+				esc_html_e( 'This site appears to be a version control checkout, so WordPress would normally block automatic updates. Enable this to allow them anyway.', 'update-control' );
+			} else {
+				esc_html_e( 'This site does not appear to be a version control checkout, so this setting has no effect here.', 'update-control' );
+			}
+			?>
+		</p>
 		<?php
+		$vcs_checkouts = self::get_vcs_checkouts();
+		if ( ! empty( $vcs_checkouts['plugins'] ) || ! empty( $vcs_checkouts['themes'] ) ) {
+			?>
+			<p class="description">
+				<?php esc_html_e( 'The following are also version control checkouts and would be blocked individually:', 'update-control' ); ?>
+				<?php
+				if ( ! empty( $vcs_checkouts['plugins'] ) ) {
+					printf(
+						'<br />%1$s %2$s',
+						esc_html__( 'Plugins:', 'update-control' ),
+						esc_html( implode( ', ', $vcs_checkouts['plugins'] ) )
+					);
+				}
+				if ( ! empty( $vcs_checkouts['themes'] ) ) {
+					printf(
+						'<br />%1$s %2$s',
+						esc_html__( 'Themes:', 'update-control' ),
+						esc_html( implode( ', ', $vcs_checkouts['themes'] ) )
+					);
+				}
+				?>
+			</p>
+			<?php
+		}
+	}
+
+	/**
+	 * Scan installed plugins and themes for version control checkouts.
+	 *
+	 * WordPress blocks automatic updates for any plugin or theme whose directory
+	 * contains version control metadata, independent of whether the core install
+	 * is itself a checkout.
+	 *
+	 * @return array {
+	 *     @type string[] $plugins Names of plugin directories under version control.
+	 *     @type string[] $themes  Names of themes under version control.
+	 * }
+	 */
+	private static function get_vcs_checkouts() {
+		$vcs_dirs = array( '.svn', '.git', '.hg', '.bzr' );
+		$found    = array(
+			'plugins' => array(),
+			'themes'  => array(),
+		);
+
+		if ( defined( 'WP_PLUGIN_DIR' ) && is_dir( WP_PLUGIN_DIR ) ) {
+			foreach ( (array) glob( WP_PLUGIN_DIR . '/*', GLOB_ONLYDIR ) as $plugin_dir ) {
+				foreach ( $vcs_dirs as $vcs ) {
+					if ( is_dir( $plugin_dir . '/' . $vcs ) ) {
+						$found['plugins'][] = basename( $plugin_dir );
+						break;
+					}
+				}
+			}
+		}
+
+		foreach ( wp_get_themes() as $theme ) {
+			$stylesheet_dir = $theme->get_stylesheet_directory();
+			foreach ( $vcs_dirs as $vcs ) {
+				if ( is_dir( $stylesheet_dir . '/' . $vcs ) ) {
+					$found['themes'][] = $theme->get( 'Name' );
+					break;
+				}
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Determine whether the current site is a version control checkout.
+	 *
+	 * Mirrors the detection WordPress core uses to decide whether to block
+	 * automatic updates on VCS installs.
+	 *
+	 * @return bool|null True/false if detectable, null if it cannot be determined.
+	 */
+	private static function is_vcs_checkout() {
+		if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-automatic-updater.php';
+		}
+
+		if ( ! class_exists( 'WP_Automatic_Updater' ) ) {
+			return null;
+		}
+
+		$updater = new \WP_Automatic_Updater();
+
+		return (bool) $updater->is_vcs_checkout( ABSPATH );
 	}
 
 	/**
@@ -565,7 +666,19 @@ class Update_Control {
 	 */
 	public static function update_control_email_recipient_cb() {
 		?>
-		<input type="email" class="update_control_email_dependency update_control_advanced regular-text" id="update_control_email_recipient" name="update_control_options[notification_email]" value="<?php echo esc_attr( self::get_option( 'notification_email' ) ); ?>" placeholder="<?php esc_attr_e( 'Leave empty for default admin email', 'update-control' ); ?>" />
+		<?php
+		$default_recipient = get_option( 'admin_email' );
+		if ( $default_recipient ) {
+			$recipient_placeholder = sprintf(
+				/* translators: %s: the site's admin email address. */
+				__( 'Leave empty to use %s', 'update-control' ),
+				$default_recipient
+			);
+		} else {
+			$recipient_placeholder = __( 'Leave empty for default admin email', 'update-control' );
+		}
+		?>
+		<input type="email" class="update_control_email_dependency update_control_advanced regular-text" id="update_control_email_recipient" name="update_control_options[notification_email]" value="<?php echo esc_attr( self::get_option( 'notification_email' ) ); ?>" placeholder="<?php echo esc_attr( $recipient_placeholder ); ?>" />
 		<?php
 	}
 
