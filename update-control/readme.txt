@@ -59,8 +59,12 @@ Core Updates:
 
 Plugin/Theme/Translation Updates:
 
-* If you disable updates, Plugin, Theme, and Translation updates will also be disabled
-* Separately enable Plugin, Theme, and Translation updates via the appropriate checkboxes
+* If you disable updates globally, Plugin, Theme, and Translation updates will also be disabled.
+* Configure "Automatic Plugin Updates" and "Automatic Theme Updates" via the dropdown selectors:
+  * "Auto-update all": forces all plugins or themes to update automatically (hides individual core toggles).
+  * "Disable all": prevents all automatic updates for plugins or themes (hides individual core toggles).
+  * "Choose individually": lets you manage them per-item on the Plugins page or Themes page using standard WordPress core toggles.
+* Permit Translation updates via the checkbox.
 
 = What are advanced settings? =
 

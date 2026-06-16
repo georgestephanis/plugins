@@ -86,16 +86,18 @@ class Update_Control {
 				add_filter( 'allow_minor_auto_core_updates', '__return_true', 1 );
 			}
 
-			if ( $options['plugin'] ) {
+			if ( 'yes' === $options['plugin'] ) {
 				add_filter( 'auto_update_plugin', '__return_true', 1 );
-			} else {
+				add_filter( 'plugins_auto_update_enabled', '__return_false', 1 );
+			} elseif ( 'no' === $options['plugin'] ) {
 				add_filter( 'auto_update_plugin', '__return_false', 1 );
 				add_filter( 'plugins_auto_update_enabled', '__return_false', 1 );
 			}
 
-			if ( $options['theme'] ) {
+			if ( 'yes' === $options['theme'] ) {
 				add_filter( 'auto_update_theme', '__return_true', 1 );
-			} else {
+				add_filter( 'themes_auto_update_enabled', '__return_false', 1 );
+			} elseif ( 'no' === $options['theme'] ) {
 				add_filter( 'auto_update_theme', '__return_false', 1 );
 				add_filter( 'themes_auto_update_enabled', '__return_false', 1 );
 			}
@@ -213,8 +215,8 @@ class Update_Control {
 		$defaults = array(
 			'active'             => 'yes',
 			'core'               => 'minor',
-			'plugin'             => false,
-			'theme'              => false,
+			'plugin'             => 'core',
+			'theme'              => 'core',
 			'translation'        => true,
 			'toggleadvanced'     => 'hide',
 			'vcscheck'           => false,
@@ -226,6 +228,23 @@ class Update_Control {
 			'notification_email' => '',
 		);
 		$args     = get_option( 'update_control_options', array() );
+
+		// Migrate old boolean values to the new string format.
+		if ( isset( $args['plugin'] ) ) {
+			if ( true === $args['plugin'] || '1' === $args['plugin'] || 'yes' === $args['plugin'] ) {
+				$args['plugin'] = 'yes';
+			} elseif ( false === $args['plugin'] || '0' === $args['plugin'] || '' === $args['plugin'] ) {
+				$args['plugin'] = 'core';
+			}
+		}
+		if ( isset( $args['theme'] ) ) {
+			if ( true === $args['theme'] || '1' === $args['theme'] || 'yes' === $args['theme'] ) {
+				$args['theme'] = 'yes';
+			} elseif ( false === $args['theme'] || '0' === $args['theme'] || '' === $args['theme'] ) {
+				$args['theme'] = 'core';
+			}
+		}
+
 		return wp_parse_args( $args, $defaults );
 	}
 
@@ -284,7 +303,7 @@ class Update_Control {
 
 		add_settings_field(
 			'update_control_plugin',
-			sprintf( '<label for="update_control_plugin">%1$s</label>', esc_html__( 'Permit Automatic Plugin Updates?', 'update-control' ) ),
+			sprintf( '<label for="update_control_plugin">%1$s</label>', esc_html__( 'Automatic Plugin Updates', 'update-control' ) ),
 			array( __CLASS__, 'update_control_plugin_cb' ),
 			'general',
 			'update-control'
@@ -292,7 +311,7 @@ class Update_Control {
 
 		add_settings_field(
 			'update_control_theme',
-			sprintf( '<label for="update_control_theme">%1$s</label>', esc_html__( 'Permit Automatic Theme Updates?', 'update-control' ) ),
+			sprintf( '<label for="update_control_theme">%1$s</label>', esc_html__( 'Automatic Theme Updates', 'update-control' ) ),
 			array( __CLASS__, 'update_control_theme_cb' ),
 			'general',
 			'update-control'
@@ -427,20 +446,30 @@ class Update_Control {
 	}
 
 	/**
-	 * Output markup for 'Permit Automatic Plugin Updates?' field.
+	 * Output markup for 'Automatic Plugin Updates' field.
 	 */
 	public static function update_control_plugin_cb() {
+		$val = self::get_option( 'plugin' );
 		?>
-		<input type="checkbox" class="update_control_dependency" id="update_control_plugin" name="update_control_options[plugin]" <?php checked( self::get_option( 'plugin' ) ); ?> />
+		<select class="update_control_dependency" id="update_control_plugin" name="update_control_options[plugin]">
+			<option <?php selected( 'yes' === $val ); ?> value="yes"><?php esc_html_e( 'Auto-update all plugins', 'update-control' ); ?></option>
+			<option <?php selected( 'no' === $val ); ?> value="no"><?php esc_html_e( 'Disable all plugin auto-updates', 'update-control' ); ?></option>
+			<option <?php selected( 'core' === $val ); ?> value="core"><?php esc_html_e( 'Choose individually (WordPress default)', 'update-control' ); ?></option>
+		</select>
 		<?php
 	}
 
 	/**
-	 * Output markup for 'Permit Automatic Theme Updates?' field.
+	 * Output markup for 'Automatic Theme Updates' field.
 	 */
 	public static function update_control_theme_cb() {
+		$val = self::get_option( 'theme' );
 		?>
-		<input type="checkbox" class="update_control_dependency" id="update_control_theme" name="update_control_options[theme]" <?php checked( self::get_option( 'theme' ) ); ?> />
+		<select class="update_control_dependency" id="update_control_theme" name="update_control_options[theme]">
+			<option <?php selected( 'yes' === $val ); ?> value="yes"><?php esc_html_e( 'Auto-update all themes', 'update-control' ); ?></option>
+			<option <?php selected( 'no' === $val ); ?> value="no"><?php esc_html_e( 'Disable all theme auto-updates', 'update-control' ); ?></option>
+			<option <?php selected( 'core' === $val ); ?> value="core"><?php esc_html_e( 'Choose individually (WordPress default)', 'update-control' ); ?></option>
+		</select>
 		<?php
 	}
 
@@ -561,8 +590,8 @@ class Update_Control {
 
 		$options['active']             = ( in_array( $options['active'], array( 'yes', 'no' ), true ) ? $options['active'] : 'yes' );
 		$options['core']               = ( in_array( $options['core'], array( 'minor', 'major', 'dev' ), true ) ? $options['core'] : 'minor' );
-		$options['plugin']             = ! empty( $options['plugin'] );
-		$options['theme']              = ! empty( $options['theme'] );
+		$options['plugin']             = ( in_array( $options['plugin'], array( 'yes', 'no', 'core' ), true ) ? $options['plugin'] : 'core' );
+		$options['theme']              = ( in_array( $options['theme'], array( 'yes', 'no', 'core' ), true ) ? $options['theme'] : 'core' );
 		$options['translation']        = ! empty( $options['translation'] );
 		$options['toggleadvanced']     = ( isset( $options['toggleadvanced'] ) && in_array( $options['toggleadvanced'], array( 'show', 'hide' ), true ) ? $options['toggleadvanced'] : 'hide' );
 		$options['vcscheck']           = ! empty( $options['vcscheck'] );
