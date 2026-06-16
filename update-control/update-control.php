@@ -295,7 +295,7 @@ class Update_Control {
 
 		add_settings_field(
 			'update_control_core',
-			sprintf( '<label for="update_control_core">%1$s</label>', esc_html__( 'Automatic Core Update Level?', 'update-control' ) ),
+			esc_html__( 'Automatic Core Update Level?', 'update-control' ),
 			array( __CLASS__, 'update_control_core_cb' ),
 			'general',
 			'update-control'
@@ -303,7 +303,7 @@ class Update_Control {
 
 		add_settings_field(
 			'update_control_plugin',
-			sprintf( '<label for="update_control_plugin">%1$s</label>', esc_html__( 'Automatic Plugin Updates', 'update-control' ) ),
+			esc_html__( 'Automatic Plugin Updates', 'update-control' ),
 			array( __CLASS__, 'update_control_plugin_cb' ),
 			'general',
 			'update-control'
@@ -311,7 +311,7 @@ class Update_Control {
 
 		add_settings_field(
 			'update_control_theme',
-			sprintf( '<label for="update_control_theme">%1$s</label>', esc_html__( 'Automatic Theme Updates', 'update-control' ) ),
+			esc_html__( 'Automatic Theme Updates', 'update-control' ),
 			array( __CLASS__, 'update_control_theme_cb' ),
 			'general',
 			'update-control'
@@ -436,12 +436,14 @@ class Update_Control {
 	 * Output markup for 'Automatic Core Update Level?' field.
 	 */
 	public static function update_control_core_cb() {
+		$val = self::get_option( 'core' );
 		?>
-		<select class="update_control_dependency" id="update_control_core" name="update_control_options[core]">
-			<option <?php selected( 'minor' === self::get_option( 'core' ) ); ?> value="minor"><?php esc_html_e( 'Minor Updates', 'update-control' ); ?></option>
-			<option <?php selected( 'major' === self::get_option( 'core' ) ); ?> value="major"><?php esc_html_e( 'Major Updates', 'update-control' ); ?></option>
-			<option <?php selected( 'dev' === self::get_option( 'core' ) ); ?> value="dev"><?php esc_html_e( 'Development Updates', 'update-control' ); ?></option>
-		</select>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Automatic Core Update Level?', 'update-control' ); ?></span></legend>
+			<label><input type="radio" class="update_control_dependency" id="update_control_core_minor" name="update_control_options[core]" value="minor" <?php checked( 'minor' === $val ); ?> /> <?php esc_html_e( 'Minor Updates', 'update-control' ); ?></label><br />
+			<label><input type="radio" class="update_control_dependency" id="update_control_core_major" name="update_control_options[core]" value="major" <?php checked( 'major' === $val ); ?> /> <?php esc_html_e( 'Major Updates', 'update-control' ); ?></label><br />
+			<label><input type="radio" class="update_control_dependency" id="update_control_core_dev" name="update_control_options[core]" value="dev" <?php checked( 'dev' === $val ); ?> /> <?php esc_html_e( 'Development Updates', 'update-control' ); ?></label>
+		</fieldset>
 		<?php
 	}
 
@@ -451,11 +453,12 @@ class Update_Control {
 	public static function update_control_plugin_cb() {
 		$val = self::get_option( 'plugin' );
 		?>
-		<select class="update_control_dependency" id="update_control_plugin" name="update_control_options[plugin]">
-			<option <?php selected( 'yes' === $val ); ?> value="yes"><?php esc_html_e( 'Auto-update all plugins', 'update-control' ); ?></option>
-			<option <?php selected( 'no' === $val ); ?> value="no"><?php esc_html_e( 'Disable all plugin auto-updates', 'update-control' ); ?></option>
-			<option <?php selected( 'core' === $val ); ?> value="core"><?php esc_html_e( 'Choose individually (WordPress default)', 'update-control' ); ?></option>
-		</select>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Automatic Plugin Updates', 'update-control' ); ?></span></legend>
+			<label><input type="radio" class="update_control_dependency" id="update_control_plugin_yes" name="update_control_options[plugin]" value="yes" <?php checked( 'yes' === $val ); ?> /> <?php esc_html_e( 'Auto-update all plugins', 'update-control' ); ?></label><br />
+			<label><input type="radio" class="update_control_dependency" id="update_control_plugin_no" name="update_control_options[plugin]" value="no" <?php checked( 'no' === $val ); ?> /> <?php esc_html_e( 'Disable all plugin auto-updates', 'update-control' ); ?></label><br />
+			<label><input type="radio" class="update_control_dependency" id="update_control_plugin_core" name="update_control_options[plugin]" value="core" <?php checked( 'core' === $val ); ?> /> <?php esc_html_e( 'Choose individually (WordPress default)', 'update-control' ); ?></label>
+		</fieldset>
 		<?php
 	}
 
@@ -465,11 +468,12 @@ class Update_Control {
 	public static function update_control_theme_cb() {
 		$val = self::get_option( 'theme' );
 		?>
-		<select class="update_control_dependency" id="update_control_theme" name="update_control_options[theme]">
-			<option <?php selected( 'yes' === $val ); ?> value="yes"><?php esc_html_e( 'Auto-update all themes', 'update-control' ); ?></option>
-			<option <?php selected( 'no' === $val ); ?> value="no"><?php esc_html_e( 'Disable all theme auto-updates', 'update-control' ); ?></option>
-			<option <?php selected( 'core' === $val ); ?> value="core"><?php esc_html_e( 'Choose individually (WordPress default)', 'update-control' ); ?></option>
-		</select>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Automatic Theme Updates', 'update-control' ); ?></span></legend>
+			<label><input type="radio" class="update_control_dependency" id="update_control_theme_yes" name="update_control_options[theme]" value="yes" <?php checked( 'yes' === $val ); ?> /> <?php esc_html_e( 'Auto-update all themes', 'update-control' ); ?></label><br />
+			<label><input type="radio" class="update_control_dependency" id="update_control_theme_no" name="update_control_options[theme]" value="no" <?php checked( 'no' === $val ); ?> /> <?php esc_html_e( 'Disable all theme auto-updates', 'update-control' ); ?></label><br />
+			<label><input type="radio" class="update_control_dependency" id="update_control_theme_core" name="update_control_options[theme]" value="core" <?php checked( 'core' === $val ); ?> /> <?php esc_html_e( 'Choose individually (WordPress default)', 'update-control' ); ?></label>
+		</fieldset>
 		<?php
 	}
 
