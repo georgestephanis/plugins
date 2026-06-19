@@ -12,9 +12,9 @@
 
 	--ndizi-orchid: #{ $ndizi-orchid };
 	--color-indigo: #{ $ndizi-orchid };
-	--color-indigo-glow: #{ rgba($ndizi-orchid, 0.25) };
-	--color-yellow: #eab308;
-	--color-yellow-glow: rgba(234, 179, 8, 0.2);
+	--color-indigo-glow: #{ rgba( $ndizi-orchid, 0.25 ) };
+	--color-yellow: #{ $ndizi-yellow };
+	--color-yellow-glow: #{ rgba( $ndizi-yellow, 0.2 ) };
 	--color-red: #ef4444;
 	--color-red-glow: rgba(239, 68, 68, 0.25);
 	--color-emerald: #10b981;
