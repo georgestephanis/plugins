@@ -65,7 +65,7 @@ class Ndizi_Notifications {
 		// Build a clean, styled HTML message body
 		$message  = '<html><body>';
 		$message .= '<div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">';
-		$message .= '<h2 style="color: #4f46e5; margin-top: 0;">New Task Submitted</h2>';
+		$message .= '<h2 style="color: #3A1A4D; margin-top: 0;">New Task Submitted</h2>';
 		$message .= sprintf( '<p><strong>Client:</strong> %s</p>', esc_html( $client->post_title ) );
 		$message .= sprintf( '<p><strong>Project:</strong> %s</p>', esc_html( $project->post_title ) );
 		$message .= '<hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">';
@@ -74,7 +74,7 @@ class Ndizi_Notifications {
 		$message .= wpautop( esc_html( $task->post_content ) );
 		$message .= '</div>';
 		$message .= '<hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">';
-		$message .= sprintf( '<p style="font-size: 13px; color: #64748b;"><a href="%s" style="color: #4f46e5; text-decoration: none; font-weight: bold;">Triage and Assign Task in WordPress Admin &rarr;</a></p>', esc_url( admin_url( 'post.php?post=' . $task_id . '&action=edit' ) ) );
+		$message .= sprintf( '<p style="font-size: 13px; color: #64748b;"><a href="%s" style="color: #3A1A4D; text-decoration: none; font-weight: bold;">Triage and Assign Task in WordPress Admin &rarr;</a></p>', esc_url( admin_url( 'post.php?post=' . $task_id . '&action=edit' ) ) );
 		$message .= '</div>';
 		$message .= '</body></html>';
 
@@ -124,7 +124,7 @@ class Ndizi_Notifications {
 
 		$message  = '<html><body>';
 		$message .= '<div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">';
-		$message .= '<h2 style="color: #4f46e5; margin-top: 0;">New Task Assignment</h2>';
+		$message .= '<h2 style="color: #3A1A4D; margin-top: 0;">New Task Assignment</h2>';
 		/* translators: %s: user display name */
 		$message .= sprintf( '<p>' . esc_html__( 'Hello %s,', 'ndizi-project-management' ) . '</p>', esc_html( $user->display_name ) );
 		$message .= sprintf( '<p>' . esc_html__( 'You have been assigned to the following task:', 'ndizi-project-management' ) . '</p>' );
@@ -137,7 +137,7 @@ class Ndizi_Notifications {
 			$message .= '</div>';
 		}
 		$message .= '<hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">';
-		$message .= sprintf( '<p style="font-size: 13px; color: #64748b;"><a href="%s" style="color: #4f46e5; text-decoration: none; font-weight: bold;">View Task details in WordPress &rarr;</a></p>', esc_url( admin_url( 'post.php?post=' . $task_id . '&action=edit' ) ) );
+		$message .= sprintf( '<p style="font-size: 13px; color: #64748b;"><a href="%s" style="color: #3A1A4D; text-decoration: none; font-weight: bold;">View Task details in WordPress &rarr;</a></p>', esc_url( admin_url( 'post.php?post=' . $task_id . '&action=edit' ) ) );
 		$message .= '</div>';
 		$message .= '</body></html>';
 
@@ -195,7 +195,7 @@ class Ndizi_Notifications {
 
 		$message  = '<html><body>';
 		$message .= '<div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">';
-		$message .= '<h2 style="color: #4f46e5; margin-top: 0;">Task Status Updated</h2>';
+		$message .= '<h2 style="color: #3A1A4D; margin-top: 0;">Task Status Updated</h2>';
 		/* translators: %s: user display name */
 		$message   .= sprintf( '<p>' . esc_html__( 'Hello %s,', 'ndizi-project-management' ) . '</p>', esc_html( $user->display_name ) );
 		$status_msg = sprintf(
@@ -209,7 +209,7 @@ class Ndizi_Notifications {
 		$message .= sprintf( '<h3 style="margin-top: 0; color: #1e293b;">%s</h3>', esc_html( $task->post_title ) );
 		$message .= sprintf( '<p><strong>Project:</strong> %s</p>', esc_html( $proj_title ) );
 		$message .= '<hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">';
-		$message .= sprintf( '<p style="font-size: 13px; color: #64748b;"><a href="%s" style="color: #4f46e5; text-decoration: none; font-weight: bold;">View Task details in WordPress &rarr;</a></p>', esc_url( admin_url( 'post.php?post=' . $task_id . '&action=edit' ) ) );
+		$message .= sprintf( '<p style="font-size: 13px; color: #64748b;"><a href="%s" style="color: #3A1A4D; text-decoration: none; font-weight: bold;">View Task details in WordPress &rarr;</a></p>', esc_url( admin_url( 'post.php?post=' . $task_id . '&action=edit' ) ) );
 		$message .= '</div>';
 		$message .= '</body></html>';
 

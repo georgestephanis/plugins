@@ -77,7 +77,7 @@ class Ndizi_Standalone_Tracker {
 			'start_url'        => admin_url( 'admin.php?page=ndizi-tracker-standalone' ),
 			'display'          => 'standalone',
 			'background_color' => '#0b0f19',
-			'theme_color'      => '#4f46e5',
+			'theme_color'      => '#3A1A4D',
 			'icons'            => array(
 				array(
 					'src'   => NDIZI_PLUGIN_URL . 'build/icon-192.png',

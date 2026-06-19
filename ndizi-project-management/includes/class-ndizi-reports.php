@@ -266,7 +266,7 @@ class Ndizi_Reports {
 				</div>
 				<div class="ndizi-kpi-card">
 					<span class="ndizi-kpi-title"><?php esc_html_e( 'Net Margin', 'ndizi-project-management' ); ?></span>
-					<span class="ndizi-kpi-val" style="color: #4f46e5;">$<?php echo esc_html( number_format( $overall_margin, 2 ) ); ?></span>
+					<span class="ndizi-kpi-val" style="color: #7B4B9E;">$<?php echo esc_html( number_format( $overall_margin, 2 ) ); ?></span>
 					<div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500;"><?php echo esc_html( $overall_margin_pct ); ?>% <?php esc_html_e( 'margin', 'ndizi-project-management' ); ?></div>
 				</div>
 			</div>
@@ -397,10 +397,10 @@ class Ndizi_Reports {
 									<td style="padding: 12px; text-align: right; color: #475569;">
 										$<?php echo esc_html( number_format( $data['cost'], 2 ) ); ?>
 									</td>
-									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#4f46e5' : '#ef4444'; ?>;">
+									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#7B4B9E' : '#ef4444'; ?>;">
 										$<?php echo esc_html( number_format( $p_margin, 2 ) ); ?>
 									</td>
-									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#4f46e5' : '#ef4444'; ?>;">
+									<td style="padding: 12px; text-align: right; font-weight: 600; color: <?php echo $p_margin >= 0 ? '#7B4B9E' : '#ef4444'; ?>;">
 										<?php echo esc_html( $p_margin_pct ); ?>%
 									</td>
 								</tr>
@@ -446,7 +446,7 @@ class Ndizi_Reports {
 										<div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
 											<span><?php echo esc_html( $util_pct ); ?>%</span>
 											<div style="width: 100px; height: 8px; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle;">
-												<div style="height: 100%; width: <?php echo esc_attr( $util_pct ); ?>%; background-color: #4f46e5; border-radius: 4px;"></div>
+												<div style="height: 100%; width: <?php echo esc_attr( $util_pct ); ?>%; background-color: #7B4B9E; border-radius: 4px;"></div>
 											</div>
 										</div>
 									</td>

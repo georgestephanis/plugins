@@ -1,3 +1,4 @@
+@use "../shared/variables" as *;
 @keyframes ndizi-ab-pulse-anim {
 
 	0% {
@@ -78,8 +79,8 @@
 
 			&:focus {
 				background: rgba(15, 23, 42, 0.8) !important;
-				border-color: #6366f1 !important;
-				box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+				border-color: $ndizi-orchid !important;
+				box-shadow: 0 0 0 2px rgba($ndizi-orchid,  0.2) !important;
 			}
 
 			&::placeholder {
@@ -125,8 +126,8 @@
 				width: 15px !important;
 
 				&:checked {
-					background: #6366f1 !important;
-					border-color: #6366f1 !important;
+					background: $ndizi-orchid !important;
+					border-color: $ndizi-orchid !important;
 				}
 			}
 		}
@@ -172,17 +173,17 @@
 			}
 
 			&.button-primary {
-				background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+				background: linear-gradient(135deg, $ndizi-orchid, $ndizi-plum) !important;
 				color: #fff !important;
 
 				&:disabled {
-					background: rgba(99, 102, 241, 0.3) !important;
+					background: rgba($ndizi-orchid,  0.3) !important;
 					color: rgba(255, 255, 255, 0.4) !important;
 					cursor: not-allowed;
 				}
 
 				&:hover:not(:disabled) {
-					background: linear-gradient(135deg, #4f46e5, #4338ca) !important;
+					background: linear-gradient(135deg, $ndizi-plum, $ndizi-ink) !important;
 				}
 			}
 
