@@ -64,29 +64,36 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			return;
 		}
 
-		// Prevent clicks inside the panel from closing the admin bar dropdown
-		$panel.on( 'click', function ( e ) {
-			e.stopPropagation();
+		const dialog = document.getElementById( 'ndizi-time-dialog' );
+
+		// Open dialog when clicking the admin bar trigger
+		$( '#wp-admin-bar-ndizi-time-tracker > .ab-item' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			if ( ! hasLoadedData && ! $panel.hasClass( 'ndizi-timer-running' ) ) {
+				loadTrackerData();
+			}
+			dialog && dialog.showModal();
 		} );
+
+		// Close button
+		$( '#ndizi-dialog-close-btn' ).on( 'click', function () {
+			dialog && dialog.close();
+		} );
+
+		// Close on backdrop click
+		if ( dialog ) {
+			dialog.addEventListener( 'click', function ( e ) {
+				if ( e.target === dialog ) {
+					dialog.close();
+				}
+			} );
+		}
 
 		// Check if timer is active on load
 		if ( $panel.hasClass( 'ndizi-timer-running' ) ) {
 			const offset = parseInt( $panel.data( 'duration' ), 10 ) || 0;
 			clock.start( offset );
 		}
-
-		// Fetch project data when hovering or clicking the admin bar node for the first time
-		$( '#wp-admin-bar-ndizi-time-tracker' ).on(
-			'mouseenter click',
-			function () {
-				if (
-					! hasLoadedData &&
-					! $panel.hasClass( 'ndizi-timer-running' )
-				) {
-					loadTrackerData();
-				}
-			}
-		);
 
 		// Project selection change handler
 		$( '#ndizi-ab-project-select' ).on( 'change', function () {
@@ -294,6 +301,22 @@ import { formatTime, createTimer } from '../shared/timer.js';
 				} );
 		} );
 
+		// Initialise date input to today
+		$( '#ndizi-ab-manual-date' ).val( new Date().toISOString().slice( 0, 10 ) );
+
+		// Toggle between disabled (today) and enabled (custom date)
+		$( '#ndizi-ab-date-change-btn' ).on( 'click', function () {
+			const $input = $( '#ndizi-ab-manual-date' );
+			const $btn = $( this );
+			if ( $input.prop( 'disabled' ) ) {
+				$input.prop( 'disabled', false ).trigger( 'focus' );
+				$btn.text( ndizi_adminbar.labels.back_to_today || 'Back to today' );
+			} else {
+				$input.val( new Date().toISOString().slice( 0, 10 ) ).prop( 'disabled', true );
+				$btn.text( ndizi_adminbar.labels.change_date || 'Change date' );
+			}
+		} );
+
 		// Save Manual Entry Event
 		$( '#ndizi-ab-btn-save-manual' ).on( 'click', function ( e ) {
 			e.preventDefault();
@@ -325,6 +348,9 @@ import { formatTime, createTimer } from '../shared/timer.js';
 				ndizi_adminbar.labels.btn_saving
 			);
 
+			const $dateInput = $( '#ndizi-ab-manual-date' );
+			const logDate = $dateInput.prop( 'disabled' ) ? '' : $dateInput.val();
+
 			wp.ajax
 				.post( 'ndizi_log_time_manual_action', {
 					project_id: projectId,
@@ -332,6 +358,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 					description: desc,
 					duration,
 					billable,
+					log_date: logDate,
 					nonce: ndizi_adminbar.nonce,
 				} )
 				.done( function () {
@@ -356,7 +383,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 					$( '#ndizi-ab-desc-input' ).val( '' );
 					$( '#ndizi-ab-manual-hours' ).val( '' );
 					$( '#ndizi-ab-manual-minutes' ).val( '' );
-					$( '#ndizi-ab-manual-log-panel' ).slideUp( 200 );
+	$( '#ndizi-ab-manual-log-panel' ).slideUp( 200 );
 
 					hasLoadedData = false;
 					selectedProject = null;

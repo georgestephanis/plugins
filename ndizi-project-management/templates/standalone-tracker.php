@@ -155,6 +155,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<span><?php esc_html_e( 'Min', 'ndizi-project-management' ); ?></span>
 					</div>
 				</div>
+				<div class="manual-date-section">
+					<input type="date" id="manual-date" class="manual-date-input" disabled>
+					<button type="button" class="manual-date-change-btn" id="manual-date-change-btn"><?php esc_html_e( 'Change date', 'ndizi-project-management' ); ?></button>
+				</div>
 				<button type="button" class="btn btn-primary" style="margin-top: 8px;" id="btn-save-manual">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
 					<?php esc_html_e( 'Log Manual Entry', 'ndizi-project-management' ); ?>

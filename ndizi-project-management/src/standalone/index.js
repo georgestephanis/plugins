@@ -259,6 +259,22 @@ jQuery( document ).ready( function ( $ ) {
 		} );
 	} );
 
+	// Initialise date input to today
+	$( '#manual-date' ).val( new Date().toISOString().slice( 0, 10 ) );
+
+	// Toggle between disabled (today) and enabled (custom date)
+	$( '#manual-date-change-btn' ).on( 'click', function () {
+		const $input = $( '#manual-date' );
+		const $btn = $( this );
+		if ( $input.prop( 'disabled' ) ) {
+			$input.prop( 'disabled', false ).trigger( 'focus' );
+			$btn.text( cfg.labels.back_to_today || 'Back to today' );
+		} else {
+			$input.val( new Date().toISOString().slice( 0, 10 ) ).prop( 'disabled', true );
+			$btn.text( cfg.labels.change_date || 'Change date' );
+		}
+	} );
+
 	$( '#btn-save-manual' ).on( 'click', function () {
 		const projectId = $( '#project-select' ).val();
 		if ( ! projectId ) {
@@ -277,6 +293,8 @@ jQuery( document ).ready( function ( $ ) {
 		const taskId = $( '#task-select' ).val() || 0;
 		const description = $( '#desc-input' ).val();
 		const billable = $( '#billable-check' ).is( ':checked' ) ? 1 : 0;
+		const $dateInput = $( '#manual-date' );
+		const logDate = $dateInput.prop( 'disabled' ) ? '' : $dateInput.val();
 
 		$.ajax( {
 			url: cfg.ajax_url,
@@ -288,13 +306,14 @@ jQuery( document ).ready( function ( $ ) {
 				description,
 				duration: durationSeconds,
 				billable,
+				log_date: logDate,
 				nonce: cfg.nonce,
 			},
 			success( response ) {
 				if ( response.success ) {
 					$( '#manual-hours' ).val( '' );
 					$( '#manual-minutes' ).val( '' );
-					$( '#desc-input' ).val( '' );
+$( '#desc-input' ).val( '' );
 
 					loadRecentLogs();
 					window.alert( cfg.labels.entry_logged );

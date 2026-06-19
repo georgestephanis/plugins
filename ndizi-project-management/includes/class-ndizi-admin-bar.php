@@ -35,6 +35,10 @@ class Ndizi_Admin_Bar {
 		// Render the Admin Bar Node
 		add_action( 'admin_bar_menu', array( __CLASS__, 'add_admin_bar_node' ), 999 );
 
+		// Render the panel as a <dialog> in the page footer (avoids hover-menu dismissal issues)
+		add_action( 'wp_footer', array( __CLASS__, 'render_dialog' ) );
+		add_action( 'admin_footer', array( __CLASS__, 'render_dialog' ) );
+
 		// AJAX Endpoints
 		add_action( 'wp_ajax_ndizi_get_tracker_data', array( __CLASS__, 'ajax_get_tracker_data' ) );
 		add_action( 'wp_ajax_ndizi_log_time_manual_action', array( __CLASS__, 'ajax_log_time_manual' ) );
@@ -137,17 +141,27 @@ class Ndizi_Admin_Bar {
 			)
 		);
 
-		// Submenu Content Container Node
-		$wp_admin_bar->add_node(
-			array(
-				'id'     => 'ndizi-time-tracker-panel',
-				'parent' => 'ndizi-time-tracker',
-				'title'  => self::get_panel_html( $active_timer, $duration_sec ),
-				'meta'   => array(
-					'class' => 'ndizi-ab-panel-wrapper',
-				),
-			)
-		);
+		// Panel is rendered as a <dialog> via render_dialog() in wp_footer/admin_footer.
+	}
+
+	/**
+	 * Render the time-tracker panel as a <dialog> in the page footer.
+	 */
+	public static function render_dialog() {
+		if ( ! is_admin_bar_showing() ) {
+			return;
+		}
+		$user_id      = get_current_user_id();
+		$active_timer = Ndizi_DB::get_active_timer( $user_id );
+		$duration_sec = $active_timer
+			? max( 0, time() - strtotime( $active_timer->start_time ) )
+			: 0;
+		?>
+		<dialog id="ndizi-time-dialog" aria-label="<?php esc_attr_e( 'Ndizi Time Tracker', 'ndizi-project-management' ); ?>">
+			<button class="ndizi-dialog-close" id="ndizi-dialog-close-btn" aria-label="<?php esc_attr_e( 'Close', 'ndizi-project-management' ); ?>">&#x2715;</button>
+			<?php echo self::get_panel_html( $active_timer, $duration_sec ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		</dialog>
+		<?php
 	}
 
 	/**
@@ -276,7 +290,12 @@ class Ndizi_Admin_Bar {
 							<span class="ndizi-ab-duration-label"><?php esc_html_e( 'Minutes', 'ndizi-project-management' ); ?></span>
 						</div>
 					</div>
-					
+
+					<div class="ndizi-ab-date-section">
+						<input type="date" id="ndizi-ab-manual-date" class="ndizi-ab-input ndizi-ab-date-input" disabled>
+						<button type="button" class="ndizi-ab-date-change-btn" id="ndizi-ab-date-change-btn"><?php esc_html_e( 'Change date', 'ndizi-project-management' ); ?></button>
+					</div>
+
 					<button type="button" class="button button-secondary ndizi-ab-btn-save-manual" id="ndizi-ab-btn-save-manual">
 						<svg xmlns="http://www.w3.org/2000/svg" class="ndizi-ab-btn-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> <?php esc_html_e( 'Log Entry', 'ndizi-project-management' ); ?>
 					</button>
@@ -467,9 +486,23 @@ class Ndizi_Admin_Bar {
 		$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
 		$duration    = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : 0; // in seconds
 		$billable    = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
+		$log_date    = isset( $_POST['log_date'] ) ? sanitize_text_field( wp_unslash( $_POST['log_date'] ) ) : '';
+
+		// Validate date format; fall back to today if invalid.
+		if ( $log_date && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $log_date ) ) {
+			$log_date = '';
+		}
 
 		if ( ! $project_id ) {
 			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi-project-management' ) ) );
+		}
+
+		// Convert a chosen date (YYYY-MM-DD, site timezone) to a UTC start_time at noon.
+		$start_time = '';
+		if ( $log_date ) {
+			$dt         = new DateTime( $log_date . ' 12:00:00', wp_timezone() );
+			$dt->setTimezone( new DateTimeZone( 'UTC' ) );
+			$start_time = $dt->format( 'Y-m-d H:i:s' );
 		}
 
 		$entry_id = Ndizi_Time_Service::log_time_manual(
@@ -480,6 +513,7 @@ class Ndizi_Admin_Bar {
 				'description' => $description,
 				'duration'    => $duration,
 				'billable'    => $billable,
+				'start_time'  => $start_time,
 			)
 		);
 		if ( is_wp_error( $entry_id ) ) {

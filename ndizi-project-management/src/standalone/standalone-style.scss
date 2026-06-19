@@ -415,6 +415,59 @@ input:checked + .slider::before {
 	margin-top: -16px;
 }
 
+.manual-date-section {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 8px 0;
+	text-align: center;
+}
+
+.manual-date-change-btn {
+	background: none;
+	border: none;
+	color: $ndizi-orchid;
+	cursor: pointer;
+	font-size: 12px;
+	padding: 0;
+	text-decoration: underline;
+
+	&:hover {
+		color: $ndizi-yellow;
+	}
+}
+
+.manual-date-input {
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 6px;
+	color: inherit;
+	color-scheme: dark;
+	font-size: 12px;
+	padding: 3px 8px;
+	text-align: center;
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.5;
+
+		&::-webkit-calendar-picker-indicator {
+			display: none;
+		}
+	}
+
+	&::-webkit-calendar-picker-indicator {
+		cursor: pointer;
+		filter: brightness(0) invert(1);
+		opacity: 0.7;
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+}
+
 /* Running Clock Animation */
 .active-panel {
 	display: flex;
