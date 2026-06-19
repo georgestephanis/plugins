@@ -1,3 +1,4 @@
+@use "../shared/variables" as *;
 /* stylelint-disable no-descending-specificity */
 
 /*
@@ -11,8 +12,8 @@
 	--ndizi-border-color: rgba(255, 255, 255, 0.08);
 	--ndizi-text-main: #f1f5f9;
 	--ndizi-text-muted: #94a3b8;
-	--ndizi-primary: #818cf8;
-	--ndizi-primary-hover: #6366f1;
+	--ndizi-primary: #{ $ndizi-orchid };
+	--ndizi-primary-hover: #{ $ndizi-orchid };
 	--ndizi-accent: #c084fc;
 	--ndizi-success: #34d399;
 	--ndizi-warning: #fbbf24;

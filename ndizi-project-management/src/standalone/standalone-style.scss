@@ -1,18 +1,20 @@
+@use "../shared/variables" as *;
 :root {
 	--bg-radial: radial-gradient(circle at top, #1e1b4b 0%, #0b0f19 100%);
 	--bg-glass: rgba(17, 24, 39, 0.7);
 	--bg-glass-card: rgba(30, 41, 59, 0.5);
 	--border-glass: rgba(255, 255, 255, 0.08);
-	--border-glass-focus: rgba(99, 102, 241, 0.5);
+	--border-glass-focus: #{ rgba($ndizi-orchid, 0.5) };
 
 	--text-primary: #f8fafc;
 	--text-secondary: #94a3b8;
 	--text-muted: #64748b;
 
-	--color-indigo: #6366f1;
-	--color-indigo-glow: rgba(99, 102, 241, 0.25);
-	--color-yellow: #eab308;
-	--color-yellow-glow: rgba(234, 179, 8, 0.2);
+	--ndizi-orchid: #{ $ndizi-orchid };
+	--color-indigo: #{ $ndizi-orchid };
+	--color-indigo-glow: #{ rgba( $ndizi-orchid, 0.25 ) };
+	--color-yellow: #{ $ndizi-yellow };
+	--color-yellow-glow: #{ rgba( $ndizi-yellow, 0.2 ) };
 	--color-red: #ef4444;
 	--color-red-glow: rgba(239, 68, 68, 0.25);
 	--color-emerald: #10b981;
@@ -93,14 +95,8 @@ body {
 .app-logo {
 	width: 32px;
 	height: 32px;
-	color: var(--color-yellow);
-	filter: drop-shadow(0 0 8px var(--color-yellow-glow));
-}
-
-.app-logo path {
-	fill: none;
-	stroke: currentcolor;
-	stroke-width: 2.2;
+	filter: drop-shadow(0 0 8px rgba($ndizi-yellow, 0.35));
+	flex-shrink: 0;
 }
 
 .app-title {
@@ -115,9 +111,9 @@ body {
 
 .app-status {
 	font-size: 11px;
-	background: rgba(99, 102, 241, 0.15);
+	background: rgba($ndizi-orchid,  0.15);
 	color: var(--color-indigo);
-	border: 1px solid rgba(99, 102, 241, 0.3);
+	border: 1px solid rgba($ndizi-orchid,  0.3);
 	padding: 3px 8px;
 	border-radius: 12px;
 	font-weight: 600;
@@ -128,8 +124,8 @@ body {
 /* Install App Banner */
 .install-banner {
 	display: none;
-	background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
-	border: 1px solid rgba(99, 102, 241, 0.3);
+	background: linear-gradient(135deg, rgba($ndizi-orchid,  0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+	border: 1px solid rgba($ndizi-orchid,  0.3);
 	border-radius: 14px;
 	padding: 12px 16px;
 	align-items: center;
@@ -156,8 +152,8 @@ body {
 }
 
 .install-btn:hover {
-	background: #4f46e5;
-	box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+	background: $ndizi-plum;
+	box-shadow: 0 0 10px rgba($ndizi-orchid,  0.4);
 }
 
 /* Mode Tabs */
@@ -303,7 +299,7 @@ select.form-select option {
 
 input:checked + .slider {
 	background-color: var(--color-indigo);
-	border-color: rgba(99, 102, 241, 0.4);
+	border-color: rgba($ndizi-orchid,  0.4);
 }
 
 input:checked + .slider::before {
@@ -339,9 +335,9 @@ input:checked + .slider::before {
 }
 
 .btn-primary:hover:not(:disabled) {
-	background: #4f46e5;
+	background: $ndizi-plum;
 	transform: translateY(-1px);
-	box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+	box-shadow: 0 6px 20px rgba($ndizi-orchid,  0.4);
 }
 
 .btn-primary:disabled {
@@ -420,6 +416,59 @@ input:checked + .slider::before {
 	margin-top: -16px;
 }
 
+.manual-date-section {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 8px 0;
+	text-align: center;
+}
+
+.manual-date-change-btn {
+	background: none;
+	border: none;
+	color: $ndizi-orchid;
+	cursor: pointer;
+	font-size: 12px;
+	padding: 0;
+	text-decoration: underline;
+
+	&:hover {
+		color: $ndizi-yellow;
+	}
+}
+
+.manual-date-input {
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 6px;
+	color: inherit;
+	color-scheme: dark;
+	font-size: 12px;
+	padding: 3px 8px;
+	text-align: center;
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.5;
+
+		&::-webkit-calendar-picker-indicator {
+			display: none;
+		}
+	}
+
+	&::-webkit-calendar-picker-indicator {
+		cursor: pointer;
+		filter: brightness(0) invert(1);
+		opacity: 0.7;
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+}
+
 /* Running Clock Animation */
 .active-panel {
 	display: flex;
@@ -451,9 +500,9 @@ input:checked + .slider::before {
 }
 
 .badge-project {
-	background: rgba(99, 102, 241, 0.15);
+	background: rgba($ndizi-orchid,  0.15);
 	color: #a5b4fc;
-	border: 1px solid rgba(99, 102, 241, 0.3);
+	border: 1px solid rgba($ndizi-orchid,  0.3);
 }
 
 .badge-task {

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 110">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;display=swap');
+      .wordmark { font-family: 'Bricolage Grotesque', 'Avenir Next', Arial Black, sans-serif; }
+    </style>
+  </defs>
+  <!-- Wordmark -->
+  <text class="wordmark" x="0" y="78" font-size="90" font-weight="800" letter-spacing="-3.6" fill="#3A1A4D">Ndizi</text>
+  <!-- Banana swoosh underline -->
+  <g transform="translate(4 6)">
+    <g transform="rotate(-10 110 88)">
+      <path d="M10 88 Q110 122 210 84 Q110 100 10 88 Z" fill="#F4B223"/>
+      <circle cx="10" cy="88" r="6.9" fill="#3A1A4D"/>
+      <circle cx="210" cy="84" r="6.9" fill="#3A1A4D"/>
+    </g>
+  </g>
+  <!-- Subheading -->
+  <text class="wordmark" x="2" y="108" font-size="12" font-weight="600" letter-spacing="4" fill="#3A1A4D">PROJECT MANAGEMENT</text>
+</svg>

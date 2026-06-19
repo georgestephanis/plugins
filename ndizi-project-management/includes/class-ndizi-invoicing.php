@@ -166,7 +166,7 @@ class Ndizi_Invoicing {
 				.invoice-logo {
 					font-size: 26px;
 					font-weight: 800;
-					color: #4f46e5;
+					color: #3A1A4D;
 					letter-spacing: -0.03em;
 				}
 				.invoice-title-col {
@@ -277,18 +277,18 @@ class Ndizi_Invoicing {
 				.totals-row-grand {
 					font-size: 20px;
 					font-weight: 800;
-					color: #4f46e5;
-					border-top: 2px solid #4f46e5;
+					color: #3A1A4D;
+					border-top: 2px solid #3A1A4D;
 					background: #f5f3ff;
 					padding: 12px 16px;
 					border-radius: 8px;
 					margin-top: 6px;
 				}
 				.totals-row-grand span {
-					color: #4f46e5;
+					color: #3A1A4D;
 				}
 				.totals-row-grand strong {
-					color: #4f46e5;
+					color: #3A1A4D;
 				}
 
 				.invoice-notes {
@@ -329,7 +329,7 @@ class Ndizi_Invoicing {
 					font-weight: 500;
 				}
 				.print-btn {
-					background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+					background: linear-gradient(135deg, #3A1A4D 0%, #241531 100%);
 					color: #fff;
 					padding: 10px 24px;
 					border: none;

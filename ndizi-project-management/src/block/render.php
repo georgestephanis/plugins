@@ -16,8 +16,8 @@ wp_enqueue_script( 'ndizi-portal-script' );
 // Parse colors from attributes (with fallbacks)
 $ndizi_bg_color     = isset( $attributes['backgroundColor'] ) ? $attributes['backgroundColor'] : '#f8fafc';
 $ndizi_text_color   = isset( $attributes['textColor'] ) ? $attributes['textColor'] : '#0f172a';
-$ndizi_button_color = isset( $attributes['buttonColor'] ) ? $attributes['buttonColor'] : '#4f46e5';
-$ndizi_link_color   = isset( $attributes['linkColor'] ) ? $attributes['linkColor'] : '#818cf8';
+$ndizi_button_color = isset( $attributes['buttonColor'] ) ? $attributes['buttonColor'] : '#3A1A4D';
+$ndizi_link_color   = isset( $attributes['linkColor'] ) ? $attributes['linkColor'] : '#7B4B9E';
 
 // Generate a scoped unique ID for wrapper
 $ndizi_wrapper_id = 'ndizi-portal-' . wp_rand( 1000, 9999 );

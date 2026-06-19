@@ -12,6 +12,11 @@ import { formatTime, createTimer } from '../shared/timer.js';
 ( function ( $ ) {
 	'use strict';
 
+	function todayISO() {
+		const d = new Date();
+		return `${ d.getFullYear() }-${ String( d.getMonth() + 1 ).padStart( 2, '0' ) }-${ String( d.getDate() ).padStart( 2, '0' ) }`;
+	}
+
 	let projectsData = [];
 	let selectedProject = null;
 	let selectedTask = null;
@@ -64,29 +69,64 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			return;
 		}
 
-		// Prevent clicks inside the panel from closing the admin bar dropdown
-		$panel.on( 'click', function ( e ) {
-			e.stopPropagation();
+		const dialog = document.getElementById( 'ndizi-time-dialog' );
+		const canShowModal =
+			dialog &&
+			typeof dialog.showModal === 'function' &&
+			typeof dialog.close === 'function';
+
+		function openDialog() {
+			if ( ! dialog ) {
+				return;
+			}
+			if ( canShowModal ) {
+				if ( ! dialog.open ) {
+					dialog.showModal();
+				}
+				return;
+			}
+			dialog.setAttribute( 'open', 'open' );
+		}
+
+		function closeDialog() {
+			if ( ! dialog ) {
+				return;
+			}
+			if ( canShowModal ) {
+				dialog.close();
+				return;
+			}
+			dialog.removeAttribute( 'open' );
+		}
+
+		// Open dialog when clicking the admin bar trigger
+		$( '#wp-admin-bar-ndizi-time-tracker > .ab-item' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			if ( ! hasLoadedData && ! $panel.hasClass( 'ndizi-timer-running' ) ) {
+				loadTrackerData();
+			}
+			openDialog();
 		} );
+
+		// Close button
+		$( '#ndizi-dialog-close-btn' ).on( 'click', function () {
+			closeDialog();
+		} );
+
+		// Close on backdrop click
+		if ( dialog ) {
+			dialog.addEventListener( 'click', function ( e ) {
+				if ( e.target === dialog ) {
+					closeDialog();
+				}
+			} );
+		}
 
 		// Check if timer is active on load
 		if ( $panel.hasClass( 'ndizi-timer-running' ) ) {
 			const offset = parseInt( $panel.data( 'duration' ), 10 ) || 0;
 			clock.start( offset );
 		}
-
-		// Fetch project data when hovering or clicking the admin bar node for the first time
-		$( '#wp-admin-bar-ndizi-time-tracker' ).on(
-			'mouseenter click',
-			function () {
-				if (
-					! hasLoadedData &&
-					! $panel.hasClass( 'ndizi-timer-running' )
-				) {
-					loadTrackerData();
-				}
-			}
-		);
 
 		// Project selection change handler
 		$( '#ndizi-ab-project-select' ).on( 'change', function () {
@@ -294,6 +334,22 @@ import { formatTime, createTimer } from '../shared/timer.js';
 				} );
 		} );
 
+		// Initialise date input to today
+		$( '#ndizi-ab-manual-date' ).val( todayISO() );
+
+		// Toggle between disabled (today) and enabled (custom date)
+		$( '#ndizi-ab-date-change-btn' ).on( 'click', function () {
+			const $input = $( '#ndizi-ab-manual-date' );
+			const $btn = $( this );
+			if ( $input.prop( 'disabled' ) ) {
+				$input.prop( 'disabled', false ).trigger( 'focus' );
+				$btn.text( ndizi_adminbar.labels.back_to_today );
+			} else {
+				$input.val( todayISO() ).prop( 'disabled', true );
+				$btn.text( ndizi_adminbar.labels.change_date );
+			}
+		} );
+
 		// Save Manual Entry Event
 		$( '#ndizi-ab-btn-save-manual' ).on( 'click', function ( e ) {
 			e.preventDefault();
@@ -325,6 +381,9 @@ import { formatTime, createTimer } from '../shared/timer.js';
 				ndizi_adminbar.labels.btn_saving
 			);
 
+			const $dateInput = $( '#ndizi-ab-manual-date' );
+			const logDate = $dateInput.prop( 'disabled' ) ? '' : $dateInput.val();
+
 			wp.ajax
 				.post( 'ndizi_log_time_manual_action', {
 					project_id: projectId,
@@ -332,6 +391,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 					description: desc,
 					duration,
 					billable,
+					log_date: logDate,
 					nonce: ndizi_adminbar.nonce,
 				} )
 				.done( function () {

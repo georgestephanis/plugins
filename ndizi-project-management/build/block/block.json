@@ -27,11 +27,11 @@
     },
     "buttonColor": {
       "type": "string",
-      "default": "#4f46e5"
+      "default": "#3A1A4D"
     },
     "linkColor": {
       "type": "string",
-      "default": "#818cf8"
+      "default": "#7B4B9E"
     }
   }
 }

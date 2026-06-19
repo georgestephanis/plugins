@@ -64,7 +64,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 							value: buttonColor,
 							onChange: ( value ) =>
 								setAttributes( {
-									buttonColor: value || '#4f46e5',
+									buttonColor: value || '#3A1A4D',
 								} ),
 							label: __(
 								'Primary Button Color',
@@ -75,7 +75,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 							value: linkColor,
 							onChange: ( value ) =>
 								setAttributes( {
-									linkColor: value || '#818cf8',
+									linkColor: value || '#7B4B9E',
 								} ),
 							label: __(
 								'Link & Accent Color',
