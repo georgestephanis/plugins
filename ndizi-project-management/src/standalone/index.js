@@ -274,10 +274,10 @@ jQuery( document ).ready( function ( $ ) {
 		const $btn = $( this );
 		if ( $input.prop( 'disabled' ) ) {
 			$input.prop( 'disabled', false ).trigger( 'focus' );
-			$btn.text( cfg.labels.back_to_today || 'Back to today' );
+			$btn.text( cfg.labels.back_to_today );
 		} else {
 			$input.val( todayISO() ).prop( 'disabled', true );
-			$btn.text( cfg.labels.change_date || 'Change date' );
+			$btn.text( cfg.labels.change_date );
 		}
 	} );
 

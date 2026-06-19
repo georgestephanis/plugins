@@ -76,6 +76,8 @@ class Ndizi_Admin_Bar {
 					'btn_saving'           => __( 'Saving...', 'ndizi-project-management' ),
 					'btn_start_timer'      => __( 'Start Timer', 'ndizi-project-management' ),
 					'btn_log_time'         => __( 'Log Time', 'ndizi-project-management' ),
+					'back_to_today'       => __( 'Back to today', 'ndizi-project-management' ),
+					'change_date'         => __( 'Change date', 'ndizi-project-management' ),
 					'no_description'       => __( 'No description', 'ndizi-project-management' ),
 					'select_project_first' => __( 'Please select a project.', 'ndizi-project-management' ),
 					'enter_duration'       => __( 'Please enter a valid duration.', 'ndizi-project-management' ),

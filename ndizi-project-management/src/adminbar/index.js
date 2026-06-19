@@ -343,10 +343,10 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			const $btn = $( this );
 			if ( $input.prop( 'disabled' ) ) {
 				$input.prop( 'disabled', false ).trigger( 'focus' );
-				$btn.text( ndizi_adminbar.labels.back_to_today || 'Back to today' );
+				$btn.text( ndizi_adminbar.labels.back_to_today );
 			} else {
 				$input.val( todayISO() ).prop( 'disabled', true );
-				$btn.text( ndizi_adminbar.labels.change_date || 'Change date' );
+				$btn.text( ndizi_adminbar.labels.change_date );
 			}
 		} );
 

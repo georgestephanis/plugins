@@ -269,6 +269,8 @@ class Ndizi_Standalone_Tracker {
 					'please_select_project' => __( 'Please select a project.', 'ndizi-project-management' ),
 					'please_enter_duration' => __( 'Please specify hours or minutes.', 'ndizi-project-management' ),
 					'entry_logged'          => __( 'Time entry logged successfully!', 'ndizi-project-management' ),
+					'back_to_today'         => __( 'Back to today', 'ndizi-project-management' ),
+					'change_date'           => __( 'Change date', 'ndizi-project-management' ),
 					'no_description'        => __( 'No description', 'ndizi-project-management' ),
 					'no_entries'            => __( 'No entries recorded today.', 'ndizi-project-management' ),
 					'confirm_delete'        => __( 'Are you sure you want to delete this time entry?', 'ndizi-project-management' ),
