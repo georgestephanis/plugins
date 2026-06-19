@@ -70,6 +70,34 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		}
 
 		const dialog = document.getElementById( 'ndizi-time-dialog' );
+		const canShowModal =
+			dialog &&
+			typeof dialog.showModal === 'function' &&
+			typeof dialog.close === 'function';
+
+		function openDialog() {
+			if ( ! dialog ) {
+				return;
+			}
+			if ( canShowModal ) {
+				if ( ! dialog.open ) {
+					dialog.showModal();
+				}
+				return;
+			}
+			dialog.setAttribute( 'open', 'open' );
+		}
+
+		function closeDialog() {
+			if ( ! dialog ) {
+				return;
+			}
+			if ( canShowModal ) {
+				dialog.close();
+				return;
+			}
+			dialog.removeAttribute( 'open' );
+		}
 
 		// Open dialog when clicking the admin bar trigger
 		$( '#wp-admin-bar-ndizi-time-tracker > .ab-item' ).on( 'click', function ( e ) {
@@ -77,19 +105,19 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			if ( ! hasLoadedData && ! $panel.hasClass( 'ndizi-timer-running' ) ) {
 				loadTrackerData();
 			}
-			dialog && ! dialog.open && dialog.showModal();
+			openDialog();
 		} );
 
 		// Close button
 		$( '#ndizi-dialog-close-btn' ).on( 'click', function () {
-			dialog && dialog.close();
+			closeDialog();
 		} );
 
 		// Close on backdrop click
 		if ( dialog ) {
 			dialog.addEventListener( 'click', function ( e ) {
 				if ( e.target === dialog ) {
-					dialog.close();
+					closeDialog();
 				}
 			} );
 		}
