@@ -156,7 +156,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</div>
 				</div>
 				<div class="manual-date-section">
-					<input type="date" id="manual-date" class="manual-date-input" disabled>
+					<input type="date" id="manual-date" class="manual-date-input" disabled aria-label="<?php esc_attr_e( 'Log date', 'ndizi-project-management' ); ?>">
 					<button type="button" class="manual-date-change-btn" id="manual-date-change-btn"><?php esc_html_e( 'Change date', 'ndizi-project-management' ); ?></button>
 				</div>
 				<button type="button" class="btn btn-primary" style="margin-top: 8px;" id="btn-save-manual">

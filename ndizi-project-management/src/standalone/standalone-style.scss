@@ -4,14 +4,15 @@
 	--bg-glass: rgba(17, 24, 39, 0.7);
 	--bg-glass-card: rgba(30, 41, 59, 0.5);
 	--border-glass: rgba(255, 255, 255, 0.08);
-	--border-glass-focus: rgba($ndizi-orchid,  0.5);
+	--border-glass-focus: #{ rgba($ndizi-orchid, 0.5) };
 
 	--text-primary: #f8fafc;
 	--text-secondary: #94a3b8;
 	--text-muted: #64748b;
 
-	--ndizi-orchid: $ndizi-orchid;
-	--color-indigo-glow: rgba($ndizi-orchid,  0.25);
+	--ndizi-orchid: #{ $ndizi-orchid };
+	--color-indigo: #{ $ndizi-orchid };
+	--color-indigo-glow: #{ rgba($ndizi-orchid, 0.25) };
 	--color-yellow: #eab308;
 	--color-yellow-glow: rgba(234, 179, 8, 0.2);
 	--color-red: #ef4444;

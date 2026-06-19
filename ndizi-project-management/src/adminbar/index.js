@@ -12,6 +12,11 @@ import { formatTime, createTimer } from '../shared/timer.js';
 ( function ( $ ) {
 	'use strict';
 
+	function todayISO() {
+		const d = new Date();
+		return `${ d.getFullYear() }-${ String( d.getMonth() + 1 ).padStart( 2, '0' ) }-${ String( d.getDate() ).padStart( 2, '0' ) }`;
+	}
+
 	let projectsData = [];
 	let selectedProject = null;
 	let selectedTask = null;
@@ -72,7 +77,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			if ( ! hasLoadedData && ! $panel.hasClass( 'ndizi-timer-running' ) ) {
 				loadTrackerData();
 			}
-			dialog && dialog.showModal();
+			dialog && ! dialog.open && dialog.showModal();
 		} );
 
 		// Close button
@@ -302,7 +307,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		} );
 
 		// Initialise date input to today
-		$( '#ndizi-ab-manual-date' ).val( new Date().toISOString().slice( 0, 10 ) );
+		$( '#ndizi-ab-manual-date' ).val( todayISO() );
 
 		// Toggle between disabled (today) and enabled (custom date)
 		$( '#ndizi-ab-date-change-btn' ).on( 'click', function () {
@@ -312,7 +317,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 				$input.prop( 'disabled', false ).trigger( 'focus' );
 				$btn.text( ndizi_adminbar.labels.back_to_today || 'Back to today' );
 			} else {
-				$input.val( new Date().toISOString().slice( 0, 10 ) ).prop( 'disabled', true );
+				$input.val( todayISO() ).prop( 'disabled', true );
 				$btn.text( ndizi_adminbar.labels.change_date || 'Change date' );
 			}
 		} );
@@ -383,7 +388,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 					$( '#ndizi-ab-desc-input' ).val( '' );
 					$( '#ndizi-ab-manual-hours' ).val( '' );
 					$( '#ndizi-ab-manual-minutes' ).val( '' );
-	$( '#ndizi-ab-manual-log-panel' ).slideUp( 200 );
+					$( '#ndizi-ab-manual-log-panel' ).slideUp( 200 );
 
 					hasLoadedData = false;
 					selectedProject = null;

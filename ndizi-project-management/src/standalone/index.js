@@ -6,6 +6,12 @@ import { formatTime, createTimer } from '../shared/timer.js';
 
 jQuery( document ).ready( function ( $ ) {
 	const cfg = ndizi_standalone;
+
+	function todayISO() {
+		const d = new Date();
+		return `${ d.getFullYear() }-${ String( d.getMonth() + 1 ).padStart( 2, '0' ) }-${ String( d.getDate() ).padStart( 2, '0' ) }`;
+	}
+
 	let projectsData = [];
 	let selectedMode = 'timer';
 	let idleNotificationSent = false;
@@ -260,7 +266,7 @@ jQuery( document ).ready( function ( $ ) {
 	} );
 
 	// Initialise date input to today
-	$( '#manual-date' ).val( new Date().toISOString().slice( 0, 10 ) );
+	$( '#manual-date' ).val( todayISO() );
 
 	// Toggle between disabled (today) and enabled (custom date)
 	$( '#manual-date-change-btn' ).on( 'click', function () {
@@ -270,7 +276,7 @@ jQuery( document ).ready( function ( $ ) {
 			$input.prop( 'disabled', false ).trigger( 'focus' );
 			$btn.text( cfg.labels.back_to_today || 'Back to today' );
 		} else {
-			$input.val( new Date().toISOString().slice( 0, 10 ) ).prop( 'disabled', true );
+			$input.val( todayISO() ).prop( 'disabled', true );
 			$btn.text( cfg.labels.change_date || 'Change date' );
 		}
 	} );
@@ -313,7 +319,7 @@ jQuery( document ).ready( function ( $ ) {
 				if ( response.success ) {
 					$( '#manual-hours' ).val( '' );
 					$( '#manual-minutes' ).val( '' );
-$( '#desc-input' ).val( '' );
+					$( '#desc-input' ).val( '' );
 
 					loadRecentLogs();
 					window.alert( cfg.labels.entry_logged );

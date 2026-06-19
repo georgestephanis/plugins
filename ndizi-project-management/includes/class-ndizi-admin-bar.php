@@ -101,7 +101,7 @@ class Ndizi_Admin_Bar {
 		if ( $active_timer ) {
 			$node_class .= ' ndizi-timer-active';
 			// Calculate initial live duration
-			$start_ts     = strtotime( $active_timer->start_time );
+			$start_ts     = strtotime( $active_timer->start_time . ' UTC' );
 			$now_ts       = time();
 			$duration_sec = max( 0, $now_ts - $start_ts );
 
@@ -154,7 +154,7 @@ class Ndizi_Admin_Bar {
 		$user_id      = get_current_user_id();
 		$active_timer = Ndizi_DB::get_active_timer( $user_id );
 		$duration_sec = $active_timer
-			? max( 0, time() - strtotime( $active_timer->start_time ) )
+			? max( 0, time() - strtotime( $active_timer->start_time . ' UTC' ) )
 			: 0;
 		?>
 		<dialog id="ndizi-time-dialog" aria-label="<?php esc_attr_e( 'Ndizi Time Tracker', 'ndizi-project-management' ); ?>">
@@ -292,7 +292,7 @@ class Ndizi_Admin_Bar {
 					</div>
 
 					<div class="ndizi-ab-date-section">
-						<input type="date" id="ndizi-ab-manual-date" class="ndizi-ab-input ndizi-ab-date-input" disabled>
+						<input type="date" id="ndizi-ab-manual-date" class="ndizi-ab-input ndizi-ab-date-input" disabled aria-label="<?php esc_attr_e( 'Log date', 'ndizi-project-management' ); ?>">
 						<button type="button" class="ndizi-ab-date-change-btn" id="ndizi-ab-date-change-btn"><?php esc_html_e( 'Change date', 'ndizi-project-management' ); ?></button>
 					</div>
 
@@ -486,11 +486,14 @@ class Ndizi_Admin_Bar {
 		$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
 		$duration    = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : 0; // in seconds
 		$billable    = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
-		$log_date    = isset( $_POST['log_date'] ) ? sanitize_text_field( wp_unslash( $_POST['log_date'] ) ) : '';
-
-		// Validate date format; fall back to today if invalid.
-		if ( $log_date && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $log_date ) ) {
-			$log_date = '';
+		$raw_log_date = isset( $_POST['log_date'] ) ? wp_unslash( $_POST['log_date'] ) : '';
+		$log_date     = '';
+		if ( $raw_log_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_log_date ) ) {
+			// Verify it's a real calendar date (e.g. rejects 2026-02-31).
+			$parsed = DateTimeImmutable::createFromFormat( '!Y-m-d', $raw_log_date, wp_timezone() );
+			if ( $parsed && $parsed->format( 'Y-m-d' ) === $raw_log_date ) {
+				$log_date = $raw_log_date;
+			}
 		}
 
 		if ( ! $project_id ) {
