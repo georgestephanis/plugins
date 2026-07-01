@@ -12,6 +12,9 @@ on:
         description: Plugin to sync
         required: true
         type: choice
+        # This list is an allowlist: a plugin absent here cannot be dispatched.
+        # GitHub-only plugins (e.g. 404-not-available) are NOT published to
+        # WordPress.org — do not add them here. See README footnote ³.
         options:
           - add-ids-to-header-tags
           - automatic-internal-links

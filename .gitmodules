@@ -31,3 +31,42 @@
 [submodule "tuft-feedback"]
 	path = tuft-feedback
 	url = https://github.com/georgestephanis/tuft
+[submodule "404-not-available"]
+	path = 404-not-available
+	url = https://github.com/georgestephanis/404-not-available
+[submodule "secret-santa"]
+	path = secret-santa
+	url = https://github.com/georgestephanis/secret-santa
+[submodule "blocks-against-wp"]
+	path = blocks-against-wp
+	url = https://github.com/georgestephanis/blocks-against-wp
+[submodule "short"]
+	path = short
+	url = https://github.com/georgestephanis/short
+[submodule "object-cache-flusher-button"]
+	path = object-cache-flusher-button
+	url = https://github.com/georgestephanis/object-cache-flusher-button
+[submodule "snowfall"]
+	path = snowfall
+	url = https://github.com/georgestephanis/snowfall
+[submodule "chat-room-redux"]
+	path = chat-room-redux
+	url = https://github.com/georgestephanis/chat-room-redux
+[submodule "wp-admin-css-editor"]
+	path = wp-admin-css-editor
+	url = https://github.com/georgestephanis/wp-admin-css-editor
+[submodule "support-widget"]
+	path = support-widget
+	url = https://github.com/georgestephanis/support-widget
+[submodule "domain-restricted-registration"]
+	path = domain-restricted-registration
+	url = https://github.com/georgestephanis/domain-restricted-registration
+[submodule "daily-digest"]
+	path = daily-digest
+	url = https://github.com/georgestephanis/daily-digest
+[submodule "t3admin"]
+	path = t3admin
+	url = https://github.com/georgestephanis/t3admin
+[submodule "connector-priority"]
+	path = connector-priority
+	url = https://github.com/georgestephanis/connector-priority
