@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,11 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.0.3 =
+*   Fixed a bug where submitting the Client Portal login key could blank the page instead of logging the client in (a redirect was resolving the current URL too early in the request lifecycle).
+*   The Client Portal block now has per-block toggles for task submission (on by default) and out-of-office requests (off by default), so a dashboard can be display-only for tasks or hide time-off entirely.
+*   Out-of-office requests are now their own module (Ndizi PM → Settings → Active Modules), so admins who don't need them can turn off the admin screen and portal support site-wide.
 
 = 1.0.2 =
 *   Google Fonts (Inter & Outfit) are now opt-in: a new Settings → Typography toggle, off by default, gates all requests to Google's font servers. When disabled, the UI uses a web-safe system font stack.

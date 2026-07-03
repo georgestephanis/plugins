@@ -40,7 +40,9 @@ class Ndizi_Meta_Boxes {
 		add_meta_box( 'ndizi_contact_details', __( 'Contact Details', 'ndizi-project-management' ), array( __CLASS__, 'render_contact_meta_box' ), 'ndizi_contact', 'normal', 'high' );
 
 		// Time Off Meta Box
-		add_meta_box( 'ndizi_time_off_details', __( 'Time Off Details', 'ndizi-project-management' ), array( __CLASS__, 'render_time_off_meta_box' ), 'ndizi_time_off', 'normal', 'high' );
+		if ( Ndizi_Project_Management::is_module_active( 'time_off' ) ) {
+			add_meta_box( 'ndizi_time_off_details', __( 'Time Off Details', 'ndizi-project-management' ), array( __CLASS__, 'render_time_off_meta_box' ), 'ndizi_time_off', 'normal', 'high' );
+		}
 	}
 
 	/**

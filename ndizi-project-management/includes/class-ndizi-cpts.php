@@ -247,46 +247,48 @@ class Ndizi_CPTs {
 		);
 
 		// Time Off Request
-		register_post_type(
-			'ndizi_time_off',
-			array(
-				'labels'          => array(
-					'name'               => __( 'Time Off Requests', 'ndizi-project-management' ),
-					'singular_name'      => __( 'Time Off Request', 'ndizi-project-management' ),
-					'add_new'            => __( 'Request Time Off', 'ndizi-project-management' ),
-					'add_new_item'       => __( 'Request Time Off', 'ndizi-project-management' ),
-					'edit_item'          => __( 'Edit Request', 'ndizi-project-management' ),
-					'new_item'           => __( 'New Request', 'ndizi-project-management' ),
-					'view_item'          => __( 'View Request', 'ndizi-project-management' ),
-					'search_items'       => __( 'Search Requests', 'ndizi-project-management' ),
-					'not_found'          => __( 'No requests found', 'ndizi-project-management' ),
-					'not_found_in_trash' => __( 'No requests found in Trash', 'ndizi-project-management' ),
-				),
-				'public'          => false,
-				'show_ui'         => true,
-				'show_in_menu'    => 'ndizi-pm',
-				'menu_icon'       => 'dashicons-calendar-alt',
-				'capability_type' => 'post',
-				'capabilities'    => array(
-					'edit_posts'             => 'ndizi_manage_time',
-					'edit_others_posts'      => 'ndizi_manage_time',
-					'publish_posts'          => 'ndizi_manage_time',
-					'read_private_posts'     => 'ndizi_manage_time',
-					'create_posts'           => 'ndizi_manage_time',
-					'delete_posts'           => 'ndizi_manage_time',
-					'delete_private_posts'   => 'ndizi_manage_time',
-					'delete_published_posts' => 'ndizi_manage_time',
-					'delete_others_posts'    => 'ndizi_manage_time',
-					'edit_private_posts'     => 'ndizi_manage_time',
-					'edit_published_posts'   => 'ndizi_manage_time',
-				),
-				'map_meta_cap'    => true,
-				'hierarchical'    => false,
-				'supports'        => array( 'title', 'editor' ),
-				'show_in_rest'    => true,
-				'has_archive'     => false,
-			)
-		);
+		if ( Ndizi_Project_Management::is_module_active( 'time_off' ) ) {
+			register_post_type(
+				'ndizi_time_off',
+				array(
+					'labels'          => array(
+						'name'               => __( 'Time Off Requests', 'ndizi-project-management' ),
+						'singular_name'      => __( 'Time Off Request', 'ndizi-project-management' ),
+						'add_new'            => __( 'Request Time Off', 'ndizi-project-management' ),
+						'add_new_item'       => __( 'Request Time Off', 'ndizi-project-management' ),
+						'edit_item'          => __( 'Edit Request', 'ndizi-project-management' ),
+						'new_item'           => __( 'New Request', 'ndizi-project-management' ),
+						'view_item'          => __( 'View Request', 'ndizi-project-management' ),
+						'search_items'       => __( 'Search Requests', 'ndizi-project-management' ),
+						'not_found'          => __( 'No requests found', 'ndizi-project-management' ),
+						'not_found_in_trash' => __( 'No requests found in Trash', 'ndizi-project-management' ),
+					),
+					'public'          => false,
+					'show_ui'         => true,
+					'show_in_menu'    => 'ndizi-pm',
+					'menu_icon'       => 'dashicons-calendar-alt',
+					'capability_type' => 'post',
+					'capabilities'    => array(
+						'edit_posts'             => 'ndizi_manage_time',
+						'edit_others_posts'      => 'ndizi_manage_time',
+						'publish_posts'          => 'ndizi_manage_time',
+						'read_private_posts'     => 'ndizi_manage_time',
+						'create_posts'           => 'ndizi_manage_time',
+						'delete_posts'           => 'ndizi_manage_time',
+						'delete_private_posts'   => 'ndizi_manage_time',
+						'delete_published_posts' => 'ndizi_manage_time',
+						'delete_others_posts'    => 'ndizi_manage_time',
+						'edit_private_posts'     => 'ndizi_manage_time',
+						'edit_published_posts'   => 'ndizi_manage_time',
+					),
+					'map_meta_cap'    => true,
+					'hierarchical'    => false,
+					'supports'        => array( 'title', 'editor' ),
+					'show_in_rest'    => true,
+					'has_archive'     => false,
+				)
+			);
+		}
 	}
 
 	/**
@@ -582,66 +584,68 @@ class Ndizi_CPTs {
 		);
 
 		// Time Off Meta
-		register_post_meta(
-			'ndizi_time_off',
-			'_ndizi_time_off_start_date',
-			array(
-				'show_in_rest'      => true,
-				'single'            => true,
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-		register_post_meta(
-			'ndizi_time_off',
-			'_ndizi_time_off_end_date',
-			array(
-				'show_in_rest'      => true,
-				'single'            => true,
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-		register_post_meta(
-			'ndizi_time_off',
-			'_ndizi_time_off_type',
-			array(
-				'show_in_rest'      => true,
-				'single'            => true,
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-		register_post_meta(
-			'ndizi_time_off',
-			'_ndizi_time_off_status',
-			array(
-				'show_in_rest'      => true,
-				'single'            => true,
-				'type'              => 'string',
-				'sanitize_callback' => 'sanitize_text_field',
-			)
-		);
-		register_post_meta(
-			'ndizi_time_off',
-			'_ndizi_time_off_user_id',
-			array(
-				'show_in_rest'      => true,
-				'single'            => true,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-			)
-		);
-		register_post_meta(
-			'ndizi_time_off',
-			'_ndizi_time_off_client_id',
-			array(
-				'show_in_rest'      => true,
-				'single'            => true,
-				'type'              => 'integer',
-				'sanitize_callback' => 'absint',
-			)
-		);
+		if ( Ndizi_Project_Management::is_module_active( 'time_off' ) ) {
+			register_post_meta(
+				'ndizi_time_off',
+				'_ndizi_time_off_start_date',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_time_off',
+				'_ndizi_time_off_end_date',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_time_off',
+				'_ndizi_time_off_type',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_time_off',
+				'_ndizi_time_off_status',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_time_off',
+				'_ndizi_time_off_user_id',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'integer',
+					'sanitize_callback' => 'absint',
+				)
+			);
+			register_post_meta(
+				'ndizi_time_off',
+				'_ndizi_time_off_client_id',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'integer',
+					'sanitize_callback' => 'absint',
+				)
+			);
+		}
 	}
 
 	/**

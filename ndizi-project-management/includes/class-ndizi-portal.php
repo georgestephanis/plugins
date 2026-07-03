@@ -307,7 +307,7 @@ class Ndizi_Portal {
 		}
 
 		// Submit Time-off Request
-		if ( isset( $_POST['ndizi_submit_time_off_portal'] ) && isset( $_POST['ndizi_time_off_start'] ) ) {
+		if ( Ndizi_Project_Management::is_module_active( 'time_off' ) && isset( $_POST['ndizi_submit_time_off_portal'] ) && isset( $_POST['ndizi_time_off_start'] ) ) {
 			check_admin_referer( 'ndizi_portal_submit_time_off', '_wpnonce' );
 
 			$start_date = sanitize_text_field( wp_unslash( $_POST['ndizi_time_off_start'] ) );
@@ -484,6 +484,9 @@ class Ndizi_Portal {
 			),
 			$atts
 		);
+
+		// The site-wide module switch always wins over a block's own setting.
+		$atts['enableTimeOff'] = $atts['enableTimeOff'] && Ndizi_Project_Management::is_module_active( 'time_off' );
 
 		$client_id = self::get_authenticated_client_id();
 
