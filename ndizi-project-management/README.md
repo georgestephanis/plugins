@@ -17,7 +17,7 @@ The [blueprint](playground/blueprint.json) installs only this plugin from the mo
 ### 💎 Premium Responsive Design
 
 - **Admin Dashboards**: Gorgeous, CSS-only reports and responsive visualizations representing team productivity, billable time distributions, and project health.
-- **Client Portal**: A premium, glassmorphic client-facing interface utilizing CSS transitions, visual progress bars, and responsive layouts. Embed it with the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`).
+- **Client Portal**: A premium, glassmorphic client-facing interface utilizing CSS transitions, visual progress bars, and responsive layouts. Embed it with the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block (`ndizi/client-portal`), each with its own toggles for task submission and out-of-office requests. A **Copy Portal Link** row action on the Clients list table copies a client's ready-to-use login link to the clipboard.
 - **Gantt Charts**: A custom CSS Grid and SVG-based Gantt chart system to render project timelines without loading bloated, slow third-party chart libraries.
 - **Standalone PWA Companion App**: A distraction-free, installable utility page (`admin.php?page=ndizi-tracker-standalone`) that runs without the WordPress admin menu or admin bar. Built with a dark glassmorphic interface, a ticking digital clock, and live lists to review or delete today's entries. Fully responsive at small-screen sizes. Supports a `?desc=` URL parameter to pre-fill the description field (used by the Chrome extension). Requests browser notification permission on load and fires a push notification when the active timer exceeds 8 hours.
 - **Chrome Extension**: A companion browser extension (`chrome-extension/`) that connects to the site's REST API and lets users start/stop timers, browse projects and tasks, and open the standalone tracker with a pre-filled description — from any browser tab.
@@ -88,6 +88,7 @@ Features are independently toggleable from the Settings page (`admin.php?page=nd
 | `gantt` | Gantt chart timeline views in the admin |
 | `integrations` | Outbound webhooks and Slack alerts |
 | `calendar` | Google Calendar sync for tasks and time entries, iCal subscription feed |
+| `time_off` | Time Off Requests admin screen, out-of-office portal form |
 
 All modules default to **active** on a fresh install; no configuration required to use the full feature set.
 
@@ -246,7 +247,9 @@ Transactional logs are recorded in a dedicated table to prevent `wp_posts` datab
 
 Options configured in the settings dashboard:
 
-- `ndizi_active_modules` (array of strings) — List of active module slugs (`invoicing`, `portal`, `tracker`, `notifications`, `gantt`, `integrations`, `calendar`). Defaults to all modules active when not set.
+- `ndizi_active_modules` (array of strings) — List of active module slugs (`invoicing`, `portal`, `tracker`, `notifications`, `gantt`, `integrations`, `calendar`, `time_off`). Defaults to all modules active when not set.
+- `ndizi_portal_pages` (array of post IDs) — Cached list of published pages detected as containing the Client Portal block; kept in sync via `save_post`/`deleted_post` hooks.
+- `ndizi_portal_page_id` (int) — Admin-selected default portal page, used to resolve a client's login link when more than one page qualifies.
 - `ndizi_adminbar_icon` (string) — Admin bar quick-timer icon (`banana`, `clock`, `punch_clock`, `hourglass`).
 - `ndizi_lock_date` (string) — Date string; time entries on or before this date are locked and cannot be created, edited, or deleted.
 - `ndizi_webhook_url` (string) — Endpoint URL for outbound event payload POST requests.
