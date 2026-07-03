@@ -60,6 +60,19 @@ jobs:
           # slug/v* tag and target the freshly pushed version-bump commit.
           fetch-depth: 0
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Pin npm version
+        # Without an explicit setup-node step, the runner's bundled npm version
+        # floats with each ubuntu-latest image update, which can resolve
+        # optional peer deps (e.g. stylelint) differently than the npm version
+        # used to generate a plugin's package-lock.json — causing `npm ci` to
+        # reject an otherwise-valid lockfile as "out of sync". Pin to match.
+        run: npm install -g npm@11.11.0
+
       - name: Initialize submodule if needed
         run: |
           SLUG="${{ inputs.plugin }}"
