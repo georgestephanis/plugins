@@ -32,6 +32,14 @@
     "linkColor": {
       "type": "string",
       "default": "#7B4B9E"
+    },
+    "enableTaskSubmission": {
+      "type": "boolean",
+      "default": true
+    },
+    "enableTimeOff": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
