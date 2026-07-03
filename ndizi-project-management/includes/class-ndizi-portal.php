@@ -110,11 +110,11 @@ class Ndizi_Portal {
 		}
 
 		$page_id = (int) get_option( 'ndizi_portal_page_id' );
-		if ( ! $page_id ) {
+		if ( ! $page_id || 'publish' !== get_post_status( $page_id ) ) {
 			$pages   = self::get_portal_pages();
 			$page_id = ! empty( $pages ) ? key( $pages ) : 0;
 		}
-		if ( ! $page_id || ! get_post( $page_id ) ) {
+		if ( ! $page_id || 'publish' !== get_post_status( $page_id ) ) {
 			return false;
 		}
 

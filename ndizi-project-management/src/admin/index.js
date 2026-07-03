@@ -311,16 +311,51 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			e.preventDefault();
 			const $link = $( this );
 			const original = $link.text();
+			const url = $link.data( 'url' );
 
-			window.navigator.clipboard
-				.writeText( $link.data( 'url' ) )
-				.then( function () {
-					$link.text( 'Copied!' );
-					setTimeout( function () {
-						$link.text( original );
-					}, 1500 );
-				} );
+			const showCopied = function () {
+				$link.text( 'Copied!' );
+				setTimeout( function () {
+					$link.text( original );
+				}, 1500 );
+			};
+
+			if ( window.navigator.clipboard ) {
+				window.navigator.clipboard
+					.writeText( url )
+					.then( showCopied, function () {
+						copyWithFallback( url, showCopied );
+					} );
+			} else {
+				copyWithFallback( url, showCopied );
+			}
 		} );
+	}
+
+	/**
+	 * Copy text using a temporary input + execCommand, for non-secure
+	 * contexts (HTTP) or browsers without the Clipboard API.
+	 *
+	 * @param {string}   text     Text to copy.
+	 * @param {Function} onCopied Called only if the copy actually succeeded.
+	 */
+	function copyWithFallback( text, onCopied ) {
+		const $tempInput = $( '<input>' ).val( text ).css( {
+			position: 'fixed',
+			top: '-1000px',
+		} );
+		$( 'body' ).append( $tempInput );
+		$tempInput[ 0 ].select();
+		let succeeded = false;
+		try {
+			succeeded = document.execCommand( 'copy' );
+		} catch ( err ) {
+			succeeded = false;
+		}
+		$tempInput.remove();
+		if ( succeeded ) {
+			onCopied();
+		}
 	}
 
 	/**

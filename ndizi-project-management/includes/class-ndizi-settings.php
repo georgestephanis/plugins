@@ -100,7 +100,7 @@ class Ndizi_Settings {
 				$updated = true;
 			}
 
-			if ( isset( $_POST['ndizi_portal_page_id'] ) ) {
+			if ( isset( $_POST['ndizi_portal_page_id'] ) && Ndizi_Project_Management::is_module_active( 'portal' ) && class_exists( 'Ndizi_Portal' ) ) {
 				$portal_page_id = absint( $_POST['ndizi_portal_page_id'] );
 				if ( array_key_exists( $portal_page_id, Ndizi_Portal::get_portal_pages() ) ) {
 					update_option( 'ndizi_portal_page_id', $portal_page_id );
@@ -940,6 +940,7 @@ class Ndizi_Settings {
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
 					</div>
 
+					<?php if ( Ndizi_Project_Management::is_module_active( 'portal' ) && class_exists( 'Ndizi_Portal' ) ) : ?>
 					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Client Portal', 'ndizi-project-management' ); ?></h2>
 					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Choose which page the "Copy Portal Link" client list action should point clients to.', 'ndizi-project-management' ); ?></p>
 
@@ -970,6 +971,7 @@ class Ndizi_Settings {
 							<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Multiple pages contain the Client Portal block. Pick the one clients should log in through.', 'ndizi-project-management' ); ?></p>
 						<?php endif; ?>
 					</div>
+					<?php endif; ?>
 
 					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Typography', 'ndizi-project-management' ); ?></h2>
 					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Control whether the plugin loads webfonts from a third party.', 'ndizi-project-management' ); ?></p>

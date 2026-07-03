@@ -46,6 +46,10 @@ class Ndizi_List_Tables {
 			return $actions;
 		}
 
+		if ( ! Ndizi_Project_Management::is_module_active( 'portal' ) || ! class_exists( 'Ndizi_Portal' ) ) {
+			return $actions;
+		}
+
 		$link = Ndizi_Portal::get_client_portal_link( $post->ID );
 		if ( ! $link ) {
 			return $actions;
