@@ -245,10 +245,10 @@ class Ndizi_Portal {
 			$client_id = self::get_client_id_by_token( $token );
 			if ( $client_id ) {
 				self::set_token_cookie( $token, time() + ( 30 * DAY_IN_SECONDS ) );
-				wp_safe_redirect( get_permalink() );
+				wp_safe_redirect( remove_query_arg( 'ndizi_portal_login' ) );
 				exit;
 			} else {
-				wp_safe_redirect( add_query_arg( 'ndizi_auth_error', '1', get_permalink() ) );
+				wp_safe_redirect( add_query_arg( 'ndizi_auth_error', '1' ) );
 				exit;
 			}
 		}
@@ -256,7 +256,7 @@ class Ndizi_Portal {
 		// 3. Logout
 		if ( isset( $_GET['ndizi_logout'] ) ) {
 			self::set_token_cookie( '', time() - YEAR_IN_SECONDS );
-			wp_safe_redirect( remove_query_arg( 'ndizi_logout', get_permalink() ) );
+			wp_safe_redirect( remove_query_arg( 'ndizi_logout' ) );
 			exit;
 		}
 
@@ -300,7 +300,7 @@ class Ndizi_Portal {
 					// Trigger email notifications
 					do_action( 'ndizi_client_submitted_task', $task_id, $project_id, $client_id );
 
-					wp_safe_redirect( add_query_arg( 'ndizi_task_success', '1', get_permalink() ) );
+					wp_safe_redirect( add_query_arg( 'ndizi_task_success', '1' ) );
 					exit;
 				}
 			}
@@ -331,7 +331,7 @@ class Ndizi_Portal {
 				update_post_meta( $time_off_id, '_ndizi_time_off_status', 'pending' );
 				update_post_meta( $time_off_id, '_ndizi_time_off_client_id', $client_id );
 
-				wp_safe_redirect( add_query_arg( 'ndizi_time_off_success', '1', get_permalink() ) );
+				wp_safe_redirect( add_query_arg( 'ndizi_time_off_success', '1' ) );
 				exit;
 			}
 		}
@@ -462,7 +462,7 @@ class Ndizi_Portal {
 						}
 					}
 
-					wp_safe_redirect( get_permalink() );
+					wp_safe_redirect( remove_query_arg( 'ndizi_submit_portal_comment' ) );
 					exit;
 				}
 			}
