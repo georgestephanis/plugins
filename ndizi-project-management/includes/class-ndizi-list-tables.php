@@ -34,6 +34,30 @@ class Ndizi_List_Tables {
 		add_filter( 'default_hidden_columns', array( __CLASS__, 'set_default_hidden_columns' ), 10, 2 );
 
 		add_filter( 'pre_get_posts', array( __CLASS__, 'restrict_posts_query' ) );
+
+		add_filter( 'post_row_actions', array( __CLASS__, 'add_client_copy_link_action' ), 10, 2 );
+	}
+
+	/**
+	 * Add a "Copy Portal Link" row action to the Clients list table.
+	 */
+	public static function add_client_copy_link_action( $actions, $post ) {
+		if ( 'ndizi_client' !== $post->post_type ) {
+			return $actions;
+		}
+
+		$link = Ndizi_Portal::get_client_portal_link( $post->ID );
+		if ( ! $link ) {
+			return $actions;
+		}
+
+		$actions['ndizi_copy_link'] = sprintf(
+			'<a href="#" class="ndizi-copy-portal-link" data-url="%s">%s</a>',
+			esc_url( $link ),
+			esc_html__( 'Copy Portal Link', 'ndizi-project-management' )
+		);
+
+		return $actions;
 	}
 
 	/**

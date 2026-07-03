@@ -19,6 +19,106 @@ class Ndizi_Portal {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_action( 'wp_ajax_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );
 		add_action( 'wp_ajax_nopriv_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );
+		add_action( 'save_post', array( __CLASS__, 'track_portal_page_on_save' ), 10, 2 );
+		add_action( 'deleted_post', array( __CLASS__, 'untrack_portal_page_on_delete' ) );
+	}
+
+	/**
+	 * Get published posts/pages containing the Client Portal block, cached in
+	 * the `ndizi_portal_pages` option (ID => title) and kept current by
+	 * track_portal_page_on_save()/untrack_portal_page_on_delete(). Falls back
+	 * to a one-time site scan if the cache has never been built yet.
+	 *
+	 * @return array<int,string> Post ID => title.
+	 */
+	public static function get_portal_pages() {
+		$cached = get_option( 'ndizi_portal_pages', null );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		// Narrow to posts whose content contains the block's comment delimiter
+		// via WP's own search (a post_content LIKE) before the has_block()
+		// check, rather than scanning every published post on the site.
+		$pages = array();
+		$ids   = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				's'              => 'wp:ndizi/client-portal',
+			)
+		);
+		foreach ( $ids as $post_id ) {
+			if ( has_block( 'ndizi/client-portal', get_post_field( 'post_content', $post_id ) ) ) {
+				$pages[ $post_id ] = get_the_title( $post_id );
+			}
+		}
+
+		update_option( 'ndizi_portal_pages', $pages );
+		return $pages;
+	}
+
+	/**
+	 * Keep the cached portal-page list current whenever a post is saved.
+	 */
+	public static function track_portal_page_on_save( $post_id, $post ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		$pages  = get_option( 'ndizi_portal_pages', array() );
+		$pages  = is_array( $pages ) ? $pages : array();
+		$has_it = 'publish' === $post->post_status && has_block( 'ndizi/client-portal', $post->post_content );
+
+		if ( $has_it ) {
+			$pages[ $post_id ] = $post->post_title;
+		} else {
+			unset( $pages[ $post_id ] );
+		}
+		update_option( 'ndizi_portal_pages', $pages );
+
+		// Auto-pick a default the first time a portal page shows up.
+		if ( $has_it && ! get_option( 'ndizi_portal_page_id' ) ) {
+			update_option( 'ndizi_portal_page_id', $post_id );
+		}
+	}
+
+	/**
+	 * Drop a deleted post from the cached portal-page list.
+	 */
+	public static function untrack_portal_page_on_delete( $post_id ) {
+		$pages = get_option( 'ndizi_portal_pages', array() );
+		if ( is_array( $pages ) && isset( $pages[ $post_id ] ) ) {
+			unset( $pages[ $post_id ] );
+			update_option( 'ndizi_portal_pages', $pages );
+		}
+	}
+
+	/**
+	 * Build a client's magic-link portal login URL.
+	 *
+	 * @param int $client_id Client post ID.
+	 * @return string|false Login URL, or false if no auth key or portal page is available.
+	 */
+	public static function get_client_portal_link( $client_id ) {
+		$key = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
+		if ( ! $key ) {
+			return false;
+		}
+
+		$page_id = (int) get_option( 'ndizi_portal_page_id' );
+		if ( ! $page_id ) {
+			$pages   = self::get_portal_pages();
+			$page_id = ! empty( $pages ) ? key( $pages ) : 0;
+		}
+		if ( ! $page_id || ! get_post( $page_id ) ) {
+			return false;
+		}
+
+		return add_query_arg( 'ndizi_token', $key, get_permalink( $page_id ) );
 	}
 
 	/**

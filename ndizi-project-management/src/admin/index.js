@@ -23,6 +23,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		initInvoiceAggregator();
 		initTrackerLauncher();
 		initSelectOnClick();
+		initCopyPortalLink();
 	} );
 
 	/**
@@ -299,6 +300,26 @@ import { formatTime, createTimer } from '../shared/timer.js';
 					'width=380,height=640,resizable=yes,scrollbars=yes'
 				);
 			}
+		} );
+	}
+
+	/**
+	 * Copy a client's portal login link to the clipboard from the row action
+	 */
+	function initCopyPortalLink() {
+		$( document ).on( 'click', '.ndizi-copy-portal-link', function ( e ) {
+			e.preventDefault();
+			const $link = $( this );
+			const original = $link.text();
+
+			window.navigator.clipboard
+				.writeText( $link.data( 'url' ) )
+				.then( function () {
+					$link.text( 'Copied!' );
+					setTimeout( function () {
+						$link.text( original );
+					}, 1500 );
+				} );
 		} );
 	}
 
