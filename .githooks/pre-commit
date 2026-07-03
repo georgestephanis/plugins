@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Keep each plugin's package-lock.json in sync with its package.json.
+# ponytail: package.json only, per-plugin dirs; add workspaces if this grows.
+set -euo pipefail
+
+changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^[^/]+/package\.json$' || true)
+
+for pkg in $changed; do
+	dir=$(dirname "$pkg")
+	lock="$dir/package-lock.json"
+	[ -f "$lock" ] || continue
+	echo "pre-commit: syncing $lock"
+	( cd "$dir" && npm install --package-lock-only --no-audit --no-fund )
+	git add "$lock"
+done
