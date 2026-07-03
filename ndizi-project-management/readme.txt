@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,8 +31,8 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 *   **Date-Range Filtered Reports**: The Reports dashboard supports start date / end date, project, and team member filters with bookmarkable URLs. KPI cards surface total hours, billable hours, revenue, estimated salary cost, and profit margin.
 *   **Invoice Generation & Exports**: Automatically aggregate un-invoiced billable hours into detailed project invoices. Export invoice line items to CSV or JSON formats, or print/save them using a clean, professional print stylesheet.
 *   **QuickBooks CSV Export**: Export filtered time report data as a QuickBooks-compatible CSV file (Customer, Item, Date, Hours, Rate, Description) for direct import into accounting software.
-*   **Glassmorphic Client Portal**: A premium front-end experience available as the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block in the block editor. Clients can review projects, verify tasks, download invoices, and submit new requests.
-*   **Secure Passwordless Portal Auth**: Authorize client portal sessions using unique, secure client authentication keys, avoiding the need for clients to create standard WordPress user accounts.
+*   **Glassmorphic Client Portal**: A premium front-end experience available as the `[ndizi_client_portal]` shortcode or the **Ndizi Client Portal** block in the block editor. Clients can review projects, verify tasks, download invoices, and submit new requests. The block has its own toggles for task submission and out-of-office requests, so a dashboard can be made display-only or hide time-off entirely.
+*   **Secure Passwordless Portal Auth**: Authorize client portal sessions using unique, secure client authentication keys, avoiding the need for clients to create standard WordPress user accounts. A **Copy Portal Link** row action on the Clients list table copies a client's ready-to-use login link straight to the clipboard.
 *   **Collaborative Discussions**: Task and project comment boxes are filtered and embedded into the Client Portal, allowing team members and clients to exchange feedback and upload file attachments.
 *   **Email Notifications**: Sends emails when a task is assigned or reassigned to a team member, and when a task's status changes.
 *   **Outbound Webhooks & Slack**: Dispatches JSON event payloads to a configurable webhook endpoint and formatted messages to a Slack incoming webhook on timer events, time entry CRUD, CPT status transitions, and task/invoice metadata changes.
@@ -43,7 +43,7 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 *   **Browser Extension**: A companion Chrome extension (`chrome-extension/`) connects to the site's REST API to start/stop timers, browse projects and tasks, and open the standalone tracker — from any browser tab.
 *   **REST API Integration**: Custom API routes under `/wp-json/ndizi/v1` let desktop widgets or mobile timekeepers start, stop, log, list, edit, and delete timer entries remotely.
 *   **WP-CLI Commands**: Manage timers from the terminal with `wp ndizi time start`, `wp ndizi time stop`, and `wp ndizi time status`. Accepts project/task names or IDs, user login or ID, description, and billable flag.
-*   **Modular Architecture**: Each major feature group (Invoicing, Client Portal, Admin Bar Tracker, Email Notifications, Gantt Charts, Webhooks) can be individually toggled on or off from the Settings page. Inactive modules are not loaded, reducing overhead on sites that don't need every feature.
+*   **Modular Architecture**: Each major feature group (Invoicing, Client Portal, Out-of-Office Requests, Admin Bar Tracker, Email Notifications, Gantt Charts, Webhooks, Google Calendar Sync) can be individually toggled on or off from the Settings page. Inactive modules are not loaded, reducing overhead on sites that don't need every feature.
 
 == Installation ==
 
@@ -133,6 +133,12 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.0.3 =
+*   Fixed a bug where submitting the Client Portal login key could blank the page instead of logging the client in (a redirect was resolving the current URL too early in the request lifecycle).
+*   The Client Portal block now has per-block toggles for task submission (on by default) and out-of-office requests (off by default), so a dashboard can be display-only for tasks or hide time-off entirely.
+*   Out-of-office requests are now their own module (Ndizi PM → Settings → Active Modules), so admins who don't need them can turn off the admin screen and portal support site-wide.
+*   Added a **Copy Portal Link** row action to the Clients list table that copies a client's login link to the clipboard. The plugin tracks which published page(s) contain the Client Portal block, and a new Settings → Client Portal section lets you pick the default page when more than one qualifies.
 
 = 1.0.2 =
 *   Google Fonts (Inter & Outfit) are now opt-in: a new Settings → Typography toggle, off by default, gates all requests to Google's font servers. When disabled, the UI uses a web-safe system font stack.

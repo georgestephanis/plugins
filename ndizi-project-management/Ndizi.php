@@ -5,7 +5,7 @@ Plugin URI: https://wordpress.org/plugins/ndizi-project-management/
 Description: Ndizi Project Management adds a complete project management system to WordPress.
 Author: George Stephanis
 Author URI: https://georgestephanis.wordpress.com
-Version: 1.0.2
+Version: 1.0.3
 Requires at least: 6.9
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin constants
 define( 'NDIZI_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NDIZI_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'NDIZI_VERSION', '1.0.2' );
+define( 'NDIZI_VERSION', '1.0.3' );
 
 /**
  * Main Plugin Class
@@ -65,6 +65,9 @@ class Ndizi_Project_Management {
 					'includes/class-ndizi-portal.php',
 				),
 				'init'     => array( 'Ndizi_Portal', 'init' ),
+			),
+			'time_off'      => array(
+				'includes' => array(),
 			),
 			'tracker'       => array(
 				'includes' => array(
@@ -120,6 +123,10 @@ class Ndizi_Project_Management {
 			'portal'        => array(
 				'name' => __( 'Client Portal', 'ndizi-project-management' ),
 				'desc' => __( 'Enables frontend portal block and shortcodes for client reviews, task updates, and comments.', 'ndizi-project-management' ),
+			),
+			'time_off'      => array(
+				'name' => __( 'Out-of-Office Requests', 'ndizi-project-management' ),
+				'desc' => __( 'Adds the Time Off Requests admin screen and lets clients log out-of-office windows from the portal.', 'ndizi-project-management' ),
 			),
 			'tracker'       => array(
 				'name' => __( 'Admin Bar & Quick Tracker', 'ndizi-project-management' ),

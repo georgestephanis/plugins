@@ -166,6 +166,11 @@ if ( ! wp_style_is( 'ndizi-portal-inline', 'registered' ) ) {
 wp_enqueue_style( 'ndizi-portal-inline' );
 wp_add_inline_style( 'ndizi-portal-inline', $ndizi_inline_css );
 
-$ndizi_portal_content = Ndizi_Portal::render_portal_shortcode();
+$ndizi_portal_content = Ndizi_Portal::render_portal_shortcode(
+	array(
+		'enableTaskSubmission' => isset( $attributes['enableTaskSubmission'] ) ? (bool) $attributes['enableTaskSubmission'] : true,
+		'enableTimeOff'        => isset( $attributes['enableTimeOff'] ) ? (bool) $attributes['enableTimeOff'] : false,
+	)
+);
 
 echo '<div id="' . esc_attr( $ndizi_wrapper_id ) . '" class="ndizi-custom-branded-portal">' . $ndizi_portal_content . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

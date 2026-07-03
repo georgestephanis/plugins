@@ -4,6 +4,7 @@ import {
 	InspectorControls,
 	PanelColorSettings,
 } from '@wordpress/block-editor';
+import { PanelBody, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import metadata from './block.json';
 
@@ -16,7 +17,14 @@ import metadata from './block.json';
  * @return {Element} Element to render.
  */
 const Edit = ( { attributes, setAttributes } ) => {
-	const { backgroundColor, textColor, buttonColor, linkColor } = attributes;
+	const {
+		backgroundColor,
+		textColor,
+		buttonColor,
+		linkColor,
+		enableTaskSubmission,
+		enableTimeOff,
+	} = attributes;
 
 	const blockProps = useBlockProps( {
 		style: {
@@ -34,6 +42,33 @@ const Edit = ( { attributes, setAttributes } ) => {
 	return (
 		<>
 			<InspectorControls>
+				<PanelBody
+					title={ __( 'Dashboard Features', 'ndizi-project-management' ) }
+					initialOpen={ true }
+				>
+					<ToggleControl
+						label={ __( 'Allow task submission', 'ndizi-project-management' ) }
+						help={ __(
+							'When off, clients can view their tasks but not submit new ones.',
+							'ndizi-project-management'
+						) }
+						checked={ enableTaskSubmission }
+						onChange={ ( value ) =>
+							setAttributes( { enableTaskSubmission: value } )
+						}
+					/>
+					<ToggleControl
+						label={ __( 'Allow out-of-office requests', 'ndizi-project-management' ) }
+						help={ __(
+							'Lets clients log upcoming out-of-office windows so your team can plan around them.',
+							'ndizi-project-management'
+						) }
+						checked={ enableTimeOff }
+						onChange={ ( value ) =>
+							setAttributes( { enableTimeOff: value } )
+						}
+					/>
+				</PanelBody>
 				<PanelColorSettings
 					title={ __( 'Portal Colors', 'ndizi-project-management' ) }
 					initialOpen={ true }
