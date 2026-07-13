@@ -765,6 +765,16 @@ class Ndizi_REST {
 			$args['search'] = sanitize_text_field( $search );
 		}
 
+		// Date range filter
+		$start_date = $request->get_param( 'start_date' );
+		if ( $start_date ) {
+			$args['start_date'] = sanitize_text_field( $start_date );
+		}
+		$end_date = $request->get_param( 'end_date' );
+		if ( $end_date ) {
+			$args['end_date'] = sanitize_text_field( $end_date );
+		}
+
 		// Order & Orderby
 		$orderby = $request->get_param( 'orderby' );
 		if ( $orderby ) {
