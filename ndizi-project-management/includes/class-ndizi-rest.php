@@ -767,12 +767,12 @@ class Ndizi_REST {
 
 		// Date range filter
 		$start_date = $request->get_param( 'start_date' );
-		if ( $start_date ) {
-			$args['start_date'] = sanitize_text_field( $start_date );
+		if ( $start_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $start_date ) ) {
+			$args['start_date'] = $start_date;
 		}
 		$end_date = $request->get_param( 'end_date' );
-		if ( $end_date ) {
-			$args['end_date'] = sanitize_text_field( $end_date );
+		if ( $end_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end_date ) ) {
+			$args['end_date'] = $end_date;
 		}
 
 		// Order & Orderby
