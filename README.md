@@ -4,6 +4,12 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 
 <!-- deploy-status-start -->
 
+> **⚠ Pending deploys** — the following plugins have trunk versions ahead of the last WordPress.org release.
+>
+> | Plugin | Deployed | Trunk | Action |
+> |--------|----------|-------|--------|
+> | `ai-provider-for-openai-compatible-servers` | 0.0.0 | **1.0.0** | [Run deploy →](https://github.com/georgestephanis/plugins/actions/workflows/deploy.yml) |
+
 <!-- deploy-status-end -->
 
 ## Plugins
@@ -12,6 +18,7 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 |--------|--------|-------------|
 | [404-not-available](404-not-available/) | [georgestephanis/404-not-available](https://github.com/georgestephanis/404-not-available) ¹ ³ | Joke plugin (per [XKCD 1969](https://xkcd.com/1969/)) that replaces the theme's 404 page with a fake "not available in your country" screen. |
 | [add-ids-to-header-tags](add-ids-to-header-tags/) | [georgestephanis/add-ids-to-header-tags](https://github.com/georgestephanis/add-ids-to-header-tags) ¹ | Adds `id` attributes to header tags in post content for deep linking. |
+| [ai-provider-for-openai-compatible-servers](ai-provider-for-openai-compatible-servers/) | [georgestephanis/ai-provider-for-openai-compatible-servers](https://github.com/georgestephanis/ai-provider-for-openai-compatible-servers) ¹ | Connects self-hosted, OpenAI-compatible inference servers (Ollama, LM Studio, vLLM, llama.cpp, LocalAI) to the WordPress AI Client. |
 | [automatic-internal-links](automatic-internal-links/) | [georgestephanis/automatic-internal-links](https://github.com/georgestephanis/automatic-internal-links) ¹ | Inserts callout blocks after paragraphs that link to other posts on the same site. |
 | [big-emoji-comments](big-emoji-comments/) | [georgestephanis/big-emoji-comments](https://github.com/georgestephanis/big-emoji-comments) ¹ | Enlarges comments that consist entirely of emoji. |
 | [blocks-against-wp](blocks-against-wp/) | [georgestephanis/blocks-against-wp](https://github.com/georgestephanis/blocks-against-wp) ¹ ³ | "Blocks Against WordPress" — a Cards Against Humanity–style party game built as editor blocks. |

@@ -12,6 +12,7 @@ on:
         # WordPress.org — do not add them here. See README footnote ³.
         options:
           - add-ids-to-header-tags
+          - ai-provider-for-openai-compatible-servers
           - automatic-internal-links
           - big-emoji-comments
           - category-posts-widget

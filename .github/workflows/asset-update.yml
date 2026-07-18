@@ -13,6 +13,7 @@ on:
         type: choice
         options:
           - add-ids-to-header-tags
+          - ai-provider-for-openai-compatible-servers
           - automatic-internal-links
           - big-emoji-comments
           - category-posts-widget
