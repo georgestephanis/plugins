@@ -102,7 +102,7 @@ class Ndizi_List_Tables {
 				'posts_per_page'         => -1,
 				'fields'                 => 'ids',
 				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
+				'update_post_meta_cache' => true,
 				'update_post_term_cache' => false,
 				'meta_query'             => $meta_query,
 			)
