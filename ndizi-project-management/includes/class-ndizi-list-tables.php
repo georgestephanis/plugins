@@ -45,7 +45,7 @@ class Ndizi_List_Tables {
 	 */
 	public static function get_client_project_ids( $client_id ) {
 		static $cache = array();
-		$client_id = (int) $client_id;
+		$client_id    = (int) $client_id;
 		if ( isset( $cache[ $client_id ] ) ) {
 			return $cache[ $client_id ];
 		}
@@ -76,7 +76,7 @@ class Ndizi_List_Tables {
 	 */
 	public static function get_client_invoice_ids( $client_id ) {
 		static $cache = array();
-		$client_id = (int) $client_id;
+		$client_id    = (int) $client_id;
 		if ( isset( $cache[ $client_id ] ) ) {
 			return $cache[ $client_id ];
 		}
@@ -183,7 +183,7 @@ class Ndizi_List_Tables {
 		echo '<select name="ndizi_filter_client">';
 		printf( '<option value="0">%s</option>', esc_html__( 'All Clients', 'ndizi-project-management' ) );
 		foreach ( $clients as $client ) {
-			printf( '<option value="%1$d" %2$s>%3$s</option>', $client->ID, selected( $selected, $client->ID, false ), esc_html( $client->post_title ) );
+			printf( '<option value="%1$d" %2$s>%3$s</option>', absint( $client->ID ), esc_attr( selected( $selected, $client->ID, false ) ), esc_html( $client->post_title ) );
 		}
 		echo '</select>';
 	}
@@ -213,7 +213,7 @@ class Ndizi_List_Tables {
 		echo '<select name="ndizi_filter_project">';
 		printf( '<option value="0">%s</option>', esc_html__( 'All Projects', 'ndizi-project-management' ) );
 		foreach ( $projects as $project ) {
-			printf( '<option value="%1$d" %2$s>%3$s</option>', $project->ID, selected( $selected, $project->ID, false ), esc_html( $project->post_title ) );
+			printf( '<option value="%1$d" %2$s>%3$s</option>', absint( $project->ID ), esc_attr( selected( $selected, $project->ID, false ) ), esc_html( $project->post_title ) );
 		}
 		echo '</select>';
 	}
@@ -374,8 +374,8 @@ class Ndizi_List_Tables {
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
 				if ( $invoicing_live ) {
-					$new_columns['invoices_count']    = __( 'Invoices', 'ndizi-project-management' );
-					$new_columns['outstanding']       = __( 'Outstanding', 'ndizi-project-management' );
+					$new_columns['invoices_count'] = __( 'Invoices', 'ndizi-project-management' );
+					$new_columns['outstanding']    = __( 'Outstanding', 'ndizi-project-management' );
 				}
 				$new_columns['unbilled_time']  = __( 'Unbilled Time', 'ndizi-project-management' );
 				$new_columns['projects_count'] = __( 'Projects', 'ndizi-project-management' );
@@ -412,7 +412,7 @@ class Ndizi_List_Tables {
 							admin_url( 'edit.php' )
 						)
 					),
-					$count
+					absint( $count )
 				);
 			} else {
 				echo '0';
@@ -438,8 +438,8 @@ class Ndizi_List_Tables {
 					esc_url(
 						add_query_arg(
 							array(
-								'post_type'                   => 'ndizi_invoice',
-								'ndizi_filter_client'         => $post_id,
+								'post_type'           => 'ndizi_invoice',
+								'ndizi_filter_client' => $post_id,
 								'ndizi_filter_invoice_status' => 'outstanding',
 							),
 							admin_url( 'edit.php' )
@@ -458,7 +458,7 @@ class Ndizi_List_Tables {
 					'groupby'    => 'client_id',
 				)
 			);
-			$hours = ! empty( $totals ) ? round( (float) $totals[0]->billable_duration / HOUR_IN_SECONDS, 2 ) : 0;
+			$hours  = ! empty( $totals ) ? round( (float) $totals[0]->billable_duration / HOUR_IN_SECONDS, 2 ) : 0;
 			printf(
 				'<a href="%s">%sh</a>',
 				esc_url(
@@ -488,7 +488,7 @@ class Ndizi_List_Tables {
 							admin_url( 'edit.php' )
 						)
 					),
-					$count
+					absint( $count )
 				);
 			} else {
 				echo '0';
@@ -506,7 +506,7 @@ class Ndizi_List_Tables {
 		} elseif ( 'last_activity' === $column ) {
 			global $wpdb;
 			$table_name = Ndizi_DB::get_table_name();
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name comes from Ndizi_DB, not user input; client id is prepared.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name comes from Ndizi_DB, not user input; client id is prepared.
 			$last = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(start_time) FROM {$table_name} WHERE client_id = %d", $post_id ) );
 			echo $last ? esc_html( $last ) : '-';
 		} elseif ( 'client_status' === $column ) {
@@ -637,7 +637,7 @@ class Ndizi_List_Tables {
 					),
 				)
 			);
-			$count = count( $open_task_ids );
+			$count         = count( $open_task_ids );
 			if ( $count ) {
 				printf(
 					'<a href="%s">%d</a>',
@@ -650,7 +650,7 @@ class Ndizi_List_Tables {
 							admin_url( 'edit.php' )
 						)
 					),
-					$count
+					absint( $count )
 				);
 			} else {
 				echo '0';
