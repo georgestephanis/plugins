@@ -59,13 +59,20 @@ class Ndizi_Reports {
 		// itself is already gated by the ndizi_view_reports capability, and no
 		// state is changed here, so a nonce is not appropriate.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$client_id  = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0;
 		$project_id = isset( $_GET['project_id'] ) ? intval( $_GET['project_id'] ) : 0;
 		$user_id    = isset( $_GET['user_id'] ) ? intval( $_GET['user_id'] ) : 0;
 		$start_date = isset( $_GET['start_date'] ) ? sanitize_text_field( wp_unslash( $_GET['start_date'] ) ) : gmdate( 'Y-m-01' ); // first day of month
 		$end_date   = isset( $_GET['end_date'] ) ? sanitize_text_field( wp_unslash( $_GET['end_date'] ) ) : gmdate( 'Y-m-t' ); // last day of month
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		// Fetch projects and team members for dropdown filters
+		// Fetch clients, projects and team members for dropdown filters
+		$clients  = get_posts(
+			array(
+				'post_type'      => 'ndizi_client',
+				'posts_per_page' => -1,
+			)
+		);
 		$projects = get_posts(
 			array(
 				'post_type'      => 'ndizi_project',
@@ -77,6 +84,7 @@ class Ndizi_Reports {
 		// Query aggregate data
 		$project_totals = Ndizi_DB::get_time_totals(
 			array(
+				'client_id'  => $client_id ? $client_id : null,
 				'project_id' => $project_id ? $project_id : null,
 				'user_id'    => $user_id ? $user_id : null,
 				'start_date' => $start_date,
@@ -87,6 +95,7 @@ class Ndizi_Reports {
 
 		$user_totals = Ndizi_DB::get_time_totals(
 			array(
+				'client_id'  => $client_id ? $client_id : null,
 				'project_id' => $project_id ? $project_id : null,
 				'user_id'    => $user_id ? $user_id : null,
 				'start_date' => $start_date,
@@ -109,6 +118,7 @@ class Ndizi_Reports {
 		// Query detailed entries for profitability calculations
 		$detailed_entries = Ndizi_DB::get_time_entries(
 			array(
+				'client_id'  => $client_id ? $client_id : null,
 				'project_id' => $project_id ? $project_id : null,
 				'user_id'    => $user_id ? $user_id : null,
 				'start_date' => $start_date,
@@ -191,6 +201,18 @@ class Ndizi_Reports {
 					<input type="hidden" name="page" value="ndizi-reports">
 
 					<div class="ndizi-filter-row">
+						<div class="ndizi-filter-col">
+							<label for="client_id"><?php esc_html_e( 'Client', 'ndizi-project-management' ); ?></label>
+							<select name="client_id" id="client_id">
+								<option value="0"><?php esc_html_e( 'All Clients', 'ndizi-project-management' ); ?></option>
+								<?php foreach ( $clients as $cl ) : ?>
+									<option value="<?php echo esc_attr( $cl->ID ); ?>" <?php selected( $client_id, $cl->ID ); ?>>
+										<?php echo esc_html( $cl->post_title ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</div>
+
 						<div class="ndizi-filter-col">
 							<label for="project_id"><?php esc_html_e( 'Project', 'ndizi-project-management' ); ?></label>
 							<select name="project_id" id="project_id">

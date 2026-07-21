@@ -836,12 +836,20 @@ class Ndizi_Portal {
 															$inv_amount = get_post_meta( $inv->ID, '_ndizi_invoice_amount', true );
 															$inv_date   = get_post_meta( $inv->ID, '_ndizi_invoice_date', true );
 															$inv_due    = get_post_meta( $inv->ID, '_ndizi_invoice_due_date', true );
+															$inv_num    = get_post_meta( $inv->ID, '_ndizi_invoice_number', true );
+															$inv_curr   = get_post_meta( $inv->ID, '_ndizi_invoice_currency', true );
+
+															$display_title = ! empty( $inv_num ) ? $inv_num : $inv->post_title;
+															if ( empty( $inv_curr ) ) {
+																$inv_curr = get_option( 'ndizi_default_currency', 'USD' );
+															}
+															$formatted_amount = $inv_amount ? strtoupper( $inv_curr ) . ' ' . number_format( $inv_amount, 2 ) : '-';
 															?>
 															<tr>
-																<td><strong><?php echo esc_html( $inv->post_title ); ?></strong></td>
+																<td><strong><?php echo esc_html( $display_title ); ?></strong></td>
 																<td><?php echo esc_html( $inv_date ); ?></td>
 																<td><?php echo esc_html( $inv_due ); ?></td>
-																<td><?php echo $inv_amount ? '$' . esc_html( number_format( $inv_amount, 2 ) ) : '-'; ?></td>
+																<td><?php echo esc_html( $formatted_amount ); ?></td>
 																<td><span class="ndizi-badge ndizi-invoice-<?php echo esc_attr( $inv_status ); ?>"><?php echo esc_html( $inv_status ); ?></span></td>
 																<td>
 																	<?php
@@ -886,6 +894,102 @@ class Ndizi_Portal {
 								</div>
 							</div>
 						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				// Query direct client invoices without a project
+				$standalone_invoices = get_posts(
+					array(
+						'post_type'      => 'ndizi_invoice',
+						'posts_per_page' => -1,
+						'meta_query'     => array(
+							'relation' => 'AND',
+							array(
+								'key'   => '_ndizi_client_id',
+								'value' => $client_id,
+							),
+							array(
+								'relation' => 'OR',
+								array(
+									'key'     => '_ndizi_project_id',
+									'value'   => 0,
+									'compare' => '=',
+								),
+								array(
+									'key'     => '_ndizi_project_id',
+									'compare' => 'NOT EXISTS',
+								),
+							),
+						),
+					)
+				);
+				if ( ! empty( $standalone_invoices ) ) :
+					?>
+					<div class="ndizi-portal-card" style="margin-top: 30px;">
+						<h3><?php esc_html_e( 'Account & Direct Invoices', 'ndizi-project-management' ); ?></h3>
+						<div class="ndizi-portal-table-wrapper" style="margin-top: 15px;">
+							<table class="ndizi-portal-table">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Invoice #', 'ndizi-project-management' ); ?></th>
+										<th><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
+										<th><?php esc_html_e( 'Due Date', 'ndizi-project-management' ); ?></th>
+										<th><?php esc_html_e( 'Amount', 'ndizi-project-management' ); ?></th>
+										<th><?php esc_html_e( 'Status', 'ndizi-project-management' ); ?></th>
+										<th><?php esc_html_e( 'Actions', 'ndizi-project-management' ); ?></th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php
+									foreach ( $standalone_invoices as $inv ) :
+										$inv_status    = get_post_meta( $inv->ID, '_ndizi_invoice_status', true );
+										$inv_amount    = get_post_meta( $inv->ID, '_ndizi_invoice_amount', true );
+										$inv_date      = get_post_meta( $inv->ID, '_ndizi_invoice_date', true );
+										$inv_due       = get_post_meta( $inv->ID, '_ndizi_invoice_due_date', true );
+										$inv_num       = get_post_meta( $inv->ID, '_ndizi_invoice_number', true );
+										$inv_curr      = get_post_meta( $inv->ID, '_ndizi_invoice_currency', true );
+										$display_title = ! empty( $inv_num ) ? $inv_num : $inv->post_title;
+										if ( empty( $inv_curr ) ) {
+											$inv_curr = get_option( 'ndizi_default_currency', 'USD' );
+										}
+										$formatted_amount = $inv_amount ? strtoupper( $inv_curr ) . ' ' . number_format( $inv_amount, 2 ) : '-';
+										?>
+										<tr>
+											<td><strong><?php echo esc_html( $display_title ); ?></strong></td>
+											<td><?php echo esc_html( $inv_date ); ?></td>
+											<td><?php echo esc_html( $inv_due ); ?></td>
+											<td><?php echo esc_html( $formatted_amount ); ?></td>
+											<td><span class="ndizi-badge ndizi-invoice-<?php echo esc_attr( $inv_status ); ?>"><?php echo esc_html( $inv_status ); ?></span></td>
+											<td>
+												<?php
+												$ndizi_print_url = esc_url(
+													add_query_arg(
+														array(
+															'ndizi_print_invoice' => $inv->ID,
+															'ndizi_token'         => get_post_meta( $client_id, '_ndizi_client_auth_key', true ),
+														),
+														home_url()
+													)
+												);
+												?>
+												<a href="<?php echo $ndizi_print_url; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_url() applied above. ?>" target="_blank" class="ndizi-portal-btn-table">
+													<span class="dashicons dashicons-printer"></span> <?php esc_html_e( 'Print/PDF', 'ndizi-project-management' ); ?>
+												</a>
+												<?php
+												$stripe_publishable = Ndizi_Project_Management::get_secret( 'ndizi_stripe_publishable_key' );
+												if ( $stripe_publishable && 'paid' !== $inv_status ) :
+													?>
+													<button type="button" class="ndizi-portal-btn-table ndizi-pay-invoice-btn" data-invoice-id="<?php echo esc_attr( $inv->ID ); ?>" data-token="<?php echo esc_attr( get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ); ?>">
+														<span class="dashicons dashicons-cart"></span> <?php esc_html_e( 'Pay Online', 'ndizi-project-management' ); ?>
+													</button>
+												<?php endif; ?>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				<?php endif; ?>
 			</div>

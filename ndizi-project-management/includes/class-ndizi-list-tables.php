@@ -312,6 +312,8 @@ class Ndizi_List_Tables {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
+				$new_columns['invoice_num']     = __( 'Invoice #', 'ndizi-project-management' );
+				$new_columns['invoice_client']  = __( 'Client', 'ndizi-project-management' );
 				$new_columns['invoice_project'] = __( 'Project', 'ndizi-project-management' );
 				$new_columns['invoice_status']  = __( 'Status', 'ndizi-project-management' );
 				$new_columns['invoice_amount']  = __( 'Amount', 'ndizi-project-management' );
@@ -327,7 +329,21 @@ class Ndizi_List_Tables {
 	 * Render custom column contents for Invoices list
 	 */
 	public static function render_invoice_columns( $column, $post_id ) {
-		if ( 'invoice_project' === $column ) {
+		if ( 'invoice_num' === $column ) {
+			$num = get_post_meta( $post_id, '_ndizi_invoice_number', true );
+			echo $num ? esc_html( $num ) : '-';
+		} elseif ( 'invoice_client' === $column ) {
+			$client_id = get_post_meta( $post_id, '_ndizi_client_id', true );
+			if ( ! $client_id ) {
+				$project_id = get_post_meta( $post_id, '_ndizi_project_id', true );
+				$client_id  = $project_id ? get_post_meta( $project_id, '_ndizi_client_id', true ) : 0;
+			}
+			if ( $client_id ) {
+				echo '<a href="' . esc_url( get_edit_post_link( $client_id ) ) . '">' . esc_html( get_the_title( $client_id ) ) . '</a>';
+			} else {
+				echo '-';
+			}
+		} elseif ( 'invoice_project' === $column ) {
 			$project_id = get_post_meta( $post_id, '_ndizi_project_id', true );
 			if ( $project_id ) {
 				echo '<a href="' . esc_url( get_edit_post_link( $project_id ) ) . '">' . esc_html( get_the_title( $project_id ) ) . '</a>';
@@ -345,8 +361,12 @@ class Ndizi_List_Tables {
 			$label  = isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Draft', 'ndizi-project-management' );
 			echo '<span class="ndizi-badge ndizi-invoice-' . esc_attr( $status ) . '">' . esc_html( $label ) . '</span>';
 		} elseif ( 'invoice_amount' === $column ) {
-			$amount = get_post_meta( $post_id, '_ndizi_invoice_amount', true );
-			echo $amount ? '$' . esc_html( number_format( $amount, 2 ) ) : '-';
+			$amount   = get_post_meta( $post_id, '_ndizi_invoice_amount', true );
+			$currency = get_post_meta( $post_id, '_ndizi_invoice_currency', true );
+			if ( ! $currency ) {
+				$currency = get_option( 'ndizi_default_currency', 'USD' );
+			}
+			echo $amount ? esc_html( strtoupper( $currency ) . ' ' . number_format( $amount, 2 ) ) : '-';
 		} elseif ( 'invoice_due' === $column ) {
 			$due = get_post_meta( $post_id, '_ndizi_invoice_due_date', true );
 			echo $due ? esc_html( $due ) : '-';

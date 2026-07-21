@@ -21,6 +21,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		initAuthKeyRegen();
 		initTimeTracker();
 		initInvoiceAggregator();
+		initLineItemsEditor();
 		initTrackerLauncher();
 		initSelectOnClick();
 		initCopyPortalLink();
@@ -283,6 +284,68 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			} );
 
 			$( '#ndizi_invoice_amount' ).val( totalAmount.toFixed( 2 ) );
+		} );
+	}
+
+	/**
+	 * Dynamic Line Items Table Editor
+	 */
+	function initLineItemsEditor() {
+		const $table = $( '#ndizi_line_items_table' );
+		if ( ! $table.length ) {
+			return;
+		}
+
+		function calcRow( $row ) {
+			const qty = parseFloat( $row.find( '.ndizi-li-qty' ).val() ) || 0;
+			const price =
+				parseFloat( $row.find( '.ndizi-li-price' ).val() ) || 0;
+			$row.find( '.ndizi-li-amount' ).val( ( qty * price ).toFixed( 2 ) );
+		}
+
+		$( document ).on(
+			'input change',
+			'.ndizi-li-qty, .ndizi-li-price',
+			function () {
+				calcRow( $( this ).closest( 'tr' ) );
+			}
+		);
+
+		$( '#ndizi_add_line_item_btn' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			const newRowHtml = `
+				<tr class="ndizi-line-item-row">
+					<td><input type="text" name="ndizi_line_items_desc[]" value="" class="large-text"></td>
+					<td><input type="number" step="0.01" name="ndizi_line_items_qty[]" value="1" class="small-text ndizi-li-qty"></td>
+					<td><input type="number" step="0.01" name="ndizi_line_items_price[]" value="0.00" class="small-text ndizi-li-price"></td>
+					<td><input type="number" step="0.01" name="ndizi_line_items_amount[]" value="0.00" class="small-text ndizi-li-amount" readonly></td>
+					<td><button type="button" class="button button-secondary ndizi-remove-li-row">&times;</button></td>
+				</tr>`;
+			$( '#ndizi_line_items_body' ).append( newRowHtml );
+		} );
+
+		$( document ).on( 'click', '.ndizi-remove-li-row', function ( e ) {
+			e.preventDefault();
+			const $rows = $( '#ndizi_line_items_body tr' );
+			if ( $rows.length > 1 ) {
+				$( this ).closest( 'tr' ).remove();
+			} else {
+				$( this ).closest( 'tr' ).find( 'input' ).val( '' );
+				$( this ).closest( 'tr' ).find( '.ndizi-li-qty' ).val( '1' );
+				$( this ).closest( 'tr' ).find( '.ndizi-li-price' ).val( '0.00' );
+				$( this ).closest( 'tr' ).find( '.ndizi-li-amount' ).val( '0.00' );
+			}
+		} );
+
+		$( '#ndizi_calc_line_items_btn' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			let total = 0;
+			$( '#ndizi_line_items_body tr' ).each( function () {
+				calcRow( $( this ) );
+				total +=
+					parseFloat( $( this ).find( '.ndizi-li-amount' ).val() ) || 0;
+			} );
+			$( '#ndizi_invoice_amount' ).val( total.toFixed( 2 ) );
 		} );
 	}
 

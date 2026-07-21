@@ -342,6 +342,27 @@ class Ndizi_CPTs {
 			)
 		);
 
+		register_post_meta(
+			'ndizi_client',
+			'_ndizi_external_source',
+			array(
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+		register_post_meta(
+			'ndizi_client',
+			'_ndizi_external_id',
+			array(
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+
 		// Project Meta
 		register_post_meta(
 			'ndizi_project',
@@ -406,6 +427,26 @@ class Ndizi_CPTs {
 				'sanitize_callback' => function ( $value ) {
 					return floatval( $value );
 				},
+			)
+		);
+		register_post_meta(
+			'ndizi_project',
+			'_ndizi_external_source',
+			array(
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+		register_post_meta(
+			'ndizi_project',
+			'_ndizi_external_id',
+			array(
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
 
@@ -479,12 +520,43 @@ class Ndizi_CPTs {
 		if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) {
 			register_post_meta(
 				'ndizi_invoice',
+				'_ndizi_client_id',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'integer',
+					'sanitize_callback' => 'absint',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
 				'_ndizi_project_id',
 				array(
 					'show_in_rest'      => true,
 					'single'            => true,
 					'type'              => 'integer',
 					'sanitize_callback' => 'absint',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_number',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_currency',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'default'           => get_option( 'ndizi_default_currency', 'USD' ),
+					'sanitize_callback' => 'sanitize_text_field',
 				)
 			);
 			register_post_meta(
@@ -527,6 +599,66 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'string',
 					'default'           => 'draft', // draft, sent, paid, void
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_line_items',
+				array(
+					'show_in_rest'      => array(
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array(
+								'type'       => 'object',
+								'properties' => array(
+									'description' => array( 'type' => 'string' ),
+									'quantity'    => array( 'type' => 'number' ),
+									'unit_price'  => array( 'type' => 'number' ),
+									'amount'      => array( 'type' => 'number' ),
+								),
+							),
+						),
+					),
+					'single'            => true,
+					'type'              => 'array',
+					'sanitize_callback' => function ( $items ) {
+						if ( ! is_array( $items ) ) {
+							return array();
+						}
+						$clean = array();
+						foreach ( $items as $item ) {
+							if ( ! is_array( $item ) ) {
+								continue;
+							}
+							$clean[] = array(
+								'description' => isset( $item['description'] ) ? sanitize_text_field( $item['description'] ) : '',
+								'quantity'    => isset( $item['quantity'] ) ? floatval( $item['quantity'] ) : 0.0,
+								'unit_price'  => isset( $item['unit_price'] ) ? floatval( $item['unit_price'] ) : 0.0,
+								'amount'      => isset( $item['amount'] ) ? floatval( $item['amount'] ) : 0.0,
+							);
+						}
+						return $clean;
+					},
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_external_source',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_external_id',
+				array(
+					'show_in_rest'      => true,
+					'single'            => true,
+					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
 				)
 			);

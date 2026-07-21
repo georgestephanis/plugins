@@ -27,7 +27,8 @@ class Ndizi_DB {
 
 		$sql = "CREATE TABLE $table_name (
   id bigint(20) NOT NULL AUTO_INCREMENT,
-  project_id bigint(20) NOT NULL,
+  client_id bigint(20) DEFAULT 0,
+  project_id bigint(20) DEFAULT 0,
   task_id bigint(20) DEFAULT 0,
   user_id bigint(20) NOT NULL,
   description text NOT NULL,
@@ -41,6 +42,7 @@ class Ndizi_DB {
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY  (id),
+  KEY client_id (client_id),
   KEY project_id (project_id),
   KEY task_id (task_id),
   KEY user_id (user_id),
@@ -70,11 +72,17 @@ class Ndizi_DB {
 		$table_name = self::get_table_name();
 
 		$defaults = array(
+			'client_id'   => 0,
 			'task_id'     => 0,
 			'description' => '',
 			'billable'    => 1,
 		);
 		$args     = wp_parse_args( $args, $defaults );
+
+		$client_id = intval( $args['client_id'] );
+		if ( ! $client_id && $project_id > 0 ) {
+			$client_id = intval( get_post_meta( $project_id, '_ndizi_client_id', true ) );
+		}
 
 		if ( self::is_date_locked( current_time( 'mysql', true ) ) ) {
 			return false;
@@ -89,6 +97,7 @@ class Ndizi_DB {
 		$result = $wpdb->insert(
 			$table_name,
 			array(
+				'client_id'   => $client_id,
 				'project_id'  => $project_id,
 				'task_id'     => intval( $args['task_id'] ),
 				'user_id'     => $user_id,
@@ -101,7 +110,7 @@ class Ndizi_DB {
 				'created_at'  => $now,
 				'updated_at'  => $now,
 			),
-			array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' )
+			array( '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' )
 		);
 
 		if ( $result ) {
@@ -163,6 +172,7 @@ class Ndizi_DB {
 		$table_name = self::get_table_name();
 
 		$defaults = array(
+			'client_id'   => 0,
 			'task_id'     => 0,
 			'description' => '',
 			'duration'    => 0,
@@ -171,6 +181,11 @@ class Ndizi_DB {
 			'end_time'    => '',
 		);
 		$args     = wp_parse_args( $args, $defaults );
+
+		$client_id = intval( $args['client_id'] );
+		if ( ! $client_id && $project_id > 0 ) {
+			$client_id = intval( get_post_meta( $project_id, '_ndizi_client_id', true ) );
+		}
 
 		// All timestamps stored in UTC.
 		$now_ts = time();
@@ -206,6 +221,7 @@ class Ndizi_DB {
 		$result = $wpdb->insert(
 			$table_name,
 			array(
+				'client_id'   => $client_id,
 				'project_id'  => $project_id,
 				'task_id'     => intval( $args['task_id'] ),
 				'user_id'     => $user_id,
@@ -218,7 +234,7 @@ class Ndizi_DB {
 				'created_at'  => $now,
 				'updated_at'  => $now,
 			),
-			array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' )
+			array( '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' )
 		);
 
 		if ( $result ) {
@@ -271,6 +287,7 @@ class Ndizi_DB {
 		$formats     = array();
 
 		$allowed_keys = array(
+			'client_id'   => '%d',
 			'project_id'  => '%d',
 			'task_id'     => '%d',
 			'description' => '%s',
@@ -369,6 +386,7 @@ class Ndizi_DB {
 		$table_name = self::get_table_name();
 
 		$defaults = array(
+			'client_id'  => null,
 			'project_id' => null,
 			'task_id'    => null,
 			'user_id'    => null,
@@ -388,6 +406,11 @@ class Ndizi_DB {
 
 		$where      = array( '1=1' );
 		$query_args = array();
+
+		if ( null !== $args['client_id'] ) {
+			$where[]      = 'client_id = %d';
+			$query_args[] = intval( $args['client_id'] );
+		}
 
 		if ( null !== $args['project_id'] ) {
 			$where[]      = 'project_id = %d';
@@ -436,7 +459,7 @@ class Ndizi_DB {
 
 		$where_str = implode( ' AND ', $where );
 
-		$allowed_orderby = array( 'id', 'project_id', 'task_id', 'user_id', 'start_time', 'end_time', 'duration', 'billable' );
+		$allowed_orderby = array( 'id', 'client_id', 'project_id', 'task_id', 'user_id', 'start_time', 'end_time', 'duration', 'billable' );
 		$orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'start_time';
 		$order           = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 
@@ -471,6 +494,7 @@ class Ndizi_DB {
 		$table_name = self::get_table_name();
 
 		$defaults = array(
+			'client_id'  => null,
 			'project_id' => null,
 			'task_id'    => null,
 			'user_id'    => null,
@@ -486,6 +510,11 @@ class Ndizi_DB {
 
 		$where      = array( '1=1' );
 		$query_args = array();
+
+		if ( null !== $args['client_id'] ) {
+			$where[]      = 'client_id = %d';
+			$query_args[] = intval( $args['client_id'] );
+		}
 
 		if ( null !== $args['project_id'] ) {
 			$where[]      = 'project_id = %d';
@@ -552,17 +581,23 @@ class Ndizi_DB {
 		$table_name = self::get_table_name();
 
 		$defaults = array(
+			'client_id'  => null,
 			'project_id' => null,
 			'user_id'    => null,
 			'start_date' => null,
 			'end_date'   => null,
-			'groupby'    => 'project_id', // can be project_id, user_id, task_id, or day
+			'groupby'    => 'project_id', // can be client_id, project_id, user_id, task_id, or day
 		);
 
 		$args = wp_parse_args( $args, $defaults );
 
 		$where      = array( '1=1' );
 		$query_args = array();
+
+		if ( null !== $args['client_id'] ) {
+			$where[]      = 'client_id = %d';
+			$query_args[] = intval( $args['client_id'] );
+		}
 
 		if ( null !== $args['project_id'] ) {
 			$where[]      = 'project_id = %d';
@@ -587,6 +622,10 @@ class Ndizi_DB {
 		$where_str = implode( ' AND ', $where );
 
 		switch ( $args['groupby'] ) {
+			case 'client_id':
+				$select  = 'client_id as group_id, SUM(duration) as total_duration, SUM(CASE WHEN billable = 1 THEN duration ELSE 0 END) as billable_duration';
+				$groupby = 'client_id';
+				break;
 			case 'user_id':
 				$select  = 'user_id as group_id, SUM(duration) as total_duration, SUM(CASE WHEN billable = 1 THEN duration ELSE 0 END) as billable_duration';
 				$groupby = 'user_id';

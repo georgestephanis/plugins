@@ -51,6 +51,7 @@ const TimeEntriesApp = () => {
 		// into the `start_time` (Date) column, so `task_id`/`end_time` are not
 		// listed as their own columns.
 		fields: [
+			'client_id',
 			'project_id',
 			'user_id',
 			'description',
@@ -108,7 +109,9 @@ const TimeEntriesApp = () => {
 
 		if ( view.filters ) {
 			view.filters.forEach( ( filter ) => {
-				if ( filter.field === 'project_id' ) {
+				if ( filter.field === 'client_id' ) {
+					args.client_id = filter.value;
+				} else if ( filter.field === 'project_id' ) {
 					args.project_id = filter.value;
 				} else if ( filter.field === 'user_id' ) {
 					args.user_id = filter.value;
@@ -124,7 +127,7 @@ const TimeEntriesApp = () => {
 	}, [ view ] );
 
 	// Data Fetching via useSelect
-	const { records, totalItems, hasResolved, projects, tasks, users } =
+	const { records, totalItems, hasResolved, clients, projects, tasks, users } =
 		useSelect(
 			( select ) => {
 				const selector = select( 'core' );
@@ -143,11 +146,11 @@ const TimeEntriesApp = () => {
 						'getEntityRecords',
 						[ 'ndizi', 'time-entry', queryArgs ]
 					),
-					// Core REST controllers cap per_page at 100 and reject -1
-					// outright (rest_invalid_param), which would leave the
-					// dropdowns/filters empty. Request the maximum allowed page
-					// instead. (If an install ever exceeds 100 projects/tasks/
-					// users these lists would need real pagination.)
+					clients: selector.getEntityRecords(
+						'postType',
+						'ndizi_client',
+						{ per_page: 100 }
+					),
 					projects: selector.getEntityRecords(
 						'postType',
 						'ndizi_project',
@@ -158,10 +161,6 @@ const TimeEntriesApp = () => {
 						'ndizi_task',
 						{ per_page: 100 }
 					),
-					// The user list only drives the manager-only assignee
-					// dropdown/filter, and non-managers typically lack
-					// `list_users` (so the request would 403). Only fetch it when
-					// the current user can manage all time.
 					users: canManage
 						? selector.getEntityRecords( 'root', 'user', {
 								per_page: 100,
@@ -178,7 +177,8 @@ const TimeEntriesApp = () => {
 	const [ isFormModalOpen, setIsFormModalOpen ] = useState( false );
 	const [ editingEntry, setEditingEntry ] = useState( null );
 	const [ formState, setFormState ] = useState( {
-		projectId: '',
+		clientId: '',
+		projectId: '0',
 		taskId: '0',
 		userId: currentUserId,
 		description: '',
@@ -208,18 +208,38 @@ const TimeEntriesApp = () => {
 	};
 
 	// Dropdown Options
+	const clientsOptions = useMemo( () => {
+		if ( ! clients ) {
+			return [];
+		}
+		return [
+			{ label: 'Select Client (Optional)', value: '' },
+			...clients.map( ( c ) => ( {
+				label: decodeEntities( c.title.rendered ),
+				value: c.id,
+			} ) ),
+		];
+	}, [ clients ] );
+
 	const projectsOptions = useMemo( () => {
 		if ( ! projects ) {
 			return [];
 		}
+		const filtered = formState.clientId
+			? projects.filter(
+					( p ) =>
+						parseInt( p.meta?._ndizi_client_id, 10 ) ===
+						parseInt( formState.clientId, 10 )
+			  )
+			: projects;
 		return [
-			{ label: 'Select Project', value: '' },
-			...projects.map( ( p ) => ( {
+			{ label: 'None / Direct to Client', value: '0' },
+			...filtered.map( ( p ) => ( {
 				label: decodeEntities( p.title.rendered ),
 				value: p.id,
 			} ) ),
 		];
-	}, [ projects ] );
+	}, [ projects, formState.clientId ] );
 
 	const tasksOptions = useMemo( () => {
 		if ( ! tasks ) {
@@ -309,10 +329,10 @@ const TimeEntriesApp = () => {
 	// Save handler for Add/Edit
 	const handleSave = async ( e ) => {
 		e.preventDefault();
-		if ( ! formState.projectId ) {
+		if ( ! formState.clientId && ( ! formState.projectId || formState.projectId === '0' ) ) {
 			setActionNotice( {
 				status: 'error',
-				content: 'Project is required.',
+				content: 'Must select a Client or a Project.',
 			} );
 			return;
 		}
@@ -321,7 +341,8 @@ const TimeEntriesApp = () => {
 		setActionNotice( null );
 
 		const payload = {
-			project_id: parseInt( formState.projectId, 10 ),
+			client_id: parseInt( formState.clientId, 10 ) || 0,
+			project_id: parseInt( formState.projectId, 10 ) || 0,
 			task_id: parseInt( formState.taskId, 10 ) || 0,
 			user_id: parseInt( formState.userId, 10 ) || currentUserId,
 			description: formState.description,
@@ -362,7 +383,8 @@ const TimeEntriesApp = () => {
 	const openAddModal = () => {
 		setEditingEntry( null );
 		setFormState( {
-			projectId: '',
+			clientId: '',
+			projectId: '0',
 			taskId: '0',
 			userId: currentUserId,
 			description: '',
@@ -381,8 +403,9 @@ const TimeEntriesApp = () => {
 	const openEditModal = ( entry ) => {
 		setEditingEntry( entry );
 		setFormState( {
-			projectId: entry.project_id.toString(),
-			taskId: entry.task_id.toString(),
+			clientId: entry.client_id ? entry.client_id.toString() : '',
+			projectId: entry.project_id ? entry.project_id.toString() : '0',
+			taskId: entry.task_id ? entry.task_id.toString() : '0',
 			userId: entry.user_id,
 			description: entry.description,
 			durationHours: ( entry.duration / 3600 ).toFixed( 2 ),
@@ -485,6 +508,10 @@ const TimeEntriesApp = () => {
 	// where the rendered column id is not the raw value used for sorting or
 	// filtering, so the filter chips and server query args stay correct.
 	const fields = useMemo( () => {
+		const clientElements = ( clients || [] ).map( ( c ) => ( {
+			value: c.id,
+			label: decodeEntities( c.title.rendered ),
+		} ) );
 		const projectElements = ( projects || [] ).map( ( p ) => ( {
 			value: p.id,
 			label: decodeEntities( p.title.rendered ),
@@ -496,20 +523,37 @@ const TimeEntriesApp = () => {
 
 		return [
 			{
+				id: 'client_id',
+				label: 'Client',
+				type: 'integer',
+				elements: clientElements,
+				filterBy: { operators: [ 'is' ] },
+				enableSorting: true,
+				getValue: ( { item } ) => parseInt( item.client_id, 10 ),
+				render: ( { item } ) => (
+					<span>
+						{ item.client_name ||
+							( item.client_id
+								? `Client #${ item.client_id }`
+								: '-' ) }
+					</span>
+				),
+			},
+			{
 				id: 'project_id',
 				label: 'Project / Task',
 				type: 'integer',
 				elements: projectElements,
 				filterBy: { operators: [ 'is' ] },
-				// Sortable: clicking groups by project, then task (the server
-				// adds task_id as a secondary ORDER BY for this column).
 				enableSorting: true,
 				getValue: ( { item } ) => parseInt( item.project_id, 10 ),
 				render: ( { item } ) => (
 					<div>
 						<strong>
 							{ item.project_name ||
-								`Project #${ item.project_id }` }
+								( item.project_id
+									? `Project #${ item.project_id }`
+									: '-' ) }
 						</strong>
 						<div style={ { color: '#64748b', fontSize: '0.9em' } }>
 							{ item.task_name || <em>General / None</em> }
@@ -647,7 +691,7 @@ const TimeEntriesApp = () => {
 				},
 			},
 		];
-	}, [ projects, users, canManage ] );
+	}, [ clients, projects, users, canManage ] );
 
 	return (
 		<div
@@ -732,17 +776,39 @@ const TimeEntriesApp = () => {
 				>
 					<form onSubmit={ handleSave }>
 						<SelectControl
-							label="Project"
-							value={ formState.projectId }
-							options={ projectsOptions }
+							label="Client"
+							value={ formState.clientId }
+							options={ clientsOptions }
 							onChange={ ( val ) =>
 								setFormState( {
 									...formState,
-									projectId: val,
-									taskId: '0',
+									clientId: val,
 								} )
 							}
-							required
+						/>
+
+						<SelectControl
+							label="Project"
+							value={ formState.projectId }
+							options={ projectsOptions }
+							onChange={ ( val ) => {
+								const projId = parseInt( val, 10 );
+								let newClientId = formState.clientId;
+								if ( projId > 0 && projects ) {
+									const found = projects.find(
+										( p ) => p.id === projId
+									);
+									if ( found && found.meta?._ndizi_client_id ) {
+										newClientId = found.meta._ndizi_client_id.toString();
+									}
+								}
+								setFormState( {
+									...formState,
+									clientId: newClientId,
+									projectId: val,
+									taskId: '0',
+								} );
+							} }
 						/>
 
 						<SelectControl

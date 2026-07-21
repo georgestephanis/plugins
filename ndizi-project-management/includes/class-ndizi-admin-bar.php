@@ -76,8 +76,8 @@ class Ndizi_Admin_Bar {
 					'btn_saving'           => __( 'Saving...', 'ndizi-project-management' ),
 					'btn_start_timer'      => __( 'Start Timer', 'ndizi-project-management' ),
 					'btn_log_time'         => __( 'Log Time', 'ndizi-project-management' ),
-					'back_to_today'       => __( 'Back to today', 'ndizi-project-management' ),
-					'change_date'         => __( 'Change date', 'ndizi-project-management' ),
+					'back_to_today'        => __( 'Back to today', 'ndizi-project-management' ),
+					'change_date'          => __( 'Change date', 'ndizi-project-management' ),
 					'no_description'       => __( 'No description', 'ndizi-project-management' ),
 					'select_project_first' => __( 'Please select a project.', 'ndizi-project-management' ),
 					'enter_duration'       => __( 'Please enter a valid duration.', 'ndizi-project-management' ),
@@ -483,12 +483,12 @@ class Ndizi_Admin_Bar {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
-		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
-		$task_id     = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
-		$duration    = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : 0; // in seconds
-		$billable    = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
-		$raw_log_date = isset( $_POST['log_date'] ) ? wp_unslash( $_POST['log_date'] ) : '';
+		$project_id   = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
+		$task_id      = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$description  = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
+		$duration     = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : 0; // in seconds
+		$billable     = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
+		$raw_log_date = isset( $_POST['log_date'] ) ? sanitize_text_field( wp_unslash( $_POST['log_date'] ) ) : '';
 		$log_date     = '';
 		if ( $raw_log_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_log_date ) ) {
 			// Verify it's a real calendar date (e.g. rejects 2026-02-31).
@@ -505,7 +505,7 @@ class Ndizi_Admin_Bar {
 		// Convert a chosen date (YYYY-MM-DD, site timezone) to a UTC start_time at noon.
 		$start_time = '';
 		if ( $log_date ) {
-			$dt         = new DateTime( $log_date . ' 12:00:00', wp_timezone() );
+			$dt = new DateTime( $log_date . ' 12:00:00', wp_timezone() );
 			$dt->setTimezone( new DateTimeZone( 'UTC' ) );
 			$start_time = $dt->format( 'Y-m-d H:i:s' );
 		}
