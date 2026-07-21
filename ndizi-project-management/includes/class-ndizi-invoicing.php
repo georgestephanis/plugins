@@ -17,6 +17,82 @@ class Ndizi_Invoicing {
 		add_action( 'admin_init', array( __CLASS__, 'handle_invoice_export_requests' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_report_export_requests' ) );
 		add_action( 'post_submitbox_misc_actions', array( __CLASS__, 'add_export_buttons_to_editor' ) );
+		add_action( 'updated_post_meta', array( __CLASS__, 'on_invoice_meta_updated' ), 10, 3 );
+		add_action( 'added_post_meta', array( __CLASS__, 'on_invoice_meta_updated' ), 10, 3 );
+	}
+
+	/**
+	 * Recalculate invoice status when invoice payments or amount post meta is updated.
+	 *
+	 * @param int    $meta_id   Meta ID.
+	 * @param int    $object_id Post ID.
+	 * @param string $meta_key  Meta key.
+	 */
+	public static function on_invoice_meta_updated( $meta_id, $object_id, $meta_key ) {
+		if ( in_array( $meta_key, array( '_ndizi_invoice_payments', '_ndizi_invoice_amount' ), true ) ) {
+			if ( 'ndizi_invoice' === get_post_type( $object_id ) ) {
+				self::update_invoice_status_from_payments( $object_id );
+			}
+		}
+	}
+
+	/**
+	 * Recalculate and update the invoice status based on recorded payments.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return string Updated or current status.
+	 */
+	public static function update_invoice_status_from_payments( $invoice_id ) {
+		$current_status = get_post_meta( $invoice_id, '_ndizi_invoice_status', true );
+		if ( 'draft' === $current_status || 'void' === $current_status ) {
+			return $current_status;
+		}
+
+		$invoice_total = floatval( get_post_meta( $invoice_id, '_ndizi_invoice_amount', true ) );
+		$total_paid    = self::get_invoice_paid_total( $invoice_id );
+
+		if ( $invoice_total > 0 && round( $total_paid, 2 ) >= round( $invoice_total, 2 ) ) {
+			$derived = 'paid';
+		} elseif ( round( $total_paid, 2 ) > 0 ) {
+			$derived = 'partial';
+		} else {
+			$derived = 'sent';
+		}
+
+		if ( $derived !== $current_status ) {
+			update_post_meta( $invoice_id, '_ndizi_invoice_status', $derived );
+		}
+
+		return $derived;
+	}
+
+	/**
+	 * Sum of recorded payments for an invoice.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return float Total amount paid.
+	 */
+	public static function get_invoice_paid_total( $invoice_id ) {
+		$payments = get_post_meta( $invoice_id, '_ndizi_invoice_payments', true );
+		if ( ! is_array( $payments ) ) {
+			return 0.0;
+		}
+		$total = 0.0;
+		foreach ( $payments as $payment ) {
+			$total += isset( $payment['amount'] ) ? floatval( $payment['amount'] ) : 0.0;
+		}
+		return $total;
+	}
+
+	/**
+	 * Outstanding balance for an invoice (total amount minus recorded payments).
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return float Balance due (may be 0; never negative).
+	 */
+	public static function get_invoice_balance( $invoice_id ) {
+		$amount = floatval( get_post_meta( $invoice_id, '_ndizi_invoice_amount', true ) );
+		return max( 0.0, $amount - self::get_invoice_paid_total( $invoice_id ) );
 	}
 
 	/**
@@ -107,6 +183,12 @@ class Ndizi_Invoicing {
 		if ( ! is_array( $line_items ) ) {
 			$line_items = array();
 		}
+		$payments = get_post_meta( $invoice_id, '_ndizi_invoice_payments', true );
+		if ( ! is_array( $payments ) ) {
+			$payments = array();
+		}
+		$total_paid = self::get_invoice_paid_total( $invoice_id );
+		$balance    = floatval( $amount ) - $total_paid;
 
 		// Fetch linked time entries
 		global $wpdb;
@@ -523,11 +605,44 @@ class Ndizi_Invoicing {
 							<span><strong><?php echo esc_html( $total_hours ); ?>h</strong></span>
 						</div>
 					<?php endif; ?>
-					<div class="totals-row totals-row-grand">
-						<span><?php esc_html_e( 'Total Due:', 'ndizi-project-management' ); ?></span>
+					<div class="totals-row">
+						<span><?php esc_html_e( 'Invoice Total:', 'ndizi-project-management' ); ?></span>
 						<span><strong><?php echo esc_html( $currency_upper . ' ' . number_format( $amount, 2 ) ); ?></strong></span>
 					</div>
+					<?php if ( ! empty( $payments ) ) : ?>
+						<div class="totals-row">
+							<span><?php esc_html_e( 'Amount Paid:', 'ndizi-project-management' ); ?></span>
+							<span><strong><?php echo esc_html( $currency_upper . ' ' . number_format( $total_paid, 2 ) ); ?></strong></span>
+						</div>
+					<?php endif; ?>
+					<div class="totals-row totals-row-grand">
+						<span><?php esc_html_e( 'Balance Due:', 'ndizi-project-management' ); ?></span>
+						<span><strong><?php echo esc_html( $currency_upper . ' ' . number_format( max( 0, $balance ), 2 ) ); ?></strong></span>
+					</div>
 				</div>
+
+				<?php if ( ! empty( $payments ) ) : ?>
+					<table class="line-items-table">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Payment Date', 'ndizi-project-management' ); ?></th>
+								<th><?php esc_html_e( 'Method', 'ndizi-project-management' ); ?></th>
+								<th><?php esc_html_e( 'Note', 'ndizi-project-management' ); ?></th>
+								<th style="text-align:right;"><?php esc_html_e( 'Amount', 'ndizi-project-management' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $payments as $payment ) : ?>
+								<tr>
+									<td><?php echo esc_html( isset( $payment['date'] ) ? $payment['date'] : '' ); ?></td>
+									<td><?php echo esc_html( isset( $payment['method'] ) ? $payment['method'] : '' ); ?></td>
+									<td><?php echo esc_html( isset( $payment['note'] ) ? $payment['note'] : '' ); ?></td>
+									<td style="text-align:right;"><?php echo esc_html( $currency_upper . ' ' . number_format( isset( $payment['amount'] ) ? floatval( $payment['amount'] ) : 0, 2 ) ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
 
 				<?php if ( ! empty( $invoice->post_content ) ) : ?>
 					<div class="invoice-notes">

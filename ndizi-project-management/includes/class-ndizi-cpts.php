@@ -640,7 +640,7 @@ class Ndizi_CPTs {
 					'show_in_rest'      => true,
 					'single'            => true,
 					'type'              => 'string',
-					'default'           => 'draft', // draft, sent, paid, void
+					'default'           => 'draft', // draft, sent, partial, paid, void
 					'sanitize_callback' => 'sanitize_text_field',
 					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
@@ -679,6 +679,47 @@ class Ndizi_CPTs {
 								'quantity'    => isset( $item['quantity'] ) ? floatval( $item['quantity'] ) : 0.0,
 								'unit_price'  => isset( $item['unit_price'] ) ? floatval( $item['unit_price'] ) : 0.0,
 								'amount'      => isset( $item['amount'] ) ? floatval( $item['amount'] ) : 0.0,
+							);
+						}
+						return $clean;
+					},
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
+				)
+			);
+			register_post_meta(
+				'ndizi_invoice',
+				'_ndizi_invoice_payments',
+				array(
+					'show_in_rest'      => array(
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array(
+								'type'       => 'object',
+								'properties' => array(
+									'date'   => array( 'type' => 'string' ),
+									'amount' => array( 'type' => 'number' ),
+									'method' => array( 'type' => 'string' ),
+									'note'   => array( 'type' => 'string' ),
+								),
+							),
+						),
+					),
+					'single'            => true,
+					'type'              => 'array',
+					'sanitize_callback' => function ( $payments ) {
+						if ( ! is_array( $payments ) ) {
+							return array();
+						}
+						$clean = array();
+						foreach ( $payments as $payment ) {
+							if ( ! is_array( $payment ) ) {
+								continue;
+							}
+							$clean[] = array(
+								'date'   => isset( $payment['date'] ) ? sanitize_text_field( $payment['date'] ) : '',
+								'amount' => isset( $payment['amount'] ) ? floatval( $payment['amount'] ) : 0.0,
+								'method' => isset( $payment['method'] ) ? sanitize_text_field( $payment['method'] ) : '',
+								'note'   => isset( $payment['note'] ) ? sanitize_text_field( $payment['note'] ) : '',
 							);
 						}
 						return $clean;

@@ -1065,7 +1065,13 @@ class Ndizi_REST {
 			return new WP_Error( 'stripe_not_configured', __( 'Stripe is not configured on this site.', 'ndizi-project-management' ), array( 'status' => 500 ) );
 		}
 
+		$invoice_status = get_post_meta( $invoice_id, '_ndizi_invoice_status', true );
+		if ( in_array( $invoice_status, array( 'draft', 'void' ), true ) ) {
+			return new WP_Error( 'invoice_not_payable', __( 'This invoice is not available for online payment.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
 		$amount     = (float) get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
+		$balance    = Ndizi_Invoicing::get_invoice_balance( $invoice_id );
 		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
 		$client_id  = get_post_meta( $invoice_id, '_ndizi_client_id', true );
 		if ( ! $client_id && $project_id ) {
@@ -1081,6 +1087,10 @@ class Ndizi_REST {
 
 		if ( $amount <= 0 ) {
 			return new WP_Error( 'invalid_amount', __( 'Invoice has no valid amount to charge.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+		}
+
+		if ( $balance <= 0 ) {
+			return new WP_Error( 'invoice_already_paid', __( 'This invoice has already been paid in full.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
 
 		$invoice_post = get_post( $invoice_id );
@@ -1117,11 +1127,13 @@ class Ndizi_REST {
 			$redirect_base
 		);
 
-		// Build Stripe line items
+		// Build Stripe line items. Only itemize when the full invoice amount is still
+		// outstanding — once a partial payment has been recorded, the per-item amounts
+		// no longer sum to the balance due, so charge the remaining balance as one line.
 		$stored_items = get_post_meta( $invoice_id, '_ndizi_invoice_line_items', true );
 		$line_items   = array();
 
-		if ( is_array( $stored_items ) && ! empty( $stored_items ) ) {
+		if ( round( $balance, 2 ) === round( $amount, 2 ) && is_array( $stored_items ) && ! empty( $stored_items ) ) {
 			foreach ( $stored_items as $item ) {
 				$item_desc   = ! empty( $item['description'] ) ? $item['description'] : $display_name;
 				$unit_amount = round( floatval( isset( $item['unit_price'] ) ? $item['unit_price'] : 0 ) * 100 );
@@ -1151,7 +1163,7 @@ class Ndizi_REST {
 							'name'        => sprintf( __( 'Invoice %1$s - %2$s', 'ndizi-project-management' ), $display_name, $project_title ),
 							'description' => __( 'Project Management and Time Tracking Services', 'ndizi-project-management' ),
 						),
-						'unit_amount'  => round( $amount * 100 ),
+						'unit_amount'  => round( $balance * 100 ),
 					),
 					'quantity'   => 1,
 				),
@@ -1279,6 +1291,20 @@ class Ndizi_REST {
 				if ( 'paid' === get_post_meta( $invoice_id, '_ndizi_invoice_status', true ) ) {
 					return new WP_REST_Response( array( 'received' => true ), 200 );
 				}
+
+				// Record the online payment so the payments table and balance due
+				// stay consistent with manually-recorded payments.
+				$payments = get_post_meta( $invoice_id, '_ndizi_invoice_payments', true );
+				if ( ! is_array( $payments ) ) {
+					$payments = array();
+				}
+				$payments[] = array(
+					'date'   => current_time( 'Y-m-d' ),
+					'amount' => isset( $session['amount_total'] ) ? floatval( $session['amount_total'] ) / 100 : 0.0,
+					'method' => 'Stripe',
+					'note'   => isset( $session['id'] ) ? sanitize_text_field( $session['id'] ) : '',
+				);
+				update_post_meta( $invoice_id, '_ndizi_invoice_payments', $payments );
 
 				update_post_meta( $invoice_id, '_ndizi_invoice_status', 'paid' );
 				do_action( 'ndizi_invoice_paid', $invoice_id );

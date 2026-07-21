@@ -353,10 +353,11 @@ class Ndizi_List_Tables {
 		} elseif ( 'invoice_status' === $column ) {
 			$status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
 			$labels = array(
-				'draft' => __( 'Draft', 'ndizi-project-management' ),
-				'sent'  => __( 'Sent', 'ndizi-project-management' ),
-				'paid'  => __( 'Paid', 'ndizi-project-management' ),
-				'void'  => __( 'Void', 'ndizi-project-management' ),
+				'draft'   => __( 'Draft', 'ndizi-project-management' ),
+				'sent'    => __( 'Sent', 'ndizi-project-management' ),
+				'partial' => __( 'Partially Paid', 'ndizi-project-management' ),
+				'paid'    => __( 'Paid', 'ndizi-project-management' ),
+				'void'    => __( 'Void', 'ndizi-project-management' ),
 			);
 			$label  = isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Draft', 'ndizi-project-management' );
 			echo '<span class="ndizi-badge ndizi-invoice-' . esc_attr( $status ) . '">' . esc_html( $label ) . '</span>';
@@ -366,7 +367,18 @@ class Ndizi_List_Tables {
 			if ( ! $currency ) {
 				$currency = get_option( 'ndizi_default_currency', 'USD' );
 			}
-			echo $amount ? esc_html( strtoupper( $currency ) . ' ' . number_format( $amount, 2 ) ) : '-';
+			$currency = strtoupper( $currency );
+			echo $amount ? esc_html( $currency . ' ' . number_format( $amount, 2 ) ) : '-';
+			$balance = Ndizi_Invoicing::get_invoice_balance( $post_id );
+			if ( $balance > 0 && floatval( $amount ) > 0 && $balance < floatval( $amount ) ) {
+				echo '<br><small style="color:#b45309;">' . esc_html(
+					sprintf(
+					/* translators: %s: formatted outstanding balance */
+						__( 'Balance: %s', 'ndizi-project-management' ),
+						$currency . ' ' . number_format( $balance, 2 )
+					)
+				) . '</small>';
+			}
 		} elseif ( 'invoice_due' === $column ) {
 			$due = get_post_meta( $post_id, '_ndizi_invoice_due_date', true );
 			echo $due ? esc_html( $due ) : '-';
