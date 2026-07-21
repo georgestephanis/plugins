@@ -236,17 +236,66 @@ class GS_Support_Manager {
 	public function remove_monitored_plugin( string $key_or_slug ): bool {
 		$key_or_slug = sanitize_text_field( trim( $key_or_slug ) );
 		$plugins     = $this->get_monitored_plugins();
+		$target_slug = '';
+		$target_type = '';
+		$removed     = false;
 
 		if ( isset( $plugins[ $key_or_slug ] ) ) {
+			$target_slug = isset( $plugins[ $key_or_slug ]['slug'] ) ? $plugins[ $key_or_slug ]['slug'] : '';
+			$target_type = isset( $plugins[ $key_or_slug ]['type'] ) ? $plugins[ $key_or_slug ]['type'] : '';
 			unset( $plugins[ $key_or_slug ] );
-			return $this->save_monitored_plugins( $plugins );
+			$removed = true;
+		} else {
+			foreach ( $plugins as $k => $item ) {
+				if ( ( isset( $item['slug'] ) && $item['slug'] === $key_or_slug ) || $k === $key_or_slug ) {
+					$target_slug = isset( $item['slug'] ) ? $item['slug'] : '';
+					$target_type = isset( $item['type'] ) ? $item['type'] : '';
+					unset( $plugins[ $k ] );
+					$removed = true;
+					break;
+				}
+			}
 		}
 
-		foreach ( $plugins as $k => $item ) {
-			if ( ( isset( $item['slug'] ) && $item['slug'] === $key_or_slug ) || $k === $key_or_slug ) {
-				unset( $plugins[ $k ] );
-				return $this->save_monitored_plugins( $plugins );
+		if ( $removed ) {
+			$this->save_monitored_plugins( $plugins );
+
+			if ( ! empty( $target_slug ) ) {
+				$this->purge_feed_items_for_slug( $target_slug, $target_type );
 			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Purge stored feed items associated with a specific plugin or theme slug.
+	 *
+	 * @param string $slug Plugin or theme slug.
+	 * @param string $type Optional item type ('plugin' or 'theme').
+	 * @return bool True if items were purged and saved.
+	 */
+	public function purge_feed_items_for_slug( string $slug, string $type = '' ): bool {
+		$slug = sanitize_title( $slug );
+		if ( empty( $slug ) ) {
+			return false;
+		}
+
+		$items   = $this->get_feed_items();
+		$initial = count( $items );
+
+		foreach ( $items as $id => $item ) {
+			if ( isset( $item['plugin_slug'] ) && $item['plugin_slug'] === $slug ) {
+				if ( empty( $type ) || ( isset( $item['item_type'] ) && $item['item_type'] === $type ) ) {
+					unset( $items[ $id ] );
+				}
+			}
+		}
+
+		if ( count( $items ) !== $initial ) {
+			return update_option( self::ITEMS_OPTION, $items );
 		}
 
 		return false;
