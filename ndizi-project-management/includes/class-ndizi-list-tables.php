@@ -183,7 +183,7 @@ class Ndizi_List_Tables {
 		echo '<select name="ndizi_filter_client">';
 		printf( '<option value="0">%s</option>', esc_html__( 'All Clients', 'ndizi-project-management' ) );
 		foreach ( $clients as $client ) {
-			printf( '<option value="%1$d" %2$s>%3$s</option>', absint( $client->ID ), esc_attr( selected( $selected, $client->ID, false ) ), esc_html( $client->post_title ) );
+			printf( '<option value="%1$d" %2$s>%3$s</option>', absint( $client->ID ), selected( $selected, $client->ID, false ), esc_html( $client->post_title ) );
 		}
 		echo '</select>';
 	}
@@ -213,7 +213,7 @@ class Ndizi_List_Tables {
 		echo '<select name="ndizi_filter_project">';
 		printf( '<option value="0">%s</option>', esc_html__( 'All Projects', 'ndizi-project-management' ) );
 		foreach ( $projects as $project ) {
-			printf( '<option value="%1$d" %2$s>%3$s</option>', absint( $project->ID ), esc_attr( selected( $selected, $project->ID, false ) ), esc_html( $project->post_title ) );
+			printf( '<option value="%1$d" %2$s>%3$s</option>', absint( $project->ID ), selected( $selected, $project->ID, false ), esc_html( $project->post_title ) );
 		}
 		echo '</select>';
 	}
