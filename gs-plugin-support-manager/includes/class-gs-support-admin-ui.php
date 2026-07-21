@@ -467,7 +467,7 @@ class GS_Support_Admin_UI {
 				$item_id      = esc_attr( $item['id'] );
 				$is_read      = ! empty( $item['read'] );
 				$row_style    = $is_read ? 'opacity: 0.7;' : 'font-weight: bold; background: #fff8e5;';
-				$status_label = $is_read ? '<span style="color:#777;">Read</span>' : '<span style="color:#e74c3c; font-weight:bold;">● Unread</span>';
+				$status_label = $is_read ? '<span style="color:#777;">' . esc_html__( 'Read', 'gs-plugin-support-manager' ) . '</span>' : '<span style="color:#e74c3c; font-weight:bold;">● ' . esc_html__( 'Unread', 'gs-plugin-support-manager' ) . '</span>';
 
 				$item_type    = isset( $item['item_type'] ) ? $item['item_type'] : 'plugin';
 				$item_key     = $item_type . ':' . $item['plugin_slug'];
@@ -486,7 +486,8 @@ class GS_Support_Admin_UI {
 				echo '<td>';
 				echo '<a href="' . esc_url( $item['link'] ) . '" target="_blank" style="text-decoration:none;">' . esc_html( $item['title'] ) . '</a> <span class="dashicons dashicons-external" style="font-size:14px; width:14px; height:14px; vertical-align:middle; color:#666;"></span>';
 				if ( ! empty( $item['description'] ) ) {
-					echo '<div class="item-preview" style="font-weight:normal; font-size:12px; color:#555; margin-top:4px;">' . wp_kses_post( wp_trim_words( $item['description'], 25 ) ) . '</div>';
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-sanitized on input via SimplePie and wp_kses_post.
+					echo '<div class="item-preview" style="font-weight:normal; font-size:12px; color:#555; margin-top:4px;">' . wp_trim_words( $item['description'], 25 ) . '</div>';
 				}
 				echo '</td>';
 				echo '<td>' . esc_html( ! empty( $item['author'] ) ? $item['author'] : __( 'Anonymous', 'gs-plugin-support-manager' ) ) . '</td>';
@@ -552,8 +553,8 @@ class GS_Support_Admin_UI {
 				echo '<td>' . esc_html( $last_sync_str ) . '</td>';
 				echo '<td>' . esc_html( isset( $data['item_count'] ) ? $data['item_count'] : 0 ) . '</td>';
 				echo '<td>';
-				echo '<a href="' . esc_url( $forum_url ) . '" target="_blank" class="button button-small"><span class="dashicons dashicons-external" style="margin-top:2px;"></span> Forum</a> ';
-				echo '<a href="' . esc_url( $remove_url ) . '" class="button button-small button-link-delete" onclick="return confirm(\'Are you sure you want to stop monitoring this item?\');">Remove</a>';
+				echo '<a href="' . esc_url( $forum_url ) . '" target="_blank" class="button button-small"><span class="dashicons dashicons-external" style="margin-top:2px;"></span> ' . esc_html__( 'Forum', 'gs-plugin-support-manager' ) . '</a> ';
+				echo '<a href="' . esc_url( $remove_url ) . '" class="button button-small button-link-delete" onclick="return confirm(\'' . esc_js( __( 'Are you sure you want to stop monitoring this item?', 'gs-plugin-support-manager' ) ) . '\');">' . esc_html__( 'Remove', 'gs-plugin-support-manager' ) . '</a>';
 				echo '</td>';
 				echo '</tr>';
 			}
@@ -748,12 +749,12 @@ class GS_Support_Admin_UI {
 					if (res.success) {
 						if (res.data.read) {
 							row.css({ opacity: '0.7', fontWeight: 'normal', background: 'transparent' });
-							row.find('.item-status-col').html('<span style="color:#777;">Read</span>');
-							btn.text('Mark Unread');
+							row.find('.item-status-col').html('<span style="color:#777;"><?php echo esc_js( __( 'Read', 'gs-plugin-support-manager' ) ); ?></span>');
+							btn.text('<?php echo esc_js( __( 'Mark Unread', 'gs-plugin-support-manager' ) ); ?>');
 						} else {
 							row.css({ opacity: '1.0', fontWeight: 'bold', background: '#fff8e5' });
-							row.find('.item-status-col').html('<span style="color:#e74c3c; font-weight:bold;">● Unread</span>');
-							btn.text('Mark Read');
+							row.find('.item-status-col').html('<span style="color:#e74c3c; font-weight:bold;">● <?php echo esc_js( __( 'Unread', 'gs-plugin-support-manager' ) ); ?></span>');
+							btn.text('<?php echo esc_js( __( 'Mark Read', 'gs-plugin-support-manager' ) ); ?>');
 						}
 					}
 				});

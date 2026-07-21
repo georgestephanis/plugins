@@ -156,7 +156,7 @@ class GS_Support_Notifier {
 			'blocking' => true,
 		);
 
-		$response = wp_remote_post( $url, $args );
+		$response = wp_safe_remote_post( $url, $args );
 
 		return ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) >= 200 && wp_remote_retrieve_response_code( $response ) < 300;
 	}

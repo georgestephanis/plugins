@@ -66,7 +66,7 @@ class GS_Support_REST_API {
 		$type_flt = $request->get_param( 'type' );
 		$plugin   = $request->get_param( 'plugin' );
 		$limit    = $request->get_param( 'limit' );
-		$limit    = $limit ? $limit : 50;
+		$limit    = $limit ? min( max( (int) $limit, 1 ), 100 ) : 50;
 
 		$all_items = $manager->get_feed_items();
 		$filtered  = array();
@@ -107,10 +107,10 @@ class GS_Support_REST_API {
 		echo '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
 		echo '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">' . "\n";
 		echo '<channel>' . "\n";
-		echo '  <title>' . esc_html( $feed_title ) . '</title>' . "\n";
-		echo '  <link>' . esc_html( $feed_link ) . '</link>' . "\n";
-		echo '  <description>' . esc_html( $feed_description ) . '</description>' . "\n";
-		echo '  <pubDate>' . esc_html( gmdate( 'r' ) ) . '</pubDate>' . "\n";
+		echo '  <title>' . esc_xml( $feed_title ) . '</title>' . "\n";
+		echo '  <link>' . esc_xml( $feed_link ) . '</link>' . "\n";
+		echo '  <description>' . esc_xml( $feed_description ) . '</description>' . "\n";
+		echo '  <pubDate>' . esc_xml( gmdate( 'r' ) ) . '</pubDate>' . "\n";
 
 		foreach ( $filtered as $item ) {
 			$item_type = ! empty( $item['item_type'] ) ? $item['item_type'] : 'plugin';
@@ -118,15 +118,17 @@ class GS_Support_REST_API {
 			$pub_date  = gmdate( 'r', $item['pub_date'] );
 
 			echo '  <item>' . "\n";
-			echo '    <title>' . esc_html( $title ) . '</title>' . "\n";
-			echo '    <link>' . esc_html( $item['link'] ) . '</link>' . "\n";
-			echo '    <guid isPermaLink="false">' . esc_html( $item['id'] ) . '</guid>' . "\n";
-			echo '    <pubDate>' . esc_html( $pub_date ) . '</pubDate>' . "\n";
+			echo '    <title>' . esc_xml( $title ) . '</title>' . "\n";
+			echo '    <link>' . esc_xml( $item['link'] ) . '</link>' . "\n";
+			echo '    <guid isPermaLink="false">' . esc_xml( $item['id'] ) . '</guid>' . "\n";
+			echo '    <pubDate>' . esc_xml( $pub_date ) . '</pubDate>' . "\n";
 			if ( ! empty( $item['author'] ) ) {
-				echo '    <dc:creator>' . esc_html( $item['author'] ) . '</dc:creator>' . "\n";
+				echo '    <dc:creator>' . esc_xml( $item['author'] ) . '</dc:creator>' . "\n";
 			}
 			if ( ! empty( $item['description'] ) ) {
-				echo '    <description><![CDATA[' . wp_kses_post( $item['description'] ) . ']]></description>' . "\n";
+				$description = str_replace( ']]>', ']]&gt;', $item['description'] );
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CDATA content escaped via str_replace for CDATA closing tag.
+				echo '    <description><![CDATA[' . $description . ']]></description>' . "\n";
 			}
 			echo '  </item>' . "\n";
 		}
