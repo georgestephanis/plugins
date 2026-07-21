@@ -499,6 +499,7 @@ class Ndizi_DB {
 			'task_id'    => null,
 			'user_id'    => null,
 			'invoice_id' => null,
+			'invoiced'   => null,
 			'billable'   => null,
 			'start_date' => null,
 			'end_date'   => null,
@@ -534,6 +535,14 @@ class Ndizi_DB {
 		if ( null !== $args['invoice_id'] ) {
 			$where[]      = 'invoice_id = %d';
 			$query_args[] = intval( $args['invoice_id'] );
+		}
+
+		if ( null !== $args['invoiced'] ) {
+			if ( 'yes' === $args['invoiced'] || true === $args['invoiced'] || 1 === intval( $args['invoiced'] ) ) {
+				$where[] = 'invoice_id > 0';
+			} elseif ( 'no' === $args['invoiced'] || false === $args['invoiced'] || 0 === intval( $args['invoiced'] ) ) {
+				$where[] = 'invoice_id = 0';
+			}
 		}
 
 		if ( null !== $args['billable'] ) {
