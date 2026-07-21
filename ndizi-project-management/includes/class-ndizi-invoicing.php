@@ -17,6 +17,53 @@ class Ndizi_Invoicing {
 		add_action( 'admin_init', array( __CLASS__, 'handle_invoice_export_requests' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_report_export_requests' ) );
 		add_action( 'post_submitbox_misc_actions', array( __CLASS__, 'add_export_buttons_to_editor' ) );
+		add_action( 'updated_post_meta', array( __CLASS__, 'on_invoice_meta_updated' ), 10, 3 );
+		add_action( 'added_post_meta', array( __CLASS__, 'on_invoice_meta_updated' ), 10, 3 );
+	}
+
+	/**
+	 * Recalculate invoice status when invoice payments or amount post meta is updated.
+	 *
+	 * @param int    $meta_id   Meta ID.
+	 * @param int    $object_id Post ID.
+	 * @param string $meta_key  Meta key.
+	 */
+	public static function on_invoice_meta_updated( $meta_id, $object_id, $meta_key ) {
+		if ( in_array( $meta_key, array( '_ndizi_invoice_payments', '_ndizi_invoice_amount' ), true ) ) {
+			if ( 'ndizi_invoice' === get_post_type( $object_id ) ) {
+				self::update_invoice_status_from_payments( $object_id );
+			}
+		}
+	}
+
+	/**
+	 * Recalculate and update the invoice status based on recorded payments.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return string Updated or current status.
+	 */
+	public static function update_invoice_status_from_payments( $invoice_id ) {
+		$current_status = get_post_meta( $invoice_id, '_ndizi_invoice_status', true );
+		if ( 'draft' === $current_status || 'void' === $current_status ) {
+			return $current_status;
+		}
+
+		$invoice_total = floatval( get_post_meta( $invoice_id, '_ndizi_invoice_amount', true ) );
+		$total_paid    = self::get_invoice_paid_total( $invoice_id );
+
+		if ( $invoice_total > 0 && round( $total_paid, 2 ) >= round( $invoice_total, 2 ) ) {
+			$derived = 'paid';
+		} elseif ( round( $total_paid, 2 ) > 0 ) {
+			$derived = 'partial';
+		} else {
+			$derived = 'sent';
+		}
+
+		if ( $derived !== $current_status ) {
+			update_post_meta( $invoice_id, '_ndizi_invoice_status', $derived );
+		}
+
+		return $derived;
 	}
 
 	/**

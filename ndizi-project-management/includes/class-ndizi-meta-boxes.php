@@ -973,18 +973,7 @@ class Ndizi_Meta_Boxes {
 			update_post_meta( $post_id, '_ndizi_invoice_payments', $saved_payments );
 
 			// Derive status from payments unless the invoice is a draft or voided.
-			$current_status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
-			if ( 'draft' !== $current_status && 'void' !== $current_status ) {
-				$invoice_total = floatval( get_post_meta( $post_id, '_ndizi_invoice_amount', true ) );
-				if ( $invoice_total > 0 && $total_paid >= $invoice_total ) {
-					$derived = 'paid';
-				} elseif ( $total_paid > 0 ) {
-					$derived = 'partial';
-				} else {
-					$derived = 'sent';
-				}
-				update_post_meta( $post_id, '_ndizi_invoice_status', $derived );
-			}
+			Ndizi_Invoicing::update_invoice_status_from_payments( $post_id );
 
 			// Clear all existing time entries linked to this invoice first, then relink selected ones
 			global $wpdb;
