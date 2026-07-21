@@ -43,11 +43,17 @@ const Edit = ( { attributes, setAttributes } ) => {
 		<>
 			<InspectorControls>
 				<PanelBody
-					title={ __( 'Dashboard Features', 'ndizi-project-management' ) }
+					title={ __(
+						'Dashboard Features',
+						'ndizi-project-management'
+					) }
 					initialOpen={ true }
 				>
 					<ToggleControl
-						label={ __( 'Allow task submission', 'ndizi-project-management' ) }
+						label={ __(
+							'Allow task submission',
+							'ndizi-project-management'
+						) }
 						help={ __(
 							'When off, clients can view their tasks but not submit new ones.',
 							'ndizi-project-management'
@@ -58,7 +64,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 						}
 					/>
 					<ToggleControl
-						label={ __( 'Allow out-of-office requests', 'ndizi-project-management' ) }
+						label={ __(
+							'Allow out-of-office requests',
+							'ndizi-project-management'
+						) }
 						help={ __(
 							'Lets clients log upcoming out-of-office windows so your team can plan around them.',
 							'ndizi-project-management'

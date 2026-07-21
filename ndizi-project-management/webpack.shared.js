@@ -86,10 +86,15 @@ function buildRules( { markCssSideEffects = false } = {} ) {
  *        replacement CleanWebpackPlugin's pre-build cleanup.
  * @return {Array} The transformed plugins array.
  */
-function buildPlugins( { dependencyExtraction, cleanOnceBeforeBuildPatterns } ) {
+function buildPlugins( {
+	dependencyExtraction,
+	cleanOnceBeforeBuildPatterns,
+} ) {
 	return defaultConfig.plugins.map( ( plugin ) => {
 		if ( plugin instanceof DependencyExtractionWebpackPlugin ) {
-			return new DependencyExtractionWebpackPlugin( dependencyExtraction );
+			return new DependencyExtractionWebpackPlugin(
+				dependencyExtraction
+			);
 		}
 		if ( plugin instanceof CleanWebpackPlugin ) {
 			return new CleanWebpackPlugin( {

@@ -14,7 +14,10 @@ const {
 // here we externalize `@wordpress/dataviews` to our shared global and map it to
 // the `ndizi-dataviews` handle. That keeps the heavy DataViews code out of every
 // app rebuild and lets multiple scripts share the one bundle.
-const DATAVIEWS_REQUESTS = [ '@wordpress/dataviews', '@wordpress/dataviews/wp' ];
+const DATAVIEWS_REQUESTS = [
+	'@wordpress/dataviews',
+	'@wordpress/dataviews/wp',
+];
 
 module.exports = {
 	...defaultConfig,
