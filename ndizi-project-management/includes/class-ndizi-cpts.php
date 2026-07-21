@@ -70,7 +70,7 @@ class Ndizi_CPTs {
 				),
 				'map_meta_cap'    => true,
 				'hierarchical'    => false,
-				'supports'        => array( 'title', 'editor', 'thumbnail' ),
+				'supports'        => array( 'title', 'editor', 'thumbnail', 'custom-fields' ),
 				'show_in_rest'    => true,
 				'has_archive'     => false,
 			)
@@ -112,7 +112,7 @@ class Ndizi_CPTs {
 				),
 				'map_meta_cap'    => true,
 				'hierarchical'    => false,
-				'supports'        => array( 'title', 'editor', 'comments' ),
+				'supports'        => array( 'title', 'editor', 'comments', 'custom-fields' ),
 				'show_in_rest'    => true,
 				'has_archive'     => false,
 			)
@@ -154,7 +154,7 @@ class Ndizi_CPTs {
 				),
 				'map_meta_cap'    => true,
 				'hierarchical'    => false,
-				'supports'        => array( 'title', 'editor', 'comments' ),
+				'supports'        => array( 'title', 'editor', 'comments', 'custom-fields' ),
 				'show_in_rest'    => true,
 				'has_archive'     => false,
 			)
@@ -197,7 +197,7 @@ class Ndizi_CPTs {
 					),
 					'map_meta_cap'    => true,
 					'hierarchical'    => false,
-					'supports'        => array( 'title', 'editor' ),
+					'supports'        => array( 'title', 'editor', 'custom-fields' ),
 					'show_in_rest'    => true,
 					'has_archive'     => false,
 				)
@@ -240,7 +240,7 @@ class Ndizi_CPTs {
 				),
 				'map_meta_cap'    => true,
 				'hierarchical'    => false,
-				'supports'        => array( 'title', 'editor', 'thumbnail' ),
+				'supports'        => array( 'title', 'editor', 'thumbnail', 'custom-fields' ),
 				'show_in_rest'    => true,
 				'has_archive'     => false,
 			)
@@ -283,7 +283,7 @@ class Ndizi_CPTs {
 					),
 					'map_meta_cap'    => true,
 					'hierarchical'    => false,
-					'supports'        => array( 'title', 'editor' ),
+					'supports'        => array( 'title', 'editor', 'custom-fields' ),
 					'show_in_rest'    => true,
 					'has_archive'     => false,
 				)
