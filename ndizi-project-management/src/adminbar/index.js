@@ -14,7 +14,10 @@ import { formatTime, createTimer } from '../shared/timer.js';
 
 	function todayISO() {
 		const d = new Date();
-		return `${ d.getFullYear() }-${ String( d.getMonth() + 1 ).padStart( 2, '0' ) }-${ String( d.getDate() ).padStart( 2, '0' ) }`;
+		return `${ d.getFullYear() }-${ String( d.getMonth() + 1 ).padStart(
+			2,
+			'0'
+		) }-${ String( d.getDate() ).padStart( 2, '0' ) }`;
 	}
 
 	let projectsData = [];
@@ -100,13 +103,19 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		}
 
 		// Open dialog when clicking the admin bar trigger
-		$( '#wp-admin-bar-ndizi-time-tracker > .ab-item' ).on( 'click', function ( e ) {
-			e.preventDefault();
-			if ( ! hasLoadedData && ! $panel.hasClass( 'ndizi-timer-running' ) ) {
-				loadTrackerData();
+		$( '#wp-admin-bar-ndizi-time-tracker > .ab-item' ).on(
+			'click',
+			function ( e ) {
+				e.preventDefault();
+				if (
+					! hasLoadedData &&
+					! $panel.hasClass( 'ndizi-timer-running' )
+				) {
+					loadTrackerData();
+				}
+				openDialog();
 			}
-			openDialog();
-		} );
+		);
 
 		// Close button
 		$( '#ndizi-dialog-close-btn' ).on( 'click', function () {
@@ -382,7 +391,9 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			);
 
 			const $dateInput = $( '#ndizi-ab-manual-date' );
-			const logDate = $dateInput.prop( 'disabled' ) ? '' : $dateInput.val();
+			const logDate = $dateInput.prop( 'disabled' )
+				? ''
+				: $dateInput.val();
 
 			wp.ajax
 				.post( 'ndizi_log_time_manual_action', {

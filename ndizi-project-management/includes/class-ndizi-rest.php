@@ -216,6 +216,12 @@ class Ndizi_REST {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( __CLASS__, 'get_time_logs' ),
 					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
+					'args'                => array(
+						'invoiced' => array(
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -782,6 +788,14 @@ class Ndizi_REST {
 			} elseif ( 'no' === $approved || '0' === $approved || false === $approved || 0 === intval( $approved ) ) {
 				$args['approved'] = 0;
 			}
+		}
+
+		// Invoiced status filter (supports "yes" / billed and "no" / unbilled).
+		$invoiced = $request->get_param( 'invoiced' );
+		if ( 'no' === $invoiced || '0' === $invoiced || 'false' === $invoiced ) {
+			$args['invoiced'] = 'no';
+		} elseif ( 'yes' === $invoiced || '1' === $invoiced || 'true' === $invoiced ) {
+			$args['invoiced'] = 'yes';
 		}
 
 		// Search filter
