@@ -25,6 +25,7 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 | [footer-on-homepage](footer-on-homepage/) | — | Adds expandable copy to the homepage footer. |
 | [go-dark](go-dark/) | — | Makes a site "go dark" on a scheduled date with a customizable message. |
 | [google-tag-manager](google-tag-manager/) | — | Adds a GTM ID field to Settings → General and outputs the GTM snippet. |
+| [gs-plugin-support-manager](gs-plugin-support-manager/) | — | Monitored plugin & theme support forum aggregator for WordPress.org with profile import, email, webhook, and RSS notifications. [▶ Playground demo](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/gs-plugin-support-manager/playground/blueprint.json) |
 | [hugh](hugh/) | — | Personal color consultant widget that can also follow peer pressure. |
 | [legacy-jetpack-custom-css-editor](legacy-jetpack-custom-css-editor/) | [georgestephanis/legacy-jetpack-custom-css-editor](https://github.com/georgestephanis/legacy-jetpack-custom-css-editor) ¹ | Restores the full-page Custom CSS admin editor removed from Jetpack. |
 | [ndizi-project-management](ndizi-project-management/) | — | Basecamp-style project management built on WordPress. [▶ Playground demo](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/ndizi-project-management/playground/blueprint.json) |
