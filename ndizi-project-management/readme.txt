@@ -135,7 +135,8 @@ Google's terms and privacy policy: https://policies.google.com/terms and https:/
 == Changelog ==
 
 = 1.1.1 =
-*   REST Meta Exposure: Added `custom-fields` support to the Client, Project, Task, Invoice, Contact, and Time Off Request post types so their registered `show_in_rest` meta (including `_ndizi_client_id`, `_ndizi_invoice_number`, `_ndizi_invoice_currency`, `_ndizi_invoice_line_items`, and `_ndizi_external_source` / `_ndizi_external_id`) is now readable and writable through the core REST API. Previously this meta was silently dropped on REST writes, blocking external integrations and imports.
+*   REST Meta Exposure: Added `custom-fields` support to the Client, Project, Task, Invoice, Contact, and Time Off Request post types so their registered `show_in_rest` meta is now readable through the core REST API. Previously this meta was silently dropped, blocking external integrations and imports.
+*   Capability-Gated Meta Writes: Client, Project, and Invoice meta (including `_ndizi_client_id`, `_ndizi_invoice_number`, `_ndizi_invoice_currency`, `_ndizi_invoice_line_items`, and `_ndizi_external_source` / `_ndizi_external_id`) is now writable over REST only by users with the relevant `ndizi_manage_*` capability, via per-meta `auth_callback`s. Task, Contact, and Time Off meta remains deny-by-default and is not REST-writable, preventing an unprivileged user from altering sensitive fields such as time-off approval status.
 
 = 1.1.0 =
 *   Direct Client Invoicing: Invoices can now be created and assigned directly to a Client without requiring a Project selection.

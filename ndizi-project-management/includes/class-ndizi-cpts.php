@@ -292,6 +292,28 @@ class Ndizi_CPTs {
 	}
 
 	/**
+	 * Builds a REST meta auth_callback that gates writes on a capability.
+	 *
+	 * These CPTs now support 'custom-fields', which lets WordPress expose their
+	 * registered show_in_rest meta over the core REST API. Because the keys are
+	 * protected (`_`-prefixed), WordPress denies REST writes to them by default
+	 * unless an auth_callback is provided. We deliberately open only the meta an
+	 * importer needs (Client, Project, Invoice) and require the relevant management
+	 * capability, so an unprivileged user who can merely edit their own post cannot
+	 * change sensitive meta (e.g. invoice amounts) via REST. Meta left without an
+	 * auth_callback (Task, Contact, Time Off) stays deny-by-default and is not
+	 * REST-writable by anyone.
+	 *
+	 * @param string $capability Capability required to write the meta over REST.
+	 * @return callable
+	 */
+	private static function rest_meta_auth( $capability ) {
+		return static function () use ( $capability ) {
+			return current_user_can( $capability );
+		};
+	}
+
+	/**
 	 * Register metadata schemas for CPTs to expose in REST API
 	 */
 	public static function register_metadata() {
@@ -304,6 +326,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'esc_url_raw',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_clients' ),
 			)
 		);
 		register_post_meta(
@@ -314,6 +337,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_clients' ),
 			)
 		);
 		// The auth key is a portal access credential and is intentionally NOT exposed via REST.
@@ -339,6 +363,7 @@ class Ndizi_CPTs {
 				'type'              => 'string',
 				'default'           => 'active', // active, archived
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_clients' ),
 			)
 		);
 
@@ -350,6 +375,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_clients' ),
 			)
 		);
 		register_post_meta(
@@ -360,6 +386,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_clients' ),
 			)
 		);
 
@@ -372,6 +399,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'integer',
 				'sanitize_callback' => 'absint',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -382,6 +410,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -392,6 +421,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -404,6 +434,7 @@ class Ndizi_CPTs {
 				'sanitize_callback' => function ( $value ) {
 					return floatval( $value );
 				},
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -415,6 +446,7 @@ class Ndizi_CPTs {
 				'type'              => 'string',
 				'default'           => 'active', // active, archived
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -427,6 +459,7 @@ class Ndizi_CPTs {
 				'sanitize_callback' => function ( $value ) {
 					return floatval( $value );
 				},
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -437,6 +470,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 		register_post_meta(
@@ -447,6 +481,7 @@ class Ndizi_CPTs {
 				'single'            => true,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+				'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_projects' ),
 			)
 		);
 
@@ -526,6 +561,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'integer',
 					'sanitize_callback' => 'absint',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -536,6 +572,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'integer',
 					'sanitize_callback' => 'absint',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -546,6 +583,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -557,6 +595,7 @@ class Ndizi_CPTs {
 					'type'              => 'string',
 					'default'           => get_option( 'ndizi_default_currency', 'USD' ),
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -567,6 +606,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -577,6 +617,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -589,6 +630,7 @@ class Ndizi_CPTs {
 					'sanitize_callback' => function ( $value ) {
 						return floatval( $value );
 					},
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -600,6 +642,7 @@ class Ndizi_CPTs {
 					'type'              => 'string',
 					'default'           => 'draft', // draft, sent, paid, void
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -640,6 +683,7 @@ class Ndizi_CPTs {
 						}
 						return $clean;
 					},
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -650,6 +694,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 			register_post_meta(
@@ -660,6 +705,7 @@ class Ndizi_CPTs {
 					'single'            => true,
 					'type'              => 'string',
 					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => self::rest_meta_auth( 'ndizi_manage_invoices' ),
 				)
 			);
 		}
