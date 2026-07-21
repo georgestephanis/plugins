@@ -295,7 +295,7 @@ class GS_Support_Manager {
 		}
 
 		if ( count( $items ) !== $initial ) {
-			return update_option( self::ITEMS_OPTION, $items );
+			return $this->save_feed_items( $items );
 		}
 
 		return false;
