@@ -1,0 +1,42 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"meta": {
+		"title": "GS Plugin Support Manager — Demo",
+		"description": "Monitored plugin & theme support forum aggregator for WordPress.org with profile import, email, webhook, and unified RSS feed notifications.",
+		"author": "georgestephanis"
+	},
+	"landingPage": "/wp-admin/tools.php?page=gs-plugin-support-manager",
+	"preferredVersions": {
+		"php": "8.2",
+		"wp": "latest"
+	},
+	"features": {
+		"networking": true
+	},
+	"login": true,
+	"steps": [
+		{
+			"step": "defineWpConfigConsts",
+			"consts": {
+				"WP_ENVIRONMENT_TYPE": "local"
+			}
+		},
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "git:directory",
+				"url": "https://github.com/georgestephanis/plugins",
+				"ref": "main",
+				"path": "gs-plugin-support-manager"
+			},
+			"options": {
+				"activate": true,
+				"targetFolderName": "gs-plugin-support-manager"
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php require_once '/wordpress/wp-load.php'; if ( function_exists( 'gs_support_manager' ) ) { gs_support_manager()->add_monitored_item( 'woocommerce', 'plugin', 'WooCommerce' ); gs_support_manager()->add_monitored_item( 'twentytwentyfour', 'theme', 'Twenty Twenty-Four' ); gs_support_manager()->fetcher->sync_all(); }"
+		}
+	]
+}

@@ -14,18 +14,20 @@ Monitored plugin and theme support forum aggregator for WordPress.org with profi
 
 **GS Plugin Support Manager** aggregates WordPress.org support forum RSS feeds across any number of monitored plugins and themes into a single, unified admin feed and RSS/JSON endpoint.
 
+Try the plugin instantly in your browser using [WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/gs-plugin-support-manager/playground/blueprint.json).
+
 If you maintain, support, or keep track of multiple WordPress plugins or themes, GS Plugin Support Manager saves you from checking individual support forums manually.
 
 ### Key Features
 
 * **WordPress.org Profile Import**: Plug in a WordPress.org profile URL (e.g. `https://profiles.wordpress.org/georgestephanis/`) or username to automatically discover and monitor all plugins and themes published by that author.
-* **Monitored Plugins & Themes**: Track support feeds for any plugin or theme hosted on WordPress.org by slug.
-* **Auto-Discovery**: One-click import for all WordPress.org-hosted plugins installed on your local WordPress site.
-* **Unified Dashboard**: View, search, filter, and mark support topics as read or unread across all plugins and themes in one place.
+* **Monitored Plugins & Themes**: Track support feeds for any plugin or theme hosted on WordPress.org by slug (`https://wordpress.org/support/plugin/{slug}/feed/` and `https://wordpress.org/support/theme/{slug}/feed/`).
+* **Auto-Discovery**: One-click import for all WordPress.org-hosted plugins and themes installed on your local WordPress site.
+* **Unified Dashboard**: View, search, filter by plugin/theme or status, and mark support topics as read or unread across all plugins and themes in one place.
 * **Background WP-Cron Sync**: Automatically fetches new support items hourly, twice daily, or daily.
-* **Email Notifications**: Receive customizable email digests or alerts whenever new support topics are flagged.
+* **Email Notifications**: Receive customizable email digests sent via `wp_mail()` whenever new support topics are flagged.
 * **Webhook Notifications**: Send instant JSON POST payloads to Slack, Discord, Zapier, Make, or custom HTTP endpoints.
-* **Unified RSS & JSON Export Endpoint**: Subscribe to `/wp-json/gs-support-manager/v1/feed?format=rss` in your feed reader of choice.
+* **Unified RSS & JSON Export Endpoint**: Subscribe to `/wp-json/gs-support-manager/v1/feed?format=rss` in your feed reader of choice (NetNewsWire, Feedly, Apple Mail, etc.).
 
 == Installation ==
 
@@ -39,7 +41,13 @@ If you maintain, support, or keep track of multiple WordPress plugins or themes,
 Go to **Tools > Plugin Support > Monitored Plugins & Themes** and enter a profile URL (such as `https://profiles.wordpress.org/georgestephanis/`) into the Profile Import form.
 
 = Where can I access the aggregated RSS feed? =
-Your site provides an RSS endpoint at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=rss`.
+Your site provides an RSS endpoint at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=rss`. You can also get a JSON feed at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=json`.
+
+= How do webhook notifications work? =
+When enabled under **Settings & Notifications**, the plugin sends an HTTP POST request with a JSON payload containing details about all newly discovered support topics whenever the background sync runs.
+
+= Can I trigger a feed sync manually? =
+Yes! Click the **Sync All Feeds Now** button on the Unified Support Feed tab in your WordPress dashboard.
 
 == Changelog ==
 
