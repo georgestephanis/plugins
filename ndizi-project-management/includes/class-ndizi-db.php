@@ -584,6 +584,7 @@ class Ndizi_DB {
 			'client_id'  => null,
 			'project_id' => null,
 			'user_id'    => null,
+			'invoice_id' => null,
 			'start_date' => null,
 			'end_date'   => null,
 			'groupby'    => 'project_id', // can be client_id, project_id, user_id, task_id, or day
@@ -602,6 +603,11 @@ class Ndizi_DB {
 		if ( null !== $args['project_id'] ) {
 			$where[]      = 'project_id = %d';
 			$query_args[] = intval( $args['project_id'] );
+		}
+
+		if ( null !== $args['invoice_id'] ) {
+			$where[]      = 'invoice_id = %d';
+			$query_args[] = intval( $args['invoice_id'] );
 		}
 
 		if ( null !== $args['user_id'] ) {

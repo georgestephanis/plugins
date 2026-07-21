@@ -23,6 +23,7 @@ import {
 	Spinner,
 } from '@wordpress/components';
 import { decodeEntities } from '@wordpress/html-entities';
+import { getQueryArg } from '@wordpress/url';
 import apiFetch from '@wordpress/api-fetch';
 
 /* global ndizi_time_entries_admin */
@@ -35,6 +36,25 @@ const TimeEntriesApp = () => {
 	const canManage = !! ndizi_time_entries_admin.can_manage;
 	const lockDateStr = ndizi_time_entries_admin.lock_date;
 
+	// Seed initial filters from the URL (e.g. a "view unbilled time" link from
+	// the Clients admin list: admin.php?page=ndizi-time-entries&client_id=123&invoiced=no).
+	const initialFilters = useMemo( () => {
+		const filters = [];
+		const clientId = getQueryArg( window.location.href, 'client_id' );
+		if ( clientId ) {
+			filters.push( {
+				field: 'client_id',
+				operator: 'is',
+				value: parseInt( clientId, 10 ),
+			} );
+		}
+		const invoiced = getQueryArg( window.location.href, 'invoiced' );
+		if ( invoiced === 'no' ) {
+			filters.push( { field: 'invoiced', operator: 'is', value: 0 } );
+		}
+		return filters;
+	}, [] );
+
 	// View state for DataViews. The shape follows the @wordpress/dataviews v16
 	// API: visible columns live in `fields` (an ordered array of field ids) and
 	// sorting lives in `sort: { field, direction }`. (Older releases used
@@ -43,7 +63,7 @@ const TimeEntriesApp = () => {
 	const [ view, setView ] = useState( {
 		type: 'table',
 		search: '',
-		filters: [],
+		filters: initialFilters,
 		page: 1,
 		perPage: 20,
 		sort: { field: 'start_time', direction: 'desc' },
@@ -119,6 +139,8 @@ const TimeEntriesApp = () => {
 					args.billable = filter.value;
 				} else if ( filter.field === 'approved' ) {
 					args.approved = filter.value;
+				} else if ( filter.field === 'invoiced' ) {
+					args.invoiced = filter.value === 0 ? 'no' : 'yes';
 				}
 			} );
 		}
@@ -686,6 +708,28 @@ const TimeEntriesApp = () => {
 					return (
 						<span className={ `ndizi-badge ${ badgeClass }` }>
 							{ isApproved ? 'Approved' : 'Pending' }
+						</span>
+					);
+				},
+			},
+			{
+				id: 'invoiced',
+				label: 'Invoiced',
+				type: 'integer',
+				elements: [
+					{ value: 1, label: 'Billed' },
+					{ value: 0, label: 'Unbilled' },
+				],
+				filterBy: { operators: [ 'is' ] },
+				getValue: ( { item } ) => ( parseInt( item.invoice_id, 10 ) > 0 ? 1 : 0 ),
+				render: ( { item } ) => {
+					const isInvoiced = parseInt( item.invoice_id, 10 ) > 0;
+					const badgeClass = isInvoiced
+						? 'ndizi-badge-active'
+						: 'ndizi-badge-pending';
+					return (
+						<span className={ `ndizi-badge ${ badgeClass }` }>
+							{ isInvoiced ? 'Billed' : 'Unbilled' }
 						</span>
 					);
 				},

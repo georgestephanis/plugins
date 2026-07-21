@@ -784,6 +784,12 @@ class Ndizi_REST {
 			}
 		}
 
+		// Invoiced status filter (only the "not yet invoiced" case is supported).
+		$invoiced = $request->get_param( 'invoiced' );
+		if ( 'no' === $invoiced ) {
+			$args['invoice_id'] = 0;
+		}
+
 		// Search filter
 		$search = $request->get_param( 'search' );
 		if ( ! $search ) {
