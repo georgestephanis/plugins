@@ -36,6 +36,186 @@ class Ndizi_List_Tables {
 		add_filter( 'pre_get_posts', array( __CLASS__, 'restrict_posts_query' ) );
 
 		add_filter( 'post_row_actions', array( __CLASS__, 'add_client_copy_link_action' ), 10, 2 );
+
+		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_list_filters' ), 10, 2 );
+	}
+
+	/**
+	 * Get project IDs belonging to a client, cached per request.
+	 */
+	public static function get_client_project_ids( $client_id ) {
+		static $cache = array();
+		$client_id = (int) $client_id;
+		if ( isset( $cache[ $client_id ] ) ) {
+			return $cache[ $client_id ];
+		}
+
+		$project_ids = get_posts(
+			array(
+				'post_type'              => 'ndizi_project',
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query'             => array(
+					array(
+						'key'   => '_ndizi_client_id',
+						'value' => $client_id,
+					),
+				),
+			)
+		);
+
+		$cache[ $client_id ] = $project_ids;
+		return $project_ids;
+	}
+
+	/**
+	 * Get invoice IDs belonging to a client directly, or via one of the client's projects, cached per request.
+	 */
+	public static function get_client_invoice_ids( $client_id ) {
+		static $cache = array();
+		$client_id = (int) $client_id;
+		if ( isset( $cache[ $client_id ] ) ) {
+			return $cache[ $client_id ];
+		}
+
+		$project_ids = self::get_client_project_ids( $client_id );
+
+		$meta_query   = array( 'relation' => 'OR' );
+		$meta_query[] = array(
+			'key'   => '_ndizi_client_id',
+			'value' => $client_id,
+		);
+		if ( ! empty( $project_ids ) ) {
+			$meta_query[] = array(
+				'key'     => '_ndizi_project_id',
+				'value'   => $project_ids,
+				'compare' => 'IN',
+			);
+		}
+
+		$invoice_ids = get_posts(
+			array(
+				'post_type'              => 'ndizi_invoice',
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query'             => $meta_query,
+			)
+		);
+
+		$cache[ $client_id ] = $invoice_ids;
+		return $invoice_ids;
+	}
+
+	/**
+	 * Render list-table filter dropdowns (Clients status, Projects/Tasks/Invoices client, Tasks project).
+	 */
+	public static function render_list_filters( $post_type, $which ) {
+		if ( 'top' !== $which ) {
+			return;
+		}
+
+		switch ( $post_type ) {
+			case 'ndizi_client':
+				self::render_client_status_filter();
+				break;
+			case 'ndizi_project':
+			case 'ndizi_invoice':
+				self::render_client_filter_dropdown();
+				break;
+			case 'ndizi_task':
+				self::render_project_filter_dropdown();
+				self::render_client_filter_dropdown();
+				break;
+		}
+	}
+
+	/**
+	 * Render the Clients list status filter dropdown.
+	 */
+	private static function render_client_status_filter() {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-off distinct-value lookup to populate an admin filter dropdown.
+		$known_statuses = $wpdb->get_col( "SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_ndizi_client_status'" );
+		$other_statuses = array_diff( array_unique( array_filter( (array) $known_statuses ) ), array( 'active', 'archived' ) );
+		sort( $other_statuses );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+		$selected = isset( $_GET['ndizi_filter_status'] ) ? sanitize_key( wp_unslash( $_GET['ndizi_filter_status'] ) ) : 'active';
+
+		echo '<select name="ndizi_filter_status">';
+		printf( '<option value="active" %s>%s</option>', selected( $selected, 'active', false ), esc_html__( 'Active', 'ndizi-project-management' ) );
+		printf( '<option value="archived" %s>%s</option>', selected( $selected, 'archived', false ), esc_html__( 'Archived', 'ndizi-project-management' ) );
+		foreach ( $other_statuses as $status ) {
+			printf( '<option value="%1$s" %2$s>%3$s</option>', esc_attr( $status ), selected( $selected, $status, false ), esc_html( ucwords( str_replace( array( '_', '-' ), ' ', $status ) ) ) );
+		}
+		printf( '<option value="all" %s>%s</option>', selected( $selected, 'all', false ), esc_html__( 'All', 'ndizi-project-management' ) );
+		echo '</select>';
+	}
+
+	/**
+	 * Render a Client filter dropdown, reused on Projects, Tasks, and Invoices lists.
+	 */
+	private static function render_client_filter_dropdown() {
+		$clients = get_posts(
+			array(
+				'post_type'              => 'ndizi_client',
+				'posts_per_page'         => -1,
+				'orderby'                => 'title',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+		if ( empty( $clients ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+		$selected = isset( $_GET['ndizi_filter_client'] ) ? absint( $_GET['ndizi_filter_client'] ) : 0;
+
+		echo '<select name="ndizi_filter_client">';
+		printf( '<option value="0">%s</option>', esc_html__( 'All Clients', 'ndizi-project-management' ) );
+		foreach ( $clients as $client ) {
+			printf( '<option value="%1$d" %2$s>%3$s</option>', $client->ID, selected( $selected, $client->ID, false ), esc_html( $client->post_title ) );
+		}
+		echo '</select>';
+	}
+
+	/**
+	 * Render the Tasks list Project filter dropdown.
+	 */
+	private static function render_project_filter_dropdown() {
+		$projects = get_posts(
+			array(
+				'post_type'              => 'ndizi_project',
+				'posts_per_page'         => -1,
+				'orderby'                => 'title',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			)
+		);
+		if ( empty( $projects ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+		$selected = isset( $_GET['ndizi_filter_project'] ) ? absint( $_GET['ndizi_filter_project'] ) : 0;
+
+		echo '<select name="ndizi_filter_project">';
+		printf( '<option value="0">%s</option>', esc_html__( 'All Projects', 'ndizi-project-management' ) );
+		foreach ( $projects as $project ) {
+			printf( '<option value="%1$d" %2$s>%3$s</option>', $project->ID, selected( $selected, $project->ID, false ), esc_html( $project->post_title ) );
+		}
+		echo '</select>';
 	}
 
 	/**
@@ -88,6 +268,100 @@ class Ndizi_List_Tables {
 				);
 				$query->set( 'meta_query', $meta_query );
 			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+			$project_filter = isset( $_GET['ndizi_filter_project'] ) ? absint( $_GET['ndizi_filter_project'] ) : 0;
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+			$client_filter = isset( $_GET['ndizi_filter_client'] ) ? absint( $_GET['ndizi_filter_client'] ) : 0;
+
+			if ( $project_filter || $client_filter ) {
+				$meta_query = $query->get( 'meta_query' );
+				if ( ! is_array( $meta_query ) ) {
+					$meta_query = array();
+				}
+				if ( $project_filter ) {
+					$meta_query[] = array(
+						'key'   => '_ndizi_project_id',
+						'value' => $project_filter,
+					);
+				}
+				if ( $client_filter ) {
+					$project_ids  = self::get_client_project_ids( $client_filter );
+					$meta_query[] = array(
+						'key'     => '_ndizi_project_id',
+						'value'   => ! empty( $project_ids ) ? $project_ids : array( 0 ),
+						'compare' => 'IN',
+					);
+				}
+				$query->set( 'meta_query', $meta_query );
+			}
+		}
+
+		if ( 'ndizi_project' === $query->get( 'post_type' ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+			$client_filter = isset( $_GET['ndizi_filter_client'] ) ? absint( $_GET['ndizi_filter_client'] ) : 0;
+			if ( $client_filter ) {
+				$meta_query   = $query->get( 'meta_query' );
+				$meta_query   = is_array( $meta_query ) ? $meta_query : array();
+				$meta_query[] = array(
+					'key'   => '_ndizi_client_id',
+					'value' => $client_filter,
+				);
+				$query->set( 'meta_query', $meta_query );
+			}
+		}
+
+		if ( 'ndizi_invoice' === $query->get( 'post_type' ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+			$client_filter = isset( $_GET['ndizi_filter_client'] ) ? absint( $_GET['ndizi_filter_client'] ) : 0;
+			if ( $client_filter ) {
+				$invoice_ids = self::get_client_invoice_ids( $client_filter );
+				$query->set( 'post__in', ! empty( $invoice_ids ) ? $invoice_ids : array( 0 ) );
+			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+			$status_filter = isset( $_GET['ndizi_filter_invoice_status'] ) ? sanitize_key( wp_unslash( $_GET['ndizi_filter_invoice_status'] ) ) : '';
+			if ( 'outstanding' === $status_filter ) {
+				$meta_query   = $query->get( 'meta_query' );
+				$meta_query   = is_array( $meta_query ) ? $meta_query : array();
+				$meta_query[] = array(
+					'key'     => '_ndizi_invoice_status',
+					'value'   => array( 'sent', 'partial' ),
+					'compare' => 'IN',
+				);
+				$query->set( 'meta_query', $meta_query );
+			}
+		}
+
+		if ( 'ndizi_client' === $query->get( 'post_type' ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
+			$status_filter = isset( $_GET['ndizi_filter_status'] ) ? sanitize_key( wp_unslash( $_GET['ndizi_filter_status'] ) ) : 'active';
+			if ( 'all' !== $status_filter ) {
+				$meta_query = $query->get( 'meta_query' );
+				if ( ! is_array( $meta_query ) ) {
+					$meta_query = array();
+				}
+				if ( 'active' === $status_filter ) {
+					$meta_query[] = array(
+						'relation' => 'OR',
+						array(
+							'key'     => '_ndizi_client_status',
+							'compare' => 'NOT EXISTS',
+						),
+						array(
+							'key'     => '_ndizi_client_status',
+							'value'   => 'archived',
+							'compare' => '!=',
+						),
+					);
+				} else {
+					$meta_query[] = array(
+						'key'   => '_ndizi_client_status',
+						'value' => $status_filter,
+					);
+				}
+				$query->set( 'meta_query', $meta_query );
+			}
 		}
 	}
 
@@ -95,14 +369,24 @@ class Ndizi_List_Tables {
 	 * Add custom columns to Clients list
 	 */
 	public static function add_client_columns( $columns ) {
-		$new_columns = array();
+		$new_columns    = array();
+		$invoicing_live = Ndizi_Project_Management::is_module_active( 'invoicing' );
 		foreach ( $columns as $key => $title ) {
 			if ( 'date' === $key ) {
+				if ( $invoicing_live ) {
+					$new_columns['invoices_count']    = __( 'Invoices', 'ndizi-project-management' );
+					$new_columns['outstanding']       = __( 'Outstanding', 'ndizi-project-management' );
+				}
+				$new_columns['unbilled_time']  = __( 'Unbilled Time', 'ndizi-project-management' );
 				$new_columns['projects_count'] = __( 'Projects', 'ndizi-project-management' );
 				$new_columns['client_status']  = __( 'Status', 'ndizi-project-management' );
 				$new_columns['client_key']     = __( 'Portal Key', 'ndizi-project-management' );
 				$new_columns['client_website'] = __( 'Website', 'ndizi-project-management' );
 				$new_columns['client_address'] = __( 'Address', 'ndizi-project-management' );
+				if ( $invoicing_live ) {
+					$new_columns['last_invoice_date'] = __( 'Last Invoice', 'ndizi-project-management' );
+				}
+				$new_columns['last_activity'] = __( 'Last Activity', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -113,24 +397,118 @@ class Ndizi_List_Tables {
 	 * Render custom column contents for Clients list
 	 */
 	public static function render_client_columns( $column, $post_id ) {
-		if ( 'projects_count' === $column ) {
-			$projects = get_posts(
-				array(
-					'post_type'              => 'ndizi_project',
-					'posts_per_page'         => -1,
-					'fields'                 => 'ids',
-					'no_found_rows'          => true,
-					'update_post_meta_cache' => false,
-					'update_post_term_cache' => false,
-					'meta_query'             => array(
-						array(
-							'key'   => '_ndizi_client_id',
-							'value' => $post_id,
-						),
+		if ( 'invoices_count' === $column ) {
+			$invoice_ids = self::get_client_invoice_ids( $post_id );
+			$count       = count( $invoice_ids );
+			if ( $count ) {
+				printf(
+					'<a href="%s">%d</a>',
+					esc_url(
+						add_query_arg(
+							array(
+								'post_type'           => 'ndizi_invoice',
+								'ndizi_filter_client' => $post_id,
+							),
+							admin_url( 'edit.php' )
+						)
 					),
+					$count
+				);
+			} else {
+				echo '0';
+			}
+		} elseif ( 'outstanding' === $column ) {
+			$invoice_ids = self::get_client_invoice_ids( $post_id );
+			$outstanding = 0.0;
+			$currency    = '';
+			foreach ( $invoice_ids as $invoice_id ) {
+				$status = get_post_meta( $invoice_id, '_ndizi_invoice_status', true );
+				if ( ! in_array( $status, array( 'sent', 'partial' ), true ) ) {
+					continue;
+				}
+				$outstanding += Ndizi_Invoicing::get_invoice_balance( $invoice_id );
+				if ( ! $currency ) {
+					$currency = get_post_meta( $invoice_id, '_ndizi_invoice_currency', true );
+				}
+			}
+			if ( $outstanding > 0 ) {
+				$currency = $currency ? strtoupper( $currency ) : strtoupper( get_option( 'ndizi_default_currency', 'USD' ) );
+				printf(
+					'<a href="%s">%s</a>',
+					esc_url(
+						add_query_arg(
+							array(
+								'post_type'                   => 'ndizi_invoice',
+								'ndizi_filter_client'         => $post_id,
+								'ndizi_filter_invoice_status' => 'outstanding',
+							),
+							admin_url( 'edit.php' )
+						)
+					),
+					esc_html( $currency . ' ' . number_format( $outstanding, 2 ) )
+				);
+			} else {
+				echo '-';
+			}
+		} elseif ( 'unbilled_time' === $column ) {
+			$totals = Ndizi_DB::get_time_totals(
+				array(
+					'client_id'  => $post_id,
+					'invoice_id' => 0,
+					'groupby'    => 'client_id',
 				)
 			);
-			echo count( $projects );
+			$hours = ! empty( $totals ) ? round( (float) $totals[0]->billable_duration / HOUR_IN_SECONDS, 2 ) : 0;
+			printf(
+				'<a href="%s">%sh</a>',
+				esc_url(
+					add_query_arg(
+						array(
+							'page'      => 'ndizi-time-entries',
+							'client_id' => $post_id,
+							'invoiced'  => 'no',
+						),
+						admin_url( 'admin.php' )
+					)
+				),
+				esc_html( $hours )
+			);
+		} elseif ( 'projects_count' === $column ) {
+			$project_ids = self::get_client_project_ids( $post_id );
+			$count       = count( $project_ids );
+			if ( $count ) {
+				printf(
+					'<a href="%s">%d</a>',
+					esc_url(
+						add_query_arg(
+							array(
+								'post_type'           => 'ndizi_project',
+								'ndizi_filter_client' => $post_id,
+							),
+							admin_url( 'edit.php' )
+						)
+					),
+					$count
+				);
+			} else {
+				echo '0';
+			}
+		} elseif ( 'last_invoice_date' === $column ) {
+			$invoice_ids = self::get_client_invoice_ids( $post_id );
+			$latest      = '';
+			foreach ( $invoice_ids as $invoice_id ) {
+				$date = get_post_meta( $invoice_id, '_ndizi_invoice_date', true );
+				if ( $date && ( ! $latest || strtotime( $date ) > strtotime( $latest ) ) ) {
+					$latest = $date;
+				}
+			}
+			echo $latest ? esc_html( $latest ) : '-';
+		} elseif ( 'last_activity' === $column ) {
+			global $wpdb;
+			$table_name = Ndizi_DB::get_table_name();
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table name comes from Ndizi_DB, not user input; client id is prepared.
+			$last = $wpdb->get_var( $wpdb->prepare( "SELECT MAX(start_time) FROM {$table_name} WHERE client_id = %d", $post_id ) );
+			echo $last ? esc_html( $last ) : '-';
 		} elseif ( 'client_status' === $column ) {
 			$status       = get_post_meta( $post_id, '_ndizi_client_status', true );
 			$status_label = ( 'archived' === $status ) ? __( 'Archived', 'ndizi-project-management' ) : __( 'Active', 'ndizi-project-management' );
@@ -166,6 +544,7 @@ class Ndizi_List_Tables {
 				$new_columns['project_start_date']  = __( 'Start Date', 'ndizi-project-management' );
 				$new_columns['project_end_date']    = __( 'End Date', 'ndizi-project-management' );
 				$new_columns['project_hourly_rate'] = __( 'Hourly Rate', 'ndizi-project-management' );
+				$new_columns['open_tasks']          = __( 'Open Tasks', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -236,6 +615,46 @@ class Ndizi_List_Tables {
 		} elseif ( 'project_hourly_rate' === $column ) {
 			$rate = get_post_meta( $post_id, '_ndizi_project_hourly_rate', true );
 			echo $rate ? '$' . esc_html( number_format( $rate, 2 ) ) : '-';
+		} elseif ( 'open_tasks' === $column ) {
+			$open_task_ids = get_posts(
+				array(
+					'post_type'              => 'ndizi_task',
+					'posts_per_page'         => -1,
+					'fields'                 => 'ids',
+					'no_found_rows'          => true,
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+					'meta_query'             => array(
+						array(
+							'key'   => '_ndizi_project_id',
+							'value' => $post_id,
+						),
+						array(
+							'key'     => '_ndizi_task_status',
+							'value'   => array( 'completed', 'cancelled' ),
+							'compare' => 'NOT IN',
+						),
+					),
+				)
+			);
+			$count = count( $open_task_ids );
+			if ( $count ) {
+				printf(
+					'<a href="%s">%d</a>',
+					esc_url(
+						add_query_arg(
+							array(
+								'post_type'            => 'ndizi_task',
+								'ndizi_filter_project' => $post_id,
+							),
+							admin_url( 'edit.php' )
+						)
+					),
+					$count
+				);
+			} else {
+				echo '0';
+			}
 		}
 	}
 
@@ -319,6 +738,7 @@ class Ndizi_List_Tables {
 				$new_columns['invoice_amount']  = __( 'Amount', 'ndizi-project-management' );
 				$new_columns['invoice_due']     = __( 'Due Date', 'ndizi-project-management' );
 				$new_columns['invoice_date']    = __( 'Invoice Date', 'ndizi-project-management' );
+				$new_columns['days_overdue']    = __( 'Days Overdue', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -385,6 +805,15 @@ class Ndizi_List_Tables {
 		} elseif ( 'invoice_date' === $column ) {
 			$date = get_post_meta( $post_id, '_ndizi_invoice_date', true );
 			echo $date ? esc_html( $date ) : '-';
+		} elseif ( 'days_overdue' === $column ) {
+			$status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
+			$due    = get_post_meta( $post_id, '_ndizi_invoice_due_date', true );
+			$days   = ( $due && in_array( $status, array( 'sent', 'partial' ), true ) ) ? (int) floor( ( time() - strtotime( $due ) ) / DAY_IN_SECONDS ) : 0;
+			if ( $days > 0 ) {
+				echo '<span style="color:#b45309;font-weight:600;">' . esc_html( $days ) . '</span>';
+			} else {
+				echo '-';
+			}
 		}
 	}
 
@@ -394,6 +823,9 @@ class Ndizi_List_Tables {
 	public static function add_contact_columns( $columns ) {
 		$new_columns = array();
 		foreach ( $columns as $key => $title ) {
+			if ( 'title' === $key ) {
+				$new_columns['contact_avatar'] = __( 'Photo', 'ndizi-project-management' );
+			}
 			if ( 'date' === $key ) {
 				$new_columns['contact_email']   = __( 'Email', 'ndizi-project-management' );
 				$new_columns['contact_phone']   = __( 'Phone', 'ndizi-project-management' );
@@ -409,7 +841,15 @@ class Ndizi_List_Tables {
 	 * Render custom column contents for Contacts list
 	 */
 	public static function render_contact_columns( $column, $post_id ) {
-		if ( 'contact_email' === $column ) {
+		if ( 'contact_avatar' === $column ) {
+			$style = 'width:40px;height:40px;object-fit:cover;border-radius:4px;';
+			if ( has_post_thumbnail( $post_id ) ) {
+				echo get_the_post_thumbnail( $post_id, 'thumbnail', array( 'style' => $style ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() escapes its own output.
+			} else {
+				$email = get_post_meta( $post_id, '_ndizi_contact_email', true );
+				echo get_avatar( $email, 40, '', '', array( 'style' => $style ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_avatar() escapes its own output.
+			}
+		} elseif ( 'contact_email' === $column ) {
 			$email = get_post_meta( $post_id, '_ndizi_contact_email', true );
 			if ( $email ) {
 				echo '<a href="' . esc_url( 'mailto:' . $email ) . '">' . esc_html( $email ) . '</a>';
@@ -517,17 +957,21 @@ class Ndizi_List_Tables {
 			case 'ndizi_client':
 				$hidden[] = 'client_website';
 				$hidden[] = 'client_address';
+				$hidden[] = 'last_invoice_date';
+				$hidden[] = 'last_activity';
 				break;
 			case 'ndizi_project':
 				$hidden[] = 'project_start_date';
 				$hidden[] = 'project_end_date';
 				$hidden[] = 'project_hourly_rate';
+				$hidden[] = 'open_tasks';
 				break;
 			case 'ndizi_task':
 				$hidden[] = 'task_hourly_rate';
 				break;
 			case 'ndizi_invoice':
 				$hidden[] = 'invoice_date';
+				$hidden[] = 'days_overdue';
 				break;
 			case 'ndizi_contact':
 				$hidden[] = 'contact_phone';
