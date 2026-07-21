@@ -316,7 +316,13 @@ class Ndizi_List_Tables {
 			$client_filter = isset( $_GET['ndizi_filter_client'] ) ? absint( $_GET['ndizi_filter_client'] ) : 0;
 			if ( $client_filter ) {
 				$invoice_ids = self::get_client_invoice_ids( $client_filter );
-				$query->set( 'post__in', ! empty( $invoice_ids ) ? $invoice_ids : array( 0 ) );
+				$invoice_ids = ! empty( $invoice_ids ) ? $invoice_ids : array( 0 );
+				$existing    = $query->get( 'post__in' );
+				if ( ! empty( $existing ) && is_array( $existing ) ) {
+					$invoice_ids = array_values( array_intersect( $existing, $invoice_ids ) );
+					$invoice_ids = ! empty( $invoice_ids ) ? $invoice_ids : array( 0 );
+				}
+				$query->set( 'post__in', $invoice_ids );
 			}
 
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list-table filter, not a form submission.
