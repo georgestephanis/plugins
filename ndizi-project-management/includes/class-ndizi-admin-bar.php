@@ -483,18 +483,19 @@ class Ndizi_Admin_Bar {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ndizi-project-management' ) ) );
 		}
 
-		$project_id   = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
-		$task_id      = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$description  = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
-		$duration     = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : 0; // in seconds
-		$billable     = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
-		$raw_log_date = isset( $_POST['log_date'] ) ? sanitize_text_field( wp_unslash( $_POST['log_date'] ) ) : '';
+		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
+		$task_id     = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
+		$duration    = isset( $_POST['duration'] ) ? intval( $_POST['duration'] ) : 0; // in seconds
+		$billable    = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Validated via regex /^\d{4}-\d{2}-\d{2}$/ and DateTimeImmutable format check before sanitize_text_field().
+		$raw_log_date = isset( $_POST['log_date'] ) ? wp_unslash( $_POST['log_date'] ) : '';
 		$log_date     = '';
-		if ( $raw_log_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_log_date ) ) {
+		if ( $raw_log_date && is_string( $raw_log_date ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_log_date ) ) {
 			// Verify it's a real calendar date (e.g. rejects 2026-02-31).
 			$parsed = DateTimeImmutable::createFromFormat( '!Y-m-d', $raw_log_date, wp_timezone() );
 			if ( $parsed && $parsed->format( 'Y-m-d' ) === $raw_log_date ) {
-				$log_date = $raw_log_date;
+				$log_date = sanitize_text_field( $raw_log_date );
 			}
 		}
 
