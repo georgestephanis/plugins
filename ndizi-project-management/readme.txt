@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,9 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.1 =
+*   REST Meta Exposure: Added `custom-fields` support to the Client, Project, Task, Invoice, Contact, and Time Off Request post types so their registered `show_in_rest` meta (including `_ndizi_client_id`, `_ndizi_invoice_number`, `_ndizi_invoice_currency`, `_ndizi_invoice_line_items`, and `_ndizi_external_source` / `_ndizi_external_id`) is now readable and writable through the core REST API. Previously this meta was silently dropped on REST writes, blocking external integrations and imports.
 
 = 1.1.0 =
 *   Direct Client Invoicing: Invoices can now be created and assigned directly to a Client without requiring a Project selection.
