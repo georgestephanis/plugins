@@ -90,7 +90,7 @@ Data is stored efficiently in standard WordPress options (`wp_options`), keeping
 
 ## WordPress.org Profile Import Feature
 
-Users can paste a WordPress.org Profile URL (e.g., `https://profiles.wordpress.org/georgestephanis/`) or raw username into the Profile Import form.
+Users can paste a WordPress.org Profile URL (e.g., `https://profiles.wordpress.org/username/`) or raw username into the Profile Import form.
 
 1. **URL Parsing**: `GS_Support_Manager::extract_username_from_profile_url()` extracts the clean username string.
 2. **Plugins API Query**: `wp_remote_get()` calls `https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&request[author]={username}&request[per_page]=100`.

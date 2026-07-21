@@ -570,15 +570,18 @@ class GS_Support_Admin_UI {
 		// 1. WordPress.org Profile Import.
 		echo '<h3><span class="dashicons dashicons-admin-users" style="margin-top:3px;"></span> ' . esc_html__( 'Import from WordPress.org Profile', 'gs-plugin-support-manager' ) . '</h3>';
 		echo '<p>' . esc_html__( 'Enter a WordPress.org profile URL or username to automatically populate plugins and themes published by that author.', 'gs-plugin-support-manager' ) . '</p>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '">';
+		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '" id="gs-psm-profile-import-form">';
 		echo '<input type="hidden" name="page" value="gs-plugin-support-manager" />';
 		echo '<input type="hidden" name="gs_psm_action" value="import_profile" />';
 		echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
 
 		echo '<p><label><strong>' . esc_html__( 'Profile URL or Username:', 'gs-plugin-support-manager' ) . '</strong><br/>';
-		echo '<input type="text" name="profile_url" required placeholder="https://profiles.wordpress.org/georgestephanis/" class="widefat" /></label></p>';
+		echo '<input type="text" name="profile_url" required placeholder="https://profiles.wordpress.org/username/" class="widefat" /></label></p>';
 
-		echo '<p><input type="submit" class="button button-primary" value="' . esc_attr__( 'Import Profile Plugins & Themes', 'gs-plugin-support-manager' ) . '" /></p>';
+		echo '<p style="display:flex; align-items:center; gap:8px;">';
+		echo '<input type="submit" id="gs-psm-import-btn" class="button button-primary" value="' . esc_attr__( 'Import Profile Plugins & Themes', 'gs-plugin-support-manager' ) . '" />';
+		echo '<span class="spinner" id="gs-psm-import-spinner" style="float:none; margin:0;"></span>';
+		echo '</p>';
 		echo '</form>';
 
 		echo '<hr style="margin:20px 0; border:0; border-top:1px solid #eee;" />';
@@ -730,6 +733,16 @@ class GS_Support_Admin_UI {
 		jQuery(document).ready(function($) {
 			$('#cb-select-all-top').on('change', function() {
 				$('input[name="item_ids[]"]').prop('checked', this.checked);
+			});
+
+			$('#gs-psm-profile-import-form').on('submit', function() {
+				var form = $(this);
+				var btn = form.find('#gs-psm-import-btn');
+				var spinner = form.find('#gs-psm-import-spinner');
+				spinner.addClass('is-active');
+				setTimeout(function() {
+					btn.addClass('disabled').attr('disabled', 'disabled');
+				}, 10);
 			});
 
 			$('.toggle-read-btn').on('click', function(e) {
