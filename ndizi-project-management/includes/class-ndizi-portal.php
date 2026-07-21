@@ -884,7 +884,7 @@ class Ndizi_Portal {
 																	</a>
 																	<?php
 																	$stripe_publishable = Ndizi_Project_Management::get_secret( 'ndizi_stripe_publishable_key' );
-																	if ( $stripe_publishable && 'void' !== $inv_status && $inv_balance > 0 ) :
+																	if ( $stripe_publishable && ! in_array( $inv_status, array( 'draft', 'paid', 'void' ), true ) && $inv_balance > 0 ) :
 																		?>
 																		<button type="button" class="ndizi-portal-btn-table ndizi-pay-invoice-btn" data-invoice-id="<?php echo esc_attr( $inv->ID ); ?>" data-token="<?php echo esc_attr( get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ); ?>">
 																			<span class="dashicons dashicons-cart"></span> <?php esc_html_e( 'Pay Online', 'ndizi-project-management' ); ?>
