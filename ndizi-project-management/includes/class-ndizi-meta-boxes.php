@@ -927,67 +927,63 @@ class Ndizi_Meta_Boxes {
 			}
 
 			// Process structured line items
-			if ( isset( $_POST['ndizi_line_items_desc'] ) && is_array( $_POST['ndizi_line_items_desc'] ) ) {
-				$descs  = array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_line_items_desc'] ) );
-				$qtys   = isset( $_POST['ndizi_line_items_qty'] ) && is_array( $_POST['ndizi_line_items_qty'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_line_items_qty'] ) ) : array();
-				$prices = isset( $_POST['ndizi_line_items_price'] ) && is_array( $_POST['ndizi_line_items_price'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_line_items_price'] ) ) : array();
+			$descs  = isset( $_POST['ndizi_line_items_desc'] ) && is_array( $_POST['ndizi_line_items_desc'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_line_items_desc'] ) ) : array();
+			$qtys   = isset( $_POST['ndizi_line_items_qty'] ) && is_array( $_POST['ndizi_line_items_qty'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_line_items_qty'] ) ) : array();
+			$prices = isset( $_POST['ndizi_line_items_price'] ) && is_array( $_POST['ndizi_line_items_price'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_line_items_price'] ) ) : array();
 
-				$saved_items = array();
-				foreach ( $descs as $idx => $desc ) {
-					$qty   = isset( $qtys[ $idx ] ) ? floatval( $qtys[ $idx ] ) : 0.0;
-					$price = isset( $prices[ $idx ] ) ? floatval( $prices[ $idx ] ) : 0.0;
-					if ( '' === trim( $desc ) && 0.0 === $qty && 0.0 === $price ) {
-						continue;
-					}
-					$amt           = round( $qty * $price, 2 );
-					$saved_items[] = array(
-						'description' => $desc,
-						'quantity'    => $qty,
-						'unit_price'  => $price,
-						'amount'      => $amt,
-					);
+			$saved_items = array();
+			foreach ( $descs as $idx => $desc ) {
+				$qty   = isset( $qtys[ $idx ] ) ? floatval( $qtys[ $idx ] ) : 0.0;
+				$price = isset( $prices[ $idx ] ) ? floatval( $prices[ $idx ] ) : 0.0;
+				if ( '' === trim( $desc ) && 0.0 === $qty && 0.0 === $price ) {
+					continue;
 				}
-				update_post_meta( $post_id, '_ndizi_invoice_line_items', $saved_items );
+				$amt           = round( $qty * $price, 2 );
+				$saved_items[] = array(
+					'description' => $desc,
+					'quantity'    => $qty,
+					'unit_price'  => $price,
+					'amount'      => $amt,
+				);
 			}
+			update_post_meta( $post_id, '_ndizi_invoice_line_items', $saved_items );
 
 			// Process payment records.
-			if ( isset( $_POST['ndizi_payments_amount'] ) && is_array( $_POST['ndizi_payments_amount'] ) ) {
-				$pay_dates   = isset( $_POST['ndizi_payments_date'] ) && is_array( $_POST['ndizi_payments_date'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_date'] ) ) : array();
-				$pay_amounts = array_map( 'floatval', wp_unslash( $_POST['ndizi_payments_amount'] ) );
-				$pay_methods = isset( $_POST['ndizi_payments_method'] ) && is_array( $_POST['ndizi_payments_method'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_method'] ) ) : array();
-				$pay_notes   = isset( $_POST['ndizi_payments_note'] ) && is_array( $_POST['ndizi_payments_note'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_note'] ) ) : array();
+			$pay_dates   = isset( $_POST['ndizi_payments_date'] ) && is_array( $_POST['ndizi_payments_date'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_date'] ) ) : array();
+			$pay_amounts = isset( $_POST['ndizi_payments_amount'] ) && is_array( $_POST['ndizi_payments_amount'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_payments_amount'] ) ) : array();
+			$pay_methods = isset( $_POST['ndizi_payments_method'] ) && is_array( $_POST['ndizi_payments_method'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_method'] ) ) : array();
+			$pay_notes   = isset( $_POST['ndizi_payments_note'] ) && is_array( $_POST['ndizi_payments_note'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_note'] ) ) : array();
 
-				$saved_payments = array();
-				$total_paid     = 0.0;
-				foreach ( $pay_amounts as $idx => $amt ) {
-					$amt  = floatval( $amt );
-					$date = isset( $pay_dates[ $idx ] ) ? $pay_dates[ $idx ] : '';
-					if ( 0.0 === $amt && '' === trim( $date ) ) {
-						continue;
-					}
-					$total_paid      += $amt;
-					$saved_payments[] = array(
-						'date'   => $date,
-						'amount' => $amt,
-						'method' => isset( $pay_methods[ $idx ] ) ? $pay_methods[ $idx ] : '',
-						'note'   => isset( $pay_notes[ $idx ] ) ? $pay_notes[ $idx ] : '',
-					);
+			$saved_payments = array();
+			$total_paid     = 0.0;
+			foreach ( $pay_amounts as $idx => $amt ) {
+				$amt  = floatval( $amt );
+				$date = isset( $pay_dates[ $idx ] ) ? $pay_dates[ $idx ] : '';
+				if ( 0.0 === $amt && '' === trim( $date ) ) {
+					continue;
 				}
-				update_post_meta( $post_id, '_ndizi_invoice_payments', $saved_payments );
+				$total_paid      += $amt;
+				$saved_payments[] = array(
+					'date'   => $date,
+					'amount' => $amt,
+					'method' => isset( $pay_methods[ $idx ] ) ? $pay_methods[ $idx ] : '',
+					'note'   => isset( $pay_notes[ $idx ] ) ? $pay_notes[ $idx ] : '',
+				);
+			}
+			update_post_meta( $post_id, '_ndizi_invoice_payments', $saved_payments );
 
-				// Derive status from payments unless the invoice is a draft or voided.
-				$current_status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
-				if ( 'draft' !== $current_status && 'void' !== $current_status ) {
-					$invoice_total = floatval( get_post_meta( $post_id, '_ndizi_invoice_amount', true ) );
-					if ( $invoice_total > 0 && $total_paid >= $invoice_total ) {
-						$derived = 'paid';
-					} elseif ( $total_paid > 0 ) {
-						$derived = 'partial';
-					} else {
-						$derived = 'sent';
-					}
-					update_post_meta( $post_id, '_ndizi_invoice_status', $derived );
+			// Derive status from payments unless the invoice is a draft or voided.
+			$current_status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
+			if ( 'draft' !== $current_status && 'void' !== $current_status ) {
+				$invoice_total = floatval( get_post_meta( $post_id, '_ndizi_invoice_amount', true ) );
+				if ( $invoice_total > 0 && $total_paid >= $invoice_total ) {
+					$derived = 'paid';
+				} elseif ( $total_paid > 0 ) {
+					$derived = 'partial';
+				} else {
+					$derived = 'sent';
 				}
+				update_post_meta( $post_id, '_ndizi_invoice_status', $derived );
 			}
 
 			// Clear all existing time entries linked to this invoice first, then relink selected ones
