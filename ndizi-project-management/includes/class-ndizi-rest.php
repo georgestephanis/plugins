@@ -287,6 +287,9 @@ class Ndizi_REST {
 						'id'          => array(
 							'sanitize_callback' => 'absint',
 						),
+						'client_id'   => array(
+							'sanitize_callback' => 'absint',
+						),
 						'project_id'  => array(
 							'sanitize_callback' => 'absint',
 						),
@@ -937,7 +940,7 @@ class Ndizi_REST {
 		}
 
 		// Build data list from params.
-		$params = array( 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
+		$params = array( 'client_id', 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
 		$data   = array();
 
 		foreach ( $params as $param ) {
