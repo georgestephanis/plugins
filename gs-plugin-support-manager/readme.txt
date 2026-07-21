@@ -29,6 +29,27 @@ If you maintain, support, or keep track of multiple WordPress plugins or themes,
 * **Webhook Notifications**: Send instant JSON POST payloads to Slack, Discord, Zapier, Make, or custom HTTP endpoints.
 * **Unified RSS & JSON Export Endpoint**: Subscribe to `/wp-json/gs-support-manager/v1/feed?format=rss` in your feed reader of choice (NetNewsWire, Feedly, Apple Mail, etc.).
 
+== External Services ==
+
+This plugin connects to external services to retrieve support forum feeds and author plugin listings:
+
+1. **WordPress.org Support Forum Feeds**:
+   - **URL**: `https://wordpress.org/support/plugin/{slug}/feed/` and `https://wordpress.org/support/theme/{slug}/feed/`
+   - **Purpose**: Fetches public RSS feeds for monitored plugins and themes to populate the support feed.
+   - **Data Transmitted**: Standard HTTP request headers (User-Agent, IP address). No site data or credentials are transmitted.
+   - **Service Privacy Policy**: [WordPress.org Privacy Policy](https://wordpress.org/about/privacy/)
+
+2. **WordPress.org Plugins & Themes API**:
+   - **URL**: `https://api.wordpress.org/plugins/info/1.2/` and `https://api.wordpress.org/themes/info/1.1/`
+   - **Purpose**: Used during Profile Import to look up published plugins and themes for a specified author username.
+   - **Data Transmitted**: Author username parameter.
+   - **Service Privacy Policy**: [WordPress.org Privacy Policy](https://wordpress.org/about/privacy/)
+
+3. **User-Configured Notification Webhooks (Optional)**:
+   - **URL**: Administrator-configured HTTP/HTTPS webhook URL (e.g., Slack, Discord, Zapier).
+   - **Purpose**: Sends JSON POST payloads containing summary details of newly flagged support topics.
+   - **Data Transmitted**: Site name, site URL, event timestamp, and summary data of newly flagged support topics.
+
 == Installation ==
 
 1. Upload the `gs-plugin-support-manager` folder to the `/wp-content/plugins/` directory.
