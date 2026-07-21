@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,14 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.0 =
+*   Direct Client Invoicing: Invoices can now be created and assigned directly to a Client without requiring a Project selection.
+*   Structured Repeatable Line Items: Added line item editor in the Invoice meta box with dynamic total calculations, rendered in printable templates, CSV/JSON exports, and Stripe Checkout.
+*   Dedicated Invoice Numbers: Support custom invoice numbers (`_ndizi_invoice_number`) displayed across Admin list tables, printable views, exports, portal lists, and Stripe.
+*   Multi-Currency Support: Configurable global site default currency (Settings → General) and per-invoice currency dropdown selection, formatted dynamically in tables, exports, and Stripe payloads.
+*   External Provenance Metadata: Added `_ndizi_external_source` and `_ndizi_external_id` metadata fields to Clients, Projects, and Invoices.
+*   Direct Client Time Tracking: Support tracking time directly to a Client (optional Project and Task selection) across the custom database table, REST API, WP-CLI, Admin Bar quick-timer, Standalone PWA tracker, Reports dashboard, and the Time Entries DataViews table.
 
 = 1.0.3 =
 *   Fixed a bug where submitting the Client Portal login key could blank the page instead of logging the client in (a redirect was resolving the current URL too early in the request lifecycle).

@@ -65,9 +65,12 @@ class Ndizi_Invoicing {
 			$authorized = true;
 		} else {
 			// Check key match
-			$project_id    = get_post_meta( $invoice_id, '_ndizi_project_id', true );
-			$client_id     = get_post_meta( $project_id, '_ndizi_client_id', true );
-			$client_key    = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
+			$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+			$client_id  = get_post_meta( $invoice_id, '_ndizi_client_id', true );
+			if ( ! $client_id && $project_id ) {
+				$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
+			}
+			$client_key    = $client_id ? get_post_meta( $client_id, '_ndizi_client_auth_key', true ) : '';
 			$request_token = isset( $_GET['ndizi_token'] ) ? sanitize_text_field( wp_unslash( $_GET['ndizi_token'] ) ) : '';
 
 			if ( ! empty( $client_key ) && hash_equals( $client_key, $request_token ) ) {
@@ -82,14 +85,28 @@ class Ndizi_Invoicing {
 
 		// Pull related details
 		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
-		$project    = get_post( $project_id );
-		$client_id  = get_post_meta( $project_id, '_ndizi_client_id', true );
-		$client     = get_post( $client_id );
+		$project    = $project_id ? get_post( $project_id ) : null;
+		$client_id  = get_post_meta( $invoice_id, '_ndizi_client_id', true );
+		if ( ! $client_id && $project_id ) {
+			$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
+		}
+		$client         = $client_id ? get_post( $client_id ) : null;
+		$invoice_num    = get_post_meta( $invoice_id, '_ndizi_invoice_number', true );
+		$display_number = ! empty( $invoice_num ) ? $invoice_num : $invoice->post_title;
+		$currency       = get_post_meta( $invoice_id, '_ndizi_invoice_currency', true );
+		if ( ! $currency ) {
+			$currency = get_option( 'ndizi_default_currency', 'USD' );
+		}
+		$currency_upper = strtoupper( $currency );
 
 		$invoice_date = get_post_meta( $invoice_id, '_ndizi_invoice_date', true );
 		$due_date     = get_post_meta( $invoice_id, '_ndizi_invoice_due_date', true );
 		$amount       = get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
 		$status       = get_post_meta( $invoice_id, '_ndizi_invoice_status', true );
+		$line_items   = get_post_meta( $invoice_id, '_ndizi_invoice_line_items', true );
+		if ( ! is_array( $line_items ) ) {
+			$line_items = array();
+		}
 
 		// Fetch linked time entries
 		global $wpdb;
@@ -398,7 +415,7 @@ class Ndizi_Invoicing {
 						<?php echo esc_html( get_bloginfo( 'name' ) ); ?>
 					</div>
 					<div class="invoice-title-col">
-						<h1><?php echo esc_html( $invoice->post_title ); ?></h1>
+						<h1><?php echo esc_html( $display_number ); ?></h1>
 						<span class="invoice-status-badge invoice-status-<?php echo esc_attr( $status ); ?>">
 							<?php echo esc_html( $status ); ?>
 						</span>
@@ -408,11 +425,11 @@ class Ndizi_Invoicing {
 				<div class="invoice-details-grid">
 					<div class="details-col">
 						<h3><?php esc_html_e( 'Billed To', 'ndizi-project-management' ); ?></h3>
-						<p><strong><?php echo esc_html( $client->post_title ); ?></strong></p>
-						<?php if ( get_post_meta( $client_id, '_ndizi_client_address', true ) ) : ?>
+						<p><strong><?php echo $client ? esc_html( $client->post_title ) : '-'; ?></strong></p>
+						<?php if ( $client_id && get_post_meta( $client_id, '_ndizi_client_address', true ) ) : ?>
 							<p><?php echo nl2br( esc_html( get_post_meta( $client_id, '_ndizi_client_address', true ) ) ); ?></p>
 						<?php endif; ?>
-						<?php if ( get_post_meta( $client_id, '_ndizi_client_website', true ) ) : ?>
+						<?php if ( $client_id && get_post_meta( $client_id, '_ndizi_client_website', true ) ) : ?>
 							<p><?php echo esc_html( get_post_meta( $client_id, '_ndizi_client_website', true ) ); ?></p>
 						<?php endif; ?>
 					</div>
@@ -420,69 +437,95 @@ class Ndizi_Invoicing {
 						<h3><?php esc_html_e( 'Invoice Details', 'ndizi-project-management' ); ?></h3>
 						<p><strong><?php esc_html_e( 'Date:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $invoice_date ); ?></p>
 						<p><strong><?php esc_html_e( 'Due Date:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $due_date ); ?></p>
-						<p><strong><?php esc_html_e( 'Project:', 'ndizi-project-management' ); ?></strong> <?php echo esc_html( $project->post_title ); ?></p>
+						<p><strong><?php esc_html_e( 'Project:', 'ndizi-project-management' ); ?></strong> <?php echo $project ? esc_html( $project->post_title ) : '-'; ?></p>
 					</div>
 				</div>
 
-				<!-- Table of billable logs -->
-				<table class="invoice-table">
-					<thead>
-						<tr>
-							<th style="width: 12%;"><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
-							<th style="width: 18%;"><?php esc_html_e( 'Team Member', 'ndizi-project-management' ); ?></th>
-							<th style="width: 40%;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
-							<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
-							<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Rate', 'ndizi-project-management' ); ?></th>
-							<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Subtotal', 'ndizi-project-management' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php if ( empty( $time_entries ) ) : ?>
+				<?php if ( ! empty( $line_items ) ) : ?>
+					<!-- Structured Line Items Table -->
+					<table class="invoice-table">
+						<thead>
 							<tr>
-								<td colspan="6" style="text-align: center; color: #64748b;">
-									<em><?php esc_html_e( 'No detailed time entries linked. Showing summary amount only.', 'ndizi-project-management' ); ?></em>
-								</td>
+								<th style="width: 50%;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
+								<th style="width: 15%; text-align: right;"><?php esc_html_e( 'Quantity', 'ndizi-project-management' ); ?></th>
+								<th style="width: 15%; text-align: right;"><?php esc_html_e( 'Unit Price', 'ndizi-project-management' ); ?></th>
+								<th style="width: 20%; text-align: right;"><?php esc_html_e( 'Amount', 'ndizi-project-management' ); ?></th>
 							</tr>
-						<?php else : ?>
-							<?php
-							foreach ( $time_entries as $entry ) :
-								$user = get_userdata( $entry->user_id );
-
-								// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
-								$entry_rate = '';
-								if ( $entry->task_id ) {
-									$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
-								}
-								if ( '' === $entry_rate && $entry->user_id ) {
-									$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
-								}
-								if ( '' === $entry_rate && $entry->project_id ) {
-									$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
-								}
-								$entry_rate     = '' !== $entry_rate ? floatval( $entry_rate ) : 0.0;
-								$entry_subtotal = round( ( $entry->duration / 3600 ) * $entry_rate, 2 );
-								?>
+						</thead>
+						<tbody>
+							<?php foreach ( $line_items as $item ) : ?>
 								<tr>
-									<td><?php echo esc_html( gmdate( 'Y-m-d', strtotime( $entry->start_time ) ) ); ?></td>
-									<td><?php echo $user ? esc_html( $user->display_name ) : '-'; ?></td>
-									<td><?php echo esc_html( $entry->description ); ?></td>
-									<td style="text-align: right;"><strong><?php echo esc_html( round( $entry->duration / 3600, 2 ) ); ?>h</strong></td>
-									<td style="text-align: right;"><?php echo $entry_rate ? '$' . esc_html( number_format( $entry_rate, 2 ) ) : '-'; ?></td>
-									<td style="text-align: right;"><strong><?php echo $entry_rate ? '$' . esc_html( number_format( $entry_subtotal, 2 ) ) : '-'; ?></strong></td>
+									<td><?php echo esc_html( isset( $item['description'] ) ? $item['description'] : '' ); ?></td>
+									<td style="text-align: right;"><?php echo esc_html( isset( $item['quantity'] ) ? number_format( $item['quantity'], 2 ) : '1.00' ); ?></td>
+									<td style="text-align: right;"><?php echo esc_html( $currency_upper . ' ' . number_format( isset( $item['unit_price'] ) ? $item['unit_price'] : 0, 2 ) ); ?></td>
+									<td style="text-align: right;"><strong><?php echo esc_html( $currency_upper . ' ' . number_format( isset( $item['amount'] ) ? $item['amount'] : 0, 2 ) ); ?></strong></td>
 								</tr>
 							<?php endforeach; ?>
-						<?php endif; ?>
-					</tbody>
-				</table>
+						</tbody>
+					</table>
+				<?php else : ?>
+					<!-- Table of billable logs -->
+					<table class="invoice-table">
+						<thead>
+							<tr>
+								<th style="width: 12%;"><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
+								<th style="width: 18%;"><?php esc_html_e( 'Team Member', 'ndizi-project-management' ); ?></th>
+								<th style="width: 40%;"><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
+								<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Hours', 'ndizi-project-management' ); ?></th>
+								<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Rate', 'ndizi-project-management' ); ?></th>
+								<th style="width: 10%; text-align: right;"><?php esc_html_e( 'Subtotal', 'ndizi-project-management' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php if ( empty( $time_entries ) ) : ?>
+								<tr>
+									<td colspan="6" style="text-align: center; color: #64748b;">
+										<em><?php esc_html_e( 'No detailed time entries linked. Showing summary amount only.', 'ndizi-project-management' ); ?></em>
+									</td>
+								</tr>
+							<?php else : ?>
+								<?php
+								foreach ( $time_entries as $entry ) :
+									$user = get_userdata( $entry->user_id );
+
+									// Resolve billing rate hierarchically: Task Override -> User Billing Rate -> Project Default Rate
+									$entry_rate = '';
+									if ( $entry->task_id ) {
+										$entry_rate = get_post_meta( $entry->task_id, '_ndizi_task_hourly_rate', true );
+									}
+									if ( '' === $entry_rate && $entry->user_id ) {
+										$entry_rate = get_user_meta( $entry->user_id, '_ndizi_user_billing_rate', true );
+									}
+									if ( '' === $entry_rate && $entry->project_id ) {
+										$entry_rate = get_post_meta( $entry->project_id, '_ndizi_project_hourly_rate', true );
+									}
+									$entry_rate     = '' !== $entry_rate ? floatval( $entry_rate ) : 0.0;
+									$entry_subtotal = round( ( $entry->duration / 3600 ) * $entry_rate, 2 );
+									?>
+									<tr>
+										<td><?php echo esc_html( gmdate( 'Y-m-d', strtotime( $entry->start_time ) ) ); ?></td>
+										<td><?php echo $user ? esc_html( $user->display_name ) : '-'; ?></td>
+										<td><?php echo esc_html( $entry->description ); ?></td>
+										<td style="text-align: right;"><strong><?php echo esc_html( round( $entry->duration / 3600, 2 ) ); ?>h</strong></td>
+										<td style="text-align: right;"><?php echo $entry_rate ? esc_html( $currency_upper . ' ' . number_format( $entry_rate, 2 ) ) : '-'; ?></td>
+										<td style="text-align: right;"><strong><?php echo $entry_rate ? esc_html( $currency_upper . ' ' . number_format( $entry_subtotal, 2 ) ) : '-'; ?></strong></td>
+									</tr>
+								<?php endforeach; ?>
+							<?php endif; ?>
+						</tbody>
+					</table>
+				<?php endif; ?>
 
 				<div class="invoice-totals">
-					<div class="totals-row">
-						<span><?php esc_html_e( 'Total Logged Hours:', 'ndizi-project-management' ); ?></span>
-						<span><strong><?php echo esc_html( $total_hours ); ?>h</strong></span>
-					</div>
+					<?php if ( empty( $line_items ) && ! empty( $time_entries ) ) : ?>
+						<div class="totals-row">
+							<span><?php esc_html_e( 'Total Logged Hours:', 'ndizi-project-management' ); ?></span>
+							<span><strong><?php echo esc_html( $total_hours ); ?>h</strong></span>
+						</div>
+					<?php endif; ?>
 					<div class="totals-row totals-row-grand">
 						<span><?php esc_html_e( 'Total Due:', 'ndizi-project-management' ); ?></span>
-						<span><strong>$<?php echo esc_html( number_format( $amount, 2 ) ); ?></strong></span>
+						<span><strong><?php echo esc_html( $currency_upper . ' ' . number_format( $amount, 2 ) ); ?></strong></span>
 					</div>
 				</div>
 
@@ -529,9 +572,24 @@ class Ndizi_Invoicing {
 
 		// Compile export array structure
 		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
-		$project    = get_post( $project_id );
-		$client_id  = get_post_meta( $project_id, '_ndizi_client_id', true );
-		$client     = get_post( $client_id );
+		$project    = $project_id ? get_post( $project_id ) : null;
+		$client_id  = get_post_meta( $invoice_id, '_ndizi_client_id', true );
+		if ( ! $client_id && $project_id ) {
+			$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
+		}
+		$client          = $client_id ? get_post( $client_id ) : null;
+		$invoice_num     = get_post_meta( $invoice_id, '_ndizi_invoice_number', true );
+		$currency        = get_post_meta( $invoice_id, '_ndizi_invoice_currency', true );
+		$external_source = get_post_meta( $invoice_id, '_ndizi_external_source', true );
+		$external_id     = get_post_meta( $invoice_id, '_ndizi_external_id', true );
+		$line_items      = get_post_meta( $invoice_id, '_ndizi_invoice_line_items', true );
+
+		if ( empty( $invoice_num ) ) {
+			$invoice_num = $invoice->post_title;
+		}
+		if ( empty( $currency ) ) {
+			$currency = get_option( 'ndizi_default_currency', 'USD' );
+		}
 
 		$invoice_date = get_post_meta( $invoice_id, '_ndizi_invoice_date', true );
 		$due_date     = get_post_meta( $invoice_id, '_ndizi_invoice_due_date', true );
@@ -545,25 +603,39 @@ class Ndizi_Invoicing {
 		$time_entries = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE invoice_id = %d ORDER BY start_time ASC", $invoice_id ) );
 
 		$export_data = array(
-			'invoice_id'     => $invoice_id,
-			'invoice_number' => $invoice->post_title,
-			'project_name'   => $project ? $project->post_title : '',
-			'client_name'    => $client ? $client->post_title : '',
-			'invoice_date'   => $invoice_date,
-			'due_date'       => $due_date,
-			'amount'         => $amount,
-			'status'         => $status,
-			'line_items'     => array(),
+			'invoice_id'      => $invoice_id,
+			'invoice_number'  => $invoice_num,
+			'currency'        => strtoupper( $currency ),
+			'project_name'    => $project ? $project->post_title : '',
+			'client_name'     => $client ? $client->post_title : '',
+			'invoice_date'    => $invoice_date,
+			'due_date'        => $due_date,
+			'amount'          => $amount,
+			'status'          => $status,
+			'external_source' => $external_source,
+			'external_id'     => $external_id,
+			'line_items'      => array(),
 		);
 
-		foreach ( $time_entries as $entry ) {
-			$user                        = get_userdata( $entry->user_id );
-			$export_data['line_items'][] = array(
-				'date'        => gmdate( 'Y-m-d', strtotime( $entry->start_time ) ),
-				'team_member' => $user ? $user->display_name : '',
-				'description' => $entry->description,
-				'hours'       => round( $entry->duration / 3600, 2 ),
-			);
+		if ( is_array( $line_items ) && ! empty( $line_items ) ) {
+			foreach ( $line_items as $item ) {
+				$export_data['line_items'][] = array(
+					'description' => isset( $item['description'] ) ? $item['description'] : '',
+					'quantity'    => isset( $item['quantity'] ) ? floatval( $item['quantity'] ) : 1,
+					'unit_price'  => isset( $item['unit_price'] ) ? floatval( $item['unit_price'] ) : 0,
+					'amount'      => isset( $item['amount'] ) ? floatval( $item['amount'] ) : 0,
+				);
+			}
+		} else {
+			foreach ( $time_entries as $entry ) {
+				$user                        = get_userdata( $entry->user_id );
+				$export_data['line_items'][] = array(
+					'date'        => gmdate( 'Y-m-d', strtotime( $entry->start_time ) ),
+					'team_member' => $user ? $user->display_name : '',
+					'description' => $entry->description,
+					'hours'       => round( $entry->duration / 3600, 2 ),
+				);
+			}
 		}
 
 		// Allow third party plugins to customize invoice dataset exports

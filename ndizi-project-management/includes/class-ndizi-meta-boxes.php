@@ -56,6 +56,9 @@ class Ndizi_Meta_Boxes {
 		$key     = get_post_meta( $post->ID, '_ndizi_client_auth_key', true );
 		$status  = get_post_meta( $post->ID, '_ndizi_client_status', true );
 
+		$external_source = get_post_meta( $post->ID, '_ndizi_external_source', true );
+		$external_id     = get_post_meta( $post->ID, '_ndizi_external_id', true );
+
 		if ( empty( $key ) ) {
 			$key = wp_generate_password( 16, false );
 		}
@@ -86,6 +89,13 @@ class Ndizi_Meta_Boxes {
 					<p class="description"><?php esc_html_e( 'Used for frontend access authentication.', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
+			<tr>
+				<th><label for="ndizi_external_source"><?php esc_html_e( 'External Provenance', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="text" name="ndizi_external_source" id="ndizi_external_source" value="<?php echo esc_attr( $external_source ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Source (e.g. freshbooks)', 'ndizi-project-management' ); ?>" style="width: 48%; margin-right: 2%;">
+					<input type="text" name="ndizi_external_id" id="ndizi_external_id" value="<?php echo esc_attr( $external_id ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'External ID', 'ndizi-project-management' ); ?>" style="width: 48%;">
+				</td>
+			</tr>
 		</table>
 		<?php
 	}
@@ -102,6 +112,9 @@ class Ndizi_Meta_Boxes {
 		$budget      = get_post_meta( $post->ID, '_ndizi_project_budget', true );
 		$hourly_rate = get_post_meta( $post->ID, '_ndizi_project_hourly_rate', true );
 		$status      = get_post_meta( $post->ID, '_ndizi_project_status', true );
+
+		$external_source = get_post_meta( $post->ID, '_ndizi_external_source', true );
+		$external_id     = get_post_meta( $post->ID, '_ndizi_external_id', true );
 
 		$clients = get_posts(
 			array(
@@ -149,6 +162,13 @@ class Ndizi_Meta_Boxes {
 						<option value="active" <?php selected( $status, 'active' ); ?>><?php esc_html_e( 'Active', 'ndizi-project-management' ); ?></option>
 						<option value="archived" <?php selected( $status, 'archived' ); ?>><?php esc_html_e( 'Archived', 'ndizi-project-management' ); ?></option>
 					</select>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_external_source"><?php esc_html_e( 'External Provenance', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="text" name="ndizi_external_source" id="ndizi_external_source" value="<?php echo esc_attr( $external_source ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Source (e.g. freshbooks)', 'ndizi-project-management' ); ?>" style="width: 48%; margin-right: 2%;">
+					<input type="text" name="ndizi_external_id" id="ndizi_external_id" value="<?php echo esc_attr( $external_id ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'External ID', 'ndizi-project-management' ); ?>" style="width: 48%;">
 				</td>
 			</tr>
 		</table>
@@ -369,11 +389,31 @@ class Ndizi_Meta_Boxes {
 	public static function render_invoice_meta_box( $post ) {
 		wp_nonce_field( 'ndizi_save_invoice', 'ndizi_invoice_nonce' );
 
-		$project_id   = get_post_meta( $post->ID, '_ndizi_project_id', true );
-		$invoice_date = get_post_meta( $post->ID, '_ndizi_invoice_date', true );
-		$due_date     = get_post_meta( $post->ID, '_ndizi_invoice_due_date', true );
-		$amount       = get_post_meta( $post->ID, '_ndizi_invoice_amount', true );
-		$status       = get_post_meta( $post->ID, '_ndizi_invoice_status', true );
+		$client_id       = get_post_meta( $post->ID, '_ndizi_client_id', true );
+		$project_id      = get_post_meta( $post->ID, '_ndizi_project_id', true );
+		$invoice_number  = get_post_meta( $post->ID, '_ndizi_invoice_number', true );
+		$currency        = get_post_meta( $post->ID, '_ndizi_invoice_currency', true );
+		$invoice_date    = get_post_meta( $post->ID, '_ndizi_invoice_date', true );
+		$due_date        = get_post_meta( $post->ID, '_ndizi_invoice_due_date', true );
+		$amount          = get_post_meta( $post->ID, '_ndizi_invoice_amount', true );
+		$status          = get_post_meta( $post->ID, '_ndizi_invoice_status', true );
+		$line_items      = get_post_meta( $post->ID, '_ndizi_invoice_line_items', true );
+		$external_source = get_post_meta( $post->ID, '_ndizi_external_source', true );
+		$external_id     = get_post_meta( $post->ID, '_ndizi_external_id', true );
+
+		if ( ! $currency ) {
+			$currency = get_option( 'ndizi_default_currency', 'USD' );
+		}
+		if ( ! is_array( $line_items ) ) {
+			$line_items = array();
+		}
+
+		$clients = get_posts(
+			array(
+				'post_type'      => 'ndizi_client',
+				'posts_per_page' => -1,
+			)
+		);
 
 		$projects = get_posts(
 			array(
@@ -393,10 +433,24 @@ class Ndizi_Meta_Boxes {
 		?>
 		<table class="form-table ndizi-meta-table">
 			<tr>
+				<th><label for="ndizi_invoice_client_id"><?php esc_html_e( 'Client', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<select name="ndizi_client_id" id="ndizi_invoice_client_id">
+						<option value=""><?php esc_html_e( '-- Select Client (Or infer from Project) --', 'ndizi-project-management' ); ?></option>
+						<?php foreach ( $clients as $c ) : ?>
+							<option value="<?php echo esc_attr( $c->ID ); ?>" <?php selected( $client_id, $c->ID ); ?>>
+								<?php echo esc_html( $c->post_title ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description"><?php esc_html_e( 'Direct client association. Required if no project is selected.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="ndizi_invoice_project_id"><?php esc_html_e( 'Project', 'ndizi-project-management' ); ?></label></th>
 				<td>
-					<select name="ndizi_project_id" id="ndizi_invoice_project_id" required>
-						<option value=""><?php esc_html_e( '-- Select Project --', 'ndizi-project-management' ); ?></option>
+					<select name="ndizi_project_id" id="ndizi_invoice_project_id">
+						<option value=""><?php esc_html_e( '-- None / Standalone Client Invoice --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $projects as $project ) : ?>
 							<?php $proj_rate = get_post_meta( $project->ID, '_ndizi_project_hourly_rate', true ); ?>
 							<option value="<?php echo esc_attr( $project->ID ); ?>" <?php selected( $project_id, $project->ID ); ?> data-rate="<?php echo esc_attr( $proj_rate ); ?>">
@@ -404,6 +458,20 @@ class Ndizi_Meta_Boxes {
 							</option>
 						<?php endforeach; ?>
 					</select>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_invoice_number"><?php esc_html_e( 'Invoice Number', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="text" name="ndizi_invoice_number" id="ndizi_invoice_number" value="<?php echo esc_attr( $invoice_number ); ?>" class="regular-text" placeholder="e.g. INV-1001">
+					<p class="description"><?php esc_html_e( 'Unique identifier or external invoice number.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_invoice_currency"><?php esc_html_e( 'Currency', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="text" name="ndizi_invoice_currency" id="ndizi_invoice_currency" value="<?php echo esc_attr( $currency ); ?>" class="small-text" maxlength="3" style="text-transform: uppercase;">
+					<p class="description"><?php esc_html_e( '3-letter currency code (e.g. USD, EUR, GBP, CAD).', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -415,10 +483,10 @@ class Ndizi_Meta_Boxes {
 				<td><input type="date" name="ndizi_invoice_due_date" id="ndizi_invoice_due_date" value="<?php echo esc_attr( $due_date ); ?>"></td>
 			</tr>
 			<tr>
-				<th><label for="ndizi_invoice_amount"><?php esc_html_e( 'Amount ($)', 'ndizi-project-management' ); ?></label></th>
+				<th><label for="ndizi_invoice_amount"><?php esc_html_e( 'Total Amount', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<input type="number" step="0.01" name="ndizi_invoice_amount" id="ndizi_invoice_amount" value="<?php echo esc_attr( $amount ); ?>" class="small-text">
-					<p class="description"><?php esc_html_e( 'Total amount for this invoice. Can be manually overridden or aggregated from time entries below.', 'ndizi-project-management' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Total amount for this invoice. Can be calculated from structured line items or time entries.', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -430,6 +498,54 @@ class Ndizi_Meta_Boxes {
 						<option value="paid" <?php selected( $status, 'paid' ); ?>><?php esc_html_e( 'Paid', 'ndizi-project-management' ); ?></option>
 						<option value="void" <?php selected( $status, 'void' ); ?>><?php esc_html_e( 'Void', 'ndizi-project-management' ); ?></option>
 					</select>
+				</td>
+			</tr>
+			<tr>
+				<th><label><?php esc_html_e( 'Structured Line Items', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<table class="widefat striped" id="ndizi_line_items_table">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Description', 'ndizi-project-management' ); ?></th>
+								<th style="width: 80px;"><?php esc_html_e( 'Qty', 'ndizi-project-management' ); ?></th>
+								<th style="width: 110px;"><?php esc_html_e( 'Unit Price', 'ndizi-project-management' ); ?></th>
+								<th style="width: 110px;"><?php esc_html_e( 'Amount', 'ndizi-project-management' ); ?></th>
+								<th style="width: 50px;"></th>
+							</tr>
+						</thead>
+						<tbody id="ndizi_line_items_body">
+							<?php if ( empty( $line_items ) ) : ?>
+								<tr class="ndizi-line-item-row">
+									<td><input type="text" name="ndizi_line_items_desc[]" value="" class="large-text"></td>
+									<td><input type="number" step="0.01" name="ndizi_line_items_qty[]" value="1" class="small-text ndizi-li-qty"></td>
+									<td><input type="number" step="0.01" name="ndizi_line_items_price[]" value="0.00" class="small-text ndizi-li-price"></td>
+									<td><input type="number" step="0.01" name="ndizi_line_items_amount[]" value="0.00" class="small-text ndizi-li-amount" readonly></td>
+									<td><button type="button" class="button button-secondary ndizi-remove-li-row">&times;</button></td>
+								</tr>
+							<?php else : ?>
+								<?php foreach ( $line_items as $item ) : ?>
+									<tr class="ndizi-line-item-row">
+										<td><input type="text" name="ndizi_line_items_desc[]" value="<?php echo esc_attr( isset( $item['description'] ) ? $item['description'] : '' ); ?>" class="large-text"></td>
+										<td><input type="number" step="0.01" name="ndizi_line_items_qty[]" value="<?php echo esc_attr( isset( $item['quantity'] ) ? $item['quantity'] : 1 ); ?>" class="small-text ndizi-li-qty"></td>
+										<td><input type="number" step="0.01" name="ndizi_line_items_price[]" value="<?php echo esc_attr( isset( $item['unit_price'] ) ? $item['unit_price'] : 0.00 ); ?>" class="small-text ndizi-li-price"></td>
+										<td><input type="number" step="0.01" name="ndizi_line_items_amount[]" value="<?php echo esc_attr( isset( $item['amount'] ) ? $item['amount'] : 0.00 ); ?>" class="small-text ndizi-li-amount" readonly></td>
+										<td><button type="button" class="button button-secondary ndizi-remove-li-row">&times;</button></td>
+									</tr>
+								<?php endforeach; ?>
+							<?php endif; ?>
+						</tbody>
+					</table>
+					<div style="margin-top: 10px;">
+						<button type="button" class="button" id="ndizi_add_line_item_btn"><?php esc_html_e( '+ Add Line Item', 'ndizi-project-management' ); ?></button>
+						<button type="button" class="button" id="ndizi_calc_line_items_btn"><?php esc_html_e( 'Calculate & Apply Total', 'ndizi-project-management' ); ?></button>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="ndizi_external_source"><?php esc_html_e( 'External Provenance', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<input type="text" name="ndizi_external_source" id="ndizi_external_source" value="<?php echo esc_attr( $external_source ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Source (e.g. freshbooks)', 'ndizi-project-management' ); ?>" style="width: 48%; margin-right: 2%;">
+					<input type="text" name="ndizi_external_id" id="ndizi_external_id" value="<?php echo esc_attr( $external_id ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'External ID', 'ndizi-project-management' ); ?>" style="width: 48%;">
 				</td>
 			</tr>
 			<?php if ( $project_id ) : ?>
@@ -671,6 +787,12 @@ class Ndizi_Meta_Boxes {
 			if ( isset( $_POST['ndizi_client_auth_key'] ) ) {
 				update_post_meta( $post_id, '_ndizi_client_auth_key', sanitize_text_field( wp_unslash( $_POST['ndizi_client_auth_key'] ) ) );
 			}
+			if ( isset( $_POST['ndizi_external_source'] ) ) {
+				update_post_meta( $post_id, '_ndizi_external_source', sanitize_text_field( wp_unslash( $_POST['ndizi_external_source'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_external_id'] ) ) {
+				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
+			}
 		}
 
 		// 2. Project Save
@@ -692,6 +814,12 @@ class Ndizi_Meta_Boxes {
 			}
 			if ( isset( $_POST['ndizi_project_status'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_status', sanitize_text_field( wp_unslash( $_POST['ndizi_project_status'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_external_source'] ) ) {
+				update_post_meta( $post_id, '_ndizi_external_source', sanitize_text_field( wp_unslash( $_POST['ndizi_external_source'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_external_id'] ) ) {
+				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
 			}
 		}
 
@@ -719,8 +847,17 @@ class Ndizi_Meta_Boxes {
 
 		// 4. Invoice Save
 		if ( 'ndizi_invoice' === $post_type && isset( $_POST['ndizi_invoice_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_nonce'] ) ), 'ndizi_save_invoice' ) ) {
+			if ( isset( $_POST['ndizi_client_id'] ) ) {
+				update_post_meta( $post_id, '_ndizi_client_id', intval( $_POST['ndizi_client_id'] ) );
+			}
 			if ( isset( $_POST['ndizi_project_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_project_id', intval( $_POST['ndizi_project_id'] ) );
+			}
+			if ( isset( $_POST['ndizi_invoice_number'] ) ) {
+				update_post_meta( $post_id, '_ndizi_invoice_number', sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_number'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_invoice_currency'] ) ) {
+				update_post_meta( $post_id, '_ndizi_invoice_currency', strtoupper( sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_currency'] ) ) ) );
 			}
 			if ( isset( $_POST['ndizi_invoice_date'] ) ) {
 				update_post_meta( $post_id, '_ndizi_invoice_date', sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_date'] ) ) );
@@ -733,6 +870,36 @@ class Ndizi_Meta_Boxes {
 			}
 			if ( isset( $_POST['ndizi_invoice_status'] ) ) {
 				update_post_meta( $post_id, '_ndizi_invoice_status', sanitize_text_field( wp_unslash( $_POST['ndizi_invoice_status'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_external_source'] ) ) {
+				update_post_meta( $post_id, '_ndizi_external_source', sanitize_text_field( wp_unslash( $_POST['ndizi_external_source'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_external_id'] ) ) {
+				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
+			}
+
+			// Process structured line items
+			if ( isset( $_POST['ndizi_line_items_desc'] ) && is_array( $_POST['ndizi_line_items_desc'] ) ) {
+				$descs  = array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_line_items_desc'] ) );
+				$qtys   = isset( $_POST['ndizi_line_items_qty'] ) && is_array( $_POST['ndizi_line_items_qty'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_line_items_qty'] ) ) : array();
+				$prices = isset( $_POST['ndizi_line_items_price'] ) && is_array( $_POST['ndizi_line_items_price'] ) ? array_map( 'floatval', wp_unslash( $_POST['ndizi_line_items_price'] ) ) : array();
+
+				$saved_items = array();
+				foreach ( $descs as $idx => $desc ) {
+					$qty   = isset( $qtys[ $idx ] ) ? floatval( $qtys[ $idx ] ) : 0.0;
+					$price = isset( $prices[ $idx ] ) ? floatval( $prices[ $idx ] ) : 0.0;
+					if ( '' === trim( $desc ) && 0.0 === $qty && 0.0 === $price ) {
+						continue;
+					}
+					$amt           = round( $qty * $price, 2 );
+					$saved_items[] = array(
+						'description' => $desc,
+						'quantity'    => $qty,
+						'unit_price'  => $price,
+						'amount'      => $amt,
+					);
+				}
+				update_post_meta( $post_id, '_ndizi_invoice_line_items', $saved_items );
 			}
 
 			// Clear all existing time entries linked to this invoice first, then relink selected ones

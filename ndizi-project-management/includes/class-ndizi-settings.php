@@ -100,6 +100,14 @@ class Ndizi_Settings {
 				$updated = true;
 			}
 
+			if ( isset( $_POST['ndizi_default_currency'] ) ) {
+				$currency = strtoupper( sanitize_text_field( wp_unslash( $_POST['ndizi_default_currency'] ) ) );
+				if ( ! empty( $currency ) ) {
+					update_option( 'ndizi_default_currency', $currency );
+					$updated = true;
+				}
+			}
+
 			if ( isset( $_POST['ndizi_portal_page_id'] ) && Ndizi_Project_Management::is_module_active( 'portal' ) && class_exists( 'Ndizi_Portal' ) ) {
 				$portal_page_id = absint( $_POST['ndizi_portal_page_id'] );
 				if ( array_key_exists( $portal_page_id, Ndizi_Portal::get_portal_pages() ) ) {
@@ -938,6 +946,15 @@ class Ndizi_Settings {
 						<label for="ndizi_lock_date" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Lock Date', 'ndizi-project-management' ); ?></label>
 						<input type="date" name="ndizi_lock_date" id="ndizi_lock_date" value="<?php echo esc_attr( $lock_date ); ?>" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
 						<p class="description" style="margin-top: 5px; color: #64748b;"><?php esc_html_e( 'Leave empty to disable locking.', 'ndizi-project-management' ); ?></p>
+					</div>
+
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Default Currency', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Set the default currency code for new invoices (e.g. USD, EUR, GBP, CAD).', 'ndizi-project-management' ); ?></p>
+
+					<div style="margin-bottom: 30px;">
+						<?php $default_currency = get_option( 'ndizi_default_currency', 'USD' ); ?>
+						<label for="ndizi_default_currency" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Currency Code (3-letter ISO)', 'ndizi-project-management' ); ?></label>
+						<input type="text" name="ndizi_default_currency" id="ndizi_default_currency" value="<?php echo esc_attr( $default_currency ); ?>" maxlength="3" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; text-transform: uppercase; width: 100px;">
 					</div>
 
 					<?php if ( Ndizi_Project_Management::is_module_active( 'portal' ) && class_exists( 'Ndizi_Portal' ) ) : ?>

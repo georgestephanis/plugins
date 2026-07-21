@@ -19,12 +19,15 @@ class Ndizi_CLI {
 	}
 
 	/**
-	 * Start a running timer for a project.
+	 * Start a running timer for a project or client.
 	 *
 	 * ## OPTIONS
 	 *
-	 * --project=<project_id_or_title>
+	 * [--project=<project_id_or_title>]
 	 * : The ID or title of the project to track time against.
+	 *
+	 * [--client=<client_id_or_title>]
+	 * : The ID or title of the client to track time against.
 	 *
 	 * [--task=<task_id_or_title>]
 	 * : The ID or title of the task to track time against.
@@ -43,10 +46,12 @@ class Ndizi_CLI {
 	 * ## EXAMPLES
 	 *
 	 *     wp ndizi time start --project=123 --desc="Debugging CLI"
+	 *     wp ndizi time start --client="Acme Corp" --desc="Client Consultation"
 	 *     wp ndizi time start --project="Website Redesign" --task="Setup WP" --billable=1
 	 */
 	public function start( $args, $assoc_args ) {
 		$project_string    = isset( $assoc_args['project'] ) ? sanitize_text_field( $assoc_args['project'] ) : '';
+		$client_string     = isset( $assoc_args['client'] ) ? sanitize_text_field( $assoc_args['client'] ) : '';
 		$task_string       = isset( $assoc_args['task'] ) ? sanitize_text_field( $assoc_args['task'] ) : '';
 		$description       = isset( $assoc_args['desc'] ) ? sanitize_text_field( $assoc_args['desc'] ) : '';
 		$user_string       = isset( $assoc_args['user'] ) ? sanitize_text_field( $assoc_args['user'] ) : '';
@@ -64,13 +69,15 @@ class Ndizi_CLI {
 			}
 		}
 
-		$project_id = $this->get_project_id( $project_string );
-		if ( ! $project_id ) {
-			WP_CLI::error( sprintf( 'Project "%s" not found.', $project_string ) );
+		$project_id = $project_string ? $this->get_project_id( $project_string ) : 0;
+		$client_id  = $client_string ? $this->get_client_id( $client_string ) : 0;
+
+		if ( ! $project_id && ! $client_id ) {
+			WP_CLI::error( 'Must specify either a valid --project or --client.' );
 		}
 
 		$task_id = 0;
-		if ( ! empty( $task_string ) ) {
+		if ( ! empty( $task_string ) && $project_id ) {
 			$task_id = $this->get_task_id( $task_string, $project_id );
 			if ( ! $task_id ) {
 				WP_CLI::error( sprintf( 'Task "%s" not found for project.', $task_string ) );
@@ -81,6 +88,7 @@ class Ndizi_CLI {
 			$user_id,
 			$project_id,
 			array(
+				'client_id'   => $client_id,
 				'task_id'     => $task_id,
 				'description' => $description,
 				'billable'    => $billable ? 1 : 0,
@@ -90,7 +98,7 @@ class Ndizi_CLI {
 			WP_CLI::error( $timer_id->get_error_message() );
 		}
 
-		WP_CLI::success( sprintf( 'Timer started for project ID %d (Timer Entry ID: %d).', $project_id, $timer_id ) );
+		WP_CLI::success( sprintf( 'Timer started (Timer Entry ID: %d).', $timer_id ) );
 	}
 
 	/**
@@ -162,8 +170,18 @@ class Ndizi_CLI {
 			return;
 		}
 
-		$project    = get_post( $active->project_id );
-		$proj_title = $project ? $project->post_title : 'Unknown';
+		$client_title = '-';
+		if ( $active->client_id ) {
+			$client       = get_post( $active->client_id );
+			$client_title = $client ? $client->post_title : 'Unknown';
+		}
+
+		$proj_title = '-';
+		if ( $active->project_id ) {
+			$project    = get_post( $active->project_id );
+			$proj_title = $project ? $project->post_title : 'Unknown';
+		}
+
 		$task_title = '-';
 		if ( $active->task_id ) {
 			$task       = get_post( $active->task_id );
@@ -176,6 +194,7 @@ class Ndizi_CLI {
 		$hours    = round( $duration / 3600, 2 );
 
 		WP_CLI::line( 'Active Timer Details:' );
+		WP_CLI::line( sprintf( '  Client:      %s (ID: %d)', $client_title, $active->client_id ) );
 		WP_CLI::line( sprintf( '  Project:     %s (ID: %d)', $proj_title, $active->project_id ) );
 		WP_CLI::line( sprintf( '  Task:        %s (ID: %d)', $task_title, $active->task_id ) );
 		WP_CLI::line( sprintf( '  Description: %s', $active->description ) );
@@ -220,6 +239,29 @@ class Ndizi_CLI {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Helper: Resolve client ID from ID or Title
+	 */
+	private function get_client_id( $client_string ) {
+		if ( is_numeric( $client_string ) ) {
+			$client = get_post( intval( $client_string ) );
+			if ( $client && 'ndizi_client' === $client->post_type ) {
+				return $client->ID;
+			}
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off lookup resolving a name to a post ID within a WP-CLI command.
+		$id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_title = %s AND post_type = 'ndizi_client' AND post_status != 'trash' LIMIT 1",
+				$client_string
+			)
+		);
+
+		return $id ? intval( $id ) : 0;
 	}
 
 	/**

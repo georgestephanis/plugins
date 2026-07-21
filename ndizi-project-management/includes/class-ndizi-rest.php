@@ -117,7 +117,13 @@ class Ndizi_REST {
 				'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
 				'args'                => array(
 					'project_id'  => array(
-						'required'          => true,
+						'required'          => false,
+						'default'           => 0,
+						'sanitize_callback' => 'absint',
+					),
+					'client_id'   => array(
+						'required'          => false,
+						'default'           => 0,
 						'sanitize_callback' => 'absint',
 					),
 					'task_id'     => array(
@@ -160,7 +166,13 @@ class Ndizi_REST {
 				'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
 				'args'                => array(
 					'project_id'  => array(
-						'required'          => true,
+						'required'          => false,
+						'default'           => 0,
+						'sanitize_callback' => 'absint',
+					),
+					'client_id'   => array(
+						'required'          => false,
+						'default'           => 0,
 						'sanitize_callback' => 'absint',
 					),
 					'task_id'     => array(
@@ -211,7 +223,13 @@ class Ndizi_REST {
 					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
 					'args'                => array(
 						'project_id'  => array(
-							'required'          => true,
+							'required'          => false,
+							'default'           => 0,
+							'sanitize_callback' => 'absint',
+						),
+						'client_id'   => array(
+							'required'          => false,
+							'default'           => 0,
 							'sanitize_callback' => 'absint',
 						),
 						'task_id'     => array(
@@ -602,8 +620,9 @@ class Ndizi_REST {
 	 */
 	public static function start_timer( $request ) {
 		$user_id     = get_current_user_id();
-		$project_id  = $request->get_param( 'project_id' );
-		$task_id     = $request->get_param( 'task_id' );
+		$project_id  = intval( $request->get_param( 'project_id' ) );
+		$client_id   = intval( $request->get_param( 'client_id' ) );
+		$task_id     = intval( $request->get_param( 'task_id' ) );
 		$description = $request->get_param( 'description' );
 		$billable    = $request->get_param( 'billable' );
 
@@ -611,6 +630,7 @@ class Ndizi_REST {
 			$user_id,
 			$project_id,
 			array(
+				'client_id'   => $client_id,
 				'task_id'     => $task_id,
 				'description' => $description,
 				'billable'    => $billable,
@@ -618,7 +638,7 @@ class Ndizi_REST {
 		);
 		if ( is_wp_error( $timer_id ) ) {
 			$code        = $timer_id->get_error_code();
-			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
+			$status_code = in_array( $code, array( 'invalid_project', 'invalid_target', 'invalid_task', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
 			return new WP_REST_Response( array( 'error' => $timer_id->get_error_message() ), $status_code );
 		}
 
@@ -656,10 +676,11 @@ class Ndizi_REST {
 	 */
 	public static function log_time_manual( $request ) {
 		$user_id     = get_current_user_id();
-		$project_id  = $request->get_param( 'project_id' );
-		$task_id     = $request->get_param( 'task_id' );
+		$project_id  = intval( $request->get_param( 'project_id' ) );
+		$client_id   = intval( $request->get_param( 'client_id' ) );
+		$task_id     = intval( $request->get_param( 'task_id' ) );
 		$description = $request->get_param( 'description' );
-		$duration    = $request->get_param( 'duration' ); // in seconds
+		$duration    = intval( $request->get_param( 'duration' ) ); // in seconds
 		$billable    = $request->get_param( 'billable' );
 		$start_time  = $request->get_param( 'start_time' );
 		$end_time    = $request->get_param( 'end_time' );
@@ -668,6 +689,7 @@ class Ndizi_REST {
 			$user_id,
 			$project_id,
 			array(
+				'client_id'   => $client_id,
 				'task_id'     => $task_id,
 				'description' => $description,
 				'duration'    => $duration,
@@ -678,7 +700,7 @@ class Ndizi_REST {
 		);
 		if ( is_wp_error( $entry_id ) ) {
 			$code        = $entry_id->get_error_code();
-			$status_code = in_array( $code, array( 'invalid_project', 'invalid_task', 'invalid_duration', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
+			$status_code = in_array( $code, array( 'invalid_project', 'invalid_target', 'invalid_task', 'invalid_duration', 'date_locked' ), true ) ? 400 : ( 'db_error' === $code ? 500 : 403 );
 			return new WP_REST_Response( array( 'error' => $entry_id->get_error_message() ), $status_code );
 		}
 
@@ -719,9 +741,15 @@ class Ndizi_REST {
 			'offset' => ( $page - 1 ) * $per_page,
 		);
 
+		// Client filter
+		$client_id = $request->get_param( 'client_id' );
+		if ( $client_id ) {
+			$args['client_id'] = intval( $client_id );
+		}
+
 		// Project filter
 		$project_id = $request->get_param( 'project_id' );
-		if ( $project_id ) {
+		if ( null !== $project_id && '' !== $project_id ) {
 			$args['project_id'] = intval( $project_id );
 		}
 
@@ -792,8 +820,11 @@ class Ndizi_REST {
 
 		// Include names for easier rendering in custom table/react views
 		foreach ( $logs as $log ) {
-			$project           = get_post( $log->project_id );
-			$log->project_name = $project ? $project->post_title : __( 'Deleted Project', 'ndizi-project-management' );
+			$client           = $log->client_id ? get_post( $log->client_id ) : null;
+			$log->client_name = $client ? $client->post_title : '';
+
+			$project           = $log->project_id ? get_post( $log->project_id ) : null;
+			$log->project_name = $project ? $project->post_title : ( $log->project_id ? __( 'Deleted Project', 'ndizi-project-management' ) : '' );
 
 			if ( $log->task_id ) {
 				$task           = get_post( $log->task_id );
@@ -818,6 +849,7 @@ class Ndizi_REST {
 	 */
 	public static function create_time_log( $request ) {
 		$project_id  = intval( $request->get_param( 'project_id' ) );
+		$client_id   = intval( $request->get_param( 'client_id' ) );
 		$task_id     = intval( $request->get_param( 'task_id' ) );
 		$user_id     = intval( $request->get_param( 'user_id' ) );
 		$description = sanitize_text_field( $request->get_param( 'description' ) );
@@ -835,6 +867,7 @@ class Ndizi_REST {
 			$user_id,
 			$project_id,
 			array(
+				'client_id'   => $client_id,
 				'task_id'     => $task_id,
 				'description' => $description,
 				'duration'    => $duration,
@@ -1003,8 +1036,11 @@ class Ndizi_REST {
 		if ( $token && class_exists( 'Ndizi_Portal' ) ) {
 			$token_client_id = Ndizi_Portal::get_client_id_by_token( $token );
 			if ( $token_client_id ) {
-				$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
-				$client_id  = $project_id ? get_post_meta( $project_id, '_ndizi_client_id', true ) : 0;
+				$client_id = get_post_meta( $invoice_id, '_ndizi_client_id', true );
+				if ( ! $client_id ) {
+					$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+					$client_id  = $project_id ? get_post_meta( $project_id, '_ndizi_client_id', true ) : 0;
+				}
 				if ( $client_id && (int) $client_id === (int) $token_client_id ) {
 					return true;
 				}
@@ -1031,11 +1067,35 @@ class Ndizi_REST {
 
 		$amount     = (float) get_post_meta( $invoice_id, '_ndizi_invoice_amount', true );
 		$project_id = get_post_meta( $invoice_id, '_ndizi_project_id', true );
+		$client_id  = get_post_meta( $invoice_id, '_ndizi_client_id', true );
+		if ( ! $client_id && $project_id ) {
+			$client_id = get_post_meta( $project_id, '_ndizi_client_id', true );
+		}
+
+		$invoice_num = get_post_meta( $invoice_id, '_ndizi_invoice_number', true );
+		$currency    = get_post_meta( $invoice_id, '_ndizi_invoice_currency', true );
+		if ( empty( $currency ) ) {
+			$currency = get_option( 'ndizi_default_currency', 'USD' );
+		}
+		$stripe_currency = strtolower( $currency );
 
 		if ( $amount <= 0 ) {
 			return new WP_Error( 'invalid_amount', __( 'Invoice has no valid amount to charge.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
-		$project_title = get_the_title( $project_id );
+
+		$invoice_post = get_post( $invoice_id );
+		$display_name = ! empty( $invoice_num ) ? $invoice_num : ( $invoice_post ? $invoice_post->post_title : sprintf( 'Invoice #%d', $invoice_id ) );
+
+		// Resolve redirect destination base URL
+		$redirect_base = home_url( '/' );
+		if ( $project_id ) {
+			$redirect_base = get_permalink( $project_id );
+		} elseif ( $client_id && class_exists( 'Ndizi_Portal' ) ) {
+			$portal_link = Ndizi_Portal::get_client_portal_link( $client_id );
+			if ( $portal_link ) {
+				$redirect_base = $portal_link;
+			}
+		}
 
 		// Store the long-lived portal token in a short-lived transient so Stripe URLs
 		// only carry a one-time reference key, not the credential itself.
@@ -1047,30 +1107,56 @@ class Ndizi_REST {
 				'ndizi_payment'     => 'success',
 				'ndizi_payment_ref' => $payment_ref,
 			),
-			get_permalink( $project_id )
+			$redirect_base
 		);
 		$cancel_url  = add_query_arg(
 			array(
 				'ndizi_payment'     => 'cancel',
 				'ndizi_payment_ref' => $payment_ref,
 			),
-			get_permalink( $project_id )
+			$redirect_base
 		);
 
-		$line_items = array(
-			array(
-				'price_data' => array(
-					'currency'     => 'usd',
-					'product_data' => array(
-						/* translators: 1: invoice ID, 2: project title */
-						'name'        => sprintf( __( 'Invoice #%1$d - Project: %2$s', 'ndizi-project-management' ), $invoice_id, $project_title ),
-						'description' => __( 'Project Management and Time Tracking Services', 'ndizi-project-management' ),
+		// Build Stripe line items
+		$stored_items = get_post_meta( $invoice_id, '_ndizi_invoice_line_items', true );
+		$line_items   = array();
+
+		if ( is_array( $stored_items ) && ! empty( $stored_items ) ) {
+			foreach ( $stored_items as $item ) {
+				$item_desc   = ! empty( $item['description'] ) ? $item['description'] : $display_name;
+				$unit_amount = round( floatval( isset( $item['unit_price'] ) ? $item['unit_price'] : 0 ) * 100 );
+				$qty         = max( 1, intval( round( floatval( isset( $item['quantity'] ) ? $item['quantity'] : 1 ) ) ) );
+
+				$line_items[] = array(
+					'price_data' => array(
+						'currency'     => $stripe_currency,
+						'product_data' => array(
+							'name' => $item_desc,
+						),
+						'unit_amount'  => $unit_amount,
 					),
-					'unit_amount'  => round( $amount * 100 ),
+					'quantity'   => $qty,
+				);
+			}
+		}
+
+		if ( empty( $line_items ) ) {
+			$project_title = $project_id ? get_the_title( $project_id ) : ( $client_id ? get_the_title( $client_id ) : '' );
+			$line_items    = array(
+				array(
+					'price_data' => array(
+						'currency'     => $stripe_currency,
+						'product_data' => array(
+							/* translators: 1: invoice number/ID, 2: target title */
+							'name'        => sprintf( __( 'Invoice %1$s - %2$s', 'ndizi-project-management' ), $display_name, $project_title ),
+							'description' => __( 'Project Management and Time Tracking Services', 'ndizi-project-management' ),
+						),
+						'unit_amount'  => round( $amount * 100 ),
+					),
+					'quantity'   => 1,
 				),
-				'quantity'   => 1,
-			),
-		);
+			);
+		}
 
 		$body = array(
 			'payment_method_types' => array( 'card' ),

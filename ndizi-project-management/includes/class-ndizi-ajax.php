@@ -69,18 +69,20 @@ class Ndizi_Ajax {
 		}
 
 		$project_id  = isset( $_POST['project_id'] ) ? intval( $_POST['project_id'] ) : 0;
+		$client_id   = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0;
 		$task_id     = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 		$description = isset( $_POST['description'] ) ? sanitize_text_field( wp_unslash( $_POST['description'] ) ) : '';
 		$billable    = isset( $_POST['billable'] ) ? intval( $_POST['billable'] ) : 1;
 
-		if ( ! $project_id ) {
-			wp_send_json_error( array( 'message' => __( 'Project ID is required.', 'ndizi-project-management' ) ) );
+		if ( ! $project_id && ! $client_id ) {
+			wp_send_json_error( array( 'message' => __( 'Project or Client ID is required.', 'ndizi-project-management' ) ) );
 		}
 
 		$timer_id = Ndizi_Time_Service::start_timer(
 			get_current_user_id(),
 			$project_id,
 			array(
+				'client_id'   => $client_id,
 				'task_id'     => $task_id,
 				'description' => $description,
 				'billable'    => $billable,

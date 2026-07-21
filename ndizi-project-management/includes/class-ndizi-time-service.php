@@ -21,8 +21,18 @@ class Ndizi_Time_Service {
 	 * @param int $user_id    User ID.
 	 * @return true|WP_Error True on success, WP_Error describing the problem.
 	 */
-	public static function validate_time_project_access( $project_id, $task_id, $user_id ) {
-		if ( ! $project_id || 'ndizi_project' !== get_post_type( $project_id ) ) {
+	public static function validate_time_project_access( $project_id, $task_id, $user_id, $client_id = 0 ) {
+		if ( ! $project_id ) {
+			if ( ! $client_id || 'ndizi_client' !== get_post_type( $client_id ) ) {
+				return new WP_Error( 'invalid_target', __( 'Must specify a valid project or client.', 'ndizi-project-management' ) );
+			}
+			if ( ! Ndizi_Roles::current_user_can( 'ndizi_manage_projects' ) ) {
+				return new WP_Error( 'client_not_allowed', __( 'You do not have permission to track time directly to clients.', 'ndizi-project-management' ) );
+			}
+			return true;
+		}
+
+		if ( 'ndizi_project' !== get_post_type( $project_id ) ) {
 			return new WP_Error( 'invalid_project', __( 'Invalid project ID.', 'ndizi-project-management' ) );
 		}
 
@@ -80,6 +90,7 @@ class Ndizi_Time_Service {
 	 * @param int   $project_id Project post ID.
 	 * @param array $args       {
 	 *     Optional. Array of arguments.
+	 *     @type int    $client_id   Client post ID (0 = general).
 	 *     @type int    $task_id     Task post ID (0 = general).
 	 *     @type string $description Work description.
 	 *     @type int    $billable    1 = billable, 0 = non-billable.
@@ -88,13 +99,14 @@ class Ndizi_Time_Service {
 	 */
 	public static function start_timer( $user_id, $project_id, $args = array() ) {
 		$defaults = array(
+			'client_id'   => 0,
 			'task_id'     => 0,
 			'description' => '',
 			'billable'    => 1,
 		);
 		$args     = wp_parse_args( $args, $defaults );
 
-		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id );
+		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id, $args['client_id'] );
 		if ( is_wp_error( $access ) ) {
 			return $access;
 		}
@@ -156,6 +168,7 @@ class Ndizi_Time_Service {
 	 * @param int   $project_id Project post ID.
 	 * @param array $args       {
 	 *     Optional. Array of arguments.
+	 *     @type int    $client_id   Client post ID (0 = general).
 	 *     @type int    $task_id     Task post ID (0 = general).
 	 *     @type string $description Work description.
 	 *     @type int    $duration    Duration in seconds (must be > 0).
@@ -167,6 +180,7 @@ class Ndizi_Time_Service {
 	 */
 	public static function log_time_manual( $user_id, $project_id, $args = array() ) {
 		$defaults = array(
+			'client_id'   => 0,
 			'task_id'     => 0,
 			'description' => '',
 			'duration'    => 0,
@@ -176,7 +190,7 @@ class Ndizi_Time_Service {
 		);
 		$args     = wp_parse_args( $args, $defaults );
 
-		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id );
+		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id, $args['client_id'] );
 		if ( is_wp_error( $access ) ) {
 			return $access;
 		}
