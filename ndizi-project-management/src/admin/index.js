@@ -353,7 +353,9 @@ import { formatTime, createTimer } from '../shared/timer.js';
 					parseFloat( $( this ).find( '.ndizi-li-amount' ).val() ) ||
 					0;
 			} );
-			$( '#ndizi_invoice_amount' ).val( total.toFixed( 2 ) );
+			$( '#ndizi_invoice_amount' )
+				.val( total.toFixed( 2 ) )
+				.trigger( 'change' );
 		} );
 	}
 
