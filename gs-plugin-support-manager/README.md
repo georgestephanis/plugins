@@ -12,7 +12,7 @@ If you maintain, support, or keep track of multiple WordPress plugins or themes,
 
 ## Features
 
-- **WordPress.org Profile Import**: Plug in any WordPress.org profile URL (e.g. `https://profiles.wordpress.org/georgestephanis/`) or username to automatically discover and monitor all plugins and themes published by that author.
+- **WordPress.org Profile Import**: Plug in any WordPress.org profile URL (e.g. `https://profiles.wordpress.org/username/`) or username to automatically discover and monitor all plugins and themes published by that author.
 - **Monitored Plugins & Themes**: Track support feeds for any plugin (`https://wordpress.org/support/plugin/{slug}/feed/`) or theme (`https://wordpress.org/support/theme/{slug}/feed/`) hosted on WordPress.org by slug.
 - **Auto-Discovery of Local Installed Items**: One-click import for all WordPress.org-hosted plugins (`get_plugins()`) and themes (`wp_get_themes()`) installed on your local WordPress site.
 - **Unified Feed Dashboard**: Located under **Tools > Plugin Support**. View, search, filter by plugin/theme or read status, toggle read/unread states via AJAX without reloading, and apply bulk actions.

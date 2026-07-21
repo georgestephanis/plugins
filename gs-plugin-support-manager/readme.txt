@@ -20,7 +20,7 @@ If you maintain, support, or keep track of multiple WordPress plugins or themes,
 
 ### Key Features
 
-* **WordPress.org Profile Import**: Plug in a WordPress.org profile URL (e.g. `https://profiles.wordpress.org/georgestephanis/`) or username to automatically discover and monitor all plugins and themes published by that author.
+* **WordPress.org Profile Import**: Plug in a WordPress.org profile URL (e.g. `https://profiles.wordpress.org/username/`) or username to automatically discover and monitor all plugins and themes published by that author.
 * **Monitored Plugins & Themes**: Track support feeds for any plugin or theme hosted on WordPress.org by slug (`https://wordpress.org/support/plugin/{slug}/feed/` and `https://wordpress.org/support/theme/{slug}/feed/`).
 * **Auto-Discovery**: One-click import for all WordPress.org-hosted plugins and themes installed on your local WordPress site.
 * **Unified Dashboard**: View, search, filter by plugin/theme or status, and mark support topics as read or unread across all plugins and themes in one place.
@@ -59,7 +59,7 @@ This plugin connects to external services to retrieve support forum feeds and au
 == Frequently Asked Questions ==
 
 = How do I import items from a WordPress.org profile? =
-Go to **Tools > Plugin Support > Monitored Plugins & Themes** and enter a profile URL (such as `https://profiles.wordpress.org/georgestephanis/`) into the Profile Import form.
+Go to **Tools > Plugin Support > Monitored Plugins & Themes** and enter a profile URL (such as `https://profiles.wordpress.org/username/`) into the Profile Import form.
 
 = Where can I access the aggregated RSS feed? =
 Your site provides an RSS endpoint at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=rss`. You can also get a JSON feed at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=json`.
