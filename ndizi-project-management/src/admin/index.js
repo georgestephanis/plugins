@@ -22,6 +22,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		initTimeTracker();
 		initInvoiceAggregator();
 		initLineItemsEditor();
+		initPaymentsEditor();
 		initTrackerLauncher();
 		initSelectOnClick();
 		initCopyPortalLink();
@@ -332,8 +333,14 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			} else {
 				$( this ).closest( 'tr' ).find( 'input' ).val( '' );
 				$( this ).closest( 'tr' ).find( '.ndizi-li-qty' ).val( '1' );
-				$( this ).closest( 'tr' ).find( '.ndizi-li-price' ).val( '0.00' );
-				$( this ).closest( 'tr' ).find( '.ndizi-li-amount' ).val( '0.00' );
+				$( this )
+					.closest( 'tr' )
+					.find( '.ndizi-li-price' )
+					.val( '0.00' );
+				$( this )
+					.closest( 'tr' )
+					.find( '.ndizi-li-amount' )
+					.val( '0.00' );
 			}
 		} );
 
@@ -343,10 +350,61 @@ import { formatTime, createTimer } from '../shared/timer.js';
 			$( '#ndizi_line_items_body tr' ).each( function () {
 				calcRow( $( this ) );
 				total +=
-					parseFloat( $( this ).find( '.ndizi-li-amount' ).val() ) || 0;
+					parseFloat( $( this ).find( '.ndizi-li-amount' ).val() ) ||
+					0;
 			} );
 			$( '#ndizi_invoice_amount' ).val( total.toFixed( 2 ) );
 		} );
+	}
+
+	/**
+	 * Dynamic Payments Table Editor
+	 */
+	function initPaymentsEditor() {
+		const $table = $( '#ndizi_payments_table' );
+		if ( ! $table.length ) {
+			return;
+		}
+
+		function recalc() {
+			let paid = 0;
+			$( '#ndizi_payments_body .ndizi-pay-amount' ).each( function () {
+				paid += parseFloat( $( this ).val() ) || 0;
+			} );
+			const amount =
+				parseFloat( $( '#ndizi_invoice_amount' ).val() ) || 0;
+			$( '#ndizi_payments_total' ).text( paid.toFixed( 2 ) );
+			$( '#ndizi_payments_balance' ).text(
+				( amount - paid ).toFixed( 2 )
+			);
+		}
+
+		$( document ).on(
+			'input change',
+			'.ndizi-pay-amount, #ndizi_invoice_amount',
+			recalc
+		);
+
+		$( '#ndizi_add_payment_btn' ).on( 'click', function ( e ) {
+			e.preventDefault();
+			const newRowHtml = `
+				<tr class="ndizi-payment-row">
+					<td><input type="date" name="ndizi_payments_date[]" value=""></td>
+					<td><input type="number" step="0.01" name="ndizi_payments_amount[]" value="0.00" class="small-text ndizi-pay-amount"></td>
+					<td><input type="text" name="ndizi_payments_method[]" value="" class="regular-text"></td>
+					<td><input type="text" name="ndizi_payments_note[]" value="" class="large-text"></td>
+					<td><button type="button" class="button button-secondary ndizi-remove-pay-row">&times;</button></td>
+				</tr>`;
+			$( '#ndizi_payments_body' ).append( newRowHtml );
+		} );
+
+		$( document ).on( 'click', '.ndizi-remove-pay-row', function ( e ) {
+			e.preventDefault();
+			$( this ).closest( 'tr' ).remove();
+			recalc();
+		} );
+
+		recalc();
 	}
 
 	/**

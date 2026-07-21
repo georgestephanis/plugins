@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,11 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.2 =
+*   Invoice Payment Records: Added a repeatable payments ledger to invoices (`_ndizi_invoice_payments`: date, amount, method, note) with an editor in the Invoice meta box, partial-payment support, and a running Total Paid / Balance Due readout. Exposed over the REST API with a capability-gated `auth_callback` (`ndizi_manage_invoices`).
+*   Automatic Status from Payments: Invoice status now derives from recorded payments on save — `paid` when fully covered, `partial` when partly paid — unless the invoice is Draft or Void. Added a `Partially Paid` status.
+*   Balance Due Display: The printable/PDF invoice, client portal, and admin Invoices list now show amount paid and outstanding balance; the portal "Pay Online" button reflects the remaining balance.
 
 = 1.1.1 =
 *   REST Meta Exposure: Added `custom-fields` support to the Client, Project, Task, Invoice, Contact, and Time Off Request post types so their registered `show_in_rest` meta is now readable through the core REST API. Previously this meta was silently dropped, blocking external integrations and imports.

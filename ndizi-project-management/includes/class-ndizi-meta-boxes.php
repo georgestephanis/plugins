@@ -398,6 +398,7 @@ class Ndizi_Meta_Boxes {
 		$amount          = get_post_meta( $post->ID, '_ndizi_invoice_amount', true );
 		$status          = get_post_meta( $post->ID, '_ndizi_invoice_status', true );
 		$line_items      = get_post_meta( $post->ID, '_ndizi_invoice_line_items', true );
+		$payments        = get_post_meta( $post->ID, '_ndizi_invoice_payments', true );
 		$external_source = get_post_meta( $post->ID, '_ndizi_external_source', true );
 		$external_id     = get_post_meta( $post->ID, '_ndizi_external_id', true );
 
@@ -406,6 +407,13 @@ class Ndizi_Meta_Boxes {
 		}
 		if ( ! is_array( $line_items ) ) {
 			$line_items = array();
+		}
+		if ( ! is_array( $payments ) ) {
+			$payments = array();
+		}
+		$total_paid = 0.0;
+		foreach ( $payments as $payment ) {
+			$total_paid += isset( $payment['amount'] ) ? floatval( $payment['amount'] ) : 0.0;
 		}
 
 		$clients = get_posts(
@@ -495,9 +503,11 @@ class Ndizi_Meta_Boxes {
 					<select name="ndizi_invoice_status" id="ndizi_invoice_status">
 						<option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'ndizi-project-management' ); ?></option>
 						<option value="sent" <?php selected( $status, 'sent' ); ?>><?php esc_html_e( 'Sent', 'ndizi-project-management' ); ?></option>
+						<option value="partial" <?php selected( $status, 'partial' ); ?>><?php esc_html_e( 'Partially Paid', 'ndizi-project-management' ); ?></option>
 						<option value="paid" <?php selected( $status, 'paid' ); ?>><?php esc_html_e( 'Paid', 'ndizi-project-management' ); ?></option>
 						<option value="void" <?php selected( $status, 'void' ); ?>><?php esc_html_e( 'Void', 'ndizi-project-management' ); ?></option>
 					</select>
+					<p class="description"><?php esc_html_e( 'Status is updated automatically from recorded payments when they are added (unless Draft or Void).', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -538,6 +548,44 @@ class Ndizi_Meta_Boxes {
 					<div style="margin-top: 10px;">
 						<button type="button" class="button" id="ndizi_add_line_item_btn"><?php esc_html_e( '+ Add Line Item', 'ndizi-project-management' ); ?></button>
 						<button type="button" class="button" id="ndizi_calc_line_items_btn"><?php esc_html_e( 'Calculate & Apply Total', 'ndizi-project-management' ); ?></button>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th><label><?php esc_html_e( 'Payments', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<table class="widefat striped" id="ndizi_payments_table">
+						<thead>
+							<tr>
+								<th style="width: 150px;"><?php esc_html_e( 'Date', 'ndizi-project-management' ); ?></th>
+								<th style="width: 120px;"><?php esc_html_e( 'Amount', 'ndizi-project-management' ); ?></th>
+								<th style="width: 140px;"><?php esc_html_e( 'Method', 'ndizi-project-management' ); ?></th>
+								<th><?php esc_html_e( 'Note', 'ndizi-project-management' ); ?></th>
+								<th style="width: 50px;"></th>
+							</tr>
+						</thead>
+						<tbody id="ndizi_payments_body">
+							<?php foreach ( $payments as $payment ) : ?>
+								<tr class="ndizi-payment-row">
+									<td><input type="date" name="ndizi_payments_date[]" value="<?php echo esc_attr( isset( $payment['date'] ) ? $payment['date'] : '' ); ?>"></td>
+									<td><input type="number" step="0.01" name="ndizi_payments_amount[]" value="<?php echo esc_attr( isset( $payment['amount'] ) ? $payment['amount'] : '0.00' ); ?>" class="small-text ndizi-pay-amount"></td>
+									<td><input type="text" name="ndizi_payments_method[]" value="<?php echo esc_attr( isset( $payment['method'] ) ? $payment['method'] : '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. Bank transfer', 'ndizi-project-management' ); ?>"></td>
+									<td><input type="text" name="ndizi_payments_note[]" value="<?php echo esc_attr( isset( $payment['note'] ) ? $payment['note'] : '' ); ?>" class="large-text"></td>
+									<td><button type="button" class="button button-secondary ndizi-remove-pay-row">&times;</button></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+						<tfoot>
+							<tr>
+								<th style="text-align: right;"><?php esc_html_e( 'Total Paid', 'ndizi-project-management' ); ?></th>
+								<th><span id="ndizi_payments_total"><?php echo esc_html( number_format( $total_paid, 2 ) ); ?></span></th>
+								<th style="text-align: right;"><?php esc_html_e( 'Balance Due', 'ndizi-project-management' ); ?></th>
+								<th colspan="2"><span id="ndizi_payments_balance"><?php echo esc_html( number_format( floatval( $amount ) - $total_paid, 2 ) ); ?></span></th>
+							</tr>
+						</tfoot>
+					</table>
+					<div style="margin-top: 10px;">
+						<button type="button" class="button" id="ndizi_add_payment_btn"><?php esc_html_e( '+ Add Payment', 'ndizi-project-management' ); ?></button>
 					</div>
 				</td>
 			</tr>
@@ -900,6 +948,46 @@ class Ndizi_Meta_Boxes {
 					);
 				}
 				update_post_meta( $post_id, '_ndizi_invoice_line_items', $saved_items );
+			}
+
+			// Process payment records.
+			if ( isset( $_POST['ndizi_payments_amount'] ) && is_array( $_POST['ndizi_payments_amount'] ) ) {
+				$pay_dates   = isset( $_POST['ndizi_payments_date'] ) && is_array( $_POST['ndizi_payments_date'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_date'] ) ) : array();
+				$pay_amounts = array_map( 'floatval', wp_unslash( $_POST['ndizi_payments_amount'] ) );
+				$pay_methods = isset( $_POST['ndizi_payments_method'] ) && is_array( $_POST['ndizi_payments_method'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_method'] ) ) : array();
+				$pay_notes   = isset( $_POST['ndizi_payments_note'] ) && is_array( $_POST['ndizi_payments_note'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_payments_note'] ) ) : array();
+
+				$saved_payments = array();
+				$total_paid     = 0.0;
+				foreach ( $pay_amounts as $idx => $amt ) {
+					$amt  = floatval( $amt );
+					$date = isset( $pay_dates[ $idx ] ) ? $pay_dates[ $idx ] : '';
+					if ( 0.0 === $amt && '' === trim( $date ) ) {
+						continue;
+					}
+					$total_paid      += $amt;
+					$saved_payments[] = array(
+						'date'   => $date,
+						'amount' => $amt,
+						'method' => isset( $pay_methods[ $idx ] ) ? $pay_methods[ $idx ] : '',
+						'note'   => isset( $pay_notes[ $idx ] ) ? $pay_notes[ $idx ] : '',
+					);
+				}
+				update_post_meta( $post_id, '_ndizi_invoice_payments', $saved_payments );
+
+				// Derive status from payments unless the invoice is a draft or voided.
+				$current_status = get_post_meta( $post_id, '_ndizi_invoice_status', true );
+				if ( 'draft' !== $current_status && 'void' !== $current_status ) {
+					$invoice_total = floatval( get_post_meta( $post_id, '_ndizi_invoice_amount', true ) );
+					if ( $invoice_total > 0 && $total_paid >= $invoice_total ) {
+						$derived = 'paid';
+					} elseif ( $total_paid > 0 ) {
+						$derived = 'partial';
+					} else {
+						$derived = 'sent';
+					}
+					update_post_meta( $post_id, '_ndizi_invoice_status', $derived );
+				}
 			}
 
 			// Clear all existing time entries linked to this invoice first, then relink selected ones

@@ -843,14 +843,29 @@ class Ndizi_Portal {
 															if ( empty( $inv_curr ) ) {
 																$inv_curr = get_option( 'ndizi_default_currency', 'USD' );
 															}
-															$formatted_amount = $inv_amount ? strtoupper( $inv_curr ) . ' ' . number_format( $inv_amount, 2 ) : '-';
+															$inv_curr         = strtoupper( $inv_curr );
+															$formatted_amount = $inv_amount ? $inv_curr . ' ' . number_format( $inv_amount, 2 ) : '-';
+															$inv_balance      = Ndizi_Invoicing::get_invoice_balance( $inv->ID );
+															$status_labels    = array(
+																'draft'   => __( 'Draft', 'ndizi-project-management' ),
+																'sent'    => __( 'Sent', 'ndizi-project-management' ),
+																'partial' => __( 'Partially Paid', 'ndizi-project-management' ),
+																'paid'    => __( 'Paid', 'ndizi-project-management' ),
+																'void'    => __( 'Void', 'ndizi-project-management' ),
+															);
+															$status_label     = isset( $status_labels[ $inv_status ] ) ? $status_labels[ $inv_status ] : $inv_status;
 															?>
 															<tr>
 																<td><strong><?php echo esc_html( $display_title ); ?></strong></td>
 																<td><?php echo esc_html( $inv_date ); ?></td>
 																<td><?php echo esc_html( $inv_due ); ?></td>
-																<td><?php echo esc_html( $formatted_amount ); ?></td>
-																<td><span class="ndizi-badge ndizi-invoice-<?php echo esc_attr( $inv_status ); ?>"><?php echo esc_html( $inv_status ); ?></span></td>
+																<td>
+																	<?php echo esc_html( $formatted_amount ); ?>
+																	<?php if ( $inv_balance > 0 && floatval( $inv_amount ) > 0 && $inv_balance < floatval( $inv_amount ) ) : ?>
+																		<br><small style="color:#b45309;"><?php echo esc_html( sprintf( /* translators: %s: outstanding balance */ __( 'Balance: %s', 'ndizi-project-management' ), $inv_curr . ' ' . number_format( $inv_balance, 2 ) ) ); ?></small>
+																	<?php endif; ?>
+																</td>
+																<td><span class="ndizi-badge ndizi-invoice-<?php echo esc_attr( $inv_status ); ?>"><?php echo esc_html( $status_label ); ?></span></td>
 																<td>
 																	<?php
 																	// Printable invoice URL linking to portal printing action.
@@ -869,7 +884,7 @@ class Ndizi_Portal {
 																	</a>
 																	<?php
 																	$stripe_publishable = Ndizi_Project_Management::get_secret( 'ndizi_stripe_publishable_key' );
-																	if ( $stripe_publishable && 'paid' !== $inv_status ) :
+																	if ( $stripe_publishable && 'void' !== $inv_status && $inv_balance > 0 ) :
 																		?>
 																		<button type="button" class="ndizi-portal-btn-table ndizi-pay-invoice-btn" data-invoice-id="<?php echo esc_attr( $inv->ID ); ?>" data-token="<?php echo esc_attr( get_post_meta( $client_id, '_ndizi_client_auth_key', true ) ); ?>">
 																			<span class="dashicons dashicons-cart"></span> <?php esc_html_e( 'Pay Online', 'ndizi-project-management' ); ?>
