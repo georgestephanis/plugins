@@ -287,6 +287,7 @@ class Ndizi_DB {
 		$formats     = array();
 
 		$allowed_keys = array(
+			'user_id'     => '%d',
 			'client_id'   => '%d',
 			'project_id'  => '%d',
 			'task_id'     => '%d',
@@ -311,8 +312,10 @@ class Ndizi_DB {
 		if ( isset( $update_data['project_id'] ) && empty( $update_data['client_id'] ) ) {
 			$derived_client_id = intval( get_post_meta( $update_data['project_id'], '_ndizi_client_id', true ) );
 			if ( $derived_client_id ) {
+				if ( ! isset( $update_data['client_id'] ) ) {
+					$formats[] = '%d';
+				}
 				$update_data['client_id'] = $derived_client_id;
-				$formats[]                = '%d';
 			}
 		}
 

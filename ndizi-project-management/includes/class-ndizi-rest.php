@@ -287,6 +287,9 @@ class Ndizi_REST {
 						'id'          => array(
 							'sanitize_callback' => 'absint',
 						),
+						'user_id'     => array(
+							'sanitize_callback' => 'absint',
+						),
 						'client_id'   => array(
 							'sanitize_callback' => 'absint',
 						),
@@ -908,6 +911,8 @@ class Ndizi_REST {
 			return new WP_REST_Response( array( 'error' => __( 'Failed to retrieve newly created entry.', 'ndizi-project-management' ) ), 500 );
 		}
 
+		$client                 = $new_entry->client_id ? get_post( $new_entry->client_id ) : null;
+		$new_entry->client_name = $client ? $client->post_title : '';
 		$project                 = get_post( $new_entry->project_id );
 		$new_entry->project_name = $project ? $project->post_title : '';
 		if ( $new_entry->task_id ) {
@@ -941,6 +946,9 @@ class Ndizi_REST {
 
 		// Build data list from params.
 		$params = array( 'client_id', 'project_id', 'task_id', 'description', 'start_time', 'end_time', 'duration', 'billable' );
+		if ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
+			$params[] = 'user_id';
+		}
 		$data   = array();
 
 		foreach ( $params as $param ) {
@@ -989,6 +997,8 @@ class Ndizi_REST {
 		if ( ! $updated_entry ) {
 			return new WP_REST_Response( array( 'error' => __( 'Failed to retrieve updated entry.', 'ndizi-project-management' ) ), 500 );
 		}
+		$client                     = $updated_entry->client_id ? get_post( $updated_entry->client_id ) : null;
+		$updated_entry->client_name = $client ? $client->post_title : '';
 		$project                     = get_post( $updated_entry->project_id );
 		$updated_entry->project_name = $project ? $project->post_title : '';
 		if ( $updated_entry->task_id ) {

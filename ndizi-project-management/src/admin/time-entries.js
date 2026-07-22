@@ -559,7 +559,7 @@ const TimeEntriesApp = () => {
 				elements: clientElements,
 				filterBy: { operators: [ 'is' ] },
 				enableSorting: true,
-				getValue: ( { item } ) => parseInt( item.client_id, 10 ),
+				getValue: ( { item } ) => parseInt( item.client_id, 10 ) || 0,
 				render: ( { item } ) => {
 					const clientId = parseInt( item.client_id, 10 );
 					return (
