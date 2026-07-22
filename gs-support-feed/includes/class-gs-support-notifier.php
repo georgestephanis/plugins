@@ -2,7 +2,7 @@
 /**
  * Email and Webhook notification dispatcher class.
  *
- * @package GS_Plugin_Support_Manager
+ * @package GS_Support_Feed
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -60,7 +60,7 @@ class GS_Support_Notifier {
 		$count   = count( $new_items );
 		$subject = sprintf(
 			/* translators: 1: Site name, 2: Item count */
-			__( '[%1$s] Support Manager: %2$d New Topic(s) Flagged', 'gs-plugin-support-manager' ),
+			__( '[%1$s] Support Manager: %2$d New Topic(s) Flagged', 'gs-support-feed' ),
 			get_bloginfo( 'name' ),
 			$count
 		);
@@ -69,11 +69,11 @@ class GS_Support_Notifier {
 		$message .= '<h2>' . esc_html(
 			sprintf(
 				/* translators: 1: New items count */
-				__( '%d New Support Forum Topic(s) Flagged', 'gs-plugin-support-manager' ),
+				__( '%d New Support Forum Topic(s) Flagged', 'gs-support-feed' ),
 				$count
 			)
 		) . '</h2>';
-		$message .= '<p>' . esc_html__( 'The following new topics were detected across your monitored plugins and themes:', 'gs-plugin-support-manager' ) . '</p>';
+		$message .= '<p>' . esc_html__( 'The following new topics were detected across your monitored plugins and themes:', 'gs-support-feed' ) . '</p>';
 		$message .= '<ul style="list-style:none; padding:0;">';
 
 		foreach ( $new_items as $item ) {
@@ -81,7 +81,7 @@ class GS_Support_Notifier {
 			$plugin_slug = esc_html( $item['plugin_slug'] );
 			$title       = esc_html( $item['title'] );
 			$link        = esc_url( $item['link'] );
-			$author      = ! empty( $item['author'] ) ? esc_html( $item['author'] ) : __( 'Anonymous', 'gs-plugin-support-manager' );
+			$author      = ! empty( $item['author'] ) ? esc_html( $item['author'] ) : __( 'Anonymous', 'gs-support-feed' );
 			$date_str    = esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['pub_date'] ) );
 
 			$message .= '<li style="margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; background: #fafafa;">';
@@ -89,7 +89,7 @@ class GS_Support_Notifier {
 			$message .= '<a href="' . $link . '" target="_blank" style="font-weight:bold; font-size: 16px;">' . $title . '</a><br/>';
 			$message .= '<small style="color: #666;">' . sprintf(
 				/* translators: 1: Author name, 2: Date string */
-				__( 'Posted by %1$s on %2$s', 'gs-plugin-support-manager' ),
+				__( 'Posted by %1$s on %2$s', 'gs-support-feed' ),
 				$author,
 				$date_str
 			) . '</small>';
@@ -100,7 +100,7 @@ class GS_Support_Notifier {
 		}
 
 		$message .= '</ul>';
-		$message .= '<p><a href="' . esc_url( admin_url( 'tools.php?page=gs-plugin-support-manager' ) ) . '">' . esc_html__( 'View Unified Feed in WordPress Dashboard', 'gs-plugin-support-manager' ) . '</a></p>';
+		$message .= '<p><a href="' . esc_url( admin_url( 'tools.php?page=gs-support-feed' ) ) . '">' . esc_html__( 'View Unified Feed in WordPress Dashboard', 'gs-support-feed' ) . '</a></p>';
 		$message .= '</body></html>';
 
 		$headers = array(
@@ -150,7 +150,7 @@ class GS_Support_Notifier {
 			'body'     => wp_json_encode( $payload ),
 			'headers'  => array(
 				'Content-Type' => 'application/json',
-				'User-Agent'   => 'GS-Plugin-Support-Manager/' . GS_PSM_VERSION,
+				'User-Agent'   => 'GS-Support-Feed/' . GS_SF_VERSION,
 			),
 			'timeout'  => 15,
 			'blocking' => true,

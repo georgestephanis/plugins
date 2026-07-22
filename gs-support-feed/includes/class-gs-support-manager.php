@@ -2,7 +2,7 @@
 /**
  * Main plugin orchestrator class.
  *
- * @package GS_Plugin_Support_Manager
+ * @package GS_Support_Feed
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,22 +17,22 @@ class GS_Support_Manager {
 	/**
 	 * Option key for monitored plugins list.
 	 */
-	const PLUGINS_OPTION = 'gs_psm_monitored_plugins';
+	const PLUGINS_OPTION = 'gs_sf_monitored_plugins';
 
 	/**
 	 * Option key for plugin settings.
 	 */
-	const SETTINGS_OPTION = 'gs_psm_settings';
+	const SETTINGS_OPTION = 'gs_sf_settings';
 
 	/**
 	 * Option key for feed items storage.
 	 */
-	const ITEMS_OPTION = 'gs_psm_feed_items';
+	const ITEMS_OPTION = 'gs_sf_feed_items';
 
 	/**
 	 * Cron hook name.
 	 */
-	const CRON_HOOK = 'gs_psm_cron_sync';
+	const CRON_HOOK = 'gs_sf_cron_sync';
 
 	/**
 	 * Singleton instance.
@@ -90,8 +90,8 @@ class GS_Support_Manager {
 		$this->admin_ui = new GS_Support_Admin_UI();
 		$this->rest_api = new GS_Support_REST_API();
 
-		register_activation_hook( GS_PSM_FILE, array( $this, 'activate' ) );
-		register_deactivation_hook( GS_PSM_FILE, array( $this, 'deactivate' ) );
+		register_activation_hook( GS_SF_FILE, array( $this, 'activate' ) );
+		register_deactivation_hook( GS_SF_FILE, array( $this, 'deactivate' ) );
 
 		add_action( self::CRON_HOOK, array( $this, 'run_cron_sync' ) );
 		add_action( 'init', array( $this, 'register_hooks' ) );

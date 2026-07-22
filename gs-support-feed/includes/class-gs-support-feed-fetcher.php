@@ -2,7 +2,7 @@
 /**
  * Feed fetcher and RSS parser class.
  *
- * @package GS_Plugin_Support_Manager
+ * @package GS_Support_Feed
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
