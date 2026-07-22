@@ -1,8 +1,8 @@
-=== GS Plugin Support Manager ===
+=== GS Support Feed ===
 Contributors: georgestephanis
-Tags: support, rss, forum, plugin manager, notifications, profile import
+Tags: support, rss, forum, notifications, profile import
 Requires at least: 6.0
-Tested up to: 6.7
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -12,11 +12,11 @@ Monitored plugin and theme support forum aggregator for WordPress.org with profi
 
 == Description ==
 
-**GS Plugin Support Manager** aggregates WordPress.org support forum RSS feeds across any number of monitored plugins and themes into a single, unified admin feed and RSS/JSON endpoint.
+**GS Support Feed** aggregates WordPress.org support forum RSS feeds across any number of monitored plugins and themes into a single, unified admin feed and RSS/JSON endpoint.
 
-Try the plugin instantly in your browser using [WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/gs-plugin-support-manager/playground/blueprint.json).
+Try the plugin instantly in your browser using [WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/gs-support-feed/playground/blueprint.json).
 
-If you maintain, support, or keep track of multiple WordPress plugins or themes, GS Plugin Support Manager saves you from checking individual support forums manually.
+If you maintain, support, or keep track of multiple WordPress plugins or themes, GS Support Feed saves you from checking individual support forums manually.
 
 ### Key Features
 
@@ -27,7 +27,7 @@ If you maintain, support, or keep track of multiple WordPress plugins or themes,
 * **Background WP-Cron Sync**: Automatically fetches new support items hourly, twice daily, or daily.
 * **Email Notifications**: Receive customizable email digests sent via `wp_mail()` whenever new support topics are flagged.
 * **Webhook Notifications**: Send instant JSON POST payloads to Slack, Discord, Zapier, Make, or custom HTTP endpoints.
-* **Unified RSS & JSON Export Endpoint**: Subscribe to `/wp-json/gs-support-manager/v1/feed?format=rss` in your feed reader of choice (NetNewsWire, Feedly, Apple Mail, etc.).
+* **Unified RSS & JSON Export Endpoint**: Subscribe to `/wp-json/gs-support-feed/v1/feed?format=rss` in your feed reader of choice (NetNewsWire, Feedly, Apple Mail, etc.).
 
 == External Services ==
 
@@ -52,17 +52,17 @@ This plugin connects to external services to retrieve support forum feeds and au
 
 == Installation ==
 
-1. Upload the `gs-plugin-support-manager` folder to the `/wp-content/plugins/` directory.
+1. Upload the `gs-support-feed` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Navigate to **Tools > Plugin Support** to add monitored items, import from a WordPress.org profile URL, and configure notification options.
+3. Navigate to **Tools > Support Feed** to add monitored items, import from a WordPress.org profile URL, and configure notification options.
 
 == Frequently Asked Questions ==
 
 = How do I import items from a WordPress.org profile? =
-Go to **Tools > Plugin Support > Monitored Plugins & Themes** and enter a profile URL (such as `https://profiles.wordpress.org/username/`) into the Profile Import form.
+Go to **Tools > Support Feed > Monitored Plugins & Themes** and enter a profile URL (such as `https://profiles.wordpress.org/username/`) into the Profile Import form.
 
 = Where can I access the aggregated RSS feed? =
-Your site provides an RSS endpoint at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=rss`. You can also get a JSON feed at `https://your-site.com/wp-json/gs-support-manager/v1/feed?format=json`.
+Your site provides an RSS endpoint at `https://your-site.com/wp-json/gs-support-feed/v1/feed?format=rss`. You can also get a JSON feed at `https://your-site.com/wp-json/gs-support-feed/v1/feed?format=json`.
 
 = How do webhook notifications work? =
 When enabled under **Settings & Notifications**, the plugin sends an HTTP POST request with a JSON payload containing details about all newly discovered support topics whenever the background sync runs.

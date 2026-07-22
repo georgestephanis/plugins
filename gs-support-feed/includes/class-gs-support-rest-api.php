@@ -2,7 +2,7 @@
 /**
  * REST API feed provider class.
  *
- * @package GS_Plugin_Support_Manager
+ * @package GS_Support_Feed
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,7 +26,7 @@ class GS_Support_REST_API {
 	 */
 	public function register_routes(): void {
 		register_rest_route(
-			'gs-support-manager/v1',
+			'gs-support-feed/v1',
 			'/feed',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -101,8 +101,8 @@ class GS_Support_REST_API {
 
 		$blog_name        = esc_xml( get_bloginfo( 'name' ) );
 		$feed_title       = sprintf( '%s - Monitored Plugin & Theme Support Feed', $blog_name );
-		$feed_link        = esc_url( home_url( '/wp-json/gs-support-manager/v1/feed' ) );
-		$feed_description = esc_xml( __( 'Unified RSS support forum feed for monitored WordPress.org plugins and themes.', 'gs-plugin-support-manager' ) );
+		$feed_link        = esc_url( home_url( '/wp-json/gs-support-feed/v1/feed' ) );
+		$feed_description = esc_xml( __( 'Unified RSS support forum feed for monitored WordPress.org plugins and themes.', 'gs-support-feed' ) );
 
 		echo '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
 		echo '<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">' . "\n";

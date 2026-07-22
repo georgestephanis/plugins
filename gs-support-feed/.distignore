@@ -1,0 +1,14 @@
+# Files and directories that should never ship in the WordPress.org package.
+# Honored by the 10up WordPress.org deploy action; for the manual rsync→SVN
+# flow add matching --exclude entries.
+
+AGENTS.md
+README.md
+phpcs.xml
+/playground
+/.wordpress-org
+.gitignore
+.distignore
+/node_modules
+package.json
+package-lock.json

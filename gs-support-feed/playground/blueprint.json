@@ -1,11 +1,11 @@
 {
 	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
 	"meta": {
-		"title": "GS Plugin Support Manager — Demo",
+		"title": "GS Support Feed — Demo",
 		"description": "Monitored plugin & theme support forum aggregator for WordPress.org with profile import, email, webhook, and unified RSS feed notifications.",
 		"author": "georgestephanis"
 	},
-	"landingPage": "/wp-admin/tools.php?page=gs-plugin-support-manager",
+	"landingPage": "/wp-admin/tools.php?page=gs-support-feed",
 	"preferredVersions": {
 		"php": "8.2",
 		"wp": "latest"
@@ -27,11 +27,11 @@
 				"resource": "git:directory",
 				"url": "https://github.com/georgestephanis/plugins",
 				"ref": "main",
-				"path": "gs-plugin-support-manager"
+				"path": "gs-support-feed"
 			},
 			"options": {
 				"activate": true,
-				"targetFolderName": "gs-plugin-support-manager"
+				"targetFolderName": "gs-support-feed"
 			}
 		},
 		{

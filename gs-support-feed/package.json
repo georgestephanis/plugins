@@ -1,0 +1,24 @@
+{
+	"name": "gs-support-feed",
+	"version": "1.0.0",
+	"description": "Monitored plugin and theme support forum aggregator for WordPress.org with profile import, email, webhook, and unified RSS feed notifications.",
+	"author": "George Stephanis",
+	"license": "GPL-2.0-or-later",
+	"homepage": "https://github.com/georgestephanis/gs-support-feed",
+	"files": [
+		"gs-support-feed.php",
+		"uninstall.php",
+		"includes",
+		"readme.txt"
+	],
+	"devDependencies": {
+		"@wordpress/scripts": "^30.15.0",
+		"typescript": "^5.6.3"
+	},
+	"scripts": {
+		"plugin-zip": "wp-scripts plugin-zip",
+		"format": "wp-scripts format",
+		"lint:js": "wp-scripts lint-js",
+		"lint:css": "wp-scripts lint-style"
+	}
+}
