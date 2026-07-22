@@ -1,5 +1,7 @@
 # GS Support Feed
 
+![GS Support Feed](.wordpress-org/banner-772x250.png)
+
 [![Try in WordPress Playground](https://img.shields.io/badge/Try%20in-WordPress%20Playground-3858e9?style=for-the-badge&logo=wordpress&logoColor=white)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/gs-support-feed/playground/blueprint.json)
 
 **[▶ Launch Live Demo in WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/plugins/main/gs-support-feed/playground/blueprint.json)**

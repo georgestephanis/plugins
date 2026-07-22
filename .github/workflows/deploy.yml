@@ -20,6 +20,7 @@ on:
           - footer-on-homepage
           - go-dark
           - google-tag-manager
+          - gs-support-feed
           - hugh
           - legacy-jetpack-custom-css-editor
           - ndizi-project-management

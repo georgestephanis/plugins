@@ -239,7 +239,10 @@ class GS_Support_Admin_UI {
 		$nonce      = wp_create_nonce( 'gs_sf_admin_nonce' );
 
 		echo '<div class="wrap">';
-		echo '<h1><span class="dashicons dashicons-sos" style="font-size: 32px; width: 32px; height: 32px; margin-right: 8px;"></span> ' . esc_html__( 'GS Support Feed', 'gs-support-feed' ) . '</h1>';
+		echo '<h1>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plugin-owned static SVG asset, no user input.
+		echo $this->get_icon_svg();
+		echo ' ' . esc_html__( 'GS Support Feed', 'gs-support-feed' ) . '</h1>';
 
 		$this->render_notices();
 
@@ -263,6 +266,15 @@ class GS_Support_Admin_UI {
 
 		// Render inline CSS and JS for interactive admin UX.
 		$this->render_inline_assets( $nonce );
+	}
+
+	/**
+	 * Inline mono life-ring SVG used as the page-header icon.
+	 *
+	 * @return string Raw SVG markup (trusted, plugin-owned, no user input).
+	 */
+	private function get_icon_svg(): string {
+		return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="32" height="32" fill="currentColor" role="img" aria-label="' . esc_attr__( 'Support', 'gs-support-feed' ) . '" style="vertical-align: middle;"><mask id="gs-sf-icon-mask"><rect x="0" y="0" width="200" height="200" fill="white"></rect><circle cx="100" cy="100" r="52" fill="black"></circle><path d="M160.1 181.3 L181.3 160.1 L39.9 18.7 L18.7 39.9 Z" fill="black"></path><path d="M18.7 160.1 L39.9 181.3 L181.3 39.9 L160.1 18.7 Z" fill="black"></path></mask><circle cx="100" cy="100" r="92" mask="url(#gs-sf-icon-mask)"></circle></svg>';
 	}
 
 	/**

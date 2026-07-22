@@ -6,6 +6,7 @@ AGENTS.md
 README.md
 phpcs.xml
 /playground
+/.wordpress-org
 .gitignore
 .distignore
 /node_modules

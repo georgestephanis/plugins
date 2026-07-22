@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+  <linearGradient id="ig" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#f4f9ff"></stop><stop offset="1" stop-color="#dcebfb"></stop>
+  </linearGradient>
+  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(6,30,55,0.28)"></feDropShadow>
+  </filter></defs>
+  <rect x="0" y="0" width="256" height="256" rx="22" fill="url(#ig)"></rect>
+  <g transform="translate(36,36) scale(0.92)" filter="url(#sh)">
+  <circle cx="100" cy="100" r="72" fill="none" stroke="#2271b1" stroke-width="40"></circle>
+  <path d="M166.5 127.6 A72 72 0 0 1 127.6 166.5" fill="none" stroke="#ffffff" stroke-width="40"></path>
+  <path d="M72.4 166.5 A72 72 0 0 1 33.5 127.6" fill="none" stroke="#ffffff" stroke-width="40"></path>
+  <path d="M33.5 72.4 A72 72 0 0 1 72.4 33.5" fill="none" stroke="#ffffff" stroke-width="40"></path>
+  <path d="M127.6 33.5 A72 72 0 0 1 166.5 72.4" fill="none" stroke="#ffffff" stroke-width="40"></path>
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#0b3a63" stroke-width="3"></circle>
+  <circle cx="100" cy="100" r="52" fill="none" stroke="#0b3a63" stroke-width="3"></circle>
+  <g stroke="#0b3a63" stroke-width="4" stroke-linecap="round" opacity="0.55">
+    <line x1="100" y1="55" x2="100" y2="70"></line><line x1="100" y1="130" x2="100" y2="145"></line>
+    <line x1="55" y1="100" x2="70" y2="100"></line><line x1="130" y1="100" x2="145" y2="100"></line>
+  </g></g>
+</svg>
