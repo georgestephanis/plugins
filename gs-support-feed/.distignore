@@ -8,3 +8,6 @@ phpcs.xml
 /playground
 .gitignore
 .distignore
+/node_modules
+package.json
+package-lock.json
