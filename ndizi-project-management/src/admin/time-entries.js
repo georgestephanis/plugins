@@ -560,14 +560,15 @@ const TimeEntriesApp = () => {
 				filterBy: { operators: [ 'is' ] },
 				enableSorting: true,
 				getValue: ( { item } ) => parseInt( item.client_id, 10 ),
-				render: ( { item } ) => (
-					<span>
-						{ item.client_name ||
-							( item.client_id
-								? `Client #${ item.client_id }`
-								: '-' ) }
-					</span>
-				),
+				render: ( { item } ) => {
+					const clientId = parseInt( item.client_id, 10 );
+					return (
+						<span>
+							{ item.client_name ||
+								( clientId ? `Client #${ clientId }` : '-' ) }
+						</span>
+					);
+				},
 			},
 			{
 				id: 'project_id',
@@ -832,12 +833,34 @@ const TimeEntriesApp = () => {
 							label="Client"
 							value={ formState.clientId }
 							options={ clientsOptions }
-							onChange={ ( val ) =>
+							onChange={ ( val ) => {
+								const clientId = parseInt( val, 10 );
+								const currentProject =
+									projects &&
+									projects.find(
+										( p ) =>
+											p.id ===
+											parseInt( formState.projectId, 10 )
+									);
+								const projectStillValid =
+									! clientId ||
+									( currentProject &&
+										parseInt(
+											currentProject.meta
+												?._ndizi_client_id,
+											10
+										) === clientId );
 								setFormState( {
 									...formState,
 									clientId: val,
-								} )
-							}
+									projectId: projectStillValid
+										? formState.projectId
+										: '0',
+									taskId: projectStillValid
+										? formState.taskId
+										: '0',
+								} );
+							} }
 						/>
 
 						<SelectControl

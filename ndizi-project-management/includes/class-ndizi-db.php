@@ -307,6 +307,15 @@ class Ndizi_DB {
 			}
 		}
 
+		// If the project changed and no explicit client was given, derive the client from the new project.
+		if ( isset( $update_data['project_id'] ) && empty( $update_data['client_id'] ) ) {
+			$derived_client_id = intval( get_post_meta( $update_data['project_id'], '_ndizi_client_id', true ) );
+			if ( $derived_client_id ) {
+				$update_data['client_id'] = $derived_client_id;
+				$formats[]                = '%d';
+			}
+		}
+
 		if ( empty( $update_data ) ) {
 			return false;
 		}
