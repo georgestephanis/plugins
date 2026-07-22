@@ -9,6 +9,7 @@
 		"gs-support-feed.php",
 		"uninstall.php",
 		"includes",
+		"assets",
 		"readme.txt"
 	],
 	"devDependencies": {
