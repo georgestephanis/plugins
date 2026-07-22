@@ -436,6 +436,93 @@ class GS_Support_Manager {
 	}
 
 	/**
+	 * Determine whether a URL is safe to use as an outbound webhook target.
+	 *
+	 * Requires an http(s) URL with a resolvable hostname that is not a
+	 * loopback, private, or reserved-range address, to guard against SSRF
+	 * via an admin-configured webhook that fires unattended on cron.
+	 *
+	 * @param string $url Candidate webhook URL.
+	 * @return bool True if the URL is safe to send requests to.
+	 */
+	public function is_safe_webhook_url( string $url ): bool {
+		if ( '' === $url ) {
+			return true;
+		}
+
+		$parts = wp_parse_url( $url );
+		if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+			return false;
+		}
+
+		if ( ! in_array( strtolower( $parts['scheme'] ), array( 'http', 'https' ), true ) ) {
+			return false;
+		}
+
+		$host = trim( $parts['host'], '[]' );
+		$ips  = array();
+
+		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			$ips[] = $host;
+		} else {
+			$records = dns_get_record( $host, DNS_A + DNS_AAAA );
+			if ( ! empty( $records ) ) {
+				foreach ( $records as $record ) {
+					if ( ! empty( $record['ip'] ) ) {
+						$ips[] = $record['ip'];
+					} elseif ( ! empty( $record['ipv6'] ) ) {
+						$ips[] = $record['ipv6'];
+					}
+				}
+			}
+		}
+
+		if ( empty( $ips ) ) {
+			return false;
+		}
+
+		foreach ( $ips as $ip ) {
+			if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check whether a plugin slug is hosted on WordPress.org.
+	 *
+	 * @param string $slug Plugin slug.
+	 * @return bool True if the plugin has a WordPress.org listing.
+	 */
+	public function is_plugin_hosted_on_wporg( string $slug ): bool {
+		if ( ! function_exists( 'plugins_api' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		}
+
+		$result = plugins_api( 'plugin_information', array( 'slug' => $slug ) );
+
+		return ! is_wp_error( $result ) && ! empty( $result );
+	}
+
+	/**
+	 * Check whether a theme slug is hosted on WordPress.org.
+	 *
+	 * @param string $slug Theme slug.
+	 * @return bool True if the theme has a WordPress.org listing.
+	 */
+	public function is_theme_hosted_on_wporg( string $slug ): bool {
+		if ( ! function_exists( 'themes_api' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/theme.php';
+		}
+
+		$result = themes_api( 'theme_information', array( 'slug' => $slug ) );
+
+		return ! is_wp_error( $result ) && ! empty( $result );
+	}
+
+	/**
 	 * Get stored feed items.
 	 *
 	 * @return array Map of items indexed by item ID.
@@ -444,7 +531,7 @@ class GS_Support_Manager {
 		$items = get_option( self::ITEMS_OPTION, false );
 		if ( false === $items ) {
 			$items = array();
-			update_option( self::ITEMS_OPTION, $items );
+			update_option( self::ITEMS_OPTION, $items, false );
 		}
 		return is_array( $items ) ? $items : array();
 	}
@@ -474,6 +561,6 @@ class GS_Support_Manager {
 			$items = array_slice( $items, 0, $max, true );
 		}
 
-		return update_option( self::ITEMS_OPTION, $items );
+		return update_option( self::ITEMS_OPTION, $items, false );
 	}
 }

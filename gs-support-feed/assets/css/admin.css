@@ -1,0 +1,183 @@
+.gs-sf-tab-content {
+	margin-top: 15px;
+}
+
+.gs-sf-header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.gs-sf-header-row .dashicons-update {
+	margin-top: 4px;
+}
+
+.gs-sf-separator {
+	margin: 0 10px;
+	color: #ccc;
+}
+
+.gs-sf-badge-unread {
+	background: #e74c3c;
+	color: #fff;
+	padding: 3px 8px;
+	border-radius: 10px;
+	font-weight: bold;
+	font-size: 12px;
+}
+
+.gs-sf-filter-form {
+	margin-bottom: 15px;
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	background: #fff;
+	padding: 10px;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+}
+
+.gs-sf-filter-form input[type="search"] {
+	width: 250px;
+}
+
+.gs-sf-bulk-actions {
+	margin-bottom: 10px;
+}
+
+.gs-sf-col-status,
+.gs-sf-col-action {
+	width: 100px;
+}
+
+.gs-sf-col-item {
+	width: 160px;
+}
+
+.gs-sf-col-author {
+	width: 140px;
+}
+
+.gs-sf-col-date {
+	width: 150px;
+}
+
+.gs-sf-col-type {
+	width: 80px;
+}
+
+.gs-sf-item-row-unread {
+	font-weight: bold;
+	background: #fff8e5;
+}
+
+.gs-sf-item-row-read {
+	opacity: 0.7;
+}
+
+.gs-sf-status-unread {
+	color: #e74c3c;
+	font-weight: bold;
+}
+
+.gs-sf-status-read {
+	color: #777;
+}
+
+.gs-sf-badge {
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: bold;
+	margin-right: 4px;
+}
+
+.gs-sf-forum-icon {
+	margin-top: 2px;
+}
+
+.gs-sf-badge-plugin {
+	background: #eef;
+	color: #1565c0;
+}
+
+.gs-sf-badge-theme {
+	background: #e8f5e9;
+	color: #2e7d32;
+}
+
+.gs-sf-item-link {
+	text-decoration: none;
+}
+
+.gs-sf-item-external-icon {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	vertical-align: middle;
+	color: #666;
+}
+
+.gs-sf-item-preview {
+	font-weight: normal;
+	font-size: 12px;
+	color: #555;
+	margin-top: 4px;
+}
+
+.gs-sf-plugins-layout {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+}
+
+.gs-sf-plugins-list {
+	flex: 2;
+}
+
+.gs-sf-plugins-sidebar {
+	flex: 1;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	padding: 15px;
+	border-radius: 4px;
+}
+
+.gs-sf-plugins-sidebar .dashicons-admin-users,
+.gs-sf-plugins-sidebar .dashicons-external {
+	margin-top: 3px;
+}
+
+.gs-sf-divider {
+	margin: 20px 0;
+	border: 0;
+	border-top: 1px solid #eee;
+}
+
+.gs-sf-import-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.gs-sf-import-actions .spinner {
+	float: none;
+	margin: 0;
+}
+
+.gs-sf-settings-form {
+	max-width: 800px;
+	background: #fff;
+	padding: 20px;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+}
+
+.gs-sf-icon {
+	vertical-align: middle;
+}
+
+.gs-sf-help-text {
+	color: #666;
+}

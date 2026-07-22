@@ -47,7 +47,23 @@ class GS_Support_Admin_UI {
 			return;
 		}
 
-		wp_enqueue_script( 'jquery' );
+		wp_enqueue_style( 'gs-support-feed-admin', GS_SF_URL . 'assets/css/admin.css', array(), GS_SF_VERSION );
+
+		wp_enqueue_script( 'gs-support-feed-admin', GS_SF_URL . 'assets/js/admin.js', array( 'jquery' ), GS_SF_VERSION, true );
+		wp_localize_script(
+			'gs-support-feed-admin',
+			'gsSupportFeed',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'gs_sf_admin_nonce' ),
+				'strings' => array(
+					'read'       => __( 'Read', 'gs-support-feed' ),
+					'unread'     => __( 'Unread', 'gs-support-feed' ),
+					'markRead'   => __( 'Mark Read', 'gs-support-feed' ),
+					'markUnread' => __( 'Mark Unread', 'gs-support-feed' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -77,16 +93,29 @@ class GS_Support_Admin_UI {
 
 		switch ( $action ) {
 			case 'save_settings':
+				$raw_emails          = isset( $_POST['email_recipients'] ) ? sanitize_text_field( wp_unslash( $_POST['email_recipients'] ) ) : '';
+				$submitted_emails    = array_filter( array_map( 'trim', explode( ',', $raw_emails ) ) );
+				$valid_emails        = array_filter( $submitted_emails, 'is_email' );
+				$invalid_email_count = count( $submitted_emails ) - count( $valid_emails );
+
+				$raw_webhook_url = isset( $_POST['webhook_url'] ) ? esc_url_raw( wp_unslash( $_POST['webhook_url'] ) ) : '';
+				$webhook_invalid = '' !== $raw_webhook_url && ! $manager->is_safe_webhook_url( $raw_webhook_url );
+				$webhook_url     = $webhook_invalid ? '' : $raw_webhook_url;
+
 				$new_settings = array(
 					'sync_interval'    => isset( $_POST['sync_interval'] ) ? sanitize_key( $_POST['sync_interval'] ) : 'hourly',
 					'enable_email'     => isset( $_POST['enable_email'] ) ? 1 : 0,
-					'email_recipients' => isset( $_POST['email_recipients'] ) ? sanitize_text_field( wp_unslash( $_POST['email_recipients'] ) ) : '',
+					'email_recipients' => implode( ', ', $valid_emails ),
 					'enable_webhook'   => isset( $_POST['enable_webhook'] ) ? 1 : 0,
-					'webhook_url'      => isset( $_POST['webhook_url'] ) ? esc_url_raw( wp_unslash( $_POST['webhook_url'] ) ) : '',
+					'webhook_url'      => $webhook_url,
 					'max_stored_items' => isset( $_POST['max_stored_items'] ) ? absint( $_POST['max_stored_items'] ) : 500,
 				);
 				$manager->save_settings( $new_settings );
-				wp_safe_redirect( admin_url( 'tools.php?page=gs-support-feed&tab=settings&updated=1' ) );
+				wp_safe_redirect(
+					admin_url(
+						'tools.php?page=gs-support-feed&tab=settings&updated=1&invalid_emails=' . $invalid_email_count . '&webhook_invalid=' . ( $webhook_invalid ? '1' : '0' )
+					)
+				);
 				exit;
 
 			case 'add_plugin':
@@ -139,11 +168,16 @@ class GS_Support_Admin_UI {
 				}
 				$installed = get_plugins();
 				$count     = 0;
+				$skipped   = 0;
 				foreach ( $installed as $plugin_file => $plugin_data ) {
 					$parts = explode( '/', $plugin_file );
 					if ( count( $parts ) > 1 ) {
 						$slug = $parts[0];
 						$name = $plugin_data['Name'];
+						if ( ! $manager->is_plugin_hosted_on_wporg( $slug ) ) {
+							++$skipped;
+							continue;
+						}
 						if ( $manager->add_monitored_item( $slug, 'plugin', $name ) ) {
 							++$count;
 						}
@@ -152,6 +186,10 @@ class GS_Support_Admin_UI {
 				$themes = wp_get_themes();
 				foreach ( $themes as $theme_slug => $theme_obj ) {
 					$name = $theme_obj->get( 'Name' );
+					if ( ! $manager->is_theme_hosted_on_wporg( $theme_slug ) ) {
+						++$skipped;
+						continue;
+					}
 					if ( $manager->add_monitored_item( $theme_slug, 'theme', $name ) ) {
 						++$count;
 					}
@@ -159,7 +197,7 @@ class GS_Support_Admin_UI {
 				if ( $count > 0 ) {
 					$manager->fetcher->sync_all();
 				}
-				wp_safe_redirect( admin_url( 'tools.php?page=gs-support-feed&tab=plugins&imported=' . $count ) );
+				wp_safe_redirect( admin_url( 'tools.php?page=gs-support-feed&tab=plugins&imported=' . $count . '&skipped=' . $skipped ) );
 				exit;
 
 			case 'sync_now':
@@ -252,7 +290,7 @@ class GS_Support_Admin_UI {
 		echo '<a href="' . esc_url( admin_url( 'tools.php?page=gs-support-feed&tab=settings' ) ) . '" class="nav-tab ' . ( 'settings' === $active_tab ? 'nav-tab-active' : '' ) . '">' . esc_html__( 'Settings & Notifications', 'gs-support-feed' ) . '</a>';
 		echo '</h2>';
 
-		echo '<div class="tab-content" style="margin-top: 15px;">';
+		echo '<div class="tab-content gs-sf-tab-content">';
 		if ( 'plugins' === $active_tab ) {
 			$this->render_plugins_tab( $nonce );
 		} elseif ( 'settings' === $active_tab ) {
@@ -263,9 +301,6 @@ class GS_Support_Admin_UI {
 		echo '</div>';
 
 		echo '</div>';
-
-		// Render inline CSS and JS for interactive admin UX.
-		$this->render_inline_assets( $nonce );
 	}
 
 	/**
@@ -274,7 +309,7 @@ class GS_Support_Admin_UI {
 	 * @return string Raw SVG markup (trusted, plugin-owned, no user input).
 	 */
 	private function get_icon_svg(): string {
-		return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="32" height="32" fill="currentColor" role="img" aria-label="' . esc_attr__( 'Support', 'gs-support-feed' ) . '" style="vertical-align: middle;"><mask id="gs-sf-icon-mask"><rect x="0" y="0" width="200" height="200" fill="white"></rect><circle cx="100" cy="100" r="52" fill="black"></circle><path d="M160.1 181.3 L181.3 160.1 L39.9 18.7 L18.7 39.9 Z" fill="black"></path><path d="M18.7 160.1 L39.9 181.3 L181.3 39.9 L160.1 18.7 Z" fill="black"></path></mask><circle cx="100" cy="100" r="92" mask="url(#gs-sf-icon-mask)"></circle></svg>';
+		return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="32" height="32" fill="currentColor" role="img" aria-label="' . esc_attr__( 'Support', 'gs-support-feed' ) . '" class="gs-sf-icon"><mask id="gs-sf-icon-mask"><rect x="0" y="0" width="200" height="200" fill="white"></rect><circle cx="100" cy="100" r="52" fill="black"></circle><path d="M160.1 181.3 L181.3 160.1 L39.9 18.7 L18.7 39.9 Z" fill="black"></path><path d="M18.7 160.1 L39.9 181.3 L181.3 39.9 L160.1 18.7 Z" fill="black"></path></mask><circle cx="100" cy="100" r="92" mask="url(#gs-sf-icon-mask)"></circle></svg>';
 	}
 
 	/**
@@ -336,6 +371,34 @@ class GS_Support_Admin_UI {
 		if ( isset( $_GET['marked_read'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'All items marked as read.', 'gs-support-feed' ) . '</p></div>';
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['invalid_emails'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$invalid_count = absint( $_GET['invalid_emails'] );
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html(
+				sprintf(
+					/* translators: 1: Count of invalid email addresses */
+					_n( '%d email address was invalid and was not saved.', '%d email addresses were invalid and were not saved.', $invalid_count, 'gs-support-feed' ),
+					$invalid_count
+				)
+			) . '</p></div>';
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['webhook_invalid'] ) ) {
+			echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'The webhook URL was rejected because it is not a valid public HTTP(S) endpoint, and was not saved.', 'gs-support-feed' ) . '</p></div>';
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['skipped'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$skipped_count = absint( $_GET['skipped'] );
+			echo '<div class="notice notice-info is-dismissible"><p>' . esc_html(
+				sprintf(
+					/* translators: 1: Count of skipped items */
+					_n( '%d installed item is not hosted on WordPress.org and was not added.', '%d installed items are not hosted on WordPress.org and were not added.', $skipped_count, 'gs-support-feed' ),
+					$skipped_count
+				)
+			) . '</p></div>';
+		}
 	}
 
 	/**
@@ -385,17 +448,17 @@ class GS_Support_Admin_UI {
 			$filtered_items[] = $item;
 		}
 
-		echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">';
+		echo '<div class="gs-sf-header-row">';
 		echo '<div>';
-		echo '<strong style="font-size: 16px;">' . esc_html(
+		echo '<strong>' . esc_html(
 			sprintf(
 				/* translators: 1: Total count of support topics */
 				__( 'Total Topics: %d', 'gs-support-feed' ),
 				count( $all_items )
 			)
 		) . '</strong> ';
-		echo '<span style="margin: 0 10px; color: #ccc;">|</span> ';
-		echo '<span class="badge-unread" style="background:#e74c3c; color:#fff; padding:3px 8px; border-radius:10px; font-weight:bold; font-size:12px;">' . esc_html(
+		echo '<span class="gs-sf-separator">|</span> ';
+		echo '<span class="gs-sf-badge-unread">' . esc_html(
 			sprintf(
 				/* translators: 1: Unread topic count */
 				__( '%d Unread', 'gs-support-feed' ),
@@ -405,13 +468,13 @@ class GS_Support_Admin_UI {
 		echo '</div>';
 
 		echo '<div>';
-		echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'tools.php?page=gs-support-feed&gs_sf_action=sync_now' ), 'gs_sf_admin_nonce' ) ) . '" class="button button-primary"><span class="dashicons dashicons-update" style="margin-top:4px;"></span> ' . esc_html__( 'Sync All Feeds Now', 'gs-support-feed' ) . '</a> ';
+		echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'tools.php?page=gs-support-feed&gs_sf_action=sync_now' ), 'gs_sf_admin_nonce' ) ) . '" class="button button-primary"><span class="dashicons dashicons-update"></span> ' . esc_html__( 'Sync All Feeds Now', 'gs-support-feed' ) . '</a> ';
 		echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'tools.php?page=gs-support-feed&gs_sf_action=mark_all_read' ), 'gs_sf_admin_nonce' ) ) . '" class="button button-secondary">' . esc_html__( 'Mark All as Read', 'gs-support-feed' ) . '</a>';
 		echo '</div>';
 		echo '</div>';
 
 		// Filters & Search Bar.
-		echo '<form method="get" action="' . esc_url( admin_url( 'tools.php' ) ) . '" style="margin-bottom: 15px; display:flex; gap:10px; align-items:center; background:#fff; padding:10px; border:1px solid #ccd0d4; border-radius:4px;">';
+		echo '<form method="get" action="' . esc_url( admin_url( 'tools.php' ) ) . '" class="gs-sf-filter-form">';
 		echo '<input type="hidden" name="page" value="gs-support-feed" />';
 		echo '<input type="hidden" name="tab" value="dashboard" />';
 
@@ -433,7 +496,7 @@ class GS_Support_Admin_UI {
 		echo '<option value="read" ' . selected( $filter_status, 'read', false ) . '>' . esc_html__( 'Read Only', 'gs-support-feed' ) . '</option>';
 		echo '</select>';
 
-		echo '<input type="search" name="s" value="' . esc_attr( $search_query ) . '" placeholder="' . esc_attr__( 'Search topics or authors...', 'gs-support-feed' ) . '" style="width:250px;" />';
+		echo '<input type="search" name="s" value="' . esc_attr( $search_query ) . '" placeholder="' . esc_attr__( 'Search topics or authors...', 'gs-support-feed' ) . '" />';
 		echo '<input type="submit" class="button" value="' . esc_attr__( 'Filter', 'gs-support-feed' ) . '" />';
 		if ( ! empty( $filter_plugin ) || ! empty( $filter_status ) || ! empty( $search_query ) ) {
 			echo '<a href="' . esc_url( admin_url( 'tools.php?page=gs-support-feed&tab=dashboard' ) ) . '" class="button button-link">' . esc_html__( 'Clear Filters', 'gs-support-feed' ) . '</a>';
@@ -446,7 +509,7 @@ class GS_Support_Admin_UI {
 		echo '<input type="hidden" name="gs_sf_action" value="bulk_items" />';
 		echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
 
-		echo '<div class="tablenav top" style="margin-bottom:10px;">';
+		echo '<div class="tablenav top gs-sf-bulk-actions">';
 		echo '<div class="alignleft actions bulkactions">';
 		echo '<select name="bulk_action_type">';
 		echo '<option value="">' . esc_html__( 'Bulk Actions', 'gs-support-feed' ) . '</option>';
@@ -465,12 +528,12 @@ class GS_Support_Admin_UI {
 			echo '<thead>';
 			echo '<tr>';
 			echo '<td class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-top" /></td>';
-			echo '<th style="width: 100px;">' . esc_html__( 'Status', 'gs-support-feed' ) . '</th>';
-			echo '<th style="width: 160px;">' . esc_html__( 'Item', 'gs-support-feed' ) . '</th>';
+			echo '<th class="gs-sf-col-status">' . esc_html__( 'Status', 'gs-support-feed' ) . '</th>';
+			echo '<th class="gs-sf-col-item">' . esc_html__( 'Item', 'gs-support-feed' ) . '</th>';
 			echo '<th>' . esc_html__( 'Topic Title', 'gs-support-feed' ) . '</th>';
-			echo '<th style="width: 140px;">' . esc_html__( 'Author', 'gs-support-feed' ) . '</th>';
-			echo '<th style="width: 150px;">' . esc_html__( 'Date Posted', 'gs-support-feed' ) . '</th>';
-			echo '<th style="width: 100px;">' . esc_html__( 'Action', 'gs-support-feed' ) . '</th>';
+			echo '<th class="gs-sf-col-author">' . esc_html__( 'Author', 'gs-support-feed' ) . '</th>';
+			echo '<th class="gs-sf-col-date">' . esc_html__( 'Date Posted', 'gs-support-feed' ) . '</th>';
+			echo '<th class="gs-sf-col-action">' . esc_html__( 'Action', 'gs-support-feed' ) . '</th>';
 			echo '</tr>';
 			echo '</thead>';
 			echo '<tbody>';
@@ -478,28 +541,27 @@ class GS_Support_Admin_UI {
 			foreach ( $filtered_items as $item ) {
 				$item_id      = esc_attr( $item['id'] );
 				$is_read      = ! empty( $item['read'] );
-				$row_style    = $is_read ? 'opacity: 0.7;' : 'font-weight: bold; background: #fff8e5;';
-				$status_label = $is_read ? '<span style="color:#777;">' . esc_html__( 'Read', 'gs-support-feed' ) . '</span>' : '<span style="color:#e74c3c; font-weight:bold;">● ' . esc_html__( 'Unread', 'gs-support-feed' ) . '</span>';
+				$row_class    = $is_read ? 'gs-sf-item-row-read' : 'gs-sf-item-row-unread';
+				$status_label = $is_read ? '<span class="gs-sf-status-read">' . esc_html__( 'Read', 'gs-support-feed' ) . '</span>' : '<span class="gs-sf-status-unread">● ' . esc_html__( 'Unread', 'gs-support-feed' ) . '</span>';
 
 				$item_type    = isset( $item['item_type'] ) ? $item['item_type'] : 'plugin';
 				$item_key     = $item_type . ':' . $item['plugin_slug'];
 				$plugin_label = isset( $monitored[ $item_key ] ) ? $monitored[ $item_key ]['label'] : ( isset( $monitored[ $item['plugin_slug'] ] ) ? $monitored[ $item['plugin_slug'] ]['label'] : $item['plugin_slug'] );
 
-				$badge_bg = 'theme' === $item_type ? '#e8f5e9' : '#eef';
-				$badge_fg = 'theme' === $item_type ? '#2e7d32' : '#1565c0';
+				$badge_type_class = 'theme' === $item_type ? 'gs-sf-badge-theme' : 'gs-sf-badge-plugin';
 
-				echo '<tr id="item-row-' . esc_attr( $item_id ) . '" style="' . esc_attr( $row_style ) . '">';
+				echo '<tr id="item-row-' . esc_attr( $item_id ) . '" class="' . esc_attr( $row_class ) . '">';
 				echo '<th scope="row" class="check-column"><input type="checkbox" name="item_ids[]" value="' . esc_attr( $item_id ) . '" /></th>';
 				echo '<td class="item-status-col">' . wp_kses_post( $status_label ) . '</td>';
 				echo '<td>';
-				echo '<span class="plugin-tag" style="background:' . esc_attr( $badge_bg ) . '; color:' . esc_attr( $badge_fg ) . '; padding:2px 6px; border-radius:3px; font-size:11px; margin-right:4px;">' . esc_html( strtoupper( $item_type ) ) . '</span> ';
+				echo '<span class="gs-sf-badge ' . esc_attr( $badge_type_class ) . '">' . esc_html( strtoupper( $item_type ) ) . '</span> ';
 				echo '<strong>' . esc_html( $plugin_label ) . '</strong>';
 				echo '</td>';
 				echo '<td>';
-				echo '<a href="' . esc_url( $item['link'] ) . '" target="_blank" style="text-decoration:none;">' . esc_html( $item['title'] ) . '</a> <span class="dashicons dashicons-external" style="font-size:14px; width:14px; height:14px; vertical-align:middle; color:#666;"></span>';
+				echo '<a href="' . esc_url( $item['link'] ) . '" target="_blank" class="gs-sf-item-link">' . esc_html( $item['title'] ) . '</a> <span class="dashicons dashicons-external gs-sf-item-external-icon"></span>';
 				if ( ! empty( $item['description'] ) ) {
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-sanitized on input via SimplePie and wp_kses_post.
-					echo '<div class="item-preview" style="font-weight:normal; font-size:12px; color:#555; margin-top:4px;">' . wp_trim_words( $item['description'], 25 ) . '</div>';
+					echo '<div class="gs-sf-item-preview">' . wp_trim_words( $item['description'], 25 ) . '</div>';
 				}
 				echo '</td>';
 				echo '<td>' . esc_html( ! empty( $item['author'] ) ? $item['author'] : __( 'Anonymous', 'gs-support-feed' ) ) . '</td>';
@@ -526,10 +588,10 @@ class GS_Support_Admin_UI {
 		$manager   = gs_support_manager();
 		$monitored = $manager->get_monitored_plugins();
 
-		echo '<div style="display:flex; gap:20px; align-items:flex-start;">';
+		echo '<div class="gs-sf-plugins-layout">';
 
 		// Monitored Items List Table.
-		echo '<div style="flex:2;">';
+		echo '<div class="gs-sf-plugins-list">';
 		echo '<h2>' . esc_html__( 'Monitored Plugins & Themes List', 'gs-support-feed' ) . '</h2>';
 
 		if ( empty( $monitored ) ) {
@@ -538,7 +600,7 @@ class GS_Support_Admin_UI {
 			echo '<table class="wp-list-table widefat fixed striped">';
 			echo '<thead>';
 			echo '<tr>';
-			echo '<th style="width: 80px;">' . esc_html__( 'Type', 'gs-support-feed' ) . '</th>';
+			echo '<th class="gs-sf-col-type">' . esc_html__( 'Type', 'gs-support-feed' ) . '</th>';
 			echo '<th>' . esc_html__( 'Name', 'gs-support-feed' ) . '</th>';
 			echo '<th>' . esc_html__( 'WP.org Slug', 'gs-support-feed' ) . '</th>';
 			echo '<th>' . esc_html__( 'Last Synced', 'gs-support-feed' ) . '</th>';
@@ -555,17 +617,16 @@ class GS_Support_Admin_UI {
 				$forum_url     = sprintf( 'https://wordpress.org/support/%s/%s/', $type, $slug );
 				$remove_url    = wp_nonce_url( admin_url( 'tools.php?page=gs-support-feed&gs_sf_action=remove_plugin&slug=' . rawurlencode( $key ) ), 'gs_sf_admin_nonce' );
 
-				$badge_bg = 'theme' === $type ? '#e8f5e9' : '#eef';
-				$badge_fg = 'theme' === $type ? '#2e7d32' : '#1565c0';
+				$badge_type_class = 'theme' === $type ? 'gs-sf-badge-theme' : 'gs-sf-badge-plugin';
 
 				echo '<tr>';
-				echo '<td><span style="background:' . esc_attr( $badge_bg ) . '; color:' . esc_attr( $badge_fg ) . '; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:bold;">' . esc_html( strtoupper( $type ) ) . '</span></td>';
+				echo '<td><span class="gs-sf-badge ' . esc_attr( $badge_type_class ) . '">' . esc_html( strtoupper( $type ) ) . '</span></td>';
 				echo '<td><strong>' . esc_html( $data['label'] ) . '</strong></td>';
 				echo '<td><code>' . esc_html( $slug ) . '</code></td>';
 				echo '<td>' . esc_html( $last_sync_str ) . '</td>';
 				echo '<td>' . esc_html( isset( $data['item_count'] ) ? $data['item_count'] : 0 ) . '</td>';
 				echo '<td>';
-				echo '<a href="' . esc_url( $forum_url ) . '" target="_blank" class="button button-small"><span class="dashicons dashicons-external" style="margin-top:2px;"></span> ' . esc_html__( 'Forum', 'gs-support-feed' ) . '</a> ';
+				echo '<a href="' . esc_url( $forum_url ) . '" target="_blank" class="button button-small"><span class="dashicons dashicons-external gs-sf-forum-icon"></span> ' . esc_html__( 'Forum', 'gs-support-feed' ) . '</a> ';
 				echo '<a href="' . esc_url( $remove_url ) . '" class="button button-small button-link-delete" onclick="return confirm(\'' . esc_js( __( 'Are you sure you want to stop monitoring this item?', 'gs-support-feed' ) ) . '\');">' . esc_html__( 'Remove', 'gs-support-feed' ) . '</a>';
 				echo '</td>';
 				echo '</tr>';
@@ -577,10 +638,10 @@ class GS_Support_Admin_UI {
 		echo '</div>';
 
 		// Sidebar Controls: Profile Import, Add Single Item & Import Local Installed.
-		echo '<div style="flex:1; background:#fff; border:1px solid #ccd0d4; padding:15px; border-radius:4px;">';
+		echo '<div class="gs-sf-plugins-sidebar">';
 
 		// 1. WordPress.org Profile Import.
-		echo '<h3><span class="dashicons dashicons-admin-users" style="margin-top:3px;"></span> ' . esc_html__( 'Import from WordPress.org Profile', 'gs-support-feed' ) . '</h3>';
+		echo '<h3><span class="dashicons dashicons-admin-users"></span> ' . esc_html__( 'Import from WordPress.org Profile', 'gs-support-feed' ) . '</h3>';
 		echo '<p>' . esc_html__( 'Enter a WordPress.org profile URL or username to automatically populate plugins and themes published by that author.', 'gs-support-feed' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '" id="gs-sf-profile-import-form">';
 		echo '<input type="hidden" name="page" value="gs-support-feed" />';
@@ -590,13 +651,13 @@ class GS_Support_Admin_UI {
 		echo '<p><label><strong>' . esc_html__( 'Profile URL or Username:', 'gs-support-feed' ) . '</strong><br/>';
 		echo '<input type="text" name="profile_url" required placeholder="https://profiles.wordpress.org/username/" class="widefat" /></label></p>';
 
-		echo '<p style="display:flex; align-items:center; gap:8px;">';
+		echo '<p class="gs-sf-import-actions">';
 		echo '<input type="submit" id="gs-sf-import-btn" class="button button-primary" value="' . esc_attr__( 'Import Profile Plugins & Themes', 'gs-support-feed' ) . '" />';
-		echo '<span class="spinner" id="gs-sf-import-spinner" style="float:none; margin:0;"></span>';
+		echo '<span class="spinner" id="gs-sf-import-spinner"></span>';
 		echo '</p>';
 		echo '</form>';
 
-		echo '<hr style="margin:20px 0; border:0; border-top:1px solid #eee;" />';
+		echo '<hr class="gs-sf-divider" />';
 
 		// 2. Add Single Item.
 		echo '<h3>' . esc_html__( 'Add Single Plugin or Theme', 'gs-support-feed' ) . '</h3>';
@@ -613,7 +674,7 @@ class GS_Support_Admin_UI {
 
 		echo '<p><label><strong>' . esc_html__( 'Slug:', 'gs-support-feed' ) . '</strong><br/>';
 		echo '<input type="text" name="plugin_slug" required placeholder="e.g. woocommerce, twentytwentyfour" class="widefat" /></label><br/>';
-		echo '<small style="color:#666;">' . esc_html__( 'The slug from wordpress.org/plugins/{slug}/ or /themes/{slug}/', 'gs-support-feed' ) . '</small></p>';
+		echo '<small class="gs-sf-help-text">' . esc_html__( 'The slug from wordpress.org/plugins/{slug}/ or /themes/{slug}/', 'gs-support-feed' ) . '</small></p>';
 
 		echo '<p><label><strong>' . esc_html__( 'Custom Display Label (Optional):', 'gs-support-feed' ) . '</strong><br/>';
 		echo '<input type="text" name="plugin_label" placeholder="e.g. WooCommerce Core" class="widefat" /></label></p>';
@@ -621,7 +682,7 @@ class GS_Support_Admin_UI {
 		echo '<p><input type="submit" class="button button-secondary" value="' . esc_attr__( 'Add Item', 'gs-support-feed' ) . '" /></p>';
 		echo '</form>';
 
-		echo '<hr style="margin:20px 0; border:0; border-top:1px solid #eee;" />';
+		echo '<hr class="gs-sf-divider" />';
 
 		// 3. Auto-discover installed plugins.
 		echo '<h3>' . esc_html__( 'Auto-Discover Installed Plugins', 'gs-support-feed' ) . '</h3>';
@@ -646,7 +707,7 @@ class GS_Support_Admin_UI {
 		$manager  = gs_support_manager();
 		$settings = $manager->get_settings();
 
-		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '" style="max-width: 800px; background:#fff; padding:20px; border:1px solid #ccd0d4; border-radius:4px;">';
+		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '" class="gs-sf-settings-form">';
 		echo '<input type="hidden" name="page" value="gs-support-feed" />';
 		echo '<input type="hidden" name="gs_sf_action" value="save_settings" />';
 		echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( $nonce ) . '" />';
@@ -732,60 +793,5 @@ class GS_Support_Admin_UI {
 
 		echo '<p class="submit"><input type="submit" class="button button-primary" value="' . esc_attr__( 'Save Settings', 'gs-support-feed' ) . '" /></p>';
 		echo '</form>';
-	}
-
-	/**
-	 * Render inline JS assets.
-	 *
-	 * @param string $nonce Nonce value.
-	 */
-	private function render_inline_assets( string $nonce ): void {
-		?>
-		<script type="text/javascript">
-		jQuery(document).ready(function($) {
-			$('#cb-select-all-top').on('change', function() {
-				$('input[name="item_ids[]"]').prop('checked', this.checked);
-			});
-
-			$('#gs-sf-profile-import-form').on('submit', function() {
-				var form = $(this);
-				var btn = form.find('#gs-sf-import-btn');
-				var spinner = form.find('#gs-sf-import-spinner');
-				spinner.addClass('is-active');
-				setTimeout(function() {
-					btn.addClass('disabled').attr('disabled', 'disabled');
-				}, 10);
-			});
-
-			$('.toggle-read-btn').on('click', function(e) {
-				e.preventDefault();
-				var btn = $(this);
-				var itemId = btn.data('id');
-				var row = $('#item-row-' + itemId);
-
-				btn.prop('disabled', true);
-
-				$.post(ajaxurl, {
-					action: 'gs_sf_toggle_read',
-					item_id: itemId,
-					nonce: '<?php echo esc_js( $nonce ); ?>'
-				}, function(res) {
-					btn.prop('disabled', false);
-					if (res.success) {
-						if (res.data.read) {
-							row.css({ opacity: '0.7', fontWeight: 'normal', background: 'transparent' });
-							row.find('.item-status-col').html('<span style="color:#777;"><?php echo esc_js( __( 'Read', 'gs-support-feed' ) ); ?></span>');
-							btn.text('<?php echo esc_js( __( 'Mark Unread', 'gs-support-feed' ) ); ?>');
-						} else {
-							row.css({ opacity: '1.0', fontWeight: 'bold', background: '#fff8e5' });
-							row.find('.item-status-col').html('<span style="color:#e74c3c; font-weight:bold;">● <?php echo esc_js( __( 'Unread', 'gs-support-feed' ) ); ?></span>');
-							btn.text('<?php echo esc_js( __( 'Mark Read', 'gs-support-feed' ) ); ?>');
-						}
-					}
-				});
-			});
-		});
-		</script>
-		<?php
 	}
 }

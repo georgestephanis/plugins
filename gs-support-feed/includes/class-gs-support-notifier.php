@@ -119,7 +119,7 @@ class GS_Support_Notifier {
 	 */
 	public function send_webhook_notification( array $new_items, array $settings ): bool {
 		$url = esc_url_raw( $settings['webhook_url'] );
-		if ( empty( $url ) ) {
+		if ( empty( $url ) || ! gs_support_manager()->is_safe_webhook_url( $url ) ) {
 			return false;
 		}
 
