@@ -4,7 +4,7 @@
 	"description": "Monitored plugin and theme support forum aggregator for WordPress.org with profile import, email, webhook, and unified RSS feed notifications.",
 	"author": "George Stephanis",
 	"license": "GPL-2.0-or-later",
-	"homepage": "https://github.com/georgestephanis/gs-support-feed",
+	"homepage": "https://github.com/georgestephanis/plugins/tree/main/gs-support-feed",
 	"files": [
 		"gs-support-feed.php",
 		"uninstall.php",
