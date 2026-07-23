@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: GS Support Feed
- * Plugin URI:  https://github.com/georgestephanis/gs-support-feed
+ * Plugin URI:  https://github.com/georgestephanis/plugins/tree/main/gs-support-feed
  * Description: Monitored plugin support forum aggregator for WordPress.org plugins with email and webhook notifications.
  * Version:     1.0.0
  * Author:      George Stephanis
@@ -12,6 +12,8 @@
  *
  * @package GS_Support_Feed
  */
+
+namespace GeorgeStephanis\GSSupportFeed;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

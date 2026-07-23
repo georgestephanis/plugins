@@ -5,6 +5,8 @@
  * @package GS_Support_Feed
  */
 
+namespace GeorgeStephanis\GSSupportFeed;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -410,10 +412,18 @@ class GS_Support_Manager {
 			'enable_webhook'   => 0,
 			'webhook_url'      => '',
 			'max_stored_items' => 500,
+			'feed_key'         => '',
 		);
 
 		$settings = get_option( self::SETTINGS_OPTION, array() );
-		return wp_parse_args( is_array( $settings ) ? $settings : array(), $defaults );
+		$settings = wp_parse_args( is_array( $settings ) ? $settings : array(), $defaults );
+
+		if ( empty( $settings['feed_key'] ) ) {
+			$settings['feed_key'] = wp_generate_password( 32, false );
+			update_option( self::SETTINGS_OPTION, $settings );
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -450,41 +460,14 @@ class GS_Support_Manager {
 			return true;
 		}
 
-		$parts = wp_parse_url( $url );
-		if ( empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+		$validated = wp_http_validate_url( $url );
+		if ( false === $validated ) {
 			return false;
 		}
 
-		if ( ! in_array( strtolower( $parts['scheme'] ), array( 'http', 'https' ), true ) ) {
+		$parts = wp_parse_url( $validated );
+		if ( empty( $parts['scheme'] ) || ! in_array( strtolower( $parts['scheme'] ), array( 'http', 'https' ), true ) ) {
 			return false;
-		}
-
-		$host = trim( $parts['host'], '[]' );
-		$ips  = array();
-
-		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
-			$ips[] = $host;
-		} else {
-			$records = dns_get_record( $host, DNS_A + DNS_AAAA );
-			if ( ! empty( $records ) ) {
-				foreach ( $records as $record ) {
-					if ( ! empty( $record['ip'] ) ) {
-						$ips[] = $record['ip'];
-					} elseif ( ! empty( $record['ipv6'] ) ) {
-						$ips[] = $record['ipv6'];
-					}
-				}
-			}
-		}
-
-		if ( empty( $ips ) ) {
-			return false;
-		}
-
-		foreach ( $ips as $ip ) {
-			if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-				return false;
-			}
 		}
 
 		return true;
@@ -493,33 +476,65 @@ class GS_Support_Manager {
 	/**
 	 * Check whether a plugin slug is hosted on WordPress.org.
 	 *
+	 * Uses transient caching to avoid redundant API queries during bulk imports.
+	 *
 	 * @param string $slug Plugin slug.
 	 * @return bool True if the plugin has a WordPress.org listing.
 	 */
 	public function is_plugin_hosted_on_wporg( string $slug ): bool {
+		$slug = sanitize_title( trim( $slug ) );
+		if ( empty( $slug ) ) {
+			return false;
+		}
+
+		$transient_key = 'gs_sf_wporg_p_' . $slug;
+		$cached        = get_transient( $transient_key );
+		if ( false !== $cached ) {
+			return '1' === $cached;
+		}
+
 		if ( ! function_exists( 'plugins_api' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 		}
 
-		$result = plugins_api( 'plugin_information', array( 'slug' => $slug ) );
+		$result    = plugins_api( 'plugin_information', array( 'slug' => $slug ) );
+		$is_hosted = ! is_wp_error( $result ) && ! empty( $result );
 
-		return ! is_wp_error( $result ) && ! empty( $result );
+		set_transient( $transient_key, $is_hosted ? '1' : '0', WEEK_IN_SECONDS );
+
+		return $is_hosted;
 	}
 
 	/**
 	 * Check whether a theme slug is hosted on WordPress.org.
 	 *
+	 * Uses transient caching to avoid redundant API queries during bulk imports.
+	 *
 	 * @param string $slug Theme slug.
 	 * @return bool True if the theme has a WordPress.org listing.
 	 */
 	public function is_theme_hosted_on_wporg( string $slug ): bool {
+		$slug = sanitize_title( trim( $slug ) );
+		if ( empty( $slug ) ) {
+			return false;
+		}
+
+		$transient_key = 'gs_sf_wporg_t_' . $slug;
+		$cached        = get_transient( $transient_key );
+		if ( false !== $cached ) {
+			return '1' === $cached;
+		}
+
 		if ( ! function_exists( 'themes_api' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/theme.php';
 		}
 
-		$result = themes_api( 'theme_information', array( 'slug' => $slug ) );
+		$result    = themes_api( 'theme_information', array( 'slug' => $slug ) );
+		$is_hosted = ! is_wp_error( $result ) && ! empty( $result );
 
-		return ! is_wp_error( $result ) && ! empty( $result );
+		set_transient( $transient_key, $is_hosted ? '1' : '0', WEEK_IN_SECONDS );
+
+		return $is_hosted;
 	}
 
 	/**
