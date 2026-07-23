@@ -110,6 +110,9 @@ class GS_Support_Admin_UI {
 					'webhook_url'      => $webhook_url,
 					'max_stored_items' => isset( $_POST['max_stored_items'] ) ? absint( $_POST['max_stored_items'] ) : 500,
 				);
+				if ( isset( $_POST['regenerate_feed_key'] ) ) {
+					$new_settings['feed_key'] = wp_generate_password( 32, false );
+				}
 				$manager->save_settings( $new_settings );
 				wp_safe_redirect(
 					admin_url(
@@ -771,8 +774,24 @@ class GS_Support_Admin_UI {
 
 		echo '<tr><th colspan="2"><hr/><h3>' . esc_html__( 'Unified RSS & JSON Feed Export', 'gs-support-feed' ) . '</h3></th></tr>';
 
+		$feed_key = isset( $settings['feed_key'] ) ? $settings['feed_key'] : '';
 		$rss_url  = home_url( '/wp-json/gs-support-feed/v1/feed?format=rss' );
 		$json_url = home_url( '/wp-json/gs-support-feed/v1/feed?format=json' );
+
+		if ( ! empty( $feed_key ) ) {
+			$rss_url  = add_query_arg( 'feed_key', $feed_key, $rss_url );
+			$json_url = add_query_arg( 'feed_key', $feed_key, $json_url );
+		}
+
+		echo '<tr>';
+		echo '<th scope="row"><label for="feed_key">' . esc_html__( 'Feed Key / Token', 'gs-support-feed' ) . '</label></th>';
+		echo '<td>';
+		echo '<input type="text" id="feed_key" value="' . esc_attr( $feed_key ) . '" class="large-text" readonly onclick="this.select();" />';
+		echo '<p class="description">';
+		echo '<label><input type="checkbox" name="regenerate_feed_key" value="1" /> ' . esc_html__( 'Regenerate feed key (warning: this will invalidate existing RSS reader links)', 'gs-support-feed' ) . '</label>';
+		echo '</p>';
+		echo '</td>';
+		echo '</tr>';
 
 		echo '<tr>';
 		echo '<th scope="row">' . esc_html__( 'External RSS Feed URL', 'gs-support-feed' ) . '</th>';

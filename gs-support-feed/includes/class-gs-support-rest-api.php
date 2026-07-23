@@ -31,28 +31,85 @@ class GS_Support_REST_API {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_aggregated_feed' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_feed_permissions' ),
 				'args'                => array(
-					'format' => array(
+					'format'   => array(
 						'default'           => 'rss',
 						'sanitize_callback' => 'sanitize_key',
 					),
-					'type'   => array(
+					'type'     => array(
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_key',
 					),
-					'plugin' => array(
+					'plugin'   => array(
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_title',
 					),
-					'limit'  => array(
+					'limit'    => array(
 						'default'           => 50,
 						'sanitize_callback' => 'absint',
+					),
+					'feed_key' => array(
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'secret'   => array(
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'key'      => array(
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
 			)
 		);
 	}
+
+	/**
+	 * Check if the request has permission to view the feed.
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return bool|WP_Error True if the request has read access, false or WP_Error otherwise.
+	 */
+	public function check_feed_permissions( WP_REST_Request $request ) {
+		// 1. Allow if the current user has manage_options capability.
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		// 2. Allow if the correct feed key is provided.
+		$manager  = gs_support_manager();
+		$settings = $manager->get_settings();
+		$feed_key = isset( $settings['feed_key'] ) ? $settings['feed_key'] : '';
+
+		if ( empty( $feed_key ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'Feed key is not configured.', 'gs-support-feed' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		$provided_key = $request->get_param( 'feed_key' );
+		if ( empty( $provided_key ) ) {
+			$provided_key = $request->get_param( 'secret' );
+		}
+		if ( empty( $provided_key ) ) {
+			$provided_key = $request->get_param( 'key' );
+		}
+
+		if ( hash_equals( $feed_key, (string) $provided_key ) ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'rest_forbidden',
+			__( 'You do not have permission to access this feed. Please provide a valid feed key.', 'gs-support-feed' ),
+			array( 'status' => 403 )
+		);
+	}
+
 
 	/**
 	 * Output or return aggregated feed in RSS or JSON format.
