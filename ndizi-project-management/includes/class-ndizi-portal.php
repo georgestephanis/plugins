@@ -581,6 +581,9 @@ class Ndizi_Portal {
 			array(
 				'enableTaskSubmission' => true,
 				'enableTimeOff'        => false,
+				'showTasks'            => true,
+				'showInvoices'         => true,
+				'showDiscussion'       => true,
 			),
 			$atts
 		);
@@ -664,6 +667,22 @@ class Ndizi_Portal {
 	}
 
 	/**
+	 * CSS row class for an invoice table row: highlights overdue/unpaid, fades paid/void.
+	 */
+	private static function get_invoice_row_class( $status, $due_date, $balance ) {
+		if ( in_array( $status, array( 'paid', 'void' ), true ) ) {
+			return 'ndizi-invoice-row-paid';
+		}
+		if ( $balance > 0 && $due_date && strtotime( $due_date ) < strtotime( 'today' ) ) {
+			return 'ndizi-invoice-row-overdue';
+		}
+		if ( in_array( $status, array( 'sent', 'partial' ), true ) && $balance > 0 ) {
+			return 'ndizi-invoice-row-unpaid';
+		}
+		return '';
+	}
+
+	/**
 	 * Dashboard view
 	 */
 	private static function render_dashboard_view( $client_id, $atts = array() ) {
@@ -726,11 +745,14 @@ class Ndizi_Portal {
 							$total_sec   = ! empty( $time_totals ) ? $time_totals[0]->total_duration : 0;
 							$total_hours = round( $total_sec / 3600, 1 );
 
-							// Fetch Project Invoices
+							// Fetch Project Invoices, newest invoice date first.
 							$invoices = get_posts(
 								array(
 									'post_type'      => 'ndizi_invoice',
 									'posts_per_page' => -1,
+									'orderby'        => 'meta_value',
+									'meta_key'       => '_ndizi_invoice_date', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+									'order'          => 'DESC',
 									'meta_query'     => array(
 										array(
 											'key'   => '_ndizi_project_id',
@@ -777,6 +799,7 @@ class Ndizi_Portal {
 									<hr class="ndizi-card-divider">
 
 									<!-- Project Task Checklist -->
+									<?php if ( ! empty( $atts['showTasks'] ) ) : ?>
 									<div class="ndizi-portal-tasks-section">
 										<h4><?php esc_html_e( 'Tasks & Status', 'ndizi-project-management' ); ?></h4>
 										<?php if ( empty( $tasks ) ) : ?>
@@ -810,8 +833,10 @@ class Ndizi_Portal {
 									</div>
 
 									<hr class="ndizi-card-divider">
+									<?php endif; ?>
 
 									<!-- Invoices List -->
+									<?php if ( ! empty( $atts['showInvoices'] ) ) : ?>
 									<div class="ndizi-portal-invoices-section">
 										<h4><?php esc_html_e( 'Project Invoices', 'ndizi-project-management' ); ?></h4>
 										<?php if ( empty( $invoices ) ) : ?>
@@ -854,8 +879,9 @@ class Ndizi_Portal {
 																'void'    => __( 'Void', 'ndizi-project-management' ),
 															);
 															$status_label     = isset( $status_labels[ $inv_status ] ) ? $status_labels[ $inv_status ] : $inv_status;
+															$inv_row_class    = self::get_invoice_row_class( $inv_status, $inv_due, $inv_balance );
 															?>
-															<tr>
+															<tr class="<?php echo esc_attr( $inv_row_class ); ?>">
 																<td><strong><?php echo esc_html( $display_title ); ?></strong></td>
 																<td><?php echo esc_html( $inv_date ); ?></td>
 																<td><?php echo esc_html( $inv_due ); ?></td>
@@ -898,14 +924,16 @@ class Ndizi_Portal {
 											</div>
 										<?php endif; ?>
 									</div>
-
 									<hr class="ndizi-card-divider">
+									<?php endif; ?>
 
 									<!-- Project Discussion / Messages -->
+									<?php if ( ! empty( $atts['showDiscussion'] ) ) : ?>
 									<div class="ndizi-portal-discussion-section">
 										<h4><?php esc_html_e( 'Project Discussion & Attachments', 'ndizi-project-management' ); ?></h4>
 										<?php self::render_discussion_thread( $project->ID ); ?>
 									</div>
+									<?php endif; ?>
 								</div>
 							</div>
 						<?php endforeach; ?>
@@ -913,11 +941,14 @@ class Ndizi_Portal {
 				<?php endif; ?>
 
 				<?php
-				// Query direct client invoices without a project
-				$standalone_invoices = get_posts(
+				// Query direct client invoices without a project, newest invoice date first.
+				$standalone_invoices = $atts['showInvoices'] ? get_posts(
 					array(
 						'post_type'      => 'ndizi_invoice',
 						'posts_per_page' => -1,
+						'orderby'        => 'meta_value',
+						'meta_key'       => '_ndizi_invoice_date', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+						'order'          => 'DESC',
 						'meta_query'     => array(
 							'relation' => 'AND',
 							array(
@@ -938,7 +969,7 @@ class Ndizi_Portal {
 							),
 						),
 					)
-				);
+				) : array();
 				if ( ! empty( $standalone_invoices ) ) :
 					?>
 					<div class="ndizi-portal-card" style="margin-top: 30px;">
@@ -979,8 +1010,9 @@ class Ndizi_Portal {
 											'void'    => __( 'Void', 'ndizi-project-management' ),
 										);
 										$status_label     = isset( $status_labels[ $inv_status ] ) ? $status_labels[ $inv_status ] : $inv_status;
+										$inv_row_class    = self::get_invoice_row_class( $inv_status, $inv_due, $inv_balance );
 										?>
-										<tr>
+										<tr class="<?php echo esc_attr( $inv_row_class ); ?>">
 											<td><strong><?php echo esc_html( $display_title ); ?></strong></td>
 											<td><?php echo esc_html( $inv_date ); ?></td>
 											<td><?php echo esc_html( $inv_due ); ?></td>
