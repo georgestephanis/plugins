@@ -13,6 +13,8 @@
  * @package GS_Support_Feed
  */
 
+namespace GeorgeStephanis\GSSupportFeed;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
