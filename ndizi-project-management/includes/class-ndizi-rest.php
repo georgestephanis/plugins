@@ -401,6 +401,13 @@ class Ndizi_REST {
 	}
 
 	/**
+	 * Permission check: view invoices
+	 */
+	public static function check_view_invoices_permission() {
+		return current_user_can( 'ndizi_manage_invoices' );
+	}
+
+	/**
 	 * Get the IDs of projects the current user is involved in.
 	 *
 	 * "Involved in" means the project contains at least one task assigned to the

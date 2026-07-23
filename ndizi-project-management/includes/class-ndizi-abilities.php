@@ -358,6 +358,65 @@ class Ndizi_Abilities {
 				),
 			)
 		);
+
+		// Get Invoices Ability
+		wp_register_ability(
+			'ndizi/get-invoices',
+			array(
+				'label'               => __( 'Get Invoices', 'ndizi-project-management' ),
+				'description'         => __( 'Retrieves invoices, optionally filtered by project ID, client ID, or status.', 'ndizi-project-management' ),
+				'category'            => 'ndizi-pm',
+				'input_schema'        => array(
+					'type'       => 'object',
+					'properties' => array(
+						'project_id' => array(
+							'type'        => 'integer',
+							'description' => __( 'Optional project ID to filter invoices.', 'ndizi-project-management' ),
+						),
+						'client_id'  => array(
+							'type'        => 'integer',
+							'description' => __( 'Optional client ID to filter invoices.', 'ndizi-project-management' ),
+						),
+						'status'     => array(
+							'type'        => 'string',
+							'description' => __( 'Optional invoice status to filter by (e.g. draft, sent, paid, overdue, void).', 'ndizi-project-management' ),
+						),
+					),
+				),
+				'output_schema'       => array(
+					'type'  => 'array',
+					'items' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'id'           => array( 'type' => 'integer' ),
+							'number'       => array( 'type' => 'string' ),
+							'project_id'   => array( 'type' => 'integer' ),
+							'project_name' => array( 'type' => 'string' ),
+							'client_id'    => array( 'type' => 'integer' ),
+							'client_name'  => array( 'type' => 'string' ),
+							'status'       => array( 'type' => 'string' ),
+							'amount'       => array( 'type' => 'number' ),
+							'balance'      => array( 'type' => 'number' ),
+							'currency'     => array( 'type' => 'string' ),
+							'invoice_date' => array( 'type' => 'string' ),
+							'due_date'     => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'execute_callback'    => array( __CLASS__, 'get_invoices' ),
+				'permission_callback' => function ( $input = null ) {
+					unset( $input );
+					return Ndizi_REST::check_view_invoices_permission();
+				},
+				'meta'                => array(
+					'show_in_rest' => true,
+					'mcp'          => array(
+						'public' => true,
+						'type'   => 'tool',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -488,6 +547,69 @@ class Ndizi_Abilities {
 				'status'       => (string) get_post_meta( $task->ID, '_ndizi_task_status', true ),
 				'priority'     => (string) get_post_meta( $task->ID, '_ndizi_task_priority', true ),
 				'due_date'     => (string) get_post_meta( $task->ID, '_ndizi_task_due_date', true ),
+			);
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Execute callback for get-invoices ability.
+	 *
+	 * @param array $input Input parameters.
+	 * @return array
+	 */
+	public static function get_invoices( $input ) {
+		$args = array(
+			'post_type'      => 'ndizi_invoice',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'meta_query'     => array(),
+		);
+
+		if ( ! empty( $input['project_id'] ) ) {
+			$args['meta_query'][] = array(
+				'key'   => '_ndizi_project_id',
+				'value' => intval( $input['project_id'] ),
+			);
+		}
+
+		if ( ! empty( $input['client_id'] ) ) {
+			$args['meta_query'][] = array(
+				'key'   => '_ndizi_client_id',
+				'value' => intval( $input['client_id'] ),
+			);
+		}
+
+		if ( ! empty( $input['status'] ) ) {
+			$args['meta_query'][] = array(
+				'key'   => '_ndizi_invoice_status',
+				'value' => sanitize_text_field( $input['status'] ),
+			);
+		}
+
+		$invoices = get_posts( $args );
+		$response = array();
+
+		foreach ( $invoices as $invoice ) {
+			$project_id = get_post_meta( $invoice->ID, '_ndizi_project_id', true );
+			$project    = $project_id ? get_post( $project_id ) : null;
+			$client_id  = get_post_meta( $invoice->ID, '_ndizi_client_id', true );
+			$client     = $client_id ? get_post( $client_id ) : null;
+
+			$response[] = array(
+				'id'           => $invoice->ID,
+				'number'       => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_number', true ),
+				'project_id'   => $project_id ? intval( $project_id ) : 0,
+				'project_name' => $project ? $project->post_title : '',
+				'client_id'    => $client_id ? intval( $client_id ) : 0,
+				'client_name'  => $client ? $client->post_title : '',
+				'status'       => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_status', true ),
+				'amount'       => floatval( get_post_meta( $invoice->ID, '_ndizi_invoice_amount', true ) ),
+				'balance'      => floatval( Ndizi_Invoicing::get_invoice_balance( $invoice->ID ) ),
+				'currency'     => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_currency', true ),
+				'invoice_date' => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_date', true ),
+				'due_date'     => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_due_date', true ),
 			);
 		}
 
