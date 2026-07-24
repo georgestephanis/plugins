@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,13 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.2.0 =
+*   Abilities API: Expanded WordPress Abilities API coverage to full CRUD across clients, projects, tasks, time entries, invoices, and time-off requests, with a new `get-invoices` ability and capability checks.
+*   Client Portal: Added portal toggles and new invoice row states; excluded draft invoices from client portal online payments.
+*   Time Entries: Added list-table filters, cross-links, new columns, unbilled-time pre-filtering, and billed/unbilled invoice filtering in the REST API and DB; fixed client attribution and cascading form filters; exposed `invoice_id` for time entries in the REST and Abilities APIs.
+*   Invoicing: Refactored invoice status derivation, fixed balance/status gaps in Stripe payments, and fixed payment/line-item persistence when all rows are deleted.
+*   Fixes & Cleanup: Fixed time-off query `post_status`, resolved PHPCS warnings, eliminated N+1 queries via meta caching, and general WPCS fixes across list-table filters and columns.
 
 = 1.1.2 =
 *   Invoice Payment Records: Added a repeatable payments ledger to invoices (`_ndizi_invoice_payments`: date, amount, method, note) with an editor in the Invoice meta box, partial-payment support, and a running Total Paid / Balance Due readout. Exposed over the REST API with a capability-gated `auth_callback` (`ndizi_manage_invoices`).
