@@ -230,7 +230,7 @@ class Ndizi_DB {
 				'end_time'    => $end_time,
 				'duration'    => max( 0, intval( $duration ) ),
 				'billable'    => $args['billable'] ? 1 : 0,
-				'invoice_id'  => 0,
+				'invoice_id'  => isset( $args['invoice_id'] ) ? intval( $args['invoice_id'] ) : 0,
 				'created_at'  => $now,
 				'updated_at'  => $now,
 			),
@@ -263,7 +263,7 @@ class Ndizi_DB {
 
 		$updating_other_fields = false;
 		foreach ( array_keys( $data ) as $key ) {
-			if ( 'approved' !== $key && 'approved_by' !== $key ) {
+			if ( 'approved' !== $key && 'approved_by' !== $key && 'invoice_id' !== $key ) {
 				$updating_other_fields = true;
 				break;
 			}

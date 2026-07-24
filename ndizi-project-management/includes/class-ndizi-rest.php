@@ -203,6 +203,10 @@ class Ndizi_REST {
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_text_field',
 					),
+					'invoice_id'  => array(
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+					),
 				),
 			)
 		);
@@ -217,9 +221,13 @@ class Ndizi_REST {
 					'callback'            => array( __CLASS__, 'get_time_logs' ),
 					'permission_callback' => array( __CLASS__, 'check_time_log_permission' ),
 					'args'                => array(
-						'invoiced' => array(
+						'invoiced'   => array(
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'invoice_id' => array(
+							'required'          => false,
+							'sanitize_callback' => 'absint',
 						),
 					),
 				),
@@ -269,6 +277,10 @@ class Ndizi_REST {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						'invoice_id'  => array(
+							'required'          => false,
+							'sanitize_callback' => 'absint',
+						),
 					),
 				),
 			)
@@ -310,6 +322,9 @@ class Ndizi_REST {
 						),
 						'billable'    => array(
 							'sanitize_callback' => 'rest_sanitize_boolean',
+						),
+						'invoice_id'  => array(
+							'sanitize_callback' => 'absint',
 						),
 					),
 				),
@@ -701,6 +716,14 @@ class Ndizi_REST {
 		$start_time  = $request->get_param( 'start_time' );
 		$end_time    = $request->get_param( 'end_time' );
 
+		$invoice_id = 0;
+		if ( $request->has_param( 'invoice_id' ) && ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) || Ndizi_Roles::current_user_can( 'ndizi_manage_invoices' ) ) ) {
+			$invoice_id = intval( $request->get_param( 'invoice_id' ) );
+			if ( $invoice_id > 0 && 'ndizi_invoice' !== get_post_type( $invoice_id ) ) {
+				return new WP_REST_Response( array( 'error' => __( 'Invalid invoice ID.', 'ndizi-project-management' ) ), 400 );
+			}
+		}
+
 		$entry_id = Ndizi_Time_Service::log_time_manual(
 			$user_id,
 			$project_id,
@@ -712,6 +735,7 @@ class Ndizi_REST {
 				'billable'    => $billable,
 				'start_time'  => $start_time,
 				'end_time'    => $end_time,
+				'invoice_id'  => $invoice_id,
 			)
 		);
 		if ( is_wp_error( $entry_id ) ) {
@@ -808,6 +832,12 @@ class Ndizi_REST {
 			$args['invoiced'] = 'yes';
 		}
 
+		// Invoice ID filter
+		$invoice_id = $request->get_param( 'invoice_id' );
+		if ( null !== $invoice_id && '' !== $invoice_id ) {
+			$args['invoice_id'] = intval( $invoice_id );
+		}
+
 		// Search filter
 		$search = $request->get_param( 'search' );
 		if ( ! $search ) {
@@ -887,6 +917,14 @@ class Ndizi_REST {
 			$user_id = get_current_user_id();
 		}
 
+		$invoice_id = 0;
+		if ( $request->has_param( 'invoice_id' ) && ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) || Ndizi_Roles::current_user_can( 'ndizi_manage_invoices' ) ) ) {
+			$invoice_id = intval( $request->get_param( 'invoice_id' ) );
+			if ( $invoice_id > 0 && 'ndizi_invoice' !== get_post_type( $invoice_id ) ) {
+				return new WP_REST_Response( array( 'error' => __( 'Invalid invoice ID.', 'ndizi-project-management' ) ), 400 );
+			}
+		}
+
 		$result = Ndizi_Time_Service::log_time_manual(
 			$user_id,
 			$project_id,
@@ -898,6 +936,7 @@ class Ndizi_REST {
 				'billable'    => $billable,
 				'start_time'  => $start_time,
 				'end_time'    => $end_time,
+				'invoice_id'  => $invoice_id,
 			)
 		);
 
@@ -956,8 +995,14 @@ class Ndizi_REST {
 			}
 		}
 
-		// Whether any substantive (non-approval) field is being written.
-		$updating_other_fields = ! empty( $data );
+		// Whether any substantive (non-approval, non-invoice) field is being written.
+		$updating_other_fields = false;
+		foreach ( array_keys( $data ) as $key ) {
+			if ( 'approved' !== $key && 'approved_by' !== $key && 'invoice_id' !== $key ) {
+				$updating_other_fields = true;
+				break;
+			}
+		}
 
 		// Approval is a manager-only action: only users who can manage all time
 		// may set the approved flag, and `approved_by` is always recorded as the
@@ -967,6 +1012,14 @@ class Ndizi_REST {
 			$is_approved         = rest_sanitize_boolean( $request->get_param( 'approved' ) );
 			$data['approved']    = $is_approved ? 1 : 0;
 			$data['approved_by'] = $is_approved ? get_current_user_id() : 0;
+		}
+
+		if ( $request->has_param( 'invoice_id' ) && ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) || Ndizi_Roles::current_user_can( 'ndizi_manage_invoices' ) ) ) {
+			$invoice_id = intval( $request->get_param( 'invoice_id' ) );
+			if ( $invoice_id > 0 && 'ndizi_invoice' !== get_post_type( $invoice_id ) ) {
+				return new WP_REST_Response( array( 'error' => __( 'Invalid invoice ID.', 'ndizi-project-management' ) ), 400 );
+			}
+			$data['invoice_id'] = $invoice_id;
 		}
 
 		// Lock-date guards only apply to substantive edits. Approval-only updates

@@ -336,6 +336,11 @@ class Ndizi_Abilities {
 							'type'        => 'string',
 							'description' => __( 'Optional start datetime string (Y-m-d H:i:s). Defaults to current time.', 'ndizi-project-management' ),
 						),
+						'invoice_id'  => array(
+							'type'        => 'integer',
+							'description' => __( 'Optional invoice ID to affiliate with this time entry.', 'ndizi-project-management' ),
+							'default'     => 0,
+						),
 					),
 					'required'   => array( 'project_id', 'duration' ),
 				),
@@ -354,6 +359,7 @@ class Ndizi_Abilities {
 								'end_time'    => array( 'type' => 'string' ),
 								'duration'    => array( 'type' => 'integer' ),
 								'billable'    => array( 'type' => 'boolean' ),
+								'invoice_id'  => array( 'type' => 'integer' ),
 							),
 						),
 					),
@@ -1727,6 +1733,10 @@ class Ndizi_Abilities {
 							'type' => 'string',
 							'enum' => array( 'yes', 'no' ),
 						),
+						'invoice_id' => array(
+							'type'        => 'integer',
+							'description' => __( 'Filter to entries linked to a specific invoice.', 'ndizi-project-management' ),
+						),
 						'search'     => array( 'type' => 'string' ),
 						'start_date' => array(
 							'type'        => 'string',
@@ -1790,6 +1800,10 @@ class Ndizi_Abilities {
 						'end_time'    => array( 'type' => 'string' ),
 						'duration'    => array( 'type' => 'integer' ),
 						'billable'    => array( 'type' => 'boolean' ),
+						'invoice_id'  => array(
+							'type'        => 'integer',
+							'description' => __( 'Optional invoice ID to affiliate with this time entry. Only updateable by managers.', 'ndizi-project-management' ),
+						),
 						'approved'    => array(
 							'type'        => 'boolean',
 							'description' => __( 'Manager-only. Ignored for team members.', 'ndizi-project-management' ),
@@ -2180,6 +2194,11 @@ class Ndizi_Abilities {
 		$start_time  = isset( $input['start_time'] ) ? sanitize_text_field( $input['start_time'] ) : '';
 		$end_time    = isset( $input['end_time'] ) ? sanitize_text_field( $input['end_time'] ) : '';
 
+		$invoice_id = 0;
+		if ( isset( $input['invoice_id'] ) && ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) || Ndizi_Roles::current_user_can( 'ndizi_manage_invoices' ) ) ) {
+			$invoice_id = intval( $input['invoice_id'] );
+		}
+
 		$entry_id = Ndizi_Time_Service::log_time_manual(
 			$user_id,
 			$project_id,
@@ -2190,6 +2209,7 @@ class Ndizi_Abilities {
 				'billable'    => $billable ? 1 : 0,
 				'start_time'  => $start_time,
 				'end_time'    => $end_time,
+				'invoice_id'  => $invoice_id,
 			)
 		);
 		if ( is_wp_error( $entry_id ) ) {
@@ -2209,6 +2229,7 @@ class Ndizi_Abilities {
 				'end_time'    => (string) $timer->end_time,
 				'duration'    => intval( $timer->duration ),
 				'billable'    => (bool) $timer->billable,
+				'invoice_id'  => intval( $timer->invoice_id ),
 			),
 		);
 	}
@@ -3258,6 +3279,9 @@ class Ndizi_Abilities {
 		if ( ! empty( $input['client_id'] ) ) {
 			$args['client_id'] = intval( $input['client_id'] );
 		}
+		if ( isset( $input['invoice_id'] ) && '' !== $input['invoice_id'] ) {
+			$args['invoice_id'] = intval( $input['invoice_id'] );
+		}
 		if ( isset( $input['project_id'] ) && '' !== $input['project_id'] ) {
 			$args['project_id'] = intval( $input['project_id'] );
 		}
@@ -3329,7 +3353,23 @@ class Ndizi_Abilities {
 				$data[ $param ] = $input[ $param ];
 			}
 		}
-		$updating_other_fields = ! empty( $data );
+
+		if ( isset( $input['invoice_id'] ) && ( Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) || Ndizi_Roles::current_user_can( 'ndizi_manage_invoices' ) ) ) {
+			$invoice_id = intval( $input['invoice_id'] );
+			if ( $invoice_id > 0 && 'ndizi_invoice' !== get_post_type( $invoice_id ) ) {
+				return new WP_Error( 'invalid_invoice', __( 'Invalid invoice ID.', 'ndizi-project-management' ), array( 'status' => 400 ) );
+			}
+			$data['invoice_id'] = $invoice_id;
+		}
+
+		// Whether any substantive (non-approval, non-invoice) field is being written.
+		$updating_other_fields = false;
+		foreach ( array_keys( $data ) as $key ) {
+			if ( 'approved' !== $key && 'approved_by' !== $key && 'invoice_id' !== $key ) {
+				$updating_other_fields = true;
+				break;
+			}
+		}
 
 		if ( isset( $input['approved'] ) && Ndizi_Roles::current_user_can( 'ndizi_manage_time' ) ) {
 			$is_approved         = (bool) $input['approved'];

@@ -187,12 +187,20 @@ class Ndizi_Time_Service {
 			'billable'    => 1,
 			'start_time'  => '',
 			'end_time'    => '',
+			'invoice_id'  => 0,
 		);
 		$args     = wp_parse_args( $args, $defaults );
 
 		$access = self::validate_time_project_access( $project_id, $args['task_id'], $user_id, $args['client_id'] );
 		if ( is_wp_error( $access ) ) {
 			return $access;
+		}
+
+		if ( ! empty( $args['invoice_id'] ) ) {
+			$invoice_id = intval( $args['invoice_id'] );
+			if ( 'ndizi_invoice' !== get_post_type( $invoice_id ) ) {
+				return new WP_Error( 'invalid_invoice', __( 'Invalid invoice ID.', 'ndizi-project-management' ) );
+			}
 		}
 
 		if ( $args['duration'] <= 0 ) {
