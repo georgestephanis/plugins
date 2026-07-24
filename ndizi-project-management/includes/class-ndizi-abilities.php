@@ -116,15 +116,15 @@ class Ndizi_Abilities {
 					'items' => array(
 						'type'       => 'object',
 						'properties' => array(
-							'id'                => array( 'type' => 'integer' ),
-							'title'             => array( 'type' => 'string' ),
-							'description'       => array( 'type' => 'string' ),
-							'project_id'        => array( 'type' => 'integer' ),
-							'project_name'      => array( 'type' => 'string' ),
-							'assigned_user_id'  => array( 'type' => 'integer' ),
-							'status'            => array( 'type' => 'string' ),
-							'priority'          => array( 'type' => 'string' ),
-							'due_date'          => array( 'type' => 'string' ),
+							'id'               => array( 'type' => 'integer' ),
+							'title'            => array( 'type' => 'string' ),
+							'description'      => array( 'type' => 'string' ),
+							'project_id'       => array( 'type' => 'integer' ),
+							'project_name'     => array( 'type' => 'string' ),
+							'assigned_user_id' => array( 'type' => 'integer' ),
+							'status'           => array( 'type' => 'string' ),
+							'priority'         => array( 'type' => 'string' ),
+							'due_date'         => array( 'type' => 'string' ),
 						),
 					),
 				),
@@ -591,9 +591,9 @@ class Ndizi_Abilities {
 	 * @param string $default Fallback value.
 	 * @return string
 	 */
-	private static function sanitize_enum( $value, array $allowed, $default ) {
+	private static function sanitize_enum( $value, array $allowed, $default_value ) {
 		$value = is_string( $value ) ? sanitize_key( $value ) : '';
-		return in_array( $value, $allowed, true ) ? $value : $default;
+		return in_array( $value, $allowed, true ) ? $value : $default_value;
 	}
 
 	/**
@@ -3077,7 +3077,7 @@ class Ndizi_Abilities {
 	public static function get_time_off( $input = null ) {
 		$args = array(
 			'post_type'      => 'ndizi_time_off',
-			'post_status'    => 'publish',
+			'post_status'    => 'any',
 			'posts_per_page' => -1,
 			'meta_query'     => array(),
 		);
