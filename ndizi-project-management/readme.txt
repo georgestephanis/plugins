@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,7 @@ Decoupling high-frequency data from standard WordPress posts storage, Ndizi reco
 *   **Client Portal Time-Off Requests**: Clients and team members can submit time-off and absence requests directly from the portal sidebar. Requests are stored as `ndizi_time_off` posts with start/end dates, type, and approval status.
 *   **Browser Extension**: A companion Chrome extension (`chrome-extension/`) connects to the site's REST API to start/stop timers, browse projects and tasks, and open the standalone tracker — from any browser tab.
 *   **REST API Integration**: Custom API routes under `/wp-json/ndizi/v1` let desktop widgets or mobile timekeepers start, stop, log, list, edit, and delete timer entries remotely.
+*   **WordPress Abilities API / MCP Integration**: Full CRUD abilities for clients, projects, tasks, invoices, contacts, and time-off requests, plus read/update/delete for time entries, registered via the WordPress Abilities API for agentic and MCP-based workflows. Every ability is gated by the same capability checks as the REST API, validates required fields and enum values on writes, and blocks deletion of records with dependents (e.g. a client with active projects) instead of orphaning data.
 *   **WP-CLI Commands**: Manage timers from the terminal with `wp ndizi time start`, `wp ndizi time stop`, and `wp ndizi time status`. Accepts project/task names or IDs, user login or ID, description, and billable flag.
 *   **Modular Architecture**: Each major feature group (Invoicing, Client Portal, Out-of-Office Requests, Admin Bar Tracker, Email Notifications, Gantt Charts, Webhooks, Google Calendar Sync) can be individually toggled on or off from the Settings page. Inactive modules are not loaded, reducing overhead on sites that don't need every feature.
 
@@ -133,6 +134,13 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.2.0 =
+*   Abilities API: Expanded WordPress Abilities API coverage to full CRUD across clients, projects, tasks, time entries, invoices, and time-off requests, with a new `get-invoices` ability and capability checks.
+*   Client Portal: Added portal toggles and new invoice row states; excluded draft invoices from client portal online payments.
+*   Time Entries: Added list-table filters, cross-links, new columns, unbilled-time pre-filtering, and billed/unbilled invoice filtering in the REST API and DB; fixed client attribution and cascading form filters; exposed `invoice_id` for time entries in the REST and Abilities APIs.
+*   Invoicing: Refactored invoice status derivation, fixed balance/status gaps in Stripe payments, and fixed payment/line-item persistence when all rows are deleted.
+*   Fixes & Cleanup: Fixed time-off query `post_status`, resolved PHPCS warnings, eliminated N+1 queries via meta caching, and general WPCS fixes across list-table filters and columns.
 
 = 1.1.2 =
 *   Invoice Payment Records: Added a repeatable payments ledger to invoices (`_ndizi_invoice_payments`: date, amount, method, note) with an editor in the Invoice meta box, partial-payment support, and a running Total Paid / Balance Due readout. Exposed over the REST API with a capability-gated `auth_callback` (`ndizi_manage_invoices`).

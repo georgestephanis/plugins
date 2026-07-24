@@ -270,9 +270,9 @@ The plugin exposes capability-gated endpoints under `/wp-json/ndizi/v1`. Each ro
 | `GET` | `/time/active` | Get the currently running timer for the authenticated user. |
 | `POST` | `/time/start` | Start a new active timer (`project_id`, `task_id`, `description`, `billable`). |
 | `POST` | `/time/stop` | Stop the active timer (calculates duration and writes to SQL). |
-| `POST` | `/time/log` | Manually log a completed time entry (`project_id`, `task_id`, `description`, `duration`, `billable`, optional `start_time` / `end_time`). |
-| `GET` | `/time` | List time log history for the current user. |
-| `PUT` | `/time/<id>` | Edit a specific historical time entry. |
+| `POST` | `/time/log` | Manually log a completed time entry (`project_id`, `task_id`, `description`, `duration`, `billable`, optional `start_time` / `end_time` / `invoice_id`). |
+| `GET` | `/time` | List time log history for the current user (can filter by `invoice_id`). |
+| `PUT` | `/time/<id>` | Edit a specific historical time entry (can update `invoice_id`). |
 | `DELETE` | `/time/<id>` | Delete a specific historical time entry. |
 | `POST` | `/invoices/<id>/pay` | Create a Stripe Checkout session for an invoice (authenticated user or valid `token` param). Registered only when the `invoicing` module is active. |
 | `POST` | `/stripe/webhook` | Stripe webhook receiver — marks invoice paid on `checkout.session.completed` (public). Registered only when the `invoicing` module is active. |

@@ -12,23 +12,16 @@
 	"editorScript": "file:../block.js",
 	"viewScript": "ndizi-portal-script",
 	"style": "ndizi-portal-style",
+	"supports": {
+		"align": [ "wide", "full" ],
+		"color": {
+			"background": true,
+			"text": true,
+			"link": true,
+			"button": true
+		}
+	},
 	"attributes": {
-		"backgroundColor": {
-			"type": "string",
-			"default": "#f8fafc"
-		},
-		"textColor": {
-			"type": "string",
-			"default": "#0f172a"
-		},
-		"buttonColor": {
-			"type": "string",
-			"default": "#3A1A4D"
-		},
-		"linkColor": {
-			"type": "string",
-			"default": "#7B4B9E"
-		},
 		"enableTaskSubmission": {
 			"type": "boolean",
 			"default": true
@@ -36,6 +29,18 @@
 		"enableTimeOff": {
 			"type": "boolean",
 			"default": false
+		},
+		"showTasks": {
+			"type": "boolean",
+			"default": true
+		},
+		"showInvoices": {
+			"type": "boolean",
+			"default": true
+		},
+		"showDiscussion": {
+			"type": "boolean",
+			"default": true
 		}
 	}
 }

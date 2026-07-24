@@ -499,6 +499,21 @@
 	border-bottom: none;
 }
 
+/* Invoice row emphasis: fade paid/void, highlight unpaid/overdue */
+.ndizi-invoice-row-paid {
+	opacity: 0.5;
+}
+
+.ndizi-invoice-row-unpaid {
+	background: rgba(245, 158, 11, 0.08);
+	box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.ndizi-invoice-row-overdue {
+	background: rgba(239, 68, 68, 0.1);
+	box-shadow: inset 3px 0 0 #ef4444;
+}
+
 .ndizi-portal-btn-table {
 	display: inline-flex;
 	align-items: center;

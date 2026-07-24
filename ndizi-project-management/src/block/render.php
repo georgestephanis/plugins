@@ -13,11 +13,17 @@ defined( 'ABSPATH' ) || exit;
 wp_enqueue_style( 'ndizi-portal-style' );
 wp_enqueue_script( 'ndizi-portal-script' );
 
-// Parse colors from attributes (with fallbacks)
-$ndizi_bg_color     = isset( $attributes['backgroundColor'] ) ? $attributes['backgroundColor'] : '#f8fafc';
-$ndizi_text_color   = isset( $attributes['textColor'] ) ? $attributes['textColor'] : '#0f172a';
-$ndizi_button_color = isset( $attributes['buttonColor'] ) ? $attributes['buttonColor'] : '#3A1A4D';
-$ndizi_link_color   = isset( $attributes['linkColor'] ) ? $attributes['linkColor'] : '#7B4B9E';
+// Colors now come from the block's native Styles panel (style.color /
+// style.elements), with the old flat attributes as a fallback for blocks
+// saved before that migration and not yet re-saved.
+// ponytail: theme.json palette *swatches* aren't resolved to a hex value
+// here (only custom/typed colors are) - a swatch pick falls back to the
+// plugin defaults below. Add palette-slug resolution if that's needed.
+$ndizi_style        = isset( $attributes['style'] ) ? $attributes['style'] : array();
+$ndizi_bg_color     = $ndizi_style['color']['background'] ?? $attributes['backgroundColor'] ?? '#f8fafc';
+$ndizi_text_color   = $ndizi_style['color']['text'] ?? $attributes['textColor'] ?? '#0f172a';
+$ndizi_button_color = $ndizi_style['elements']['button']['color']['background'] ?? $attributes['buttonColor'] ?? '#3A1A4D';
+$ndizi_link_color   = $ndizi_style['elements']['link']['color']['text'] ?? $attributes['linkColor'] ?? '#7B4B9E';
 
 // Generate a scoped unique ID for wrapper
 $ndizi_wrapper_id = 'ndizi-portal-' . wp_rand( 1000, 9999 );
@@ -170,7 +176,14 @@ $ndizi_portal_content = Ndizi_Portal::render_portal_shortcode(
 	array(
 		'enableTaskSubmission' => isset( $attributes['enableTaskSubmission'] ) ? (bool) $attributes['enableTaskSubmission'] : true,
 		'enableTimeOff'        => isset( $attributes['enableTimeOff'] ) ? (bool) $attributes['enableTimeOff'] : false,
+		'showTasks'            => isset( $attributes['showTasks'] ) ? (bool) $attributes['showTasks'] : true,
+		'showInvoices'         => isset( $attributes['showInvoices'] ) ? (bool) $attributes['showInvoices'] : true,
+		'showDiscussion'       => isset( $attributes['showDiscussion'] ) ? (bool) $attributes['showDiscussion'] : true,
 	)
 );
 
-echo '<div id="' . esc_attr( $ndizi_wrapper_id ) . '" class="ndizi-custom-branded-portal">' . $ndizi_portal_content . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+// Wide/full alignment support (block.json supports.align): carries the
+// standard align{value} class onto the wrapper the same way core blocks do.
+$ndizi_align_class = ! empty( $attributes['align'] ) ? ' align' . $attributes['align'] : '';
+
+echo '<div id="' . esc_attr( $ndizi_wrapper_id ) . '" class="ndizi-custom-branded-portal' . esc_attr( $ndizi_align_class ) . '">' . $ndizi_portal_content . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

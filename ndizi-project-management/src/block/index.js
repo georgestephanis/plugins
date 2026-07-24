@@ -1,9 +1,5 @@
 import { registerBlockType } from '@wordpress/blocks';
-import {
-	useBlockProps,
-	InspectorControls,
-	PanelColorSettings,
-} from '@wordpress/block-editor';
+import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import metadata from './block.json';
@@ -18,19 +14,16 @@ import metadata from './block.json';
  */
 const Edit = ( { attributes, setAttributes } ) => {
 	const {
-		backgroundColor,
-		textColor,
-		buttonColor,
-		linkColor,
 		enableTaskSubmission,
 		enableTimeOff,
+		showTasks,
+		showInvoices,
+		showDiscussion,
 	} = attributes;
 
 	const blockProps = useBlockProps( {
 		style: {
 			padding: '35px',
-			background: backgroundColor,
-			color: textColor,
 			borderRadius: '12px',
 			textAlign: 'center',
 			fontFamily: 'sans-serif',
@@ -78,56 +71,41 @@ const Edit = ( { attributes, setAttributes } ) => {
 						}
 					/>
 				</PanelBody>
-				<PanelColorSettings
-					title={ __( 'Portal Colors', 'ndizi-project-management' ) }
+				<PanelBody
+					title={ __(
+						'Dashboard Sections',
+						'ndizi-project-management'
+					) }
 					initialOpen={ true }
-					colorSettings={ [
-						{
-							value: backgroundColor,
-							onChange: ( value ) =>
-								setAttributes( {
-									backgroundColor: value || '#f8fafc',
-								} ),
-							label: __(
-								'Background Color',
-								'ndizi-project-management'
-							),
-						},
-						{
-							value: textColor,
-							onChange: ( value ) =>
-								setAttributes( {
-									textColor: value || '#0f172a',
-								} ),
-							label: __(
-								'Text Color',
-								'ndizi-project-management'
-							),
-						},
-						{
-							value: buttonColor,
-							onChange: ( value ) =>
-								setAttributes( {
-									buttonColor: value || '#3A1A4D',
-								} ),
-							label: __(
-								'Primary Button Color',
-								'ndizi-project-management'
-							),
-						},
-						{
-							value: linkColor,
-							onChange: ( value ) =>
-								setAttributes( {
-									linkColor: value || '#7B4B9E',
-								} ),
-							label: __(
-								'Link & Accent Color',
-								'ndizi-project-management'
-							),
-						},
-					] }
-				/>
+				>
+					<ToggleControl
+						label={ __( 'Show tasks', 'ndizi-project-management' ) }
+						checked={ showTasks }
+						onChange={ ( value ) =>
+							setAttributes( { showTasks: value } )
+						}
+					/>
+					<ToggleControl
+						label={ __(
+							'Show invoices',
+							'ndizi-project-management'
+						) }
+						checked={ showInvoices }
+						onChange={ ( value ) =>
+							setAttributes( { showInvoices: value } )
+						}
+					/>
+					<ToggleControl
+						label={ __(
+							'Show discussion',
+							'ndizi-project-management'
+						) }
+						checked={ showDiscussion }
+						onChange={ ( value ) =>
+							setAttributes( { showDiscussion: value } )
+						}
+					/>
+				</PanelBody>
 			</InspectorControls>
 			<div { ...blockProps }>
 				<h3
@@ -135,7 +113,6 @@ const Edit = ( { attributes, setAttributes } ) => {
 						margin: '0 0 10px 0',
 						fontSize: '22px',
 						fontWeight: 'bold',
-						color: textColor,
 					} }
 				>
 					{ __( 'Ndizi Client Portal', 'ndizi-project-management' ) }
@@ -148,7 +125,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 					} }
 				>
 					{ __(
-						'This block renders the interactive client portal with custom brand styles.',
+						'This block renders the interactive client portal. Background, text, link, and button colors are set from the Styles panel.',
 						'ndizi-project-management'
 					) }
 				</p>
@@ -162,10 +139,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 				>
 					<button
 						type="button"
+						className="wp-element-button"
 						style={ {
-							background: buttonColor,
-							color: '#ffffff',
-							border: 'none',
 							padding: '8px 18px',
 							borderRadius: '6px',
 							fontWeight: '600',
@@ -174,29 +149,70 @@ const Edit = ( { attributes, setAttributes } ) => {
 					>
 						{ __( 'Action Button', 'ndizi-project-management' ) }
 					</button>
-					<span
-						style={ {
-							color: linkColor,
-							textDecoration: 'underline',
-							fontWeight: '600',
-							cursor: 'default',
-							fontSize: '14px',
-						} }
+					<a
+						href="#portal-preview"
+						onClick={ ( event ) => event.preventDefault() }
+						style={ { fontWeight: '600', fontSize: '14px' } }
 					>
 						{ __(
 							'Sample Link Accent',
 							'ndizi-project-management'
 						) }
-					</span>
+					</a>
 				</div>
 			</div>
 		</>
 	);
 };
 
+// Pre-Styles-panel version: flat hex color attributes instead of native
+// color support. Migrates existing blocks so previously-picked colors carry
+// over into the new style.color / style.elements shape.
+const deprecated = [
+	{
+		attributes: {
+			backgroundColor: { type: 'string', default: '#f8fafc' },
+			textColor: { type: 'string', default: '#0f172a' },
+			buttonColor: { type: 'string', default: '#3A1A4D' },
+			linkColor: { type: 'string', default: '#7B4B9E' },
+			enableTaskSubmission: { type: 'boolean', default: true },
+			enableTimeOff: { type: 'boolean', default: false },
+			showTasks: { type: 'boolean', default: true },
+			showInvoices: { type: 'boolean', default: true },
+			showDiscussion: { type: 'boolean', default: true },
+		},
+		save() {
+			return null;
+		},
+		migrate( attributes ) {
+			const {
+				backgroundColor,
+				textColor,
+				buttonColor,
+				linkColor,
+				...rest
+			} = attributes;
+			return {
+				...rest,
+				style: {
+					color: {
+						background: backgroundColor,
+						text: textColor,
+					},
+					elements: {
+						link: { color: { text: linkColor } },
+						button: { color: { background: buttonColor } },
+					},
+				},
+			};
+		},
+	},
+];
+
 registerBlockType( metadata, {
 	edit: Edit,
 	save() {
 		return null;
 	},
+	deprecated,
 } );
