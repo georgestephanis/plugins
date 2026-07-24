@@ -159,10 +159,17 @@ class Ndizi_Settings {
 			}
 
 			if ( isset( $_POST['ndizi_save_settings_nonce'] ) ) {
-				$modules = isset( $_POST['ndizi_active_modules'] ) && is_array( $_POST['ndizi_active_modules'] )
+				$submitted = isset( $_POST['ndizi_active_modules'] ) && is_array( $_POST['ndizi_active_modules'] )
 					? array_map( 'sanitize_key', wp_unslash( $_POST['ndizi_active_modules'] ) )
 					: array();
-				update_option( 'ndizi_active_modules', $modules );
+
+				$registry        = Ndizi_Project_Management::get_module_registry();
+				$modules_to_save = array();
+				foreach ( array_keys( $registry ) as $slug ) {
+					$modules_to_save[ $slug ] = in_array( $slug, $submitted, true );
+				}
+
+				update_option( 'ndizi_active_modules', $modules_to_save );
 				$updated = true;
 			}
 

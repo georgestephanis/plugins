@@ -157,14 +157,33 @@ class Ndizi_Project_Management {
 	 * @return array Slugs of active modules.
 	 */
 	public static function get_active_modules() {
-		$all_modules = array_keys( self::get_module_registry() );
-		$active      = get_option( 'ndizi_active_modules', null );
+		$registry = self::get_module_registry();
+		$stored   = get_option( 'ndizi_active_modules', null );
 
-		if ( null === $active ) {
-			return $all_modules;
+		if ( null === $stored ) {
+			return array_keys( $registry );
 		}
 
-		return (array) $active;
+		// Handle old format (sequential array) by migrating on the fly.
+		if ( wp_is_numeric_array( $stored ) ) {
+			$migrated = array();
+			foreach ( array_keys( $registry ) as $slug ) {
+				$migrated[ $slug ] = in_array( $slug, $stored, true );
+			}
+			update_option( 'ndizi_active_modules', $migrated );
+			$stored = $migrated;
+		}
+
+		$stored = (array) $stored;
+		$active = array();
+		foreach ( array_keys( $registry ) as $slug ) {
+			// If not set in stored (newly introduced module), it defaults to true (on).
+			if ( ! isset( $stored[ $slug ] ) || (bool) $stored[ $slug ] ) {
+				$active[] = $slug;
+			}
+		}
+
+		return $active;
 	}
 
 	/**
@@ -293,9 +312,24 @@ class Ndizi_Project_Management {
 			// Runs once per version bump; user toggles made after this are preserved.
 			$stored_modules = get_option( 'ndizi_active_modules', null );
 			if ( null !== $stored_modules ) {
-				$new_modules = array_diff( array_keys( self::get_module_registry() ), (array) $stored_modules );
+				// Migrate if old format.
+				if ( wp_is_numeric_array( $stored_modules ) ) {
+					$migrated = array();
+					foreach ( array_keys( self::get_module_registry() ) as $slug ) {
+						$migrated[ $slug ] = in_array( $slug, $stored_modules, true );
+					}
+					update_option( 'ndizi_active_modules', $migrated );
+					$stored_modules = $migrated;
+				}
+
+				// Find any registry modules not present in the keys of the stored associative array.
+				$stored_modules = (array) $stored_modules;
+				$new_modules    = array_diff( array_keys( self::get_module_registry() ), array_keys( $stored_modules ) );
 				if ( ! empty( $new_modules ) ) {
-					update_option( 'ndizi_active_modules', array_merge( (array) $stored_modules, $new_modules ) );
+					foreach ( $new_modules as $slug ) {
+						$stored_modules[ $slug ] = true;
+					}
+					update_option( 'ndizi_active_modules', $stored_modules );
 				}
 			}
 

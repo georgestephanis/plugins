@@ -140,7 +140,7 @@ Google's terms and privacy policy: https://policies.google.com/terms and https:/
 *   Client Portal: Added portal toggles and new invoice row states; excluded draft invoices from client portal online payments.
 *   Time Entries: Added list-table filters, cross-links, new columns, unbilled-time pre-filtering, and billed/unbilled invoice filtering in the REST API and DB; fixed client attribution and cascading form filters; exposed `invoice_id` for time entries in the REST and Abilities APIs.
 *   Invoicing: Refactored invoice status derivation, fixed balance/status gaps in Stripe payments, and fixed payment/line-item persistence when all rows are deleted.
-*   Fixes & Cleanup: Fixed time-off query `post_status`, resolved PHPCS warnings, eliminated N+1 queries via meta caching, and general WPCS fixes across list-table filters and columns.
+*   Fixes & Cleanup: Fixed active modules toggling back on during upgrades, fixed time-off query `post_status`, resolved PHPCS warnings, eliminated N+1 queries via meta caching, and general WPCS fixes across list-table filters and columns.
 
 = 1.1.2 =
 *   Invoice Payment Records: Added a repeatable payments ledger to invoices (`_ndizi_invoice_payments`: date, amount, method, note) with an editor in the Invoice meta box, partial-payment support, and a running Total Paid / Balance Due readout. Exposed over the REST API with a capability-gated `auth_callback` (`ndizi_manage_invoices`).
