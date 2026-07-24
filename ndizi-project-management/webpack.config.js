@@ -54,6 +54,7 @@ module.exports = {
 		adminbar: './src/adminbar/index.js',
 		standalone: './src/standalone/index.js',
 		'time-entries': './src/admin/time-entries.js',
+		'portal-time-log': './src/portal/time-log.js',
 	},
 	output: {
 		path: path.resolve( __dirname, 'build' ),
