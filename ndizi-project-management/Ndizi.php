@@ -228,6 +228,29 @@ class Ndizi_Project_Management {
 	}
 
 	/**
+	 * Resolve the effective billing mode: client-based, project-based, or both.
+	 *
+	 * A client's own `_ndizi_client_billing_mode` meta wins when set; otherwise
+	 * falls back to the global `ndizi_billing_mode` option, then to 'both'.
+	 *
+	 * @param int $client_id Optional client post ID to check for an override.
+	 * @return string One of 'client', 'project', 'both'.
+	 */
+	public static function get_billing_mode( $client_id = 0 ) {
+		$valid = array( 'client', 'project', 'both' );
+
+		if ( $client_id ) {
+			$override = get_post_meta( $client_id, '_ndizi_client_billing_mode', true );
+			if ( in_array( $override, $valid, true ) ) {
+				return $override;
+			}
+		}
+
+		$global_mode = get_option( 'ndizi_billing_mode', 'both' );
+		return in_array( $global_mode, $valid, true ) ? $global_mode : 'both';
+	}
+
+	/**
 	 * Include plugin dependencies
 	 */
 	private static function includes() {

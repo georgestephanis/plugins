@@ -173,6 +173,15 @@ class Ndizi_Settings {
 				$updated = true;
 			}
 
+			if ( isset( $_POST['ndizi_billing_mode'] ) ) {
+				$billing_mode = sanitize_key( wp_unslash( $_POST['ndizi_billing_mode'] ) );
+				if ( ! in_array( $billing_mode, array( 'client', 'project', 'both' ), true ) ) {
+					$billing_mode = 'both';
+				}
+				update_option( 'ndizi_billing_mode', $billing_mode );
+				$updated = true;
+			}
+
 			if ( $updated ) {
 				wp_safe_redirect( add_query_arg( 'settings-updated', 'true', wp_get_referer() ) );
 				exit;
@@ -963,6 +972,27 @@ class Ndizi_Settings {
 						<label for="ndizi_default_currency" style="display: block; font-weight: 600; color: #475569; margin-bottom: 8px;"><?php esc_html_e( 'Currency Code (3-letter ISO)', 'ndizi-project-management' ); ?></label>
 						<input type="text" name="ndizi_default_currency" id="ndizi_default_currency" value="<?php echo esc_attr( $default_currency ); ?>" maxlength="3" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; text-transform: uppercase; width: 100px;">
 					</div>
+
+					<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>
+					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Billing Mode', 'ndizi-project-management' ); ?></h2>
+					<p style="color: #64748b; font-size: 14px; margin: 0 0 24px 0;"><?php esc_html_e( 'Choose which billing approach invoices default to. This can be overridden per-client on the client edit screen.', 'ndizi-project-management' ); ?></p>
+
+					<div style="margin-bottom: 30px;">
+						<?php $billing_mode = get_option( 'ndizi_billing_mode', 'both' ); ?>
+						<label style="display: block; margin-bottom: 8px;">
+							<input type="radio" name="ndizi_billing_mode" value="client" <?php checked( $billing_mode, 'client' ); ?>>
+							<?php esc_html_e( 'Client-based only', 'ndizi-project-management' ); ?>
+						</label>
+						<label style="display: block; margin-bottom: 8px;">
+							<input type="radio" name="ndizi_billing_mode" value="project" <?php checked( $billing_mode, 'project' ); ?>>
+							<?php esc_html_e( 'Project-based only', 'ndizi-project-management' ); ?>
+						</label>
+						<label style="display: block;">
+							<input type="radio" name="ndizi_billing_mode" value="both" <?php checked( $billing_mode, 'both' ); ?>>
+							<?php esc_html_e( 'Both (let each invoice choose)', 'ndizi-project-management' ); ?>
+						</label>
+					</div>
+					<?php endif; ?>
 
 					<?php if ( Ndizi_Project_Management::is_module_active( 'portal' ) && class_exists( 'Ndizi_Portal' ) ) : ?>
 					<h2 style="font-size: 18px; font-weight: 600; color: #1e293b; margin: 30px 0 8px 0; border-top: 1px solid #e2e8f0; padding-top: 24px;"><?php esc_html_e( 'Client Portal', 'ndizi-project-management' ); ?></h2>

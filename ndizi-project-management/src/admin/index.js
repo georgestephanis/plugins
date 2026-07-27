@@ -26,6 +26,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		initTrackerLauncher();
 		initSelectOnClick();
 		initCopyPortalLink();
+		initInvoiceBillingModeToggle();
 	} );
 
 	/**
@@ -286,6 +287,33 @@ import { formatTime, createTimer } from '../shared/timer.js';
 
 			$( '#ndizi_invoice_amount' ).val( totalAmount.toFixed( 2 ) );
 		} );
+	}
+
+	/**
+	 * Show/hide the Client and Project rows on the invoice edit screen
+	 * based on the selected client's effective billing mode.
+	 */
+	function initInvoiceBillingModeToggle() {
+		const $clientSelect = $( '#ndizi_invoice_client_id' );
+
+		if ( ! $clientSelect.length ) {
+			return;
+		}
+
+		const $clientRow = $( '#ndizi_invoice_client_row' );
+		const $projectRow = $( '#ndizi_invoice_project_row' );
+		const globalMode = $clientSelect.attr( 'data-global-mode' ) || 'both';
+
+		function applyBillingMode() {
+			const selectedOption = $clientSelect.find( 'option:selected' );
+			const mode = selectedOption.attr( 'data-billing-mode' ) || globalMode;
+
+			$clientRow.toggle( 'project' !== mode );
+			$projectRow.toggle( 'client' !== mode );
+		}
+
+		$clientSelect.on( 'change', applyBillingMode );
+		applyBillingMode();
 	}
 
 	/**

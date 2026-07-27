@@ -58,6 +58,7 @@ class Ndizi_Meta_Boxes {
 
 		$external_source = get_post_meta( $post->ID, '_ndizi_external_source', true );
 		$external_id     = get_post_meta( $post->ID, '_ndizi_external_id', true );
+		$billing_mode    = get_post_meta( $post->ID, '_ndizi_client_billing_mode', true );
 
 		if ( empty( $key ) ) {
 			$key = wp_generate_password( 16, false );
@@ -81,6 +82,20 @@ class Ndizi_Meta_Boxes {
 					</select>
 				</td>
 			</tr>
+			<?php if ( Ndizi_Project_Management::is_module_active( 'invoicing' ) ) : ?>
+			<tr>
+				<th><label for="ndizi_client_billing_mode"><?php esc_html_e( 'Billing Mode', 'ndizi-project-management' ); ?></label></th>
+				<td>
+					<select name="ndizi_client_billing_mode" id="ndizi_client_billing_mode">
+						<option value="" <?php selected( $billing_mode, '' ); ?>><?php esc_html_e( 'Use global default', 'ndizi-project-management' ); ?></option>
+						<option value="client" <?php selected( $billing_mode, 'client' ); ?>><?php esc_html_e( 'Client-based only', 'ndizi-project-management' ); ?></option>
+						<option value="project" <?php selected( $billing_mode, 'project' ); ?>><?php esc_html_e( 'Project-based only', 'ndizi-project-management' ); ?></option>
+						<option value="both" <?php selected( $billing_mode, 'both' ); ?>><?php esc_html_e( 'Both', 'ndizi-project-management' ); ?></option>
+					</select>
+					<p class="description"><?php esc_html_e( 'Overrides the global Billing Mode setting for this client on new invoices.', 'ndizi-project-management' ); ?></p>
+				</td>
+			</tr>
+			<?php endif; ?>
 			<tr>
 				<th><label for="ndizi_client_auth_key"><?php esc_html_e( 'Portal Key', 'ndizi-project-management' ); ?></label></th>
 				<td>
@@ -405,6 +420,7 @@ class Ndizi_Meta_Boxes {
 		if ( ! $currency ) {
 			$currency = get_option( 'ndizi_default_currency', 'USD' );
 		}
+		$global_billing_mode = Ndizi_Project_Management::get_billing_mode();
 		if ( ! is_array( $line_items ) ) {
 			$line_items = array();
 		}
@@ -440,13 +456,13 @@ class Ndizi_Meta_Boxes {
 		}
 		?>
 		<table class="form-table ndizi-meta-table">
-			<tr>
+			<tr id="ndizi_invoice_client_row">
 				<th><label for="ndizi_invoice_client_id"><?php esc_html_e( 'Client', 'ndizi-project-management' ); ?></label></th>
 				<td>
-					<select name="ndizi_client_id" id="ndizi_invoice_client_id">
+					<select name="ndizi_client_id" id="ndizi_invoice_client_id" data-global-mode="<?php echo esc_attr( $global_billing_mode ); ?>">
 						<option value=""><?php esc_html_e( '-- Select Client (Or infer from Project) --', 'ndizi-project-management' ); ?></option>
 						<?php foreach ( $clients as $c ) : ?>
-							<option value="<?php echo esc_attr( $c->ID ); ?>" <?php selected( $client_id, $c->ID ); ?>>
+							<option value="<?php echo esc_attr( $c->ID ); ?>" <?php selected( $client_id, $c->ID ); ?> data-billing-mode="<?php echo esc_attr( get_post_meta( $c->ID, '_ndizi_client_billing_mode', true ) ); ?>">
 								<?php echo esc_html( $c->post_title ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -454,7 +470,7 @@ class Ndizi_Meta_Boxes {
 					<p class="description"><?php esc_html_e( 'Direct client association. Required if no project is selected.', 'ndizi-project-management' ); ?></p>
 				</td>
 			</tr>
-			<tr>
+			<tr id="ndizi_invoice_project_row">
 				<th><label for="ndizi_invoice_project_id"><?php esc_html_e( 'Project', 'ndizi-project-management' ); ?></label></th>
 				<td>
 					<select name="ndizi_project_id" id="ndizi_invoice_project_id">
@@ -840,6 +856,13 @@ class Ndizi_Meta_Boxes {
 			}
 			if ( isset( $_POST['ndizi_external_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
+			}
+			if ( isset( $_POST['ndizi_client_billing_mode'] ) ) {
+				$client_billing_mode = sanitize_key( wp_unslash( $_POST['ndizi_client_billing_mode'] ) );
+				if ( ! in_array( $client_billing_mode, array( '', 'client', 'project', 'both' ), true ) ) {
+					$client_billing_mode = '';
+				}
+				update_post_meta( $post_id, '_ndizi_client_billing_mode', $client_billing_mode );
 			}
 		}
 
