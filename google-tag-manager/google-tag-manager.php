@@ -7,6 +7,7 @@
  * Author: George Stephanis
  * Author URI: https://georgestephanis.wordpress.com
  * License: GPLv2 or later
+ * Text Domain: google-tag-manager
  *
  * @package Google_Tag_Manager
  */

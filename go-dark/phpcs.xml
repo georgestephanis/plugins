@@ -22,6 +22,15 @@
 
     <config name="minimum_supported_wp_version" value="5.3"/>
     <config name="testVersion" value="7.4-"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="go-dark"/>
+            </property>
+        </properties>
+    </rule>
 
     <arg value="ps"/>
     <arg name="colors"/>

@@ -41,8 +41,9 @@
     <!-- Minimum WP version for deprecated-function checks -->
     <config name="minimum_supported_wp_version" value="6.0"/>
 
-    <!-- PHP compatibility range (advisory; install phpcompatibility-wp to enforce) -->
+    <!-- PHP compatibility range -->
     <config name="testVersion" value="7.4-"/>
+    <rule ref="PHPCompatibilityWP"/>
 
     <!-- Show sniff codes in reports for easier suppression -->
     <arg value="ps"/>

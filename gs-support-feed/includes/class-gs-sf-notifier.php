@@ -2,7 +2,7 @@
 /**
  * Email and Webhook notification dispatcher class.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GS_Support_Notifier class.
+ * GS_SF_Notifier class.
  */
-class GS_Support_Notifier {
+class GS_SF_Notifier {
 
 	/**
 	 * Process and dispatch notifications for newly discovered items.
@@ -26,7 +26,7 @@ class GS_Support_Notifier {
 			return;
 		}
 
-		$settings = gs_support_manager()->get_settings();
+		$settings = gs_sf_manager()->get_settings();
 
 		if ( ! empty( $settings['enable_email'] ) && ! empty( $settings['email_recipients'] ) ) {
 			$this->send_email_notification( $new_items, $settings );
@@ -121,7 +121,7 @@ class GS_Support_Notifier {
 	 */
 	public function send_webhook_notification( array $new_items, array $settings ): bool {
 		$url = esc_url_raw( $settings['webhook_url'] );
-		if ( empty( $url ) || ! gs_support_manager()->is_safe_webhook_url( $url ) ) {
+		if ( empty( $url ) || ! gs_sf_manager()->is_safe_webhook_url( $url ) ) {
 			return false;
 		}
 
@@ -140,7 +140,7 @@ class GS_Support_Notifier {
 		}
 
 		$payload = array(
-			'event'     => 'gs_support_manager_new_items',
+			'event'     => 'gs_sf_manager_new_items',
 			'site_name' => get_bloginfo( 'name' ),
 			'site_url'  => home_url(),
 			'timestamp' => gmdate( 'c' ),

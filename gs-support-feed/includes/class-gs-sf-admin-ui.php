@@ -2,7 +2,7 @@
 /**
  * Admin UI and settings management class.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GS_Support_Admin_UI class.
+ * GS_SF_Admin_UI class.
  */
-class GS_Support_Admin_UI {
+class GS_SF_Admin_UI {
 
 	/**
 	 * Constructor.
@@ -91,7 +91,7 @@ class GS_Support_Admin_UI {
 			wp_die( esc_html__( 'Security check failed. Please refresh and try again.', 'gs-support-feed' ) );
 		}
 
-		$manager = gs_support_manager();
+		$manager = gs_sf_manager();
 
 		switch ( $action ) {
 			case 'save_settings':
@@ -257,7 +257,7 @@ class GS_Support_Admin_UI {
 			wp_send_json_error( array( 'message' => 'Invalid item ID' ) );
 		}
 
-		$manager = gs_support_manager();
+		$manager = gs_sf_manager();
 		$items   = $manager->get_feed_items();
 
 		if ( isset( $items[ $item_id ] ) ) {
@@ -412,7 +412,7 @@ class GS_Support_Admin_UI {
 	 * @param string $nonce Nonce value.
 	 */
 	private function render_dashboard_tab( string $nonce ): void {
-		$manager   = gs_support_manager();
+		$manager   = gs_sf_manager();
 		$monitored = $manager->get_monitored_plugins();
 		$all_items = $manager->get_feed_items();
 
@@ -565,8 +565,7 @@ class GS_Support_Admin_UI {
 				echo '<td>';
 				echo '<a href="' . esc_url( $item['link'] ) . '" target="_blank" class="gs-sf-item-link">' . esc_html( $item['title'] ) . '</a> <span class="dashicons dashicons-external gs-sf-item-external-icon"></span>';
 				if ( ! empty( $item['description'] ) ) {
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-sanitized on input via SimplePie and wp_kses_post.
-					echo '<div class="gs-sf-item-preview">' . wp_trim_words( $item['description'], 25 ) . '</div>';
+					echo '<div class="gs-sf-item-preview">' . esc_html( wp_trim_words( $item['description'], 25 ) ) . '</div>';
 				}
 				echo '</td>';
 				echo '<td>' . esc_html( ! empty( $item['author'] ) ? $item['author'] : __( 'Anonymous', 'gs-support-feed' ) ) . '</td>';
@@ -590,7 +589,7 @@ class GS_Support_Admin_UI {
 	 * @param string $nonce Nonce value.
 	 */
 	private function render_plugins_tab( string $nonce ): void {
-		$manager   = gs_support_manager();
+		$manager   = gs_sf_manager();
 		$monitored = $manager->get_monitored_plugins();
 
 		echo '<div class="gs-sf-plugins-layout">';
@@ -709,7 +708,7 @@ class GS_Support_Admin_UI {
 	 * @param string $nonce Nonce value.
 	 */
 	private function render_settings_tab( string $nonce ): void {
-		$manager  = gs_support_manager();
+		$manager  = gs_sf_manager();
 		$settings = $manager->get_settings();
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '" class="gs-sf-settings-form">';
@@ -777,8 +776,9 @@ class GS_Support_Admin_UI {
 		echo '<tr><th colspan="2"><hr/><h3>' . esc_html__( 'Unified RSS & JSON Feed Export', 'gs-support-feed' ) . '</h3></th></tr>';
 
 		$feed_key = isset( $settings['feed_key'] ) ? $settings['feed_key'] : '';
-		$rss_url  = home_url( '/wp-json/gs-support-feed/v1/feed?format=rss' );
-		$json_url = home_url( '/wp-json/gs-support-feed/v1/feed?format=json' );
+		$feed_url = rest_url( 'gs-support-feed/v1/feed' );
+		$rss_url  = add_query_arg( 'format', 'rss', $feed_url );
+		$json_url = add_query_arg( 'format', 'json', $feed_url );
 
 		if ( ! empty( $feed_key ) ) {
 			$rss_url  = add_query_arg( 'feed_key', $feed_key, $rss_url );

@@ -5,12 +5,12 @@
  * Description: Monitored plugin support forum aggregator for WordPress.org plugins with email and webhook notifications.
  * Version:     1.0.0
  * Author:      George Stephanis
- * Author URI:  https://stephanis.info
+ * Author URI:  https://georgestephanis.wordpress.com
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: gs-support-feed
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -24,19 +24,19 @@ define( 'GS_SF_FILE', __FILE__ );
 define( 'GS_SF_PATH', plugin_dir_path( __FILE__ ) );
 define( 'GS_SF_URL', plugin_dir_url( __FILE__ ) );
 
-require_once GS_SF_PATH . 'includes/class-gs-support-manager.php';
-require_once GS_SF_PATH . 'includes/class-gs-support-feed-fetcher.php';
-require_once GS_SF_PATH . 'includes/class-gs-support-notifier.php';
-require_once GS_SF_PATH . 'includes/class-gs-support-admin-ui.php';
-require_once GS_SF_PATH . 'includes/class-gs-support-rest-api.php';
+require_once GS_SF_PATH . 'includes/class-gs-sf-manager.php';
+require_once GS_SF_PATH . 'includes/class-gs-sf-feed-fetcher.php';
+require_once GS_SF_PATH . 'includes/class-gs-sf-notifier.php';
+require_once GS_SF_PATH . 'includes/class-gs-sf-admin-ui.php';
+require_once GS_SF_PATH . 'includes/class-gs-sf-rest-api.php';
 
 /**
  * Bootstrap the GS Support Feed plugin.
  *
- * @return GS_Support_Manager
+ * @return GS_SF_Manager
  */
-function gs_support_manager(): GS_Support_Manager {
-	return GS_Support_Manager::instance();
+function gs_sf_manager(): GS_SF_Manager {
+	return GS_SF_Manager::instance();
 }
 
-gs_support_manager();
+gs_sf_manager();

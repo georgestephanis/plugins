@@ -2,7 +2,7 @@
 /**
  * REST API feed provider class.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -17,9 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GS_Support_REST_API class.
+ * GS_SF_REST_API class.
  */
-class GS_Support_REST_API {
+class GS_SF_REST_API {
 
 	/**
 	 * Constructor.
@@ -86,7 +86,7 @@ class GS_Support_REST_API {
 		}
 
 		// 2. Allow if the correct feed key is provided.
-		$manager  = gs_support_manager();
+		$manager  = gs_sf_manager();
 		$settings = $manager->get_settings();
 		$feed_key = isset( $settings['feed_key'] ) ? $settings['feed_key'] : '';
 
@@ -125,7 +125,7 @@ class GS_Support_REST_API {
 	 * @return WP_REST_Response|void
 	 */
 	public function get_aggregated_feed( WP_REST_Request $request ) {
-		$manager  = gs_support_manager();
+		$manager  = gs_sf_manager();
 		$format   = $request->get_param( 'format' );
 		$type_flt = $request->get_param( 'type' );
 		$plugin   = $request->get_param( 'plugin' );
@@ -165,7 +165,7 @@ class GS_Support_REST_API {
 
 		$blog_name        = esc_xml( get_bloginfo( 'name' ) );
 		$feed_title       = sprintf( '%s - Monitored Plugin & Theme Support Feed', $blog_name );
-		$feed_link        = esc_url( home_url( '/wp-json/gs-support-feed/v1/feed' ) );
+		$feed_link        = esc_url( rest_url( 'gs-support-feed/v1/feed' ) );
 		$feed_description = esc_xml( __( 'Unified RSS support forum feed for monitored WordPress.org plugins and themes.', 'gs-support-feed' ) );
 
 		echo '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
