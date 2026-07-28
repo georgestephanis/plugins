@@ -777,8 +777,9 @@ class GS_Support_Admin_UI {
 		echo '<tr><th colspan="2"><hr/><h3>' . esc_html__( 'Unified RSS & JSON Feed Export', 'gs-support-feed' ) . '</h3></th></tr>';
 
 		$feed_key = isset( $settings['feed_key'] ) ? $settings['feed_key'] : '';
-		$rss_url  = home_url( '/wp-json/gs-support-feed/v1/feed?format=rss' );
-		$json_url = home_url( '/wp-json/gs-support-feed/v1/feed?format=json' );
+		$feed_url = rest_url( 'gs-support-feed/v1/feed' );
+		$rss_url  = add_query_arg( 'format', 'rss', $feed_url );
+		$json_url = add_query_arg( 'format', 'json', $feed_url );
 
 		if ( ! empty( $feed_key ) ) {
 			$rss_url  = add_query_arg( 'feed_key', $feed_key, $rss_url );

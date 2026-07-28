@@ -165,7 +165,7 @@ class GS_Support_REST_API {
 
 		$blog_name        = esc_xml( get_bloginfo( 'name' ) );
 		$feed_title       = sprintf( '%s - Monitored Plugin & Theme Support Feed', $blog_name );
-		$feed_link        = esc_url( home_url( '/wp-json/gs-support-feed/v1/feed' ) );
+		$feed_link        = esc_url( rest_url( 'gs-support-feed/v1/feed' ) );
 		$feed_description = esc_xml( __( 'Unified RSS support forum feed for monitored WordPress.org plugins and themes.', 'gs-support-feed' ) );
 
 		echo '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
