@@ -565,8 +565,7 @@ class GS_Support_Admin_UI {
 				echo '<td>';
 				echo '<a href="' . esc_url( $item['link'] ) . '" target="_blank" class="gs-sf-item-link">' . esc_html( $item['title'] ) . '</a> <span class="dashicons dashicons-external gs-sf-item-external-icon"></span>';
 				if ( ! empty( $item['description'] ) ) {
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pre-sanitized on input via SimplePie and wp_kses_post.
-					echo '<div class="gs-sf-item-preview">' . wp_trim_words( $item['description'], 25 ) . '</div>';
+					echo '<div class="gs-sf-item-preview">' . esc_html( wp_trim_words( $item['description'], 25 ) ) . '</div>';
 				}
 				echo '</td>';
 				echo '<td>' . esc_html( ! empty( $item['author'] ) ? $item['author'] : __( 'Anonymous', 'gs-support-feed' ) ) . '</td>';
