@@ -521,7 +521,9 @@ class Ndizi_List_Tables {
 			$status_class = ( 'archived' === $status ) ? 'ndizi-badge-archived' : 'ndizi-badge-active';
 			echo '<span class="ndizi-badge ' . esc_attr( $status_class ) . '">' . esc_html( $status_label ) . '</span>';
 		} elseif ( 'client_key' === $column ) {
-			$key = get_post_meta( $post_id, '_ndizi_client_auth_key', true );
+			$key = class_exists( 'Ndizi_Portal' )
+				? Ndizi_Portal::get_client_auth_key( $post_id )
+				: get_post_meta( $post_id, '_ndizi_client_auth_key', true );
 			echo '<code>' . esc_html( $key ? $key : '-' ) . '</code>';
 		} elseif ( 'client_website' === $column ) {
 			$website = get_post_meta( $post_id, '_ndizi_client_website', true );

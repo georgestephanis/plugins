@@ -21,6 +21,45 @@ class Ndizi_Portal {
 		add_action( 'wp_ajax_nopriv_ndizi_load_task_discussion', array( __CLASS__, 'ajax_load_task_discussion' ) );
 		add_action( 'save_post', array( __CLASS__, 'track_portal_page_on_save' ), 10, 2 );
 		add_action( 'deleted_post', array( __CLASS__, 'untrack_portal_page_on_delete' ) );
+		add_action( 'save_post_ndizi_client', array( __CLASS__, 'ensure_client_auth_key' ) );
+	}
+
+	/**
+	 * Get a client's portal auth key, generating and persisting one if the
+	 * client doesn't have one yet. This self-heals clients created outside the
+	 * editor meta box (via the abilities API, imports, or before the portal
+	 * feature existed) which would otherwise have no key -- and thus no portal
+	 * link or column value.
+	 *
+	 * @param int $client_id Client post ID.
+	 * @return string The auth key, or '' if $client_id is not a client.
+	 */
+	public static function get_client_auth_key( $client_id ) {
+		$client_id = (int) $client_id;
+		$key       = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
+		if ( $key ) {
+			return $key;
+		}
+		if ( 'ndizi_client' !== get_post_type( $client_id ) ) {
+			return '';
+		}
+		$key = wp_generate_password( 16, false );
+		update_post_meta( $client_id, '_ndizi_client_auth_key', $key );
+		return $key;
+	}
+
+	/**
+	 * Ensure a client has a portal auth key on save, so clients created via the
+	 * abilities API or imports get one automatically rather than only when the
+	 * editor meta box is saved.
+	 *
+	 * @param int $post_id Client post ID.
+	 */
+	public static function ensure_client_auth_key( $post_id ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+		self::get_client_auth_key( $post_id );
 	}
 
 	/**
@@ -104,7 +143,7 @@ class Ndizi_Portal {
 	 * @return string|false Login URL, or false if no auth key or portal page is available.
 	 */
 	public static function get_client_portal_link( $client_id ) {
-		$key = get_post_meta( $client_id, '_ndizi_client_auth_key', true );
+		$key = self::get_client_auth_key( $client_id );
 		if ( ! $key ) {
 			return false;
 		}
@@ -161,6 +200,10 @@ class Ndizi_Portal {
 
 				wp_enqueue_style( 'ndizi-portal-style' );
 				wp_enqueue_script( 'ndizi-portal-script' );
+
+				// Register (not yet enqueue) the time-log DataViews assets; the
+				// dashboard view enqueues + localizes them for authenticated clients.
+				self::register_time_log_assets();
 			}
 		}
 	}
@@ -194,7 +237,39 @@ class Ndizi_Portal {
 			)
 		);
 
+		self::register_time_log_assets();
+
 		register_block_type( NDIZI_PLUGIN_DIR . 'build/block/block.json' );
+	}
+
+	/**
+	 * Register the client-facing time-log DataViews script (and the shared
+	 * DataViews vendor bundle it depends on). Idempotent; the script is only
+	 * enqueued + localized later, in render_dashboard_view(), when an
+	 * authenticated client is actually viewing their portal.
+	 */
+	private static function register_time_log_assets() {
+		if ( class_exists( 'Ndizi_Settings' ) ) {
+			Ndizi_Settings::register_dataviews_bundle();
+		}
+
+		if ( wp_script_is( 'ndizi-portal-time-log', 'registered' ) ) {
+			return;
+		}
+
+		$asset_path = NDIZI_PLUGIN_DIR . 'build/portal-time-log.asset.php';
+		if ( ! file_exists( $asset_path ) ) {
+			return;
+		}
+		$asset = include $asset_path;
+
+		wp_register_script(
+			'ndizi-portal-time-log',
+			NDIZI_PLUGIN_URL . 'build/portal-time-log.js',
+			isset( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+			isset( $asset['version'] ) ? $asset['version'] : NDIZI_VERSION,
+			true
+		);
 	}
 
 	/**
@@ -937,6 +1012,130 @@ class Ndizi_Portal {
 								</div>
 							</div>
 						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				// --- Client Time Log (DataViews) ---
+				// v1 loads every entry for this client into a single JSON blob and
+				// lets the DataViews app filter/sort/paginate it client-side.
+				$ndizi_time_rows     = Ndizi_DB::get_time_entries(
+					array(
+						'client_id' => $client_id,
+						'orderby'   => 'start_time',
+						'order'     => 'DESC',
+						'number'    => 5000,
+					)
+				);
+				$ndizi_time_entries  = array();
+				$ndizi_time_projects = array();
+				foreach ( $ndizi_time_rows as $ndizi_row ) {
+					$ndizi_project_title = $ndizi_row->project_id ? get_the_title( $ndizi_row->project_id ) : '';
+					$ndizi_task_title    = $ndizi_row->task_id ? get_the_title( $ndizi_row->task_id ) : '';
+
+					$ndizi_time_entries[] = array(
+						'id'           => (int) $ndizi_row->id,
+						'project_id'   => (int) $ndizi_row->project_id,
+						'project_name' => $ndizi_project_title,
+						'task_id'      => (int) $ndizi_row->task_id,
+						'task_name'    => $ndizi_task_title,
+						'description'  => $ndizi_row->description,
+						'start_time'   => $ndizi_row->start_time,
+						'duration'     => (int) $ndizi_row->duration,
+						'billable'     => (int) $ndizi_row->billable,
+						'invoiced'     => ( (int) $ndizi_row->invoice_id > 0 ) ? 1 : 0,
+					);
+
+					if ( $ndizi_row->project_id && ! isset( $ndizi_time_projects[ $ndizi_row->project_id ] ) ) {
+						$ndizi_time_projects[ $ndizi_row->project_id ] = array(
+							'value' => (int) $ndizi_row->project_id,
+							'label' => $ndizi_project_title,
+						);
+					}
+				}
+
+				if ( ! empty( $ndizi_time_entries ) && wp_script_is( 'ndizi-portal-time-log', 'registered' ) ) {
+					wp_enqueue_script( 'ndizi-portal-time-log' );
+					if ( wp_style_is( 'ndizi-dataviews', 'registered' ) ) {
+						wp_enqueue_style( 'ndizi-dataviews' );
+					}
+					wp_localize_script(
+						'ndizi-portal-time-log',
+						'ndizi_portal_time_log',
+						array(
+							'entries'  => $ndizi_time_entries,
+							'projects' => array_values( $ndizi_time_projects ),
+						)
+					);
+				}
+				?>
+				<?php if ( ! empty( $ndizi_time_entries ) ) : ?>
+					<div class="ndizi-portal-card ndizi-portal-time-log" style="margin-top: 30px;">
+						<h3><?php esc_html_e( 'Time Log', 'ndizi-project-management' ); ?></h3>
+						<div id="ndizi-portal-time-log-root"></div>
+					</div>
+				<?php endif; ?>
+
+				<?php
+				// --- Client-wide Total Outstanding ---
+				// Sum unpaid balances across every invoice tied to this client,
+				// whether attached to one of their projects or billed directly.
+				$ndizi_project_ids = wp_list_pluck( $projects, 'ID' );
+				$ndizi_inv_meta    = array(
+					'relation' => 'OR',
+					array(
+						'key'   => '_ndizi_client_id',
+						'value' => $client_id,
+					),
+				);
+				if ( ! empty( $ndizi_project_ids ) ) {
+					$ndizi_inv_meta[] = array(
+						'key'     => '_ndizi_project_id',
+						'value'   => $ndizi_project_ids,
+						'compare' => 'IN',
+					);
+				}
+				$ndizi_all_invoices = get_posts(
+					array(
+						'post_type'      => 'ndizi_invoice',
+						'posts_per_page' => -1,
+						'fields'         => 'ids',
+						'meta_query'     => array( $ndizi_inv_meta ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- portal render, bounded per-client.
+					)
+				);
+				$ndizi_outstanding  = array(); // Currency code => summed balance.
+				foreach ( $ndizi_all_invoices as $ndizi_inv_id ) {
+					$ndizi_inv_status = get_post_meta( $ndizi_inv_id, '_ndizi_invoice_status', true );
+					if ( in_array( $ndizi_inv_status, array( 'draft', 'void', 'paid' ), true ) ) {
+						continue;
+					}
+					$ndizi_bal = (float) Ndizi_Invoicing::get_invoice_balance( $ndizi_inv_id );
+					if ( $ndizi_bal <= 0 ) {
+						continue;
+					}
+					$ndizi_cur = get_post_meta( $ndizi_inv_id, '_ndizi_invoice_currency', true );
+					if ( empty( $ndizi_cur ) ) {
+						$ndizi_cur = get_option( 'ndizi_default_currency', 'USD' );
+					}
+					$ndizi_cur = strtoupper( $ndizi_cur );
+					if ( ! isset( $ndizi_outstanding[ $ndizi_cur ] ) ) {
+						$ndizi_outstanding[ $ndizi_cur ] = 0;
+					}
+					$ndizi_outstanding[ $ndizi_cur ] += $ndizi_bal;
+				}
+				?>
+				<?php if ( ! empty( $ndizi_outstanding ) ) : ?>
+					<div class="ndizi-portal-card ndizi-portal-total-due" style="margin-top: 30px;">
+						<h3><?php esc_html_e( 'Total Outstanding', 'ndizi-project-management' ); ?></h3>
+						<p class="ndizi-portal-total-due-amount">
+							<?php
+							$ndizi_due_parts = array();
+							foreach ( $ndizi_outstanding as $ndizi_cur => $ndizi_amt ) {
+								$ndizi_due_parts[] = $ndizi_cur . ' ' . number_format( $ndizi_amt, 2 );
+							}
+							echo esc_html( implode( '   •   ', $ndizi_due_parts ) );
+							?>
+						</p>
 					</div>
 				<?php endif; ?>
 

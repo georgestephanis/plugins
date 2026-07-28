@@ -796,3 +796,15 @@
 	color: #0f172a;
 	box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
 }
+
+.ndizi-portal-total-due .ndizi-portal-total-due-amount {
+	margin: 8px 0 0;
+	font-size: 1.6em;
+	font-weight: 700;
+	color: var(--ndizi-text, #0f172a);
+}
+
+// The client-facing time log embeds a DataViews table; give it room to breathe.
+.ndizi-portal-time-log #ndizi-portal-time-log-root {
+	margin-top: 12px;
+}
