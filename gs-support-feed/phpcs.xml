@@ -17,6 +17,19 @@
 
     <config name="minimum_supported_wp_version" value="6.0"/>
     <config name="testVersion" value="7.4-"/>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="gs_sf"/>
+                <element value="gs_support"/>
+                <element value="GS_SF"/>
+                <element value="GS_Support"/>
+                <element value="GeorgeStephanis\GSSupportFeed"/>
+            </property>
+        </properties>
+    </rule>
 
     <arg value="ps"/>
     <arg name="colors"/>
