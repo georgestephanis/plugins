@@ -4,7 +4,7 @@
  *
  * Deletes all plugin options and settings when uninstalled via WP Admin.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

@@ -2,7 +2,7 @@
 /**
  * Main plugin orchestrator class.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GS_Support_Manager class.
+ * GS_SF_Manager class.
  */
-class GS_Support_Manager {
+class GS_SF_Manager {
 
 	/**
 	 * Option key for monitored plugins list.
@@ -39,44 +39,44 @@ class GS_Support_Manager {
 	/**
 	 * Singleton instance.
 	 *
-	 * @var GS_Support_Manager|null
+	 * @var GS_SF_Manager|null
 	 */
 	private static $instance = null;
 
 	/**
 	 * Fetcher component.
 	 *
-	 * @var GS_Support_Feed_Fetcher
+	 * @var GS_SF_Feed_Fetcher
 	 */
 	public $fetcher;
 
 	/**
 	 * Notifier component.
 	 *
-	 * @var GS_Support_Notifier
+	 * @var GS_SF_Notifier
 	 */
 	public $notifier;
 
 	/**
 	 * Admin UI component.
 	 *
-	 * @var GS_Support_Admin_UI
+	 * @var GS_SF_Admin_UI
 	 */
 	public $admin_ui;
 
 	/**
 	 * REST API component.
 	 *
-	 * @var GS_Support_REST_API
+	 * @var GS_SF_REST_API
 	 */
 	public $rest_api;
 
 	/**
 	 * Get singleton instance.
 	 *
-	 * @return GS_Support_Manager
+	 * @return GS_SF_Manager
 	 */
-	public static function instance(): GS_Support_Manager {
+	public static function instance(): GS_SF_Manager {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -87,10 +87,10 @@ class GS_Support_Manager {
 	 * Constructor.
 	 */
 	private function __construct() {
-		$this->fetcher  = new GS_Support_Feed_Fetcher();
-		$this->notifier = new GS_Support_Notifier();
-		$this->admin_ui = new GS_Support_Admin_UI();
-		$this->rest_api = new GS_Support_REST_API();
+		$this->fetcher  = new GS_SF_Feed_Fetcher();
+		$this->notifier = new GS_SF_Notifier();
+		$this->admin_ui = new GS_SF_Admin_UI();
+		$this->rest_api = new GS_SF_REST_API();
 
 		register_activation_hook( GS_SF_FILE, array( $this, 'activate' ) );
 		register_deactivation_hook( GS_SF_FILE, array( $this, 'deactivate' ) );

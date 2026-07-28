@@ -83,7 +83,7 @@ When new support topics are flagged, the plugin sends an HTTP POST request with 
 
 ```json
 {
-  "event": "gs_support_manager_new_items",
+  "event": "gs_sf_manager_new_items",
   "site_name": "My WordPress Site",
   "site_url": "https://example.com",
   "timestamp": "2026-07-21T16:50:00+00:00",

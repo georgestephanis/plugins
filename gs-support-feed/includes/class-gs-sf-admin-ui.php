@@ -2,7 +2,7 @@
 /**
  * Admin UI and settings management class.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GS_Support_Admin_UI class.
+ * GS_SF_Admin_UI class.
  */
-class GS_Support_Admin_UI {
+class GS_SF_Admin_UI {
 
 	/**
 	 * Constructor.
@@ -91,7 +91,7 @@ class GS_Support_Admin_UI {
 			wp_die( esc_html__( 'Security check failed. Please refresh and try again.', 'gs-support-feed' ) );
 		}
 
-		$manager = gs_support_manager();
+		$manager = gs_sf_manager();
 
 		switch ( $action ) {
 			case 'save_settings':
@@ -257,7 +257,7 @@ class GS_Support_Admin_UI {
 			wp_send_json_error( array( 'message' => 'Invalid item ID' ) );
 		}
 
-		$manager = gs_support_manager();
+		$manager = gs_sf_manager();
 		$items   = $manager->get_feed_items();
 
 		if ( isset( $items[ $item_id ] ) ) {
@@ -412,7 +412,7 @@ class GS_Support_Admin_UI {
 	 * @param string $nonce Nonce value.
 	 */
 	private function render_dashboard_tab( string $nonce ): void {
-		$manager   = gs_support_manager();
+		$manager   = gs_sf_manager();
 		$monitored = $manager->get_monitored_plugins();
 		$all_items = $manager->get_feed_items();
 
@@ -589,7 +589,7 @@ class GS_Support_Admin_UI {
 	 * @param string $nonce Nonce value.
 	 */
 	private function render_plugins_tab( string $nonce ): void {
-		$manager   = gs_support_manager();
+		$manager   = gs_sf_manager();
 		$monitored = $manager->get_monitored_plugins();
 
 		echo '<div class="gs-sf-plugins-layout">';
@@ -708,7 +708,7 @@ class GS_Support_Admin_UI {
 	 * @param string $nonce Nonce value.
 	 */
 	private function render_settings_tab( string $nonce ): void {
-		$manager  = gs_support_manager();
+		$manager  = gs_sf_manager();
 		$settings = $manager->get_settings();
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'tools.php' ) ) . '" class="gs-sf-settings-form">';

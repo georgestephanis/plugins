@@ -2,7 +2,7 @@
 /**
  * Feed fetcher and RSS parser class.
  *
- * @package GS_Support_Feed
+ * @package GS_SF
  */
 
 namespace GeorgeStephanis\GSSupportFeed;
@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GS_Support_Feed_Fetcher class.
+ * GS_SF_Feed_Fetcher class.
  */
-class GS_Support_Feed_Fetcher {
+class GS_SF_Feed_Fetcher {
 
 	/**
 	 * Build WordPress.org support forum RSS feed URL for a plugin or theme.
@@ -106,7 +106,7 @@ class GS_Support_Feed_Fetcher {
 	 * @return array Sync statistics.
 	 */
 	public function sync_all(): array {
-		$manager      = gs_support_manager();
+		$manager      = gs_sf_manager();
 		$plugins      = $manager->get_monitored_plugins();
 		$existing     = $manager->get_feed_items();
 		$new_items    = array();

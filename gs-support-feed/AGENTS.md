@@ -8,19 +8,19 @@ Guidance for AI coding agents working on the **GS Support Feed** plugin.
 
 ### Core Architecture
 
-The plugin is structured with a central Singleton manager (`GS_Support_Manager`) that bootstraps component submodules:
+The plugin is structured with a central Singleton manager (`GS_SF_Manager`) that bootstraps component submodules:
 
-1. **`GS_Support_Manager`** (`includes/class-gs-support-manager.php`) — Core Singleton orchestrator. Manages options storage, lifecycle hooks, WP-Cron scheduling, and helper methods.
-2. **`GS_Support_Feed_Fetcher`** (`includes/class-gs-support-feed-fetcher.php`) — RSS parser leveraging WordPress core `fetch_feed()`. Builds WP.org plugin (`/support/plugin/{slug}/feed/`) and theme (`/support/theme/{slug}/feed/`) feed URLs, parses SimplePie items, identifies newly discovered topics, and dispatches notifications.
-3. **`GS_Support_Notifier`** (`includes/class-gs-support-notifier.php`) — Handles email digests via `wp_mail()` and webhook HTTP POST notifications via `wp_remote_post()`.
-4. **`GS_Support_Admin_UI`** (`includes/class-gs-support-admin-ui.php`) — Registers the admin page under **Tools > Support Feed**. Provides the Unified Feed view, Monitored Plugins & Themes management, WP.org Profile Import form, Settings configuration, and AJAX read/unread toggle handler.
-5. **`GS_Support_REST_API`** (`includes/class-gs-support-rest-api.php`) — Registers `/wp-json/gs-support-feed/v1/feed` providing RSS 2.0 XML or JSON output for feed reader subscriptions.
+1. **`GS_SF_Manager`** (`includes/class-gs-sf-manager.php`) — Core Singleton orchestrator. Manages options storage, lifecycle hooks, WP-Cron scheduling, and helper methods.
+2. **`GS_SF_Feed_Fetcher`** (`includes/class-gs-sf-feed-fetcher.php`) — RSS parser leveraging WordPress core `fetch_feed()`. Builds WP.org plugin (`/support/plugin/{slug}/feed/`) and theme (`/support/theme/{slug}/feed/`) feed URLs, parses SimplePie items, identifies newly discovered topics, and dispatches notifications.
+3. **`GS_SF_Notifier`** (`includes/class-gs-sf-notifier.php`) — Handles email digests via `wp_mail()` and webhook HTTP POST notifications via `wp_remote_post()`.
+4. **`GS_SF_Admin_UI`** (`includes/class-gs-sf-admin-ui.php`) — Registers the admin page under **Tools > Support Feed**. Provides the Unified Feed view, Monitored Plugins & Themes management, WP.org Profile Import form, Settings configuration, and AJAX read/unread toggle handler.
+5. **`GS_SF_REST_API`** (`includes/class-gs-sf-rest-api.php`) — Registers `/wp-json/gs-support-feed/v1/feed` providing RSS 2.0 XML or JSON output for feed reader subscriptions.
 
 ---
 
 ## Codebase Directory Layout
 
-- **`gs-support-feed.php`** — Main entry point file. Defines constants (`GS_SF_VERSION`, `GS_SF_PATH`, `GS_SF_URL`), requires class files, and initializes `gs_support_manager()`.
+- **`gs-support-feed.php`** — Main entry point file. Defines constants (`GS_SF_VERSION`, `GS_SF_PATH`, `GS_SF_URL`), requires class files, and initializes `gs_sf_manager()`.
 - **`readme.txt`** — WordPress.org standard documentation header, plugin description, installation steps, FAQs, and changelog.
 - **`README.md`** — GitHub repository documentation with WordPress Playground launch badge, feature breakdown, and developer usage notes.
 - **`AGENTS.md`** — Developer and AI agent reference guide (this file).
@@ -28,11 +28,11 @@ The plugin is structured with a central Singleton manager (`GS_Support_Manager`)
 - **`playground/`**
   - **`blueprint.json`** — WordPress Playground blueprint configured with a `git:directory` resource pulling the plugin from the monorepo, populating sample monitored items (`woocommerce` plugin and `twentytwentyfour` theme), running an initial RSS sync, and opening directly on **Tools > Support Feed**.
 - **`includes/`**
-  - **`class-gs-support-manager.php`** — Main orchestrator class (`GS_Support_Manager`).
-  - **`class-gs-support-feed-fetcher.php`** — RSS feed fetcher and SimplePie parser (`GS_Support_Feed_Fetcher`).
-  - **`class-gs-support-notifier.php`** — Email and Webhook notification dispatcher (`GS_Support_Notifier`).
-  - **`class-gs-support-admin-ui.php`** — Admin menu pages, forms, tables, and AJAX handlers (`GS_Support_Admin_UI`).
-  - **`class-gs-support-rest-api.php`** — Custom REST API endpoint provider for RSS XML and JSON (`GS_Support_REST_API`).
+  - **`class-gs-sf-manager.php`** — Main orchestrator class (`GS_SF_Manager`).
+  - **`class-gs-sf-feed-fetcher.php`** — RSS feed fetcher and SimplePie parser (`GS_SF_Feed_Fetcher`).
+  - **`class-gs-sf-notifier.php`** — Email and Webhook notification dispatcher (`GS_SF_Notifier`).
+  - **`class-gs-sf-admin-ui.php`** — Admin menu pages, forms, tables, and AJAX handlers (`GS_SF_Admin_UI`).
+  - **`class-gs-sf-rest-api.php`** — Custom REST API endpoint provider for RSS XML and JSON (`GS_SF_REST_API`).
 
 ---
 
@@ -92,10 +92,10 @@ Data is stored efficiently in standard WordPress options (`wp_options`), keeping
 
 Users can paste a WordPress.org Profile URL (e.g., `https://profiles.wordpress.org/username/`) or raw username into the Profile Import form.
 
-1. **URL Parsing**: `GS_Support_Manager::extract_username_from_profile_url()` extracts the clean username string.
+1. **URL Parsing**: `GS_SF_Manager::extract_username_from_profile_url()` extracts the clean username string.
 2. **Plugins API Query**: `wp_remote_get()` calls `https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&request[author]={username}&request[per_page]=100`.
 3. **Themes API Query**: `wp_remote_get()` calls `https://api.wordpress.org/themes/info/1.1/?action=query_themes&request[author]={username}&request[per_page]=100`.
-4. **Auto-Population**: All returned items are added to `gs_sf_monitored_plugins` and an immediate sync is executed via `GS_Support_Feed_Fetcher::sync_all()`.
+4. **Auto-Population**: All returned items are added to `gs_sf_monitored_plugins` and an immediate sync is executed via `GS_SF_Feed_Fetcher::sync_all()`.
 
 ---
 

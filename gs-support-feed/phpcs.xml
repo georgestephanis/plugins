@@ -31,9 +31,7 @@
         <properties>
             <property name="prefixes" type="array">
                 <element value="gs_sf"/>
-                <element value="gs_support"/>
                 <element value="GS_SF"/>
-                <element value="GS_Support"/>
                 <element value="GeorgeStephanis\GSSupportFeed"/>
             </property>
         </properties>

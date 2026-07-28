@@ -21,7 +21,7 @@ No hard guideline violations found.
 All findings below have been resolved.
 
 ### 1. ~~Inline `<script>` and heavy inline CSS should move to enqueued assets~~ RESOLVED
-`includes/class-gs-support-admin-ui.php`
+`includes/class-gs-sf-admin-ui.php`
 
 - `render_inline_assets()` (~L742-790) echoed a full jQuery block (select-all checkbox, AJAX toggle-read, profile-import spinner) directly into the page, with the nonce and translated strings interpolated via `esc_js()`.
 - Dozens of `style="..."` attributes across `render_dashboard_tab()`, `render_plugins_tab()`, and `render_settings_tab()` (flex layouts, badge colors, table widths, etc.).
@@ -29,28 +29,28 @@ All findings below have been resolved.
 **Fix applied**: `render_inline_assets()` removed entirely; script moved to `assets/js/admin.js`, enqueued via `wp_enqueue_script()` in `enqueue_assets()`, with the nonce/strings passed via `wp_localize_script( 'gs-support-feed-admin', 'gsSupportFeed', ... )`. All inline `style="..."` attributes replaced with classes in `assets/css/admin.css`.
 
 ### 2. ~~Webhook URL has no SSRF hardening~~ RESOLVED
-`includes/class-gs-support-notifier.php::send_webhook_notification()`, `includes/class-gs-support-admin-ui.php` (`webhook_url` setting)
+`includes/class-gs-sf-notifier.php::send_webhook_notification()`, `includes/class-gs-sf-admin-ui.php` (`webhook_url` setting)
 
 The admin-configured webhook URL was sanitized with `esc_url_raw()` but not validated against scheme (`http`/`https` only) or against resolving to internal/loopback/link-local addresses before `wp_safe_remote_post()` fires on every cron sync.
 
-**Fix applied**: new `GS_Support_Manager::is_safe_webhook_url()` validates scheme (http/https only), resolves the hostname via `dns_get_record()`, and rejects private/reserved-range IPs (`FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE`). Enforced both at save time (`save_settings` rejects unsafe URLs and surfaces a `webhook_invalid` admin notice) and at send time in the notifier, for defense in depth.
+**Fix applied**: new `GS_SF_Manager::is_safe_webhook_url()` validates scheme (http/https only), resolves the hostname via `dns_get_record()`, and rejects private/reserved-range IPs (`FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE`). Enforced both at save time (`save_settings` rejects unsafe URLs and surfaces a `webhook_invalid` admin notice) and at send time in the notifier, for defense in depth.
 
 ### 3. ~~Feed items option is unbounded-until-synced and autoloaded~~ RESOLVED
-`includes/class-gs-support-manager.php::get_feed_items()` / `save_feed_items()`
+`includes/class-gs-sf-manager.php::get_feed_items()` / `save_feed_items()`
 
 `gs_sf_feed_items` is a single option that can grow up to `max_stored_items` (configurable to 2000) entries, each carrying full HTML descriptions.
 
 **Fix applied**: both `get_feed_items()` and `save_feed_items()` now call `update_option( self::ITEMS_OPTION, $items, false )` so the option is never autoloaded.
 
 ### 4. ~~Auto-discovered/added items aren't verified as wp.org-hosted before first sync~~ RESOLVED
-`includes/class-gs-support-admin-ui.php` (`import_installed` action)
+`includes/class-gs-sf-admin-ui.php` (`import_installed` action)
 
 `import_installed` added every locally installed plugin/theme folder slug as a monitored item without checking whether a matching wp.org support feed actually exists.
 
-**Fix applied**: new `GS_Support_Manager::is_plugin_hosted_on_wporg()` / `is_theme_hosted_on_wporg()` (via `plugins_api()` / `themes_api()`) gate `import_installed`; skipped items are counted and surfaced via a "N installed items are not hosted on WordPress.org and were not added" admin notice.
+**Fix applied**: new `GS_SF_Manager::is_plugin_hosted_on_wporg()` / `is_theme_hosted_on_wporg()` (via `plugins_api()` / `themes_api()`) gate `import_installed`; skipped items are counted and surfaced via a "N installed items are not hosted on WordPress.org and were not added" admin notice.
 
 ### 5. ~~Minor: `email_recipients` not validated at save time~~ RESOLVED
-`includes/class-gs-support-admin-ui.php` (`save_settings` action)
+`includes/class-gs-sf-admin-ui.php` (`save_settings` action)
 
 Recipients were only filtered through `is_email()` at send time, not when saved.
 
