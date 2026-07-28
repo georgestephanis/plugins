@@ -5,7 +5,7 @@
  * Description: Monitored plugin support forum aggregator for WordPress.org plugins with email and webhook notifications.
  * Version:     1.0.0
  * Author:      George Stephanis
- * Author URI:  https://stephanis.info
+ * Author URI:  https://georgestephanis.wordpress.com
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: gs-support-feed
