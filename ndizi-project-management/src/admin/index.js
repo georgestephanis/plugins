@@ -27,6 +27,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		initSelectOnClick();
 		initCopyPortalLink();
 		initInvoiceBillingModeToggle();
+		initDismissibleNotices();
 	} );
 
 	/**
@@ -441,6 +442,10 @@ import { formatTime, createTimer } from '../shared/timer.js';
 	 * Launch Standalone Tracker
 	 */
 	function initTrackerLauncher() {
+		if ( ! $( '.ndizi-launch-tracker' ).length ) {
+			return;
+		}
+
 		$( document ).on( 'click', '.ndizi-launch-tracker', function ( e ) {
 			e.preventDefault();
 			const url = $( this ).data( 'tracker-url' );
@@ -458,6 +463,10 @@ import { formatTime, createTimer } from '../shared/timer.js';
 	 * Copy a client's portal login link to the clipboard from the row action
 	 */
 	function initCopyPortalLink() {
+		if ( ! $( '.ndizi-copy-portal-link' ).length ) {
+			return;
+		}
+
 		$( document ).on( 'click', '.ndizi-copy-portal-link', function ( e ) {
 			e.preventDefault();
 			const $link = $( this );
@@ -513,8 +522,45 @@ import { formatTime, createTimer } from '../shared/timer.js';
 	 * Select text inside readonly input fields on click
 	 */
 	function initSelectOnClick() {
+		if ( ! $( '.ndizi-select-on-click' ).length ) {
+			return;
+		}
+
 		$( document ).on( 'click', '.ndizi-select-on-click', function () {
 			this.select();
+		} );
+	}
+
+	/**
+	 * Permanently dismiss one of Ndizi's own admin notices via AJAX, hiding it
+	 * immediately without a page reload. Generic across notice IDs — see
+	 * Ndizi_Settings::dismiss_notice() on the PHP side for the storage format.
+	 */
+	function initDismissibleNotices() {
+		const $notices = $( '.ndizi-dismiss-notice' );
+		if ( ! $notices.length ) {
+			return;
+		}
+
+		$notices.on( 'click', function () {
+			const $notice = $( this ).closest( '.notice' );
+			const noticeId = $( this ).data( 'notice-id' );
+
+			$notice.css( 'opacity', '0.5' );
+
+			wp.ajax
+				.post( 'ndizi_dismiss_notice', {
+					notice_id: noticeId,
+					nonce: ndizi_admin.nonce,
+				} )
+				.done( function () {
+					$notice.fadeOut( function () {
+						$notice.remove();
+					} );
+				} )
+				.fail( function () {
+					$notice.css( 'opacity', '1' );
+				} );
 		} );
 	}
 } )( window.jQuery );
