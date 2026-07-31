@@ -266,6 +266,7 @@ class Ndizi_Project_Management {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-reports.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-admin.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cli.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities-compat.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-abilities.php';
 
 		// Dynamic module dependency loading

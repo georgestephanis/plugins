@@ -17,6 +17,22 @@ class Ndizi_Abilities {
 		if ( function_exists( 'wp_register_ability' ) ) {
 			add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_categories' ) );
 			add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_abilities' ) );
+			Ndizi_Abilities_Compat::on_ability_invoked( array( __CLASS__, 'log_ability_invocation' ) );
+		}
+	}
+
+	/**
+	 * Logs an ability invocation attempt when WP_DEBUG_LOG is enabled.
+	 *
+	 * @param string          $ability_name Ability name, e.g. 'ndizi/get-projects'.
+	 * @param mixed           $input        Raw input passed to the ability.
+	 * @param WP_Ability|null $ability      The ability object, if available.
+	 * @return void
+	 */
+	public static function log_ability_invocation( $ability_name, $input, $ability = null ) {
+		unset( $input, $ability );
+		if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG && 0 === strpos( (string) $ability_name, 'ndizi/' ) ) {
+			error_log( sprintf( '[Ndizi Abilities] invoked: %s (user #%d)', $ability_name, get_current_user_id() ) );
 		}
 	}
 
@@ -83,6 +99,8 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -135,6 +153,8 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -181,6 +201,8 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -245,6 +267,7 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -291,6 +314,7 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -371,6 +395,7 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -437,6 +462,8 @@ class Ndizi_Abilities {
 				},
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -660,6 +687,8 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -705,6 +734,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -753,6 +783,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -788,6 +819,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -873,6 +905,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -908,6 +941,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -943,6 +977,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1029,6 +1064,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1064,6 +1100,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1099,6 +1136,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1213,6 +1251,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1248,6 +1287,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1283,6 +1323,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1343,6 +1384,8 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1392,6 +1435,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1432,6 +1476,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1467,6 +1512,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1532,6 +1578,8 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1586,6 +1634,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1630,6 +1679,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1665,6 +1715,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1771,6 +1822,8 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
+					'readonly'     => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1819,6 +1872,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
@@ -1854,6 +1908,7 @@ class Ndizi_Abilities {
 				'permission_callback' => $permission_callback,
 				'meta'                => array(
 					'show_in_rest' => true,
+					'public'       => true,
 					'mcp'          => array(
 						'public' => true,
 						'type'   => 'tool',
