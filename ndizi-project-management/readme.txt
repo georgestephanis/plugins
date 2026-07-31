@@ -2,9 +2,9 @@
 Contributors: georgestephanis
 Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,9 @@ The client portal, the standalone time tracker, and printable invoices can use t
 Google's terms and privacy policy: https://policies.google.com/terms and https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.3.0 =
+*   MCP Adapter Notice: Added a dismissible admin notice, shown only on Ndizi's own admin pages to users who can install plugins, suggesting the MCP Adapter plugin so Ndizi's Abilities API registrations become reachable over MCP. Dismissal is AJAX-based (no page reload) and backed by a generic `ndizi_notices` user meta key so future notices can reuse the same plumbing.
 
 = 1.2.0 =
 *   Abilities API: Expanded WordPress Abilities API coverage to full CRUD across clients, projects, tasks, time entries, invoices, and time-off requests, with a new `get-invoices` ability and capability checks.
