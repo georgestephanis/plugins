@@ -1,4 +1,5 @@
 @use "../shared/variables" as *;
+
 :root {
 	--bg-radial: radial-gradient(circle at top, #1e1b4b 0%, #0b0f19 100%);
 	--bg-glass: rgba(17, 24, 39, 0.7);
@@ -12,9 +13,9 @@
 
 	--ndizi-orchid: #{ $ndizi-orchid };
 	--color-indigo: #{ $ndizi-orchid };
-	--color-indigo-glow: #{ rgba( $ndizi-orchid, 0.25 ) };
+	--color-indigo-glow: #{ rgba($ndizi-orchid, 0.25) };
 	--color-yellow: #{ $ndizi-yellow };
-	--color-yellow-glow: #{ rgba( $ndizi-yellow, 0.2 ) };
+	--color-yellow-glow: #{ rgba($ndizi-yellow, 0.2) };
 	--color-red: #ef4444;
 	--color-red-glow: rgba(239, 68, 68, 0.25);
 	--color-emerald: #10b981;
@@ -111,9 +112,9 @@ body {
 
 .app-status {
 	font-size: 11px;
-	background: rgba($ndizi-orchid,  0.15);
+	background: rgba($ndizi-orchid, 0.15);
 	color: var(--color-indigo);
-	border: 1px solid rgba($ndizi-orchid,  0.3);
+	border: 1px solid rgba($ndizi-orchid, 0.3);
 	padding: 3px 8px;
 	border-radius: 12px;
 	font-weight: 600;
@@ -124,8 +125,8 @@ body {
 /* Install App Banner */
 .install-banner {
 	display: none;
-	background: linear-gradient(135deg, rgba($ndizi-orchid,  0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
-	border: 1px solid rgba($ndizi-orchid,  0.3);
+	background: linear-gradient(135deg, rgba($ndizi-orchid, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+	border: 1px solid rgba($ndizi-orchid, 0.3);
 	border-radius: 14px;
 	padding: 12px 16px;
 	align-items: center;
@@ -141,7 +142,7 @@ body {
 
 .install-btn {
 	background: var(--color-indigo);
-	color: white;
+	color: #fff;
 	border: none;
 	padding: 6px 12px;
 	border-radius: 8px;
@@ -153,7 +154,7 @@ body {
 
 .install-btn:hover {
 	background: $ndizi-plum;
-	box-shadow: 0 0 10px rgba($ndizi-orchid,  0.4);
+	box-shadow: 0 0 10px rgba($ndizi-orchid, 0.4);
 }
 
 /* Mode Tabs */
@@ -232,6 +233,7 @@ body {
 select.form-select {
 	appearance: none;
 	-webkit-appearance: none;
+	/* stylelint-disable-next-line function-url-quotes */
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 14px center;
@@ -299,12 +301,12 @@ select.form-select option {
 
 input:checked + .slider {
 	background-color: var(--color-indigo);
-	border-color: rgba($ndizi-orchid,  0.4);
+	border-color: rgba($ndizi-orchid, 0.4);
 }
 
 input:checked + .slider::before {
 	transform: translateX(20px);
-	background-color: white;
+	background-color: #fff;
 }
 
 /* Buttons */
@@ -330,14 +332,8 @@ input:checked + .slider::before {
 
 .btn-primary {
 	background: var(--color-indigo);
-	color: white;
+	color: #fff;
 	box-shadow: 0 4px 14px var(--color-indigo-glow);
-}
-
-.btn-primary:hover:not(:disabled) {
-	background: $ndizi-plum;
-	transform: translateY(-1px);
-	box-shadow: 0 6px 20px rgba($ndizi-orchid,  0.4);
 }
 
 .btn-primary:disabled {
@@ -347,9 +343,15 @@ input:checked + .slider::before {
 	box-shadow: none;
 }
 
+.btn-primary:hover:not(:disabled) {
+	background: $ndizi-plum;
+	transform: translateY(-1px);
+	box-shadow: 0 6px 20px rgba($ndizi-orchid, 0.4);
+}
+
 .btn-danger {
 	background: var(--color-red);
-	color: white;
+	color: #fff;
 	box-shadow: 0 4px 14px var(--color-red-glow);
 }
 
@@ -389,7 +391,7 @@ input:checked + .slider::before {
 	width: 100%;
 	background: rgba(0, 0, 0, 0.3);
 	border: 1px solid var(--border-glass);
-	color: white;
+	color: #fff;
 	border-radius: 8px;
 	text-align: center;
 	padding: 8px;
@@ -449,15 +451,6 @@ input:checked + .slider::before {
 	padding: 3px 8px;
 	text-align: center;
 
-	&:disabled {
-		cursor: default;
-		opacity: 0.5;
-
-		&::-webkit-calendar-picker-indicator {
-			display: none;
-		}
-	}
-
 	&::-webkit-calendar-picker-indicator {
 		cursor: pointer;
 		filter: brightness(0) invert(1);
@@ -465,6 +458,15 @@ input:checked + .slider::before {
 
 		&:hover {
 			opacity: 1;
+		}
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.5;
+
+		&::-webkit-calendar-picker-indicator {
+			display: none;
 		}
 	}
 }
@@ -500,9 +502,9 @@ input:checked + .slider::before {
 }
 
 .badge-project {
-	background: rgba($ndizi-orchid,  0.15);
+	background: rgba($ndizi-orchid, 0.15);
 	color: #a5b4fc;
-	border: 1px solid rgba($ndizi-orchid,  0.3);
+	border: 1px solid rgba($ndizi-orchid, 0.3);
 }
 
 .badge-task {
