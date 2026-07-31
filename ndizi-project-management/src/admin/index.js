@@ -307,7 +307,8 @@ import { formatTime, createTimer } from '../shared/timer.js';
 
 		function applyBillingMode() {
 			const selectedOption = $clientSelect.find( 'option:selected' );
-			const mode = selectedOption.attr( 'data-billing-mode' ) || globalMode;
+			const mode =
+				selectedOption.attr( 'data-billing-mode' ) || globalMode;
 
 			$clientRow.toggle( 'project' !== mode );
 			$projectRow.toggle( 'client' !== mode );
