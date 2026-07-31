@@ -89,6 +89,7 @@ class Ndizi_Abilities {
 	public static function log_ability_invocation( $ability_name, $input, $ability = null ) {
 		unset( $input, $ability );
 		if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG && 0 === strpos( (string) $ability_name, 'ndizi/' ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( sprintf( '[Ndizi Abilities] invoked: %s (user #%d)', $ability_name, get_current_user_id() ) );
 		}
 	}

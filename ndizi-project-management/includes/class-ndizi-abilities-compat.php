@@ -39,6 +39,8 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 	class Ndizi_Abilities_Compat {
 
 		/**
+		 * Initialized flag.
+		 *
 		 * @var bool Guards init() so its function_exists()-gated declarations only run once.
 		 */
 		private static $initialized = false;
@@ -102,13 +104,17 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 		 */
 		private static function maybe_polyfill_json_schema_functions() {
 			if ( ! function_exists( 'wp_get_json_schema_allowed_keywords' ) ) {
+				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 				function wp_get_json_schema_allowed_keywords( $schema_profile = 'draft-04' ) {
+					// phpcs:ignore Squiz.Classes.SelfMemberReference.NotUsed
 					return Ndizi_Abilities_Compat::get_json_schema_allowed_keywords( $schema_profile );
 				}
 			}
 
 			if ( ! function_exists( 'wp_prepare_json_schema_for_client' ) ) {
+				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 				function wp_prepare_json_schema_for_client( $schema, $schema_profile = 'draft-04' ) {
+					// phpcs:ignore Squiz.Classes.SelfMemberReference.NotUsed
 					return Ndizi_Abilities_Compat::prepare_json_schema_for_client( $schema, $schema_profile );
 				}
 			}
@@ -130,6 +136,7 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 				'wp_before_execute_ability',
 				function ( $input, $ability ) {
 					$name = ( is_object( $ability ) && method_exists( $ability, 'get_name' ) ) ? $ability->get_name() : '';
+					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 					do_action( 'wp_ability_invoked', $name, $input, $ability );
 				},
 				10,
@@ -183,6 +190,7 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 			 * @param string[] $keywords       Allowed keywords for the profile.
 			 * @param string   $schema_profile 'draft-04' or 'rest-api'.
 			 */
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 			return apply_filters( 'wp_json_schema_allowed_keywords', $keywords, $schema_profile );
 		}
 
@@ -282,21 +290,21 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 		 * meta keys are inert on older core, so this is safe on 6.9+ regardless of
 		 * which version is actually running.
 		 *
-		 * @param bool $public   Whether the ability should be publicly exposed via REST/MCP.
-		 * @param bool $readonly Whether to mark the ability as informational/side-effect-free.
+		 * @param bool $is_public   Whether the ability should be publicly exposed via REST/MCP.
+		 * @param bool $is_readonly Whether to mark the ability as informational/side-effect-free.
 		 * @return array
 		 */
-		public static function exposure_meta( $public = true, $readonly = false ) {
+		public static function exposure_meta( $is_public = true, $is_readonly = false ) {
 			$meta = array(
-				'show_in_rest' => $public,
-				'public'       => $public,
+				'show_in_rest' => $is_public,
+				'public'       => $is_public,
 				'mcp'          => array(
-					'public' => $public,
+					'public' => $is_public,
 					'type'   => 'tool',
 				),
 			);
 
-			if ( $readonly ) {
+			if ( $is_readonly ) {
 				$meta['readonly'] = true;
 			}
 
