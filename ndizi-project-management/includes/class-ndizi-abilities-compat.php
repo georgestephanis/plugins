@@ -2,17 +2,32 @@
 /**
  * Redistributable compatibility shim for the WordPress Abilities API.
  *
- * The Abilities API shipped in WP 6.9; WP 7.1 added new hooks (wp_ability_invoked,
- * wp_ability_validate_input/output) and a unified meta.public exposure flag. None of
- * that can be truly polyfilled onto older core — this class only owns the hooks it
- * fires itself, it can't inject calls into WP_Ability::execute() on a version that
- * doesn't already do so. What it can do is detect what's available and give callers
- * a single API that degrades gracefully instead of silently doing nothing (or fatally
- * erroring) on 6.9/7.0.
+ * The Abilities API shipped in WP 6.9; WP 7.1 added the wp_ability_invoked
+ * action, the wp_ability_validate_input/output filters, and the JSON Schema
+ * client-preparation helpers (wp_prepare_json_schema_for_client(),
+ * wp_get_json_schema_allowed_keywords(), the wp_json_schema_allowed_keywords
+ * filter). This shim makes those usable transparently on 6.9/7.0:
  *
- * This file has no dependency on anything else in this plugin and can be copied
- * as-is into other plugins that register abilities and want the same 6.9-7.1 safety
- * net.
+ * - wp_prepare_json_schema_for_client() / wp_get_json_schema_allowed_keywords()
+ *   are declared as real global functions when core doesn't already provide
+ *   them, so calling code just calls the real WP function name either way.
+ * - The wp_ability_invoked action is bridged from the earlier
+ *   wp_before_execute_ability hook when core doesn't fire it natively, so
+ *   calling code just does add_action( 'wp_ability_invoked', ... ) either way.
+ *   Note the bridge only sees invocations that already passed permission
+ *   checks (wp_before_execute_ability fires after that on pre-7.1 core),
+ *   whereas native 7.1 wp_ability_invoked fires before permission checks too.
+ *
+ * wp_ability_validate_input/output cannot be polyfilled this way — they gate
+ * a step inside WP_Ability::execute() itself, which isn't reachable from
+ * outside on pre-7.1 core. Filters added to those hooks simply never run
+ * pre-7.1; keep an equivalent check elsewhere (e.g. the ability's
+ * execute_callback) if validation logic must also work on 6.9/7.0.
+ *
+ * This file has no dependency on anything else in this plugin and can be
+ * copied as-is into other plugins that register abilities and want the same
+ * 6.9-7.1 safety net. Requiring it is enough — it installs its polyfills
+ * immediately (see the init() call at the bottom of this file).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,6 +39,11 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 	class Ndizi_Abilities_Compat {
 
 		/**
+		 * @var bool Guards init() so its function_exists()-gated declarations only run once.
+		 */
+		private static $initialized = false;
+
+		/**
 		 * Whether the Abilities API is present at all (WP 6.9+, or the standalone plugin/package).
 		 *
 		 * @return bool
@@ -33,7 +53,14 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 		}
 
 		/**
-		 * Whether the running core supports the WP 7.1 Abilities API additions.
+		 * Whether the running core supports the WP 7.1 Abilities API additions natively.
+		 *
+		 * During the 7.1 dev cycle $wp_version looks like '7.1-alpha-58900' or
+		 * '7.1-beta1-59001' or '7.1-RC1-59200' — a plain version_compare() treats
+		 * those pre-release suffixes as *older* than '7.1', which would wrongly
+		 * report false (and double up the wp_ability_invoked bridge, see
+		 * maybe_bridge_ability_invoked_action()) for the entire beta/RC cycle.
+		 * Strip everything from the first hyphen so betas/RCs of 7.1 compare as 7.1.
 		 *
 		 * @return bool
 		 */
@@ -41,48 +68,69 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 			if ( ! self::is_available() ) {
 				return false;
 			}
-			return version_compare( $GLOBALS['wp_version'], '7.1', '>=' );
+
+			$version = isset( $GLOBALS['wp_version'] ) ? (string) $GLOBALS['wp_version'] : '0';
+			$version = preg_replace( '/-.*/', '', $version );
+
+			return version_compare( $version, '7.1', '>=' );
 		}
 
 		/**
-		 * Registers a normalized "ability invoked" listener that works on both
-		 * pre-7.1 core and 7.1+.
+		 * Installs the polyfills/bridges described in the class docblock. Idempotent
+		 * and safe to call from multiple places (or not at all — it also runs once
+		 * automatically when this file is required).
 		 *
-		 * On 7.1+ this uses wp_ability_invoked, which fires before normalization,
-		 * validation, and permission checks — every invocation attempt is seen.
-		 * On 6.9/7.0, where that hook doesn't exist, it falls back to
-		 * wp_before_execute_ability, the earliest hook available there; that one
-		 * only fires for attempts that already passed permission checks, so calls
-		 * blocked by a permission_callback won't be seen pre-7.1.
-		 *
-		 * The callback always receives ( string $ability_name, mixed $input,
-		 * WP_Ability|null $ability ). $ability is populated on both paths.
-		 *
-		 * @param callable $callback Listener to invoke on ability call attempts.
 		 * @return void
 		 */
-		public static function on_ability_invoked( $callback ) {
-			if ( ! self::is_available() || ! is_callable( $callback ) ) {
+		public static function init() {
+			if ( self::$initialized || ! self::is_available() ) {
 				return;
 			}
+			self::$initialized = true;
 
+			self::maybe_polyfill_json_schema_functions();
+			self::maybe_bridge_ability_invoked_action();
+		}
+
+		/**
+		 * Declares wp_prepare_json_schema_for_client() and
+		 * wp_get_json_schema_allowed_keywords() as real global functions when core
+		 * (pre-7.1) doesn't already provide them, backed by this class's own
+		 * implementation of the documented behavior.
+		 *
+		 * @return void
+		 */
+		private static function maybe_polyfill_json_schema_functions() {
+			if ( ! function_exists( 'wp_get_json_schema_allowed_keywords' ) ) {
+				function wp_get_json_schema_allowed_keywords( $schema_profile = 'draft-04' ) {
+					return Ndizi_Abilities_Compat::get_json_schema_allowed_keywords( $schema_profile );
+				}
+			}
+
+			if ( ! function_exists( 'wp_prepare_json_schema_for_client' ) ) {
+				function wp_prepare_json_schema_for_client( $schema, $schema_profile = 'draft-04' ) {
+					return Ndizi_Abilities_Compat::prepare_json_schema_for_client( $schema, $schema_profile );
+				}
+			}
+		}
+
+		/**
+		 * Bridges wp_ability_invoked onto wp_before_execute_ability when core
+		 * doesn't fire wp_ability_invoked natively (pre-7.1). No-op on 7.1+, where
+		 * core already fires it and a bridge would double it up.
+		 *
+		 * @return void
+		 */
+		private static function maybe_bridge_ability_invoked_action() {
 			if ( self::supports_7_1() ) {
-				add_action(
-					'wp_ability_invoked',
-					function ( $ability_name, $input, $ability = null ) use ( $callback ) {
-						call_user_func( $callback, $ability_name, $input, $ability );
-					},
-					10,
-					3
-				);
 				return;
 			}
 
 			add_action(
 				'wp_before_execute_ability',
-				function ( $input, $ability ) use ( $callback ) {
+				function ( $input, $ability ) {
 					$name = ( is_object( $ability ) && method_exists( $ability, 'get_name' ) ) ? $ability->get_name() : '';
-					call_user_func( $callback, $name, $input, $ability );
+					do_action( 'wp_ability_invoked', $name, $input, $ability );
 				},
 				10,
 				2
@@ -90,14 +138,120 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 		}
 
 		/**
-		 * Registers an ability input-validation filter, if the running core supports
-		 * it (WP 7.1+). No-op on older core.
+		 * Fallback implementation of WP 7.1's wp_get_json_schema_allowed_keywords(),
+		 * used by the polyfilled wp_get_json_schema_allowed_keywords() on pre-7.1 core.
 		 *
-		 * Because this silently does nothing pre-7.1, do not use it as the only
-		 * place a piece of validation logic lives — keep an equivalent check in the
-		 * ability's execute_callback (or input_schema, where expressible) so
-		 * validation still happens on 6.9/7.0. Treat this as an enhancement layer
-		 * for 7.1+, not a replacement.
+		 * @param string $schema_profile 'draft-04' (default) or 'rest-api'.
+		 * @return string[] Allowed schema keywords for the given profile.
+		 */
+		public static function get_json_schema_allowed_keywords( $schema_profile = 'draft-04' ) {
+			$keywords = array(
+				'type',
+				'title',
+				'description',
+				'default',
+				'enum',
+				'const',
+				'format',
+				'items',
+				'properties',
+				'additionalProperties',
+				'required',
+				'minimum',
+				'maximum',
+				'minLength',
+				'maxLength',
+				'minItems',
+				'maxItems',
+				'pattern',
+				'oneOf',
+				'allOf',
+				'anyOf',
+			);
+
+			if ( 'rest-api' === $schema_profile ) {
+				$keywords[] = 'context';
+				$keywords[] = 'readonly';
+			}
+
+			/**
+			 * Filters the JSON Schema keywords retained by wp_prepare_json_schema_for_client().
+			 *
+			 * Same filter name as WP 7.1 core, so a filter callback written against
+			 * core's version behaves identically when this fallback is in use.
+			 *
+			 * @param string[] $keywords       Allowed keywords for the profile.
+			 * @param string   $schema_profile 'draft-04' or 'rest-api'.
+			 */
+			return apply_filters( 'wp_json_schema_allowed_keywords', $keywords, $schema_profile );
+		}
+
+		/**
+		 * Fallback implementation of WP 7.1's wp_prepare_json_schema_for_client(),
+		 * used by the polyfilled wp_prepare_json_schema_for_client() on pre-7.1 core.
+		 *
+		 * Converts internal WordPress schema conventions into portable JSON Schema
+		 * draft-04 output: strips server-only sanitize_callback/validate_callback/
+		 * arg_options keys, converts legacy property-level `'required' => true` into
+		 * a Draft 4-style `required` array, and normalizes empty-array defaults on
+		 * object-typed schemas to serialize as `{}` rather than `[]`.
+		 *
+		 * @param array  $schema         Schema to prepare. Non-array input is returned unmodified.
+		 * @param string $schema_profile 'draft-04' (default) or 'rest-api'.
+		 * @return array|mixed Prepared schema, or the original value if not an array.
+		 */
+		public static function prepare_json_schema_for_client( $schema, $schema_profile = 'draft-04' ) {
+			if ( ! is_array( $schema ) ) {
+				return $schema;
+			}
+
+			unset( $schema['sanitize_callback'], $schema['validate_callback'], $schema['arg_options'] );
+
+			if ( isset( $schema['properties'] ) && is_array( $schema['properties'] ) ) {
+				$required = ( isset( $schema['required'] ) && is_array( $schema['required'] ) ) ? $schema['required'] : array();
+
+				foreach ( $schema['properties'] as $property_name => $property ) {
+					if ( ! is_array( $property ) ) {
+						continue;
+					}
+
+					if ( ! empty( $property['required'] ) && true === $property['required'] ) {
+						$required[] = $property_name;
+					}
+					unset( $property['required'] );
+
+					$schema['properties'][ $property_name ] = self::prepare_json_schema_for_client( $property, $schema_profile );
+				}
+
+				if ( ! empty( $required ) ) {
+					$schema['required'] = array_values( array_unique( $required ) );
+				}
+			}
+
+			if ( isset( $schema['items'] ) && is_array( $schema['items'] ) ) {
+				$schema['items'] = self::prepare_json_schema_for_client( $schema['items'], $schema_profile );
+			}
+
+			foreach ( array( 'oneOf', 'allOf', 'anyOf' ) as $combiner ) {
+				if ( isset( $schema[ $combiner ] ) && is_array( $schema[ $combiner ] ) ) {
+					foreach ( $schema[ $combiner ] as $index => $sub_schema ) {
+						$schema[ $combiner ][ $index ] = self::prepare_json_schema_for_client( $sub_schema, $schema_profile );
+					}
+				}
+			}
+
+			if ( isset( $schema['type'] ) && 'object' === $schema['type']
+				&& isset( $schema['default'] ) && is_array( $schema['default'] ) && empty( $schema['default'] ) ) {
+				$schema['default'] = new stdClass();
+			}
+
+			return $schema;
+		}
+
+		/**
+		 * Registers an ability input-validation filter, if the running core supports
+		 * it (WP 7.1+). No-op on older core — see the class docblock for why this
+		 * one can't be bridged like wp_ability_invoked can.
 		 *
 		 * @param string   $ability_name Ability name to scope to, or '' to run for every ability.
 		 * @param callable $callback     function( $valid, $value, $ability_name ) — return true or a WP_Error.
@@ -151,3 +305,7 @@ if ( ! class_exists( 'Ndizi_Abilities_Compat' ) ) :
 	}
 
 endif;
+
+// Install the polyfills/bridges immediately: requiring this file is enough,
+// callers don't need to remember to call Ndizi_Abilities_Compat::init().
+Ndizi_Abilities_Compat::init();

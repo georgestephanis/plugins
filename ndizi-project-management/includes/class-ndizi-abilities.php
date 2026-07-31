@@ -17,7 +17,10 @@ class Ndizi_Abilities {
 		if ( function_exists( 'wp_register_ability' ) ) {
 			add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_categories' ) );
 			add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_abilities' ) );
-			Ndizi_Abilities_Compat::on_ability_invoked( array( __CLASS__, 'log_ability_invocation' ) );
+
+			// Fires natively on WP 7.1+; bridged from wp_before_execute_ability on
+			// 6.9/7.0 by Ndizi_Abilities_Compat, which is required before this file.
+			add_action( 'wp_ability_invoked', array( __CLASS__, 'log_ability_invocation' ), 10, 3 );
 		}
 	}
 
