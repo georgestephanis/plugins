@@ -26,11 +26,11 @@ const VENDOR_ARTIFACTS = [
  * Clone the default module rules with the Dart Sass legacy API deprecation
  * warnings silenced.
  *
- * @param {Object}  [options]
+ * @param {Object}  [options]                    Options.
  * @param {boolean} [options.markCssSideEffects] When true, flag the CSS rule as
- *        having side effects. @wordpress/dataviews ships `"sideEffects": false`,
- *        so without this webpack tree-shakes the bare CSS import in the vendor
- *        entry and the stylesheet is never extracted.
+ *                                               having side effects. @wordpress/dataviews ships `"sideEffects": false`,
+ *                                               so without this webpack tree-shakes the bare CSS import in the vendor
+ *                                               entry and the stylesheet is never extracted.
  * @return {Array} The transformed rules array.
  */
 function buildRules( { markCssSideEffects = false } = {} ) {
@@ -79,11 +79,11 @@ function buildRules( { markCssSideEffects = false } = {} ) {
  * and a CleanWebpackPlugin scoped so this build does not delete the other build's
  * output.
  *
- * @param {Object} options
- * @param {Object} options.dependencyExtraction       Options for the replacement
- *        DependencyExtractionWebpackPlugin (e.g. requestToExternal/requestToHandle).
+ * @param {Object}   options                              Options.
+ * @param {Object}   options.dependencyExtraction         Options for the replacement
+ *                                                        DependencyExtractionWebpackPlugin (e.g. requestToExternal/requestToHandle).
  * @param {string[]} options.cleanOnceBeforeBuildPatterns Glob patterns for the
- *        replacement CleanWebpackPlugin's pre-build cleanup.
+ *                                                        replacement CleanWebpackPlugin's pre-build cleanup.
  * @return {Array} The transformed plugins array.
  */
 function buildPlugins( {
@@ -91,12 +91,20 @@ function buildPlugins( {
 	cleanOnceBeforeBuildPatterns,
 } ) {
 	return defaultConfig.plugins.map( ( plugin ) => {
-		if ( plugin instanceof DependencyExtractionWebpackPlugin ) {
+		if (
+			plugin &&
+			plugin.constructor &&
+			plugin.constructor.name === 'DependencyExtractionWebpackPlugin'
+		) {
 			return new DependencyExtractionWebpackPlugin(
 				dependencyExtraction
 			);
 		}
-		if ( plugin instanceof CleanWebpackPlugin ) {
+		if (
+			plugin &&
+			plugin.constructor &&
+			plugin.constructor.name === 'CleanWebpackPlugin'
+		) {
 			return new CleanWebpackPlugin( {
 				cleanStaleWebpackAssets: false,
 				cleanOnceBeforeBuildPatterns,

@@ -345,15 +345,6 @@
 			text-align: center;
 			width: auto !important;
 
-			&:disabled {
-				cursor: default;
-				opacity: 0.5;
-
-				&::-webkit-calendar-picker-indicator {
-					display: none;
-				}
-			}
-
 			&::-webkit-calendar-picker-indicator {
 				cursor: pointer;
 				filter: brightness(0) invert(1);
@@ -361,6 +352,15 @@
 
 				&:hover {
 					opacity: 1;
+				}
+			}
+
+			&:disabled {
+				cursor: default;
+				opacity: 0.5;
+
+				&::-webkit-calendar-picker-indicator {
+					display: none;
 				}
 			}
 		}

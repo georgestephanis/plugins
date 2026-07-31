@@ -19,6 +19,26 @@ class Ndizi_Ajax {
 		add_action( 'wp_ajax_ndizi_delete_log_action', array( __CLASS__, 'ajax_delete_log' ) );
 		add_action( 'wp_ajax_ndizi_check_active_timer', array( __CLASS__, 'ajax_check_active_timer' ) );
 		add_action( 'wp_ajax_ndizi_refresh_logs_table', array( __CLASS__, 'ajax_refresh_logs_table' ) );
+		add_action( 'wp_ajax_ndizi_dismiss_notice', array( __CLASS__, 'ajax_dismiss_notice' ) );
+	}
+
+	/**
+	 * AJAX logic to permanently dismiss one of Ndizi's own admin notices for
+	 * the current user. Generic across notice IDs — see
+	 * Ndizi_Settings::dismiss_notice() for the storage format.
+	 */
+	public static function ajax_dismiss_notice() {
+		check_ajax_referer( 'ndizi-admin-nonce', 'nonce' );
+
+		$notice_id = isset( $_POST['notice_id'] ) ? sanitize_key( wp_unslash( $_POST['notice_id'] ) ) : '';
+
+		if ( ! $notice_id || ! in_array( $notice_id, Ndizi_Settings::get_known_notice_ids(), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid notice ID.', 'ndizi-project-management' ) ) );
+		}
+
+		Ndizi_Settings::dismiss_notice( $notice_id );
+
+		wp_send_json_success();
 	}
 
 	/**

@@ -195,7 +195,7 @@ const TimeEntriesApp = () => {
 					: [],
 			};
 		},
-		[ queryArgs ]
+		[ queryArgs, canManage ]
 	);
 
 	const { saveEntityRecord, deleteEntityRecord } = useDispatch( 'core' );

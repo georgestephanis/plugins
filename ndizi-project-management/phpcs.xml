@@ -5,10 +5,15 @@
     <!-- Exclude third party or build folders -->
     <exclude-pattern>/node_modules/*</exclude-pattern>
     <exclude-pattern>/vendor/*</exclude-pattern>
+    <exclude-pattern>/build/*</exclude-pattern>
+    <exclude-pattern>/playground/*</exclude-pattern>
 
     <!-- Lint PHP files in these directories -->
     <file>Ndizi.php</file>
     <file>includes/</file>
+
+    <!-- PHP only: JS is linted separately via wp-scripts/ESLint, not WPCS. -->
+    <arg name="extensions" value="php" />
 
     <!-- Use WordPress coding standards -->
     <rule ref="WordPress">

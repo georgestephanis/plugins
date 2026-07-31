@@ -10,6 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Ndizi_Settings {
 
 	/**
+	 * Screen IDs (hook suffixes) of Ndizi's own top-level admin pages, captured
+	 * as they're registered so other components can target notices/assets at
+	 * "our" screens without hardcoding or guessing WordPress's generated IDs.
+	 *
+	 * @var string[]
+	 */
+	private static $page_hooks = array();
+
+	/**
 	 * Initialize settings hooks
 	 */
 	public static function init() {
@@ -332,18 +341,19 @@ class Ndizi_Settings {
 	 */
 	public static function register_admin_pages() {
 		// Top level menu
-		add_menu_page(
+		self::$page_hooks[] = add_menu_page(
 			__( 'Ndizi PM', 'ndizi-project-management' ),
 			__( 'Ndizi PM', 'ndizi-project-management' ),
 			'ndizi_view_projects',
 			'ndizi-pm',
 			array( __CLASS__, 'render_dashboard_page' ),
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#3A1A4D"/><g transform="rotate(-38 50 50)"><path d="M14 56 Q50 96 86 48 Q50 72 14 56 Z" fill="#F4B223"/><circle cx="14" cy="56" r="3.6" fill="#FBE6A8"/><circle cx="86" cy="48" r="3.6" fill="#FBE6A8"/></g></svg>' ),
 			30
 		);
 
 		// Submenu: Reports
-		add_submenu_page(
+		self::$page_hooks[] = add_submenu_page(
 			'ndizi-pm',
 			__( 'Ndizi Reports', 'ndizi-project-management' ),
 			__( 'Reports', 'ndizi-project-management' ),
@@ -353,7 +363,7 @@ class Ndizi_Settings {
 		);
 
 		// Submenu: Settings
-		add_submenu_page(
+		self::$page_hooks[] = add_submenu_page(
 			'ndizi-pm',
 			__( 'Ndizi Settings', 'ndizi-project-management' ),
 			__( 'Settings', 'ndizi-project-management' ),
@@ -365,7 +375,7 @@ class Ndizi_Settings {
 		$time_entries_cap = current_user_can( 'ndizi_manage_time' ) ? 'ndizi_manage_time' : 'ndizi_log_time';
 
 		// Submenu: Time Entries
-		add_submenu_page(
+		self::$page_hooks[] = add_submenu_page(
 			'ndizi-pm',
 			__( 'Time Entries', 'ndizi-project-management' ),
 			__( 'Time Entries', 'ndizi-project-management' ),
@@ -375,6 +385,8 @@ class Ndizi_Settings {
 		);
 
 		// Register a hidden fallback target for the visual separator entry.
+		// Not included in $page_hooks: it never renders content of its own, so
+		// there's nothing for a page-scoped notice to attach to.
 		add_submenu_page(
 			null,
 			__( 'Ndizi PM', 'ndizi-project-management' ),
@@ -384,6 +396,78 @@ class Ndizi_Settings {
 			array( __CLASS__, 'render_submenu_separator_page' )
 		);
 	}
+
+	/**
+	 * Screen IDs (hook suffixes) of Ndizi's own top-level admin pages.
+	 *
+	 * @return string[] Hook suffixes, populated after admin_menu has run.
+	 */
+	public static function get_page_hooks() {
+		return self::$page_hooks;
+	}
+
+	/**
+	 * Notice IDs Ndizi actually renders, so ajax_dismiss_notice() can't be used
+	 * to write arbitrary keys into a user's `ndizi_notices` meta. Add new IDs
+	 * here as new dismissible notices are introduced.
+	 *
+	 * @return string[]
+	 */
+	public static function get_known_notice_ids() {
+		/**
+		 * Filters the set of valid dismissible-notice IDs.
+		 *
+		 * @param string[] $notice_ids Known notice IDs.
+		 */
+		return apply_filters(
+			'ndizi_known_notice_ids',
+			array(
+				'mcp_adapter',
+			)
+		);
+	}
+
+	/**
+	 * Whether the given admin notice has been permanently dismissed by the
+	 * current user (or a specific user, if passed).
+	 *
+	 * Backed by a single `ndizi_notices` user meta entry rather than one meta
+	 * key per notice, so future dismissible notices don't need their own
+	 * plumbing — just a unique $notice_id.
+	 *
+	 * @param string $notice_id Unique slug identifying the notice.
+	 * @param int    $user_id   Optional. Defaults to the current user.
+	 * @return bool
+	 */
+	public static function is_notice_dismissed( $notice_id, $user_id = 0 ) {
+		$user_id = $user_id ? $user_id : get_current_user_id();
+		$notices = get_user_meta( $user_id, 'ndizi_notices', true );
+
+		return ! empty( $notices['dismissed'][ $notice_id ] );
+	}
+
+	/**
+	 * Permanently dismisses the given admin notice for a user.
+	 *
+	 * @param string $notice_id Unique slug identifying the notice.
+	 * @param int    $user_id   Optional. Defaults to the current user.
+	 * @return void
+	 */
+	public static function dismiss_notice( $notice_id, $user_id = 0 ) {
+		$user_id = $user_id ? $user_id : get_current_user_id();
+		$notices = get_user_meta( $user_id, 'ndizi_notices', true );
+		if ( ! is_array( $notices ) ) {
+			$notices = array();
+		}
+		if ( empty( $notices['dismissed'] ) || ! is_array( $notices['dismissed'] ) ) {
+			$notices['dismissed'] = array();
+		}
+
+		$notices['dismissed'][ $notice_id ] = time();
+
+		update_user_meta( $user_id, 'ndizi_notices', $notices );
+	}
+
 
 	/**
 	 * Insert a separator/spacer in the Ndizi submenu
