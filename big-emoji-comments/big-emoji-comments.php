@@ -3,7 +3,7 @@
  * Plugin Name: Big Emoji Comments
  * Plugin URI:  https://github.com/georgestephanis/big-emoji-comments
  * Description: If someone leaves a comment comprised entirely of emoji, make it bigger.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author:      George Stephanis
  * Author URI:  https://georgestephanis.wordpress.com/
  * License:     GPL-2.0+
@@ -33,6 +33,21 @@ if ( ! function_exists( 'big_emoji_comments' ) ) {
 	 */
 	function big_emoji_comments( $content ) {
 		$no_markup = trim( wp_kses( $content, array() ) );
+
+		$custom_emojis      = get_option( 'big_emoji_custom_emojis', array() );
+		$found_custom_count = 0;
+		$temp_no_markup     = $no_markup;
+
+		// Extract custom emoji codes.
+		preg_match_all( '/:([a-zA-Z0-9_\-]+):/', $no_markup, $custom_matches );
+		if ( ! empty( $custom_matches[1] ) ) {
+			foreach ( $custom_matches[1] as $match ) {
+				if ( isset( $custom_emojis[ $match ] ) ) {
+					++$found_custom_count;
+					$temp_no_markup = str_replace( ':' . $match . ':', '', $temp_no_markup );
+				}
+			}
+		}
 
 		$all_emoji_regex = '/^[\s' .
 			// Regex generated from https://www.unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt.
@@ -200,13 +215,22 @@ if ( ! function_exists( 'big_emoji_comments' ) ) {
 			'\x{E0020}-\x{E007F}' .
 			']+$/u';
 
-		if ( preg_match( $all_emoji_regex, $no_markup ) ) {
-			$emoji_only = preg_replace( '/\s+/u', '', $no_markup );
+		$is_emoji_only = false;
+		if ( '' === trim( $temp_no_markup ) && $found_custom_count > 0 ) {
+			$is_emoji_only = true;
+		} elseif ( preg_match( $all_emoji_regex, $temp_no_markup ) ) {
+			$is_emoji_only = true;
+		}
+
+		if ( $is_emoji_only ) {
+			$emoji_only = preg_replace( '/\s+/u', '', $temp_no_markup );
 			if ( function_exists( 'grapheme_strlen' ) ) {
-				$char_count = grapheme_strlen( $emoji_only );
+				$standard_count = grapheme_strlen( $emoji_only );
 			} else {
-				$char_count = preg_match_all( '/\X/u', $emoji_only, $matches );
+				$standard_count = preg_match_all( '/\X/u', $emoji_only, $matches );
 			}
+
+			$char_count = $standard_count + $found_custom_count;
 
 			$percent = BIG_EMOJI_DEFAULT_SIZE;
 			switch ( $char_count ) {
@@ -222,11 +246,33 @@ if ( ! function_exists( 'big_emoji_comments' ) ) {
 
 			$percent = apply_filters( 'big_emoji_comments_percent', $percent, $no_markup );
 
-			$output = sprintf( '<span class="big-emoji" style="font-size:%1$d%%;">%2$s</span>', $percent, $content );
-			return apply_filters( 'big_emoji_comments_output', $output, $content, $percent, $no_markup );
+			// Replace custom emoji codes with image tags.
+			$final_content = $content;
+			foreach ( $custom_emojis as $name => $emoji_data ) {
+				$img_tag       = sprintf(
+					'<img src="%1$s" alt=":%2$s:" class="emoji custom-emoji" style="height: 1.25em; width: auto; max-height: 1.25em; vertical-align: -0.2em; display: inline-block;" />',
+					esc_url( $emoji_data['url'] ),
+					esc_attr( $name )
+				);
+				$final_content = str_replace( ':' . $name . ':', $img_tag, $final_content );
+			}
+
+			$output = sprintf( '<span class="big-emoji" style="font-size:%1$d%%;">%2$s</span>', $percent, $final_content );
+			return apply_filters( 'big_emoji_comments_output', $output, $final_content, $percent, $no_markup );
 		}
 
-		return $content;
+		// Even if not emoji-only, replace custom emoji codes with images.
+		$final_content = $content;
+		foreach ( $custom_emojis as $name => $emoji_data ) {
+			$img_tag       = sprintf(
+				'<img src="%1$s" alt=":%2$s:" class="emoji custom-emoji" style="height: 1.25em; width: auto; max-height: 1.25em; vertical-align: -0.2em; display: inline-block;" />',
+				esc_url( $emoji_data['url'] ),
+				esc_attr( $name )
+			);
+			$final_content = str_replace( ':' . $name . ':', $img_tag, $final_content );
+		}
+
+		return $final_content;
 	}
 }
 
@@ -295,7 +341,7 @@ add_action( 'init', 'big_emoji_comments_register_icons' );
  * @return array Emoji character to icon slug mapping.
  */
 function big_emoji_comments_get_reaction_emojis() {
-	return array(
+	$defaults = array(
 		'👍'  => 'thumbs-up',
 		'❤️' => 'heart',
 		'😄'  => 'laughing',
@@ -305,6 +351,13 @@ function big_emoji_comments_get_reaction_emojis() {
 		'🔥'  => 'fire',
 		'⭐'  => 'star',
 	);
+
+	$custom_emojis = get_option( 'big_emoji_custom_emojis', array() );
+	foreach ( $custom_emojis as $name => $emoji_data ) {
+		$defaults[ ':' . $name . ':' ] = $name;
+	}
+
+	return $defaults;
 }
 
 /**
@@ -371,19 +424,39 @@ function big_emoji_comments_render_reactions_block() {
 
 	$reaction_emojis = big_emoji_comments_get_reaction_emojis();
 	$counts          = big_emoji_comments_get_reaction_counts( $post_id );
+	$custom_emojis   = get_option( 'big_emoji_custom_emojis', array() );
 
 	$output = '<div class="big-emoji-reactions" data-post-id="' . esc_attr( $post_id ) . '">';
 
 	foreach ( $reaction_emojis as $emoji => $slug ) {
 		$count = isset( $counts[ $emoji ] ) ? $counts[ $emoji ] : 0;
 
+		$is_custom     = ( 0 === strpos( $emoji, ':' ) && ':' === substr( $emoji, -1 ) );
+		$emoji_display = '';
+
+		if ( $is_custom ) {
+			$name = trim( $emoji, ':' );
+			if ( isset( $custom_emojis[ $name ] ) ) {
+				$emoji_display = sprintf(
+					'<img src="%1$s" class="emoji-img" alt="%2$s" style="height: 20px; width: auto; max-height: 20px; vertical-align: middle; display: inline-block;" />',
+					esc_url( $custom_emojis[ $name ]['url'] ),
+					esc_attr( $name )
+				);
+			} else {
+				continue;
+			}
+		} else {
+			$emoji_display = sprintf( '<span class="emoji-icon">%s</span>', esc_html( $emoji ) );
+		}
+
 		$output .= sprintf(
 			'<button class="big-emoji-reaction-button" data-emoji="%1$s" title="%2$s">
-				<span class="emoji-icon">%1$s</span>
-				<span class="emoji-count">%3$d</span>
+				%3$s
+				<span class="emoji-count">%4$d</span>
 			</button>',
 			esc_attr( $emoji ),
 			esc_attr( ucfirst( str_replace( '-', ' ', $slug ) ) ),
+			$emoji_display,
 			esc_html( $count )
 		);
 	}
@@ -507,3 +580,279 @@ function big_emoji_comments_handle_react_api( $request ) {
 
 	return rest_ensure_response( $counts );
 }
+
+/**
+ * Register settings menu page.
+ */
+function big_emoji_comments_register_settings_menu() {
+	add_options_page(
+		__( 'Big Emoji Comments', 'big-emoji-comments' ),
+		__( 'Big Emoji Comments', 'big-emoji-comments' ),
+		'manage_options',
+		'big-emoji-comments',
+		'big_emoji_comments_render_settings_page'
+	);
+}
+add_action( 'admin_menu', 'big_emoji_comments_register_settings_menu' );
+
+/**
+ * Enqueue scripts and styles for admin settings page.
+ *
+ * @param string $hook The current admin page hook.
+ */
+function big_emoji_comments_admin_assets( $hook ) {
+	if ( 'settings_page_big-emoji-comments' !== $hook ) {
+		return;
+	}
+
+	wp_enqueue_style(
+		'big-emoji-comments-admin-style',
+		plugins_url( 'assets/admin.css', __FILE__ ),
+		array(),
+		'1.2.0'
+	);
+
+	wp_enqueue_script(
+		'big-emoji-comments-admin-script',
+		plugins_url( 'assets/admin.js', __FILE__ ),
+		array(),
+		'1.2.0',
+		true
+	);
+
+	$imported_emojis = get_option( 'big_emoji_custom_emojis', array() );
+
+	wp_localize_script(
+		'big-emoji-comments-admin-script',
+		'bigEmojiAdminSettings',
+		array(
+			'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'big_emoji_admin_nonce' ),
+			'imported' => array_keys( $imported_emojis ),
+		)
+	);
+}
+add_action( 'admin_enqueue_scripts', 'big_emoji_comments_admin_assets' );
+
+/**
+ * Render admin settings page layout.
+ */
+function big_emoji_comments_render_settings_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$custom_emojis = get_option( 'big_emoji_custom_emojis', array() );
+	?>
+	<div class="wrap big-emoji-settings-wrap">
+		<h1><?php esc_html_e( 'Big Emoji Comments Settings', 'big-emoji-comments' ); ?></h1>
+		
+		<div class="privacy-notice">
+			<p>
+				<strong><?php esc_html_e( 'Privacy Notice:', 'big-emoji-comments' ); ?></strong>
+				<?php esc_html_e( 'Searching custom emojis sends queries to slackmojis.com on-demand. No queries or network calls are made spontaneously or in the background.', 'big-emoji-comments' ); ?>
+			</p>
+		</div>
+
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Secondary menu', 'big-emoji-comments' ); ?>">
+			<a href="#tab-manage" class="nav-tab nav-tab-active"><?php esc_html_e( 'Manage Custom Emojis', 'big-emoji-comments' ); ?></a>
+			<a href="#tab-search" class="nav-tab"><?php esc_html_e( 'Search Slackmojis', 'big-emoji-comments' ); ?></a>
+		</nav>
+
+		<div id="tab-manage" class="tab-content">
+			<h2><?php esc_html_e( 'Your Custom Emojis', 'big-emoji-comments' ); ?></h2>
+			<div id="big-emoji-local-grid" class="emoji-grid">
+				<?php if ( empty( $custom_emojis ) ) : ?>
+					<p><?php esc_html_e( 'No custom emojis imported yet. Go to the "Search Slackmojis" tab to find and add some!', 'big-emoji-comments' ); ?></p>
+				<?php else : ?>
+					<?php foreach ( $custom_emojis as $emoji ) : ?>
+						<div class="emoji-card">
+							<img src="<?php echo esc_url( $emoji['url'] ); ?>" class="emoji-img" alt="<?php echo esc_attr( $emoji['name'] ); ?>" />
+							<div class="emoji-name">:<?php echo esc_html( $emoji['name'] ); ?>:</div>
+							<button class="button button-link-delete delete-btn" data-name="<?php echo esc_attr( $emoji['name'] ); ?>">
+								<?php esc_html_e( 'Delete', 'big-emoji-comments' ); ?>
+							</button>
+						</div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		</div>
+
+		<div id="tab-search" class="tab-content" style="display: none;">
+			<h2><?php esc_html_e( 'Search Custom Emojis from Slackmojis', 'big-emoji-comments' ); ?></h2>
+			<form id="big-emoji-search-form" class="big-emoji-search-form">
+				<input type="text" id="big-emoji-search-input" placeholder="<?php esc_attr_e( 'Search query...', 'big-emoji-comments' ); ?>" required />
+				<input type="submit" class="button button-primary" value="<?php esc_attr_e( 'Search', 'big-emoji-comments' ); ?>" />
+			</form>
+			<div id="big-emoji-search-results" class="emoji-grid"></div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * AJAX Handler: Retrieve local custom emojis list.
+ */
+function big_emoji_comments_ajax_get_local() {
+	check_ajax_referer( 'big_emoji_admin_nonce', 'nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( __( 'Unauthorized.', 'big-emoji-comments' ), 403 );
+	}
+
+	$custom_emojis = get_option( 'big_emoji_custom_emojis', array() );
+	wp_send_json_success( $custom_emojis );
+}
+add_action( 'wp_ajax_big_emoji_get_local', 'big_emoji_comments_ajax_get_local' );
+
+/**
+ * AJAX Handler: Search emojis on Slackmojis.
+ */
+function big_emoji_comments_ajax_search() {
+	check_ajax_referer( 'big_emoji_admin_nonce', 'nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( __( 'Unauthorized.', 'big-emoji-comments' ), 403 );
+	}
+
+	$query = isset( $_POST['query'] ) ? sanitize_text_field( wp_unslash( $_POST['query'] ) ) : '';
+	if ( empty( $query ) ) {
+		wp_send_json_error( __( 'Query is required.', 'big-emoji-comments' ) );
+	}
+
+	// Try to get cached Slackmojis list.
+	$emojis = get_transient( 'big_emoji_slackmojis_cache' );
+	if ( false === $emojis ) {
+		$response = wp_remote_get( 'https://slackmojis.com/emojis.json' );
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( __( 'Failed to fetch emojis from Slackmojis.', 'big-emoji-comments' ) );
+		}
+
+		$body   = wp_remote_retrieve_body( $response );
+		$emojis = json_decode( $body, true );
+		if ( ! is_array( $emojis ) ) {
+			wp_send_json_error( __( 'Invalid response format from Slackmojis.', 'big-emoji-comments' ) );
+		}
+
+		set_transient( 'big_emoji_slackmojis_cache', $emojis, DAY_IN_SECONDS );
+	}
+
+	// Filter emojis by search query (case-insensitive name match).
+	$filtered = array();
+	foreach ( $emojis as $emoji ) {
+		if ( isset( $emoji['name'] ) && false !== stripos( $emoji['name'], $query ) ) {
+			$filtered[] = array(
+				'name'      => $emoji['name'],
+				'image_url' => $emoji['image_url'],
+			);
+			if ( count( $filtered ) >= 60 ) {
+				break;
+			}
+		}
+	}
+
+	wp_send_json_success( $filtered );
+}
+add_action( 'wp_ajax_big_emoji_search', 'big_emoji_comments_ajax_search' );
+
+/**
+ * AJAX Handler: Import custom emoji image file locally.
+ */
+function big_emoji_comments_ajax_import() {
+	check_ajax_referer( 'big_emoji_admin_nonce', 'nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( __( 'Unauthorized.', 'big-emoji-comments' ), 403 );
+	}
+
+	$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+	$url  = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
+
+	if ( empty( $name ) || empty( $url ) ) {
+		wp_send_json_error( __( 'Name and image URL are required.', 'big-emoji-comments' ) );
+	}
+
+	// Setup custom directory inside uploads.
+	$upload_dir = wp_upload_dir();
+	$custom_dir = $upload_dir['basedir'] . '/big-emoji-comments';
+	if ( ! file_exists( $custom_dir ) ) {
+		wp_mkdir_p( $custom_dir );
+	}
+
+	// Get file extension and construct local filename.
+	$file_extension = pathinfo( wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION );
+	if ( empty( $file_extension ) ) {
+		$file_extension = 'png';
+	}
+	$filename  = sanitize_file_name( $name . '.' . $file_extension );
+	$file_path = $custom_dir . '/' . $filename;
+	$file_url  = $upload_dir['baseurl'] . '/big-emoji-comments/' . $filename;
+
+	// Download and write file.
+	$response = wp_remote_get( $url );
+	if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		wp_send_json_error( __( 'Failed to download emoji image.', 'big-emoji-comments' ) );
+	}
+
+	global $wp_filesystem;
+	if ( empty( $wp_filesystem ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		WP_Filesystem();
+	}
+
+	$written = $wp_filesystem->put_contents( $file_path, wp_remote_retrieve_body( $response ) );
+	if ( ! $written ) {
+		wp_send_json_error( __( 'Failed to write emoji file locally.', 'big-emoji-comments' ) );
+	}
+
+	// Store emoji details in database.
+	$custom_emojis          = get_option( 'big_emoji_custom_emojis', array() );
+	$custom_emojis[ $name ] = array(
+		'name' => $name,
+		'url'  => $file_url,
+		'path' => $file_path,
+	);
+	update_option( 'big_emoji_custom_emojis', $custom_emojis );
+
+	wp_send_json_success(
+		array(
+			'name' => $name,
+			'url'  => $file_url,
+		)
+	);
+}
+add_action( 'wp_ajax_big_emoji_import', 'big_emoji_comments_ajax_import' );
+
+/**
+ * AJAX Handler: Delete custom emoji.
+ */
+function big_emoji_comments_ajax_delete() {
+	check_ajax_referer( 'big_emoji_admin_nonce', 'nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( __( 'Unauthorized.', 'big-emoji-comments' ), 403 );
+	}
+
+	$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+	if ( empty( $name ) ) {
+		wp_send_json_error( __( 'Name is required.', 'big-emoji-comments' ) );
+	}
+
+	$custom_emojis = get_option( 'big_emoji_custom_emojis', array() );
+	if ( isset( $custom_emojis[ $name ] ) ) {
+		$file_path = $custom_emojis[ $name ]['path'];
+
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
+		if ( $wp_filesystem->exists( $file_path ) ) {
+			$wp_filesystem->delete( $file_path );
+		}
+
+		unset( $custom_emojis[ $name ] );
+		update_option( 'big_emoji_custom_emojis', $custom_emojis );
+		wp_send_json_success();
+	}
+
+	wp_send_json_error( __( 'Emoji not found.', 'big-emoji-comments' ) );
+}
+add_action( 'wp_ajax_big_emoji_delete', 'big_emoji_comments_ajax_delete' );
