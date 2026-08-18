@@ -67,3 +67,16 @@ This repository runs `phpcs` using the local ruleset configuration. Run linting 
 # From inside the big-emoji-comments directory
 ../vendor/bin/phpcs --standard=phpcs.xml
 ```
+
+### Local Testing with WordPress Playground CLI
+To run and test the local version of the codebase against the latest WordPress 7.1 nightly build, use the provided `local-blueprint.json` with the Playground CLI:
+
+```bash
+# Run Playground server in the plugin directory
+npx @wp-playground/cli@latest start --blueprint=local-blueprint.json
+```
+
+This command will:
+1. Fetch and launch WordPress running on the latest 7.1 nightly build.
+2. Mount your local plugin folder directly into `/wp-content/plugins/big-emoji-comments/`.
+3. Auto-login and redirect you directly to the Settings dashboard.

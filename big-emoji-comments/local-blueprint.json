@@ -1,0 +1,30 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": {
+    "php": "8.1",
+    "wp": "https://wordpress.org/nightly-builds/wordpress-latest.zip"
+  },
+  "landingPage": "/wp-admin/options-general.php?page=big-emoji-comments",
+  "steps": [
+    {
+      "step": "login",
+      "username": "admin",
+      "password": "password"
+    },
+    {
+      "step": "activatePlugin",
+      "pluginPath": "/wordpress/wp-content/plugins/big-emoji-comments/big-emoji-comments.php"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php\nrequire_once '/wordpress/wp-load.php';\n$upload_dir = wp_upload_dir();\n$custom_dir = $upload_dir['basedir'] . '/big-emoji-comments';\nif ( ! file_exists( $custom_dir ) ) {\n    wp_mkdir_p( $custom_dir );\n}\n$emojis = array(\n    'lol' => 'https://emojis.slackmojis.com/emojis/images/1643514041/1/lol.gif',\n    'excited' => 'https://emojis.slackmojis.com/emojis/images/1643514041/7/excited.gif',\n    'party_parrot' => 'https://emojis.slackmojis.com/emojis/images/1643514757/3229/party_parrot.gif'\n);\n$custom_emojis = get_option( 'big_emoji_custom_emojis', array() );\nforeach ( $emojis as $name => $url ) {\n    $response = wp_remote_get( $url );\n    if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {\n        $file_extension = pathinfo( wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION );\n        if ( empty( $file_extension ) ) {\n            $file_extension = 'gif';\n        }\n        $filename = sanitize_file_name( $name . '.' . $file_extension );\n        $file_path = $custom_dir . '/' . $filename;\n        $file_url = $upload_dir['baseurl'] . '/big-emoji-comments/' . $filename;\n        global $wp_filesystem;\n        if ( empty( $wp_filesystem ) ) {\n            require_once ABSPATH . 'wp-admin/includes/file.php';\n            WP_Filesystem();\n        }\n        $wp_filesystem->put_contents( $file_path, wp_remote_retrieve_body( $response ) );\n        $custom_emojis[ $name ] = array(\n            'name' => $name,\n            'url'  => $file_url,\n            'path' => $file_path\n        );\n    }\n}\nupdate_option( 'big_emoji_custom_emojis', $custom_emojis );\n"
+    },
+    {
+      "step": "importWxr",
+      "file": {
+        "resource": "vfs",
+        "path": "/wordpress/wp-content/plugins/big-emoji-comments/demo-comments.xml"
+      }
+    }
+  ]
+}
