@@ -12,6 +12,10 @@ A lightweight, high-performance WordPress plugin that automatically scales up em
   - **5 or More Emojis**: 200% font size (`BIG_EMOJI_DEFAULT_SIZE`)
 - **Modern Unicode Compatibility**: Fully recognizes modern emojis (up to Emoji 16.x / Unicode 16.0), including Zero Width Joiners (ZWJ) family/profession combinations, skin tone modifiers, regional indicator flags, and variation selectors.
 - **Grapheme Accuracy**: Uses grapheme cluster metrics to accurately count emoji characters. This ensures complex multi-codepoint emojis (like 👨‍👩‍👧) count as a single emoji rather than being falsely inflated by codepoint length.
+- **WordPress 7.1+ Icon Registration**: Registers our custom emoji SVG collection with the core Icon Registration API, enabling native usage inside WordPress's default Icon block.
+- **Emoji Reactions Block**: Offers a dynamic Gutenberg/FSE reactions block that allows users to leave reaction comments asynchronously, updating reaction counts inline.
+- **Custom Emojis Dashboard**: Allows administrators to search [Slackmojis](https://slackmojis.com/) and import custom raster/GIF/PNG emojis locally. Custom emoji codes (e.g. `:excited:`) inline are parsed, displayed as custom images, and fully support comment sizing scaling.
+  - *Privacy Note*: External queries are only sent to [slackmojis.com](https://slackmojis.com/) when the administrator explicitly performs a search. No background or automatic calls are made.
 - **Extensible Hooks**: Offers WordPress filters to customize sizes and HTML output structure.
 - **Standard Compliant**: Strictly adheres to WordPress Coding Standards (WPCS).
 
@@ -63,3 +67,16 @@ This repository runs `phpcs` using the local ruleset configuration. Run linting 
 # From inside the big-emoji-comments directory
 ../vendor/bin/phpcs --standard=phpcs.xml
 ```
+
+### Local Testing with WordPress Playground CLI
+To run and test the local version of the codebase against the latest WordPress 7.1 nightly build, use the provided `local-blueprint.json` with the Playground CLI:
+
+```bash
+# Run Playground server in the plugin directory
+npx @wp-playground/cli@latest start --blueprint=local-blueprint.json
+```
+
+This command will:
+1. Fetch and launch WordPress running on the latest 7.1 nightly build.
+2. Mount your local plugin folder directly into `/wp-content/plugins/big-emoji-comments/`.
+3. Auto-login and redirect you directly to the Settings dashboard.

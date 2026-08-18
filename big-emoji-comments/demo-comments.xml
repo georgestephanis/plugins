@@ -122,6 +122,36 @@
             <wp:comment_type><![CDATA[comment]]></wp:comment_type>
             <wp:comment_parent>0</wp:comment_parent>
         </wp:comment>
+
+        <!-- 7. Custom Emoji (500% Sizing) -->
+        <wp:comment>
+            <wp:comment_id>10007</wp:comment_id>
+            <wp:comment_author><![CDATA[Custom Emoji Fan]]></wp:comment_author>
+            <wp:comment_author_email><![CDATA[custom@example.com]]></wp:comment_author_email>
+            <wp:comment_author_url></wp:comment_author_url>
+            <wp:comment_author_IP><![CDATA[127.0.0.1]]></wp:comment_author_IP>
+            <wp:comment_date><![CDATA[2026-06-15 12:35:00]]></wp:comment_date>
+            <wp:comment_date_gmt><![CDATA[2026-06-15 12:35:00]]></wp:comment_date_gmt>
+            <wp:comment_content><![CDATA[:excited:]]></wp:comment_content>
+            <wp:comment_approved><![CDATA[1]]></wp:comment_approved>
+            <wp:comment_type><![CDATA[comment]]></wp:comment_type>
+            <wp:comment_parent>0</wp:comment_parent>
+        </wp:comment>
+
+        <!-- 8. Mixed Custom Emojis (300% Sizing) -->
+        <wp:comment>
+            <wp:comment_id>10008</wp:comment_id>
+            <wp:comment_author><![CDATA[Jumboji Collector]]></wp:comment_author>
+            <wp:comment_author_email><![CDATA[jumboji@example.com]]></wp:comment_author_email>
+            <wp:comment_author_url></wp:comment_author_url>
+            <wp:comment_author_IP><![CDATA[127.0.0.1]]></wp:comment_author_IP>
+            <wp:comment_date><![CDATA[2026-06-15 12:40:00]]></wp:comment_date>
+            <wp:comment_date_gmt><![CDATA[2026-06-15 12:40:00]]></wp:comment_date_gmt>
+            <wp:comment_content><![CDATA[:lol: :party_parrot:]]></wp:comment_content>
+            <wp:comment_approved><![CDATA[1]]></wp:comment_approved>
+            <wp:comment_type><![CDATA[comment]]></wp:comment_type>
+            <wp:comment_parent>0</wp:comment_parent>
+        </wp:comment>
     </item>
 </channel>
 </rss>
