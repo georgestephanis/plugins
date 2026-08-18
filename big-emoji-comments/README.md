@@ -14,8 +14,8 @@ A lightweight, high-performance WordPress plugin that automatically scales up em
 - **Grapheme Accuracy**: Uses grapheme cluster metrics to accurately count emoji characters. This ensures complex multi-codepoint emojis (like 👨‍👩‍👧) count as a single emoji rather than being falsely inflated by codepoint length.
 - **WordPress 7.1+ Icon Registration**: Registers our custom emoji SVG collection with the core Icon Registration API, enabling native usage inside WordPress's default Icon block.
 - **Emoji Reactions Block**: Offers a dynamic Gutenberg/FSE reactions block that allows users to leave reaction comments asynchronously, updating reaction counts inline.
-- **Custom Emojis Dashboard**: Allows administrators to search Slackmojis and import custom raster/GIF/PNG emojis locally. Custom emoji codes (e.g. `:excited:`) inline are parsed, displayed as custom images, and fully support comment sizing scaling.
-  - *Privacy Note*: External queries are only sent to slackmojis.com when the administrator explicitly performs a search. No background or automatic calls are made.
+- **Custom Emojis Dashboard**: Allows administrators to search [Slackmojis](https://slackmojis.com/) and import custom raster/GIF/PNG emojis locally. Custom emoji codes (e.g. `:excited:`) inline are parsed, displayed as custom images, and fully support comment sizing scaling.
+  - *Privacy Note*: External queries are only sent to [slackmojis.com](https://slackmojis.com/) when the administrator explicitly performs a search. No background or automatic calls are made.
 - **Extensible Hooks**: Offers WordPress filters to customize sizes and HTML output structure.
 - **Standard Compliant**: Strictly adheres to WordPress Coding Standards (WPCS).
 

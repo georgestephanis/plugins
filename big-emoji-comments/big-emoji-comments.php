@@ -781,6 +781,12 @@ function big_emoji_comments_ajax_import() {
 	if ( empty( $file_extension ) ) {
 		$file_extension = 'png';
 	}
+
+	$allowed_extensions = array( 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp' );
+	if ( ! in_array( strtolower( $file_extension ), $allowed_extensions, true ) ) {
+		wp_send_json_error( __( 'Invalid file extension. Only PNG, JPG, JPEG, GIF, SVG, and WEBP are allowed.', 'big-emoji-comments' ) );
+	}
+
 	$filename  = sanitize_file_name( $name . '.' . $file_extension );
 	$file_path = $custom_dir . '/' . $filename;
 	$file_url  = $upload_dir['baseurl'] . '/big-emoji-comments/' . $filename;

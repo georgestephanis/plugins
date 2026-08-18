@@ -27,8 +27,8 @@ Adds support for registering custom emoji SVG icons via the new WordPress 7.1 Ic
 Insert an interactive "Emoji Reactions" block anywhere on posts or FSE templates. Readers can click on reaction buttons to asynchronously leave emoji comment reactions, which automatically count as big emoji comments!
 
 = Custom Slackmojis Search & Import =
-Search Slackmojis (via emojis.json) and import custom Slack/Discord emojis directly to your WordPress site. The plugin will parse custom emojis codes (e.g. `:excited:`) inline and count them towards big emoji comment thresholds.
-*Privacy Note:* The plugin will only contact external servers (slackmojis.com) on-demand when the administrator explicitly enters a search query in the admin settings dashboard. No external calls or background syncs occur automatically.
+Search Slackmojis (https://slackmojis.com/) and import custom Slack/Discord emojis directly to your WordPress site. The plugin will parse custom emojis codes (e.g. `:excited:`) inline and count them towards big emoji comment thresholds.
+*Privacy Note:* The plugin will only contact external servers (https://slackmojis.com/) on-demand when the administrator explicitly enters a search query in the admin settings dashboard. No external calls or background syncs occur automatically.
 
 == Changelog ==
 
