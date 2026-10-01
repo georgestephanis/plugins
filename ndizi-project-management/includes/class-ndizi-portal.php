@@ -859,6 +859,26 @@ class Ndizi_Portal {
 									),
 								)
 							);
+
+							$task_total      = count( $tasks );
+							$completed_count = 0;
+							foreach ( $tasks as $task_row ) {
+								if ( 'completed' === get_post_meta( $task_row->ID, '_ndizi_task_status', true ) ) {
+									++$completed_count;
+								}
+							}
+							$open_count = $task_total - $completed_count;
+
+							/* translators: %d: number of tasks */
+							$task_summary = sprintf( _n( '%d task', '%d tasks', $task_total, 'ndizi-project-management' ), $task_total );
+							if ( $task_total > 0 && 0 === $completed_count ) {
+								$task_summary .= ' (' . ( 1 === $task_total ? __( 'open', 'ndizi-project-management' ) : __( 'all open', 'ndizi-project-management' ) ) . ')';
+							} elseif ( $task_total > 0 && 0 === $open_count ) {
+								$task_summary .= ' (' . ( 1 === $task_total ? __( 'completed', 'ndizi-project-management' ) : __( 'all completed', 'ndizi-project-management' ) ) . ')';
+							} elseif ( $task_total > 0 ) {
+								/* translators: 1: open task count, 2: completed task count */
+								$task_summary .= ' (' . sprintf( __( '%1$d open, %2$d completed', 'ndizi-project-management' ), $open_count, $completed_count ) . ')';
+							}
 							?>
 							<div class="ndizi-portal-card ndizi-project-card" data-project-id="<?php echo esc_attr( $project->ID ); ?>">
 								<div class="ndizi-project-card-header">
@@ -867,7 +887,7 @@ class Ndizi_Portal {
 										<div class="ndizi-project-summary-meta">
 											<span class="ndizi-meta-hours"><strong><?php echo esc_html( $total_hours ); ?></strong> <?php esc_html_e( 'hours tracked', 'ndizi-project-management' ); ?></span>
 											<span class="ndizi-meta-divider">&bull;</span>
-											<span class="ndizi-meta-tasks"><?php echo count( $tasks ); ?> <?php esc_html_e( 'tasks', 'ndizi-project-management' ); ?></span>
+											<span class="ndizi-meta-tasks"><?php echo esc_html( $task_summary ); ?></span>
 										</div>
 									</div>
 									<button type="button" class="ndizi-accordion-toggle-btn">
@@ -891,15 +911,11 @@ class Ndizi_Portal {
 										<?php else : ?>
 											<ul class="ndizi-portal-task-list">
 												<?php
-												$completed_count = 0;
 												foreach ( $tasks as $task ) :
 													$status   = get_post_meta( $task->ID, '_ndizi_task_status', true );
 													$priority = get_post_meta( $task->ID, '_ndizi_task_priority', true );
 													$due      = get_post_meta( $task->ID, '_ndizi_task_due_date', true );
 													$msgs     = (int) $task->comment_count;
-													if ( 'completed' === $status ) {
-														++$completed_count;
-													}
 													?>
 													<li class="ndizi-portal-task-item" id="ndizi-task-<?php echo esc_attr( $task->ID ); ?>" data-status="<?php echo esc_attr( $status ); ?>">
 														<div class="ndizi-task-row">
