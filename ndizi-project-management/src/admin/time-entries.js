@@ -26,6 +26,13 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { getQueryArg } from '@wordpress/url';
 import apiFetch from '@wordpress/api-fetch';
 
+// DataViews cells default to `white-space: nowrap`, so long project/task/user
+// text spills over the neighbouring column. Force wrapping in text cells.
+const WRAP_STYLE = {
+	whiteSpace: 'normal',
+	overflowWrap: 'anywhere',
+};
+
 /* global ndizi_time_entries_admin */
 
 const TimeEntriesApp = () => {
@@ -563,7 +570,7 @@ const TimeEntriesApp = () => {
 				render: ( { item } ) => {
 					const clientId = parseInt( item.client_id, 10 );
 					return (
-						<span>
+						<span style={ WRAP_STYLE }>
 							{ item.client_name ||
 								( clientId ? `Client #${ clientId }` : '-' ) }
 						</span>
@@ -579,14 +586,20 @@ const TimeEntriesApp = () => {
 				enableSorting: true,
 				getValue: ( { item } ) => parseInt( item.project_id, 10 ),
 				render: ( { item } ) => (
-					<div>
+					<div style={ WRAP_STYLE }>
 						<strong>
 							{ item.project_name ||
 								( item.project_id
 									? `Project #${ item.project_id }`
 									: '-' ) }
 						</strong>
-						<div style={ { color: '#64748b', fontSize: '0.9em' } }>
+						<div
+							style={ {
+								...WRAP_STYLE,
+								color: '#64748b',
+								fontSize: '0.9em',
+							} }
+						>
 							{ item.task_name || <em>General / None</em> }
 						</div>
 					</div>
@@ -600,7 +613,9 @@ const TimeEntriesApp = () => {
 				filterBy: canManage ? { operators: [ 'is' ] } : false,
 				getValue: ( { item } ) => parseInt( item.user_id, 10 ),
 				render: ( { item } ) => (
-					<span>{ item.user_name || `User #${ item.user_id }` }</span>
+					<span style={ WRAP_STYLE }>
+						{ item.user_name || `User #${ item.user_id }` }
+					</span>
 				),
 			},
 			{
@@ -608,12 +623,7 @@ const TimeEntriesApp = () => {
 				label: 'Description',
 				filterBy: false,
 				render: ( { item } ) => (
-					<div
-						style={ {
-							whiteSpace: 'normal',
-							wordBreak: 'break-word',
-						} }
-					>
+					<div style={ WRAP_STYLE }>
 						{ item.description || <em>No description</em> }
 					</div>
 				),
