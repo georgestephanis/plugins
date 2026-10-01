@@ -154,7 +154,8 @@ class Ndizi_External_Links {
 	 * @return true|WP_Error
 	 */
 	public static function validate( $links ) {
-		if ( ! is_array( $links ) ) {
+		// A lone { label, url } object decodes to an associative array; require a real list so it is rejected rather than wiping stored links.
+		if ( ! is_array( $links ) || ( array() !== $links && array_keys( $links ) !== range( 0, count( $links ) - 1 ) ) ) {
 			return new WP_Error( 'invalid_external_links', __( 'external_links must be an array of { label, url } objects.', 'ndizi-project-management' ), array( 'status' => 400 ) );
 		}
 
@@ -211,7 +212,7 @@ class Ndizi_External_Links {
 	 * @return string
 	 */
 	public static function get_display_label( $link ) {
-		if ( ! empty( $link['label'] ) ) {
+		if ( isset( $link['label'] ) && '' !== $link['label'] ) {
 			return $link['label'];
 		}
 
