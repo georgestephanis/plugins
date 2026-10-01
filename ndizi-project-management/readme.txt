@@ -4,7 +4,7 @@ Tags: project management, time tracking, clients, tasks, invoices
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,9 +135,11 @@ Google's terms and privacy policy: https://policies.google.com/terms and https:/
 
 == Changelog ==
 
-= Unreleased =
+= 1.4.0 =
+*   Client Portal: Each project's task count now shows how many tasks are open and completed (e.g. "5 tasks (3 open, 2 completed)").
+*   Client Portal: Long project, task and description text now wraps inside its column in the portal time log, and in the admin Time Entries table, instead of overflowing into neighbouring columns.
 *   Client Portal: Task discussions now expand inline beneath the task row (like projects do) instead of opening a modal, show a message count, and reopen after you post a message. A task's external links (shown by default; toggle with the block's new "Show external links" setting, or override per task with the `ndizi_portal_show_external_links` filter) now sit in the row just before the status badge. A "Hide completed tasks" toggle under Your Projects (remembered in the browser) hides completed tasks, with a per-project link to show them again.
-*   External Links: Added a repeatable label + URL `_ndizi_external_links` field to clients, projects, tasks, and invoices so a record can link back to its source in another system (e.g. an Asana task or GitHub PR). Editable in each record's meta box, shown as a Links column on the Tasks list, returned by `GET /tasks` and `GET /projects`, available through the standard REST `meta`, and accepted/returned by the matching Abilities API create/update/get abilities (so it is reachable over MCP). Client-portal output is opt-in via the `ndizi_portal_show_external_links` filter.
+*   External Links: Added a repeatable label + URL `_ndizi_external_links` field to clients, projects, tasks, and invoices so a record can link back to its source in another system (e.g. an Asana task or GitHub PR). Editable in each record's meta box, shown as a Links column on the Tasks list, returned by `GET /tasks` and `GET /projects`, available through the standard REST `meta`, and accepted/returned by the matching Abilities API create/update/get abilities (so it is reachable over MCP). Shown to clients in the portal by default (see Client Portal below).
 
 = 1.3.0 =
 *   MCP Adapter Notice: Added a dismissible admin notice, shown only on Ndizi's own admin pages to users who can install plugins, suggesting the MCP Adapter plugin so Ndizi's Abilities API registrations become reachable over MCP. Dismissal is AJAX-based (no page reload) and backed by a generic `ndizi_notices` user meta key so future notices can reuse the same plumbing.
