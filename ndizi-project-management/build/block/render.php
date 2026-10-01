@@ -179,6 +179,7 @@ $ndizi_portal_content = Ndizi_Portal::render_portal_shortcode(
 		'showTasks'            => isset( $attributes['showTasks'] ) ? (bool) $attributes['showTasks'] : true,
 		'showInvoices'         => isset( $attributes['showInvoices'] ) ? (bool) $attributes['showInvoices'] : true,
 		'showDiscussion'       => isset( $attributes['showDiscussion'] ) ? (bool) $attributes['showDiscussion'] : true,
+		'showExternalLinks'    => isset( $attributes['showExternalLinks'] ) ? (bool) $attributes['showExternalLinks'] : true,
 	)
 );
 

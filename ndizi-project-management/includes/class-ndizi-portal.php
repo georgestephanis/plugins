@@ -659,6 +659,7 @@ class Ndizi_Portal {
 				'showTasks'            => true,
 				'showInvoices'         => true,
 				'showDiscussion'       => true,
+				'showExternalLinks'    => true,
 			),
 			$atts
 		);
@@ -913,13 +914,14 @@ class Ndizi_Portal {
 																/**
 																 * Whether to show a task's external links in the client portal.
 																 *
-																 * Off by default: external links usually point at internal tooling (an Asana
-																 * task, a GitHub PR) that clients can't open.
+																 * Defaults to the portal block's "Show external links" setting (on unless
+																 * turned off). Links often point at internal tooling that clients can't
+																 * open, so this filter lets a site override the block per task.
 																 *
-																 * @param bool    $show Whether to show the links. Default false.
+																 * @param bool    $show Whether to show the links.
 																 * @param WP_Post $task The task being rendered.
 																 */
-																if ( apply_filters( 'ndizi_portal_show_external_links', false, $task ) ) {
+																if ( apply_filters( 'ndizi_portal_show_external_links', filter_var( $atts['showExternalLinks'], FILTER_VALIDATE_BOOLEAN ), $task ) ) {
 																	echo wp_kses_post( Ndizi_External_Links::render_list( $task->ID ) );
 																}
 																?>
