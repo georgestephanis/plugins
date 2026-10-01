@@ -305,7 +305,7 @@ class Ndizi_External_Links {
 	 * @param int $post_id Post ID.
 	 */
 	public static function save_from_request( $post_id ) {
-        // phpcs:disable WordPress.Security.NonceVerification.Missing -- Reason: callers verify the meta box nonce before delegating here.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Reason: callers verify the meta box nonce before delegating here.
 		if ( ! isset( $_POST['ndizi_external_links_present'] ) ) {
 			return;
 		}
