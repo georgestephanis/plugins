@@ -113,6 +113,29 @@
 	resize: vertical;
 }
 
+/* External links editor */
+.ndizi-external-link-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+	margin: 0 0 6px;
+
+	.ndizi-remove-external-link {
+		color: #b32d2e;
+	}
+}
+
+.ndizi-external-links {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	li {
+		margin: 0;
+	}
+}
+
 /* Time Tracker Controls (Project Editor Meta Box) */
 .ndizi-tracker-wrapper {
 	padding: 10px 0;

@@ -111,6 +111,7 @@ class Ndizi_Meta_Boxes {
 					<input type="text" name="ndizi_external_id" id="ndizi_external_id" value="<?php echo esc_attr( $external_id ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'External ID', 'ndizi-project-management' ); ?>" style="width: 48%;">
 				</td>
 			</tr>
+			<?php Ndizi_External_Links::render_editor_row( $post->ID ); ?>
 		</table>
 		<?php
 	}
@@ -186,6 +187,7 @@ class Ndizi_Meta_Boxes {
 					<input type="text" name="ndizi_external_id" id="ndizi_external_id" value="<?php echo esc_attr( $external_id ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'External ID', 'ndizi-project-management' ); ?>" style="width: 48%;">
 				</td>
 			</tr>
+			<?php Ndizi_External_Links::render_editor_row( $post->ID ); ?>
 		</table>
 		<?php
 	}
@@ -394,6 +396,7 @@ class Ndizi_Meta_Boxes {
 				<td><input type="number" step="0.01" name="ndizi_task_hourly_rate" id="ndizi_task_hourly_rate" value="<?php echo esc_attr( $task_hourly_rate ); ?>" class="small-text"></td>
 			</tr>
 			<?php endif; ?>
+			<?php Ndizi_External_Links::render_editor_row( $post->ID ); ?>
 		</table>
 		<?php
 	}
@@ -684,6 +687,7 @@ class Ndizi_Meta_Boxes {
 					<td><p class="description"><?php esc_html_e( 'Select a Project and save/update the invoice first to see eligible time entries.', 'ndizi-project-management' ); ?></p></td>
 				</tr>
 			<?php endif; ?>
+			<?php Ndizi_External_Links::render_editor_row( $post->ID ); ?>
 		</table>
 		<?php
 	}
@@ -857,6 +861,7 @@ class Ndizi_Meta_Boxes {
 			if ( isset( $_POST['ndizi_external_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
 			}
+			Ndizi_External_Links::save_from_request( $post_id );
 			if ( isset( $_POST['ndizi_client_billing_mode'] ) ) {
 				$client_billing_mode = sanitize_key( wp_unslash( $_POST['ndizi_client_billing_mode'] ) );
 				if ( ! in_array( $client_billing_mode, array( '', 'client', 'project', 'both' ), true ) ) {
@@ -892,6 +897,7 @@ class Ndizi_Meta_Boxes {
 			if ( isset( $_POST['ndizi_external_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
 			}
+			Ndizi_External_Links::save_from_request( $post_id );
 		}
 
 		// 3. Task Save
@@ -914,6 +920,7 @@ class Ndizi_Meta_Boxes {
 			if ( isset( $_POST['ndizi_task_hourly_rate'] ) ) {
 				update_post_meta( $post_id, '_ndizi_task_hourly_rate', max( 0.0, floatval( $_POST['ndizi_task_hourly_rate'] ) ) );
 			}
+			Ndizi_External_Links::save_from_request( $post_id );
 		}
 
 		// 4. Invoice Save
@@ -948,6 +955,7 @@ class Ndizi_Meta_Boxes {
 			if ( isset( $_POST['ndizi_external_id'] ) ) {
 				update_post_meta( $post_id, '_ndizi_external_id', sanitize_text_field( wp_unslash( $_POST['ndizi_external_id'] ) ) );
 			}
+			Ndizi_External_Links::save_from_request( $post_id );
 
 			// Process structured line items
 			$descs  = isset( $_POST['ndizi_line_items_desc'] ) && is_array( $_POST['ndizi_line_items_desc'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['ndizi_line_items_desc'] ) ) : array();

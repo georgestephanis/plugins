@@ -522,14 +522,15 @@ class Ndizi_REST {
 			$client    = $client_id ? get_post( $client_id ) : null;
 
 			$response[] = array(
-				'id'          => $project->ID,
-				'title'       => $project->post_title,
-				'description' => $project->post_content,
-				'client_id'   => $client_id ? intval( $client_id ) : null,
-				'client_name' => $client ? $client->post_title : '',
-				'budget'      => get_post_meta( $project->ID, '_ndizi_project_budget', true ),
-				'start_date'  => get_post_meta( $project->ID, '_ndizi_project_start_date', true ),
-				'end_date'    => get_post_meta( $project->ID, '_ndizi_project_end_date', true ),
+				'id'             => $project->ID,
+				'title'          => $project->post_title,
+				'description'    => $project->post_content,
+				'client_id'      => $client_id ? intval( $client_id ) : null,
+				'client_name'    => $client ? $client->post_title : '',
+				'budget'         => get_post_meta( $project->ID, '_ndizi_project_budget', true ),
+				'start_date'     => get_post_meta( $project->ID, '_ndizi_project_start_date', true ),
+				'end_date'       => get_post_meta( $project->ID, '_ndizi_project_end_date', true ),
+				'external_links' => Ndizi_External_Links::get_links( $project->ID ),
 			);
 		}
 
@@ -604,14 +605,15 @@ class Ndizi_REST {
 			$project = $p_id ? get_post( $p_id ) : null;
 
 			$response[] = array(
-				'id'           => $task->ID,
-				'title'        => $task->post_title,
-				'description'  => $task->post_content,
-				'project_id'   => $p_id ? intval( $p_id ) : null,
-				'project_name' => $project ? $project->post_title : '',
-				'status'       => get_post_meta( $task->ID, '_ndizi_task_status', true ),
-				'priority'     => get_post_meta( $task->ID, '_ndizi_task_priority', true ),
-				'due_date'     => get_post_meta( $task->ID, '_ndizi_task_due_date', true ),
+				'id'             => $task->ID,
+				'title'          => $task->post_title,
+				'description'    => $task->post_content,
+				'project_id'     => $p_id ? intval( $p_id ) : null,
+				'project_name'   => $project ? $project->post_title : '',
+				'status'         => get_post_meta( $task->ID, '_ndizi_task_status', true ),
+				'priority'       => get_post_meta( $task->ID, '_ndizi_task_priority', true ),
+				'due_date'       => get_post_meta( $task->ID, '_ndizi_task_due_date', true ),
+				'external_links' => Ndizi_External_Links::get_links( $task->ID ),
 			);
 		}
 

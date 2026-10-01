@@ -893,6 +893,20 @@ class Ndizi_Portal {
 															<?php if ( $due ) : ?>
 																<span class="ndizi-task-due"><?php esc_html_e( 'Due:', 'ndizi-project-management' ); ?> <?php echo esc_html( $due ); ?></span>
 															<?php endif; ?>
+															<?php
+															/**
+															 * Whether to show a task's external links in the client portal.
+															 *
+															 * Off by default: external links usually point at internal tooling (an Asana
+															 * task, a GitHub PR) that clients can't open.
+															 *
+															 * @param bool    $show Whether to show the links. Default false.
+															 * @param WP_Post $task The task being rendered.
+															 */
+															if ( apply_filters( 'ndizi_portal_show_external_links', false, $task ) ) {
+																echo wp_kses_post( Ndizi_External_Links::render_list( $task->ID ) );
+															}
+															?>
 														</div>
 														<div class="ndizi-task-badges-col">
 															<span class="ndizi-badge ndizi-task-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status ); ?></span>
