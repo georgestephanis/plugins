@@ -135,6 +135,9 @@ Google's terms and privacy policy: https://policies.google.com/terms and https:/
 
 == Changelog ==
 
+= Unreleased =
+*   External Links: Added a repeatable label + URL `_ndizi_external_links` field to clients, projects, tasks, and invoices so a record can link back to its source in another system (e.g. an Asana task or GitHub PR). Editable in each record's meta box, shown as a Links column on the Tasks list, returned by `GET /tasks` and `GET /projects`, available through the standard REST `meta`, and accepted/returned by the matching Abilities API create/update/get abilities (so it is reachable over MCP). Client-portal output is opt-in via the `ndizi_portal_show_external_links` filter.
+
 = 1.3.0 =
 *   MCP Adapter Notice: Added a dismissible admin notice, shown only on Ndizi's own admin pages to users who can install plugins, suggesting the MCP Adapter plugin so Ndizi's Abilities API registrations become reachable over MCP. Dismissal is AJAX-based (no page reload) and backed by a generic `ndizi_notices` user meta key so future notices can reuse the same plumbing.
 

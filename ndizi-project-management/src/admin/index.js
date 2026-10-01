@@ -22,6 +22,7 @@ import { formatTime, createTimer } from '../shared/timer.js';
 		initTimeTracker();
 		initInvoiceAggregator();
 		initLineItemsEditor();
+		initExternalLinksEditor();
 		initPaymentsEditor();
 		initTrackerLauncher();
 		initSelectOnClick();
@@ -316,6 +317,36 @@ import { formatTime, createTimer } from '../shared/timer.js';
 
 		$clientSelect.on( 'change', applyBillingMode );
 		applyBillingMode();
+	}
+
+	/**
+	 * Repeatable "External Links" label/URL editor shared by the client, project,
+	 * task and invoice meta boxes. See Ndizi_External_Links::render_editor_row().
+	 */
+	function initExternalLinksEditor() {
+		$( '.ndizi-external-links-editor' ).each( function () {
+			const $editor = $( this );
+			const $rows = $editor.find( '.ndizi-external-links-rows' );
+			const template = $editor
+				.find( '.ndizi-external-link-template' )
+				.html();
+			// Keep new indexes clear of the ones rendered server-side.
+			let nextIndex = $rows.children().length;
+
+			$editor.on( 'click', '.ndizi-add-external-link', function ( e ) {
+				e.preventDefault();
+				const $row = $(
+					template.replace( /__INDEX__/g, String( nextIndex++ ) )
+				);
+				$rows.append( $row );
+				$row.find( 'input' ).first().trigger( 'focus' );
+			} );
+
+			$editor.on( 'click', '.ndizi-remove-external-link', function ( e ) {
+				e.preventDefault();
+				$( this ).closest( '.ndizi-external-link-row' ).remove();
+			} );
+		} );
 	}
 
 	/**

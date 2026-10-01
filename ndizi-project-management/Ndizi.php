@@ -255,6 +255,7 @@ class Ndizi_Project_Management {
 	 */
 	private static function includes() {
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-db.php';
+		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-external-links.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-cpts.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-roles.php';
 		require_once NDIZI_PLUGIN_DIR . 'includes/class-ndizi-time-service.php';

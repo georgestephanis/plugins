@@ -679,6 +679,7 @@ class Ndizi_List_Tables {
 				$new_columns['task_priority']    = __( 'Priority', 'ndizi-project-management' );
 				$new_columns['task_due_date']    = __( 'Due Date', 'ndizi-project-management' );
 				$new_columns['task_hourly_rate'] = __( 'Hourly Rate', 'ndizi-project-management' );
+				$new_columns['task_links']       = __( 'Links', 'ndizi-project-management' );
 			}
 			$new_columns[ $key ] = $title;
 		}
@@ -729,6 +730,9 @@ class Ndizi_List_Tables {
 		} elseif ( 'task_hourly_rate' === $column ) {
 			$rate = get_post_meta( $post_id, '_ndizi_task_hourly_rate', true );
 			echo $rate ? '$' . esc_html( number_format( $rate, 2 ) ) : '-';
+		} elseif ( 'task_links' === $column ) {
+			$links_html = Ndizi_External_Links::render_list( $post_id );
+			echo '' !== $links_html ? wp_kses_post( $links_html ) : '-';
 		}
 	}
 

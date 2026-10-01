@@ -729,6 +729,7 @@ class Ndizi_Invoicing {
 			'status'          => $status,
 			'external_source' => $external_source,
 			'external_id'     => $external_id,
+			'external_links'  => Ndizi_External_Links::get_links( $invoice_id ),
 			'line_items'      => array(),
 		);
 

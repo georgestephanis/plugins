@@ -139,14 +139,15 @@ class Ndizi_Abilities {
 					'items' => array(
 						'type'       => 'object',
 						'properties' => array(
-							'id'          => array( 'type' => 'integer' ),
-							'title'       => array( 'type' => 'string' ),
-							'description' => array( 'type' => 'string' ),
-							'client_id'   => array( 'type' => 'integer' ),
-							'client_name' => array( 'type' => 'string' ),
-							'budget'      => array( 'type' => 'number' ),
-							'start_date'  => array( 'type' => 'string' ),
-							'end_date'    => array( 'type' => 'string' ),
+							'id'             => array( 'type' => 'integer' ),
+							'title'          => array( 'type' => 'string' ),
+							'description'    => array( 'type' => 'string' ),
+							'client_id'      => array( 'type' => 'integer' ),
+							'client_name'    => array( 'type' => 'string' ),
+							'budget'         => array( 'type' => 'number' ),
+							'start_date'     => array( 'type' => 'string' ),
+							'end_date'       => array( 'type' => 'string' ),
+							'external_links' => self::external_links_property(),
 						),
 					),
 				),
@@ -201,6 +202,7 @@ class Ndizi_Abilities {
 							'status'           => array( 'type' => 'string' ),
 							'priority'         => array( 'type' => 'string' ),
 							'due_date'         => array( 'type' => 'string' ),
+							'external_links'   => self::external_links_property(),
 						),
 					),
 				),
@@ -496,20 +498,21 @@ class Ndizi_Abilities {
 					'items' => array(
 						'type'       => 'object',
 						'properties' => array(
-							'id'           => array( 'type' => 'integer' ),
-							'number'       => array( 'type' => 'string' ),
-							'project_id'   => array( 'type' => 'integer' ),
-							'project_name' => array( 'type' => 'string' ),
-							'client_id'    => array( 'type' => 'integer' ),
-							'client_name'  => array( 'type' => 'string' ),
-							'status'       => array( 'type' => 'string' ),
-							'amount'       => array( 'type' => 'number' ),
-							'balance'      => array( 'type' => 'number' ),
-							'currency'     => array( 'type' => 'string' ),
-							'invoice_date' => array( 'type' => 'string' ),
-							'due_date'     => array( 'type' => 'string' ),
-							'line_items'   => array( 'type' => 'array' ),
-							'payments'     => array( 'type' => 'array' ),
+							'id'             => array( 'type' => 'integer' ),
+							'number'         => array( 'type' => 'string' ),
+							'project_id'     => array( 'type' => 'integer' ),
+							'project_name'   => array( 'type' => 'string' ),
+							'client_id'      => array( 'type' => 'integer' ),
+							'client_name'    => array( 'type' => 'string' ),
+							'status'         => array( 'type' => 'string' ),
+							'amount'         => array( 'type' => 'number' ),
+							'balance'        => array( 'type' => 'number' ),
+							'currency'       => array( 'type' => 'string' ),
+							'invoice_date'   => array( 'type' => 'string' ),
+							'due_date'       => array( 'type' => 'string' ),
+							'line_items'     => array( 'type' => 'array' ),
+							'payments'       => array( 'type' => 'array' ),
+							'external_links' => self::external_links_property(),
 						),
 					),
 				),
@@ -675,6 +678,34 @@ class Ndizi_Abilities {
 	}
 
 	/**
+	 * Schema for the shared `external_links` field, reused by every input/output schema.
+	 *
+	 * @return array
+	 */
+	private static function external_links_property() {
+		return array_merge(
+			Ndizi_External_Links::get_schema(),
+			array(
+				'description' => __( 'External links (label + URL) back to the same record in another system, e.g. its Asana task or GitHub PR. On update the list replaces the existing one; pass an empty array to clear it.', 'ndizi-project-management' ),
+			)
+		);
+	}
+
+	/**
+	 * Validates `external_links` in ability input up front, before any write happens, so a
+	 * malformed link fails the whole call instead of silently dropping.
+	 *
+	 * @param array $input Ability input.
+	 * @return true|WP_Error
+	 */
+	private static function validate_external_links_input( $input ) {
+		if ( ! isset( $input['external_links'] ) ) {
+			return true;
+		}
+		return Ndizi_External_Links::validate( $input['external_links'] );
+	}
+
+	/**
 	 * Sanitizes a string against an allowlist, falling back to a default.
 	 *
 	 * @param mixed  $value   Raw input value.
@@ -707,11 +738,12 @@ class Ndizi_Abilities {
 		};
 
 		$output_properties = array(
-			'id'      => array( 'type' => 'integer' ),
-			'name'    => array( 'type' => 'string' ),
-			'website' => array( 'type' => 'string' ),
-			'address' => array( 'type' => 'string' ),
-			'status'  => array( 'type' => 'string' ),
+			'id'             => array( 'type' => 'integer' ),
+			'name'           => array( 'type' => 'string' ),
+			'website'        => array( 'type' => 'string' ),
+			'address'        => array( 'type' => 'string' ),
+			'status'         => array( 'type' => 'string' ),
+			'external_links' => self::external_links_property(),
 		);
 
 		wp_register_ability(
@@ -764,23 +796,24 @@ class Ndizi_Abilities {
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
-						'name'    => array(
+						'name'           => array(
 							'type'        => 'string',
 							'description' => __( 'Client name.', 'ndizi-project-management' ),
 						),
-						'website' => array(
+						'website'        => array(
 							'type'        => 'string',
 							'description' => __( 'Client website URL.', 'ndizi-project-management' ),
 						),
-						'address' => array(
+						'address'        => array(
 							'type'        => 'string',
 							'description' => __( 'Client address.', 'ndizi-project-management' ),
 						),
-						'status'  => array(
+						'status'         => array(
 							'type'        => 'string',
 							'enum'        => array( 'active', 'archived' ),
 							'description' => __( 'Client status. Defaults to active.', 'ndizi-project-management' ),
 						),
+						'external_links' => self::external_links_property(),
 					),
 					'required'   => array( 'name' ),
 				),
@@ -810,26 +843,27 @@ class Ndizi_Abilities {
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
-						'id'      => array(
+						'id'             => array(
 							'type'        => 'integer',
 							'description' => __( 'Client ID to update.', 'ndizi-project-management' ),
 						),
-						'name'    => array(
+						'name'           => array(
 							'type'        => 'string',
 							'description' => __( 'Client name.', 'ndizi-project-management' ),
 						),
-						'website' => array(
+						'website'        => array(
 							'type'        => 'string',
 							'description' => __( 'Client website URL.', 'ndizi-project-management' ),
 						),
-						'address' => array(
+						'address'        => array(
 							'type'        => 'string',
 							'description' => __( 'Client address.', 'ndizi-project-management' ),
 						),
-						'status'  => array(
+						'status'         => array(
 							'type' => 'string',
 							'enum' => array( 'active', 'archived' ),
 						),
+						'external_links' => self::external_links_property(),
 					),
 					'required'   => array( 'id' ),
 				),
@@ -897,51 +931,53 @@ class Ndizi_Abilities {
 		};
 
 		$project_properties = array(
-			'title'       => array(
+			'title'          => array(
 				'type'        => 'string',
 				'description' => __( 'Project title.', 'ndizi-project-management' ),
 			),
-			'client_id'   => array(
+			'client_id'      => array(
 				'type'        => 'integer',
 				'description' => __( 'Client this project belongs to.', 'ndizi-project-management' ),
 			),
-			'description' => array(
+			'description'    => array(
 				'type'        => 'string',
 				'description' => __( 'Project description.', 'ndizi-project-management' ),
 			),
-			'start_date'  => array(
+			'start_date'     => array(
 				'type'        => 'string',
 				'description' => __( 'Project start date (Y-m-d).', 'ndizi-project-management' ),
 			),
-			'end_date'    => array(
+			'end_date'       => array(
 				'type'        => 'string',
 				'description' => __( 'Project end date (Y-m-d).', 'ndizi-project-management' ),
 			),
-			'budget'      => array(
+			'budget'         => array(
 				'type'        => 'number',
 				'description' => __( 'Project budget.', 'ndizi-project-management' ),
 			),
-			'status'      => array(
+			'status'         => array(
 				'type'        => 'string',
 				'enum'        => array( 'active', 'archived' ),
 				'description' => __( 'Project status. Defaults to active.', 'ndizi-project-management' ),
 			),
-			'hourly_rate' => array(
+			'hourly_rate'    => array(
 				'type'        => 'number',
 				'description' => __( 'Default hourly rate for this project.', 'ndizi-project-management' ),
 			),
+			'external_links' => self::external_links_property(),
 		);
 
 		$output_properties = array(
-			'id'          => array( 'type' => 'integer' ),
-			'title'       => array( 'type' => 'string' ),
-			'description' => array( 'type' => 'string' ),
-			'client_id'   => array( 'type' => 'integer' ),
-			'start_date'  => array( 'type' => 'string' ),
-			'end_date'    => array( 'type' => 'string' ),
-			'budget'      => array( 'type' => 'number' ),
-			'status'      => array( 'type' => 'string' ),
-			'hourly_rate' => array( 'type' => 'number' ),
+			'id'             => array( 'type' => 'integer' ),
+			'title'          => array( 'type' => 'string' ),
+			'description'    => array( 'type' => 'string' ),
+			'client_id'      => array( 'type' => 'integer' ),
+			'start_date'     => array( 'type' => 'string' ),
+			'end_date'       => array( 'type' => 'string' ),
+			'budget'         => array( 'type' => 'number' ),
+			'status'         => array( 'type' => 'string' ),
+			'hourly_rate'    => array( 'type' => 'number' ),
+			'external_links' => self::external_links_property(),
 		);
 
 		wp_register_ability(
@@ -1089,6 +1125,7 @@ class Ndizi_Abilities {
 				'type'        => 'number',
 				'description' => __( 'Hourly rate for this task, overriding the project rate.', 'ndizi-project-management' ),
 			),
+			'external_links'   => self::external_links_property(),
 		);
 
 		$output_properties = array(
@@ -1101,6 +1138,7 @@ class Ndizi_Abilities {
 			'priority'         => array( 'type' => 'string' ),
 			'due_date'         => array( 'type' => 'string' ),
 			'hourly_rate'      => array( 'type' => 'number' ),
+			'external_links'   => self::external_links_property(),
 		);
 
 		wp_register_ability(
@@ -1214,40 +1252,40 @@ class Ndizi_Abilities {
 		};
 
 		$invoice_properties = array(
-			'number'       => array(
+			'number'         => array(
 				'type'        => 'string',
 				'description' => __( 'Invoice number.', 'ndizi-project-management' ),
 			),
-			'client_id'    => array(
+			'client_id'      => array(
 				'type'        => 'integer',
 				'description' => __( 'Client this invoice is billed to.', 'ndizi-project-management' ),
 			),
-			'project_id'   => array(
+			'project_id'     => array(
 				'type'        => 'integer',
 				'description' => __( 'Project this invoice is for.', 'ndizi-project-management' ),
 			),
-			'currency'     => array(
+			'currency'       => array(
 				'type'        => 'string',
 				'description' => __( 'Currency code. Defaults to the site default currency.', 'ndizi-project-management' ),
 			),
-			'invoice_date' => array(
+			'invoice_date'   => array(
 				'type'        => 'string',
 				'description' => __( 'Invoice date (Y-m-d).', 'ndizi-project-management' ),
 			),
-			'due_date'     => array(
+			'due_date'       => array(
 				'type'        => 'string',
 				'description' => __( 'Invoice due date (Y-m-d).', 'ndizi-project-management' ),
 			),
-			'amount'       => array(
+			'amount'         => array(
 				'type'        => 'number',
 				'description' => __( 'Total invoice amount.', 'ndizi-project-management' ),
 			),
-			'status'       => array(
+			'status'         => array(
 				'type'        => 'string',
 				'enum'        => array( 'draft', 'sent', 'partial', 'paid', 'void' ),
 				'description' => __( 'Invoice status. Defaults to draft; otherwise auto-derived from payments unless set explicitly.', 'ndizi-project-management' ),
 			),
-			'line_items'   => array(
+			'line_items'     => array(
 				'type'        => 'array',
 				'items'       => array(
 					'type'       => 'object',
@@ -1260,7 +1298,7 @@ class Ndizi_Abilities {
 				),
 				'description' => __( 'Line items for this invoice.', 'ndizi-project-management' ),
 			),
-			'payments'     => array(
+			'payments'       => array(
 				'type'        => 'array',
 				'items'       => array(
 					'type'       => 'object',
@@ -1273,21 +1311,23 @@ class Ndizi_Abilities {
 				),
 				'description' => __( 'Recorded payments for this invoice.', 'ndizi-project-management' ),
 			),
+			'external_links' => self::external_links_property(),
 		);
 
 		$output_properties = array(
-			'id'           => array( 'type' => 'integer' ),
-			'number'       => array( 'type' => 'string' ),
-			'client_id'    => array( 'type' => 'integer' ),
-			'project_id'   => array( 'type' => 'integer' ),
-			'currency'     => array( 'type' => 'string' ),
-			'invoice_date' => array( 'type' => 'string' ),
-			'due_date'     => array( 'type' => 'string' ),
-			'amount'       => array( 'type' => 'number' ),
-			'balance'      => array( 'type' => 'number' ),
-			'status'       => array( 'type' => 'string' ),
-			'line_items'   => array( 'type' => 'array' ),
-			'payments'     => array( 'type' => 'array' ),
+			'id'             => array( 'type' => 'integer' ),
+			'number'         => array( 'type' => 'string' ),
+			'client_id'      => array( 'type' => 'integer' ),
+			'project_id'     => array( 'type' => 'integer' ),
+			'currency'       => array( 'type' => 'string' ),
+			'invoice_date'   => array( 'type' => 'string' ),
+			'due_date'       => array( 'type' => 'string' ),
+			'amount'         => array( 'type' => 'number' ),
+			'balance'        => array( 'type' => 'number' ),
+			'status'         => array( 'type' => 'string' ),
+			'line_items'     => array( 'type' => 'array' ),
+			'payments'       => array( 'type' => 'array' ),
+			'external_links' => self::external_links_property(),
 		);
 
 		wp_register_ability(
@@ -2045,14 +2085,15 @@ class Ndizi_Abilities {
 			$budget    = get_post_meta( $project->ID, '_ndizi_project_budget', true );
 
 			$response[] = array(
-				'id'          => $project->ID,
-				'title'       => $project->post_title,
-				'description' => $project->post_content,
-				'client_id'   => $client_id ? intval( $client_id ) : 0,
-				'client_name' => $client ? $client->post_title : '',
-				'budget'      => $budget ? floatval( $budget ) : 0.0,
-				'start_date'  => (string) get_post_meta( $project->ID, '_ndizi_project_start_date', true ),
-				'end_date'    => (string) get_post_meta( $project->ID, '_ndizi_project_end_date', true ),
+				'id'             => $project->ID,
+				'title'          => $project->post_title,
+				'description'    => $project->post_content,
+				'client_id'      => $client_id ? intval( $client_id ) : 0,
+				'client_name'    => $client ? $client->post_title : '',
+				'budget'         => $budget ? floatval( $budget ) : 0.0,
+				'start_date'     => (string) get_post_meta( $project->ID, '_ndizi_project_start_date', true ),
+				'end_date'       => (string) get_post_meta( $project->ID, '_ndizi_project_end_date', true ),
+				'external_links' => Ndizi_External_Links::get_links( $project->ID ),
 			);
 		}
 
@@ -2114,6 +2155,7 @@ class Ndizi_Abilities {
 				'status'           => (string) get_post_meta( $task->ID, '_ndizi_task_status', true ),
 				'priority'         => (string) get_post_meta( $task->ID, '_ndizi_task_priority', true ),
 				'due_date'         => (string) get_post_meta( $task->ID, '_ndizi_task_due_date', true ),
+				'external_links'   => Ndizi_External_Links::get_links( $task->ID ),
 			);
 		}
 
@@ -2169,20 +2211,21 @@ class Ndizi_Abilities {
 			$client     = $client_id ? get_post( $client_id ) : null;
 
 			$response[] = array(
-				'id'           => $invoice->ID,
-				'number'       => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_number', true ),
-				'project_id'   => $project_id ? intval( $project_id ) : 0,
-				'project_name' => $project ? $project->post_title : '',
-				'client_id'    => $client_id ? intval( $client_id ) : 0,
-				'client_name'  => $client ? $client->post_title : '',
-				'status'       => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_status', true ),
-				'amount'       => floatval( get_post_meta( $invoice->ID, '_ndizi_invoice_amount', true ) ),
-				'balance'      => floatval( Ndizi_Invoicing::get_invoice_balance( $invoice->ID ) ),
-				'currency'     => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_currency', true ),
-				'invoice_date' => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_date', true ),
-				'due_date'     => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_due_date', true ),
-				'line_items'   => self::normalize_list( get_post_meta( $invoice->ID, '_ndizi_invoice_line_items', true ) ),
-				'payments'     => self::normalize_list( get_post_meta( $invoice->ID, '_ndizi_invoice_payments', true ) ),
+				'id'             => $invoice->ID,
+				'number'         => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_number', true ),
+				'project_id'     => $project_id ? intval( $project_id ) : 0,
+				'project_name'   => $project ? $project->post_title : '',
+				'client_id'      => $client_id ? intval( $client_id ) : 0,
+				'client_name'    => $client ? $client->post_title : '',
+				'status'         => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_status', true ),
+				'amount'         => floatval( get_post_meta( $invoice->ID, '_ndizi_invoice_amount', true ) ),
+				'balance'        => floatval( Ndizi_Invoicing::get_invoice_balance( $invoice->ID ) ),
+				'currency'       => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_currency', true ),
+				'invoice_date'   => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_date', true ),
+				'due_date'       => (string) get_post_meta( $invoice->ID, '_ndizi_invoice_due_date', true ),
+				'line_items'     => self::normalize_list( get_post_meta( $invoice->ID, '_ndizi_invoice_line_items', true ) ),
+				'payments'       => self::normalize_list( get_post_meta( $invoice->ID, '_ndizi_invoice_payments', true ) ),
+				'external_links' => Ndizi_External_Links::get_links( $invoice->ID ),
 			);
 		}
 
@@ -2355,11 +2398,12 @@ class Ndizi_Abilities {
 	 */
 	private static function format_client( $post ) {
 		return array(
-			'id'      => $post->ID,
-			'name'    => $post->post_title,
-			'website' => (string) get_post_meta( $post->ID, '_ndizi_client_website', true ),
-			'address' => (string) get_post_meta( $post->ID, '_ndizi_client_address', true ),
-			'status'  => (string) get_post_meta( $post->ID, '_ndizi_client_status', true ),
+			'id'             => $post->ID,
+			'name'           => $post->post_title,
+			'website'        => (string) get_post_meta( $post->ID, '_ndizi_client_website', true ),
+			'address'        => (string) get_post_meta( $post->ID, '_ndizi_client_address', true ),
+			'status'         => (string) get_post_meta( $post->ID, '_ndizi_client_status', true ),
+			'external_links' => Ndizi_External_Links::get_links( $post->ID ),
 		);
 	}
 
@@ -2399,6 +2443,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function create_client( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'ndizi_client',
@@ -2419,6 +2468,10 @@ class Ndizi_Abilities {
 		}
 		update_post_meta( $post_id, '_ndizi_client_status', self::sanitize_enum( isset( $input['status'] ) ? $input['status'] : '', array( 'active', 'archived' ), 'active' ) );
 
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post_id, $input['external_links'] );
+		}
+
 		return self::format_client( get_post( $post_id ) );
 	}
 
@@ -2429,6 +2482,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function update_client( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$post = self::get_post_of_type( $input['id'], 'ndizi_client', 'id' );
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -2450,6 +2508,10 @@ class Ndizi_Abilities {
 		}
 		if ( isset( $input['status'] ) ) {
 			update_post_meta( $post->ID, '_ndizi_client_status', self::sanitize_enum( $input['status'], array( 'active', 'archived' ), 'active' ) );
+		}
+
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post->ID, $input['external_links'] );
 		}
 
 		return self::format_client( get_post( $post->ID ) );
@@ -2520,15 +2582,16 @@ class Ndizi_Abilities {
 		$client_id = get_post_meta( $post->ID, '_ndizi_client_id', true );
 
 		return array(
-			'id'          => $post->ID,
-			'title'       => $post->post_title,
-			'description' => $post->post_content,
-			'client_id'   => $client_id ? intval( $client_id ) : 0,
-			'start_date'  => (string) get_post_meta( $post->ID, '_ndizi_project_start_date', true ),
-			'end_date'    => (string) get_post_meta( $post->ID, '_ndizi_project_end_date', true ),
-			'budget'      => floatval( get_post_meta( $post->ID, '_ndizi_project_budget', true ) ),
-			'status'      => (string) get_post_meta( $post->ID, '_ndizi_project_status', true ),
-			'hourly_rate' => floatval( get_post_meta( $post->ID, '_ndizi_project_hourly_rate', true ) ),
+			'id'             => $post->ID,
+			'title'          => $post->post_title,
+			'description'    => $post->post_content,
+			'client_id'      => $client_id ? intval( $client_id ) : 0,
+			'start_date'     => (string) get_post_meta( $post->ID, '_ndizi_project_start_date', true ),
+			'end_date'       => (string) get_post_meta( $post->ID, '_ndizi_project_end_date', true ),
+			'budget'         => floatval( get_post_meta( $post->ID, '_ndizi_project_budget', true ) ),
+			'status'         => (string) get_post_meta( $post->ID, '_ndizi_project_status', true ),
+			'hourly_rate'    => floatval( get_post_meta( $post->ID, '_ndizi_project_hourly_rate', true ) ),
+			'external_links' => Ndizi_External_Links::get_links( $post->ID ),
 		);
 	}
 
@@ -2539,6 +2602,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function create_project( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$client = self::get_post_of_type( $input['client_id'], 'ndizi_client', 'client_id' );
 		if ( is_wp_error( $client ) ) {
 			return $client;
@@ -2572,6 +2640,10 @@ class Ndizi_Abilities {
 		}
 		update_post_meta( $post_id, '_ndizi_project_status', self::sanitize_enum( isset( $input['status'] ) ? $input['status'] : '', array( 'active', 'archived' ), 'active' ) );
 
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post_id, $input['external_links'] );
+		}
+
 		return self::format_project( get_post( $post_id ) );
 	}
 
@@ -2582,6 +2654,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function update_project( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$post = self::get_post_of_type( $input['id'], 'ndizi_project', 'id' );
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -2619,6 +2696,10 @@ class Ndizi_Abilities {
 		}
 		if ( isset( $input['status'] ) ) {
 			update_post_meta( $post->ID, '_ndizi_project_status', self::sanitize_enum( $input['status'], array( 'active', 'archived' ), 'active' ) );
+		}
+
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post->ID, $input['external_links'] );
 		}
 
 		return self::format_project( get_post( $post->ID ) );
@@ -2691,6 +2772,7 @@ class Ndizi_Abilities {
 			'priority'         => (string) get_post_meta( $post->ID, '_ndizi_task_priority', true ),
 			'due_date'         => (string) get_post_meta( $post->ID, '_ndizi_task_due_date', true ),
 			'hourly_rate'      => floatval( get_post_meta( $post->ID, '_ndizi_task_hourly_rate', true ) ),
+			'external_links'   => Ndizi_External_Links::get_links( $post->ID ),
 		);
 	}
 
@@ -2701,6 +2783,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function create_task( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$project = self::get_post_of_type( $input['project_id'], 'ndizi_project', 'project_id' );
 		if ( is_wp_error( $project ) ) {
 			return $project;
@@ -2732,6 +2819,10 @@ class Ndizi_Abilities {
 		update_post_meta( $post_id, '_ndizi_task_status', self::sanitize_enum( isset( $input['status'] ) ? $input['status'] : '', array( 'open', 'in_progress', 'completed', 'cancelled' ), 'open' ) );
 		update_post_meta( $post_id, '_ndizi_task_priority', self::sanitize_enum( isset( $input['priority'] ) ? $input['priority'] : '', array( 'low', 'medium', 'high' ), 'medium' ) );
 
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post_id, $input['external_links'] );
+		}
+
 		return self::format_task( get_post( $post_id ) );
 	}
 
@@ -2742,6 +2833,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function update_task( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$post = self::get_post_of_type( $input['id'], 'ndizi_task', 'id' );
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -2779,6 +2875,10 @@ class Ndizi_Abilities {
 		}
 		if ( isset( $input['priority'] ) ) {
 			update_post_meta( $post->ID, '_ndizi_task_priority', self::sanitize_enum( $input['priority'], array( 'low', 'medium', 'high' ), 'medium' ) );
+		}
+
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post->ID, $input['external_links'] );
 		}
 
 		return self::format_task( get_post( $post->ID ) );
@@ -2831,18 +2931,19 @@ class Ndizi_Abilities {
 		$project_id = get_post_meta( $post->ID, '_ndizi_project_id', true );
 
 		return array(
-			'id'           => $post->ID,
-			'number'       => (string) get_post_meta( $post->ID, '_ndizi_invoice_number', true ),
-			'client_id'    => $client_id ? intval( $client_id ) : 0,
-			'project_id'   => $project_id ? intval( $project_id ) : 0,
-			'currency'     => (string) get_post_meta( $post->ID, '_ndizi_invoice_currency', true ),
-			'invoice_date' => (string) get_post_meta( $post->ID, '_ndizi_invoice_date', true ),
-			'due_date'     => (string) get_post_meta( $post->ID, '_ndizi_invoice_due_date', true ),
-			'amount'       => floatval( get_post_meta( $post->ID, '_ndizi_invoice_amount', true ) ),
-			'balance'      => floatval( Ndizi_Invoicing::get_invoice_balance( $post->ID ) ),
-			'status'       => (string) get_post_meta( $post->ID, '_ndizi_invoice_status', true ),
-			'line_items'   => self::normalize_list( get_post_meta( $post->ID, '_ndizi_invoice_line_items', true ) ),
-			'payments'     => self::normalize_list( get_post_meta( $post->ID, '_ndizi_invoice_payments', true ) ),
+			'id'             => $post->ID,
+			'number'         => (string) get_post_meta( $post->ID, '_ndizi_invoice_number', true ),
+			'client_id'      => $client_id ? intval( $client_id ) : 0,
+			'project_id'     => $project_id ? intval( $project_id ) : 0,
+			'currency'       => (string) get_post_meta( $post->ID, '_ndizi_invoice_currency', true ),
+			'invoice_date'   => (string) get_post_meta( $post->ID, '_ndizi_invoice_date', true ),
+			'due_date'       => (string) get_post_meta( $post->ID, '_ndizi_invoice_due_date', true ),
+			'amount'         => floatval( get_post_meta( $post->ID, '_ndizi_invoice_amount', true ) ),
+			'balance'        => floatval( Ndizi_Invoicing::get_invoice_balance( $post->ID ) ),
+			'status'         => (string) get_post_meta( $post->ID, '_ndizi_invoice_status', true ),
+			'line_items'     => self::normalize_list( get_post_meta( $post->ID, '_ndizi_invoice_line_items', true ) ),
+			'payments'       => self::normalize_list( get_post_meta( $post->ID, '_ndizi_invoice_payments', true ) ),
+			'external_links' => Ndizi_External_Links::get_links( $post->ID ),
 		);
 	}
 
@@ -2853,6 +2954,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function create_invoice( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$client_id  = 0;
 		$project_id = 0;
 
@@ -2912,6 +3018,10 @@ class Ndizi_Abilities {
 			update_post_meta( $post_id, '_ndizi_invoice_status', self::sanitize_enum( $input['status'], array( 'draft', 'sent', 'partial', 'paid', 'void' ), 'draft' ) );
 		}
 
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post_id, $input['external_links'] );
+		}
+
 		return self::format_invoice( get_post( $post_id ) );
 	}
 
@@ -2922,6 +3032,11 @@ class Ndizi_Abilities {
 	 * @return array|WP_Error
 	 */
 	public static function update_invoice( $input ) {
+		$external_links_valid = self::validate_external_links_input( $input );
+		if ( is_wp_error( $external_links_valid ) ) {
+			return $external_links_valid;
+		}
+
 		$post = self::get_post_of_type( $input['id'], 'ndizi_invoice', 'id' );
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -2972,6 +3087,10 @@ class Ndizi_Abilities {
 		// that Ndizi_Invoicing runs whenever amount/payments meta changes above.
 		if ( isset( $input['status'] ) ) {
 			update_post_meta( $post->ID, '_ndizi_invoice_status', self::sanitize_enum( $input['status'], array( 'draft', 'sent', 'partial', 'paid', 'void' ), 'draft' ) );
+		}
+
+		if ( isset( $input['external_links'] ) ) {
+			Ndizi_External_Links::set_links( $post->ID, $input['external_links'] );
 		}
 
 		return self::format_invoice( get_post( $post->ID ) );

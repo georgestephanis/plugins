@@ -865,6 +865,9 @@ class Ndizi_CPTs {
 				)
 			);
 		}
+
+		// External links (repeatable label + URL) on every record that can be mirrored from another system.
+		Ndizi_External_Links::register_meta();
 	}
 
 	/**
