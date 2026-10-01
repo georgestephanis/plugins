@@ -17,6 +17,13 @@ import { DataViews, filterSortAndPaginate } from '@wordpress/dataviews/wp';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
 
+// DataViews cells default to `white-space: nowrap`, so long project/task text
+// spills over the neighbouring column. Force wrapping in text cells.
+const WRAP_STYLE = {
+	whiteSpace: 'normal',
+	overflowWrap: 'anywhere',
+};
+
 /* global ndizi_portal_time_log */
 
 const TimeLogApp = () => {
@@ -134,7 +141,7 @@ const TimeLogApp = () => {
 				enableSorting: false,
 				getValue: ( { item } ) => parseInt( item.project_id, 10 ),
 				render: ( { item } ) => (
-					<div>
+					<div style={ WRAP_STYLE }>
 						<strong>
 							{ item.project_name ||
 								( item.project_id
@@ -144,6 +151,7 @@ const TimeLogApp = () => {
 						{ item.task_name && (
 							<div
 								style={ {
+									...WRAP_STYLE,
 									color: '#64748b',
 									fontSize: '0.9em',
 								} }
@@ -160,12 +168,7 @@ const TimeLogApp = () => {
 				filterBy: false,
 				enableSorting: false,
 				render: ( { item } ) => (
-					<div
-						style={ {
-							whiteSpace: 'normal',
-							wordBreak: 'break-word',
-						} }
-					>
+					<div style={ WRAP_STYLE }>
 						{ item.description || (
 							<em>
 								{ __(
