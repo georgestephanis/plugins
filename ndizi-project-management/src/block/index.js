@@ -19,6 +19,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 		showTasks,
 		showInvoices,
 		showDiscussion,
+		showExternalLinks,
 	} = attributes;
 
 	const blockProps = useBlockProps( {
@@ -103,6 +104,20 @@ const Edit = ( { attributes, setAttributes } ) => {
 						checked={ showDiscussion }
 						onChange={ ( value ) =>
 							setAttributes( { showDiscussion: value } )
+						}
+					/>
+					<ToggleControl
+						label={ __(
+							'Show external links',
+							'ndizi-project-management'
+						) }
+						help={ __(
+							"Shows each task's external links (e.g. Asana, GitHub) to clients.",
+							'ndizi-project-management'
+						) }
+						checked={ showExternalLinks }
+						onChange={ ( value ) =>
+							setAttributes( { showExternalLinks: value } )
 						}
 					/>
 				</PanelBody>

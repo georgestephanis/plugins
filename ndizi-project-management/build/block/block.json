@@ -48,6 +48,10 @@
     "showDiscussion": {
       "type": "boolean",
       "default": true
+    },
+    "showExternalLinks": {
+      "type": "boolean",
+      "default": true
     }
   }
 }

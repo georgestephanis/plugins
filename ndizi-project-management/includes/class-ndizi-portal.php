@@ -637,7 +637,7 @@ class Ndizi_Portal {
 						}
 					}
 
-					wp_safe_redirect( remove_query_arg( 'ndizi_submit_portal_comment' ) );
+					wp_safe_redirect( remove_query_arg( 'ndizi_submit_portal_comment' ) . '#ndizi-discussion-' . $post_id );
 					exit;
 				}
 			}
@@ -659,6 +659,7 @@ class Ndizi_Portal {
 				'showTasks'            => true,
 				'showInvoices'         => true,
 				'showDiscussion'       => true,
+				'showExternalLinks'    => true,
 			),
 			$atts
 		);
@@ -806,7 +807,15 @@ class Ndizi_Portal {
 		<div class="ndizi-portal-layout">
 			<!-- Main projects column -->
 			<div class="ndizi-portal-main">
-				<h2><?php esc_html_e( 'Your Projects', 'ndizi-project-management' ); ?></h2>
+				<div class="ndizi-projects-heading">
+					<h2><?php esc_html_e( 'Your Projects', 'ndizi-project-management' ); ?></h2>
+					<?php if ( ! empty( $projects ) && ! empty( $atts['showTasks'] ) ) : ?>
+						<label class="ndizi-hide-completed-toggle">
+							<input type="checkbox" id="ndizi_hide_completed">
+							<?php esc_html_e( 'Hide completed tasks', 'ndizi-project-management' ); ?>
+						</label>
+					<?php endif; ?>
+				</div>
 				<?php if ( empty( $projects ) ) : ?>
 					<div class="ndizi-portal-card no-items">
 						<p><?php esc_html_e( 'You do not have any projects assigned yet.', 'ndizi-project-management' ); ?></p>
@@ -850,6 +859,26 @@ class Ndizi_Portal {
 									),
 								)
 							);
+
+							$task_total      = count( $tasks );
+							$completed_count = 0;
+							foreach ( $tasks as $task_row ) {
+								if ( 'completed' === get_post_meta( $task_row->ID, '_ndizi_task_status', true ) ) {
+									++$completed_count;
+								}
+							}
+							$open_count = $task_total - $completed_count;
+
+							/* translators: %d: number of tasks */
+							$task_summary = sprintf( _n( '%d task', '%d tasks', $task_total, 'ndizi-project-management' ), $task_total );
+							if ( $task_total > 0 && 0 === $completed_count ) {
+								$task_summary .= ' (' . ( 1 === $task_total ? __( 'open', 'ndizi-project-management' ) : __( 'all open', 'ndizi-project-management' ) ) . ')';
+							} elseif ( $task_total > 0 && 0 === $open_count ) {
+								$task_summary .= ' (' . ( 1 === $task_total ? __( 'completed', 'ndizi-project-management' ) : __( 'all completed', 'ndizi-project-management' ) ) . ')';
+							} elseif ( $task_total > 0 ) {
+								/* translators: 1: open task count, 2: completed task count */
+								$task_summary .= ' (' . sprintf( __( '%1$d open, %2$d completed', 'ndizi-project-management' ), $open_count, $completed_count ) . ')';
+							}
 							?>
 							<div class="ndizi-portal-card ndizi-project-card" data-project-id="<?php echo esc_attr( $project->ID ); ?>">
 								<div class="ndizi-project-card-header">
@@ -858,7 +887,7 @@ class Ndizi_Portal {
 										<div class="ndizi-project-summary-meta">
 											<span class="ndizi-meta-hours"><strong><?php echo esc_html( $total_hours ); ?></strong> <?php esc_html_e( 'hours tracked', 'ndizi-project-management' ); ?></span>
 											<span class="ndizi-meta-divider">&bull;</span>
-											<span class="ndizi-meta-tasks"><?php echo count( $tasks ); ?> <?php esc_html_e( 'tasks', 'ndizi-project-management' ); ?></span>
+											<span class="ndizi-meta-tasks"><?php echo esc_html( $task_summary ); ?></span>
 										</div>
 									</div>
 									<button type="button" class="ndizi-accordion-toggle-btn">
@@ -886,38 +915,51 @@ class Ndizi_Portal {
 													$status   = get_post_meta( $task->ID, '_ndizi_task_status', true );
 													$priority = get_post_meta( $task->ID, '_ndizi_task_priority', true );
 													$due      = get_post_meta( $task->ID, '_ndizi_task_due_date', true );
+													$msgs     = (int) $task->comment_count;
 													?>
-													<li class="ndizi-portal-task-item">
-														<div class="ndizi-task-details-col">
-															<span class="ndizi-task-title"><?php echo esc_html( $task->post_title ); ?></span>
-															<?php if ( $due ) : ?>
-																<span class="ndizi-task-due"><?php esc_html_e( 'Due:', 'ndizi-project-management' ); ?> <?php echo esc_html( $due ); ?></span>
-															<?php endif; ?>
-															<?php
-															/**
-															 * Whether to show a task's external links in the client portal.
-															 *
-															 * Off by default: external links usually point at internal tooling (an Asana
-															 * task, a GitHub PR) that clients can't open.
-															 *
-															 * @param bool    $show Whether to show the links. Default false.
-															 * @param WP_Post $task The task being rendered.
-															 */
-															if ( apply_filters( 'ndizi_portal_show_external_links', false, $task ) ) {
-																echo wp_kses_post( Ndizi_External_Links::render_list( $task->ID ) );
-															}
-															?>
+													<li class="ndizi-portal-task-item" id="ndizi-task-<?php echo esc_attr( $task->ID ); ?>" data-status="<?php echo esc_attr( $status ); ?>">
+														<div class="ndizi-task-row">
+															<div class="ndizi-task-details-col">
+																<span class="ndizi-task-title"><?php echo esc_html( $task->post_title ); ?></span>
+																<?php if ( $due ) : ?>
+																	<span class="ndizi-task-due"><?php esc_html_e( 'Due:', 'ndizi-project-management' ); ?> <?php echo esc_html( $due ); ?></span>
+																<?php endif; ?>
+															</div>
+															<div class="ndizi-task-badges-col">
+																<?php
+																/**
+																 * Whether to show a task's external links in the client portal.
+																 *
+																 * Defaults to the portal block's "Show external links" setting (on unless
+																 * turned off). Links often point at internal tooling that clients can't
+																 * open, so this filter lets a site override the block per task.
+																 *
+																 * @param bool    $show Whether to show the links.
+																 * @param WP_Post $task The task being rendered.
+																 */
+																if ( apply_filters( 'ndizi_portal_show_external_links', filter_var( $atts['showExternalLinks'], FILTER_VALIDATE_BOOLEAN ), $task ) ) {
+																	echo wp_kses_post( Ndizi_External_Links::render_list( $task->ID ) );
+																}
+																?>
+																<span class="ndizi-badge ndizi-task-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status ); ?></span>
+																<!-- Task discussion toggle: expands the thread inline beneath the row. -->
+																<button type="button" class="ndizi-btn-comment-dialog<?php echo $msgs ? ' has-messages' : ''; ?>" data-post-id="<?php echo esc_attr( $task->ID ); ?>" aria-expanded="false" aria-controls="ndizi-discussion-<?php echo esc_attr( $task->ID ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: task title */ __( 'Discussion: %s', 'ndizi-project-management' ), $task->post_title ) ); ?>">
+																	<span class="dashicons dashicons-admin-comments"></span>
+																	<?php if ( $msgs ) : ?>
+																		<span class="ndizi-comment-count"><?php echo esc_html( $msgs ); ?></span>
+																	<?php endif; ?>
+																</button>
+															</div>
 														</div>
-														<div class="ndizi-task-badges-col">
-															<span class="ndizi-badge ndizi-task-<?php echo esc_attr( $status ); ?>"><?php echo esc_html( $status ); ?></span>
-															<!-- Task Discussion Dialog trigger button -->
-															<button type="button" class="ndizi-btn-comment-dialog" data-post-id="<?php echo esc_attr( $task->ID ); ?>" data-title="<?php echo esc_attr( $task->post_title ); ?>">
-																<span class="dashicons dashicons-admin-comments"></span>
-															</button>
-														</div>
+														<div class="ndizi-task-discussion-panel" id="ndizi-discussion-<?php echo esc_attr( $task->ID ); ?>" hidden></div>
 													</li>
 												<?php endforeach; ?>
 											</ul>
+											<?php if ( $completed_count ) : ?>
+												<button type="button" class="ndizi-show-completed-link" data-show-label="<?php echo esc_attr( sprintf( /* translators: %d: number of completed tasks */ _n( 'Show %d completed task', 'Show %d completed tasks', $completed_count, 'ndizi-project-management' ), $completed_count ) ); ?>" data-hide-label="<?php esc_attr_e( 'Hide completed tasks', 'ndizi-project-management' ); ?>">
+													<?php echo esc_html( sprintf( /* translators: %d: number of completed tasks */ _n( 'Show %d completed task', 'Show %d completed tasks', $completed_count, 'ndizi-project-management' ), $completed_count ) ); ?>
+												</button>
+											<?php endif; ?>
 										<?php endif; ?>
 									</div>
 
@@ -1018,7 +1060,7 @@ class Ndizi_Portal {
 
 									<!-- Project Discussion / Messages -->
 									<?php if ( ! empty( $atts['showDiscussion'] ) ) : ?>
-									<div class="ndizi-portal-discussion-section">
+									<div class="ndizi-portal-discussion-section" id="ndizi-discussion-<?php echo esc_attr( $project->ID ); ?>">
 										<h4><?php esc_html_e( 'Project Discussion & Attachments', 'ndizi-project-management' ); ?></h4>
 										<?php self::render_discussion_thread( $project->ID ); ?>
 									</div>
@@ -1344,18 +1386,6 @@ class Ndizi_Portal {
 			</div>
 		</div>
 
-		<!-- Dialog Modal overlay for Task Discussions -->
-		<div id="ndizi_task_comment_modal" class="ndizi-portal-modal" style="display: none;">
-			<div class="ndizi-portal-modal-content">
-				<div class="ndizi-portal-modal-header">
-					<h3 id="ndizi_modal_task_title">Task Discussion</h3>
-					<button type="button" class="ndizi-portal-modal-close-btn">&times;</button>
-				</div>
-				<div class="ndizi-portal-modal-body" id="ndizi_modal_discussion_container">
-					<!-- Populated by JS ajax or page triggers -->
-				</div>
-			</div>
-		</div>
 		<?php
 	}
 

@@ -10,7 +10,9 @@ import './portal-style.scss';
 
 	$( document ).ready( function () {
 		initProjectAccordion();
-		initTaskCommentModal();
+		initTaskDiscussions();
+		initCompletedToggle();
+		openDiscussionFromHash();
 		initStripePayment();
 	} );
 
@@ -33,71 +35,159 @@ import './portal-style.scss';
 	}
 
 	/**
-	 * Task Comment Overlay Modal
+	 * Task discussions expand inline beneath the task row, like projects do.
+	 * The thread is fetched on first open and then kept.
 	 */
-	function initTaskCommentModal() {
-		const $modal = $( '#ndizi_task_comment_modal' );
-		if ( ! $modal.length ) {
+	function initTaskDiscussions() {
+		const ajaxUrl =
+			typeof window.ndizi_portal !== 'undefined' &&
+			window.ndizi_portal.ajax_url
+				? window.ndizi_portal.ajax_url
+				: '/wp-admin/admin-ajax.php';
+
+		$( document ).on( 'click', '.ndizi-task-row', function ( e ) {
+			// Links inside the row keep their own behaviour.
+			if ( $( e.target ).closest( 'a' ).length ) {
+				return;
+			}
+			toggleTaskDiscussion(
+				$( this ).find( '.ndizi-btn-comment-dialog' ),
+				ajaxUrl
+			);
+		} );
+	}
+
+	/**
+	 * Open or close one task's inline discussion panel.
+	 *
+	 * @param {Object}  $btn      The task's discussion toggle button (jQuery).
+	 * @param {string}  ajaxUrl   admin-ajax endpoint.
+	 * @param {boolean} forceOpen Open even if currently open.
+	 */
+	function toggleTaskDiscussion( $btn, ajaxUrl, forceOpen ) {
+		const $panel = $( '#' + $btn.attr( 'aria-controls' ) );
+		const open = forceOpen || $btn.attr( 'aria-expanded' ) !== 'true';
+
+		$btn.attr( 'aria-expanded', open ? 'true' : 'false' );
+		$panel.prop( 'hidden', ! open );
+
+		if ( ! open || $panel.data( 'loaded' ) ) {
 			return;
 		}
 
-		// Open Modal on comment click
-		$( document ).on( 'click', '.ndizi-btn-comment-dialog', function ( e ) {
-			e.preventDefault();
-			const $btn = $( this );
-			const taskId = $btn.data( 'post-id' );
-			const title = $btn.data( 'title' );
+		$panel.html(
+			'<div class="no-items"><span class="spinner is-active" style="float:none; margin:0 auto 10px;"></span> Loading messages...</div>'
+		);
 
-			$( '#ndizi_modal_task_title' ).text( 'Discussion: ' + title );
-			$( '#ndizi_modal_discussion_container' ).html(
-				'<div class="no-items"><span class="spinner is-active" style="float:none; margin:0 auto 10px;"></span> Loading messages...</div>'
-			);
+		$.post( ajaxUrl, {
+			action: 'ndizi_load_task_discussion',
+			task_id: $btn.data( 'post-id' ),
+		} )
+			.done( function ( response ) {
+				if ( response && response.success && response.data.html ) {
+					$panel.html( response.data.html ).data( 'loaded', true );
+				} else {
+					$panel.html(
+						'<div class="ndizi-portal-alert alert-error">Error loading discussion thread.</div>'
+					);
+				}
+			} )
+			.fail( function () {
+				$panel.html(
+					'<div class="ndizi-portal-alert alert-error">Error loading discussion thread.</div>'
+				);
+			} );
+	}
 
-			$modal.show();
+	/**
+	 * After posting a message the page reloads with #ndizi-discussion-<id>;
+	 * reopen the owning project card and, for tasks, the thread itself.
+	 */
+	function openDiscussionFromHash() {
+		const match = /^#ndizi-discussion-(\d+)$/.exec( window.location.hash );
+		if ( ! match ) {
+			return;
+		}
+		const $target = $( '#ndizi-discussion-' + match[ 1 ] );
+		const $card = $target.closest( '.ndizi-project-card' );
+		if ( ! $card.length ) {
+			return;
+		}
+		$card.addClass( 'ndizi-active-project' );
+		$card.find( '.ndizi-project-card-content' ).show();
 
-			// Fetch discussion HTML via AJAX. Use jQuery against the localized
-			// admin-ajax URL rather than wp.ajax, which depends on wp-util and a
-			// global ajaxurl that are not guaranteed to exist on the frontend.
+		const $btn = $card.find(
+			'.ndizi-btn-comment-dialog[data-post-id="' + match[ 1 ] + '"]'
+		);
+		if ( $btn.length ) {
 			const ajaxUrl =
 				typeof window.ndizi_portal !== 'undefined' &&
 				window.ndizi_portal.ajax_url
 					? window.ndizi_portal.ajax_url
 					: '/wp-admin/admin-ajax.php';
+			toggleTaskDiscussion( $btn, ajaxUrl, true );
+		}
+		$target.get( 0 ).scrollIntoView( { block: 'center' } );
+	}
 
-			$.post( ajaxUrl, {
-				action: 'ndizi_load_task_discussion',
-				task_id: taskId,
-			} )
-				.done( function ( response ) {
-					if ( response && response.success && response.data.html ) {
-						$( '#ndizi_modal_discussion_container' ).html(
-							response.data.html
-						);
-					} else {
-						$( '#ndizi_modal_discussion_container' ).html(
-							'<div class="ndizi-portal-alert alert-error">Error loading discussion thread.</div>'
-						);
-					}
-				} )
-				.fail( function () {
-					$( '#ndizi_modal_discussion_container' ).html(
-						'<div class="ndizi-portal-alert alert-error">Error loading discussion thread.</div>'
-					);
-				} );
-		} );
+	/**
+	 * Hide completed tasks (remembered per browser), with a per-project link
+	 * to reveal that project's completed tasks again.
+	 */
+	function initCompletedToggle() {
+		const $toggle = $( '#ndizi_hide_completed' );
+		if ( ! $toggle.length ) {
+			return;
+		}
+		const $main = $( '.ndizi-portal-main' );
+		const storageKey = 'ndizi_portal_hide_completed';
 
-		// Close modal button
-		$( '.ndizi-portal-modal-close-btn' ).on( 'click', function () {
-			$modal.hide();
-			$( '#ndizi_modal_discussion_container' ).empty();
-		} );
-
-		// Close modal on background click
-		$modal.on( 'click', function ( e ) {
-			if ( $( e.target ).hasClass( 'ndizi-portal-modal' ) ) {
-				$modal.hide();
-				$( '#ndizi_modal_discussion_container' ).empty();
+		const apply = function ( hide ) {
+			$main.toggleClass( 'ndizi-hide-completed', hide );
+			$toggle.prop( 'checked', hide );
+			if ( ! hide ) {
+				$( '.ndizi-project-card' ).removeClass(
+					'ndizi-show-completed'
+				);
+				syncLinkLabels();
 			}
+		};
+
+		const syncLinkLabels = function () {
+			$( '.ndizi-show-completed-link' ).each( function () {
+				const $link = $( this );
+				const shown = $link
+					.closest( '.ndizi-project-card' )
+					.hasClass( 'ndizi-show-completed' );
+				$link.text(
+					shown
+						? $link.data( 'hide-label' )
+						: $link.data( 'show-label' )
+				);
+			} );
+		};
+
+		try {
+			apply( window.localStorage.getItem( storageKey ) === '1' );
+		} catch ( err ) {
+			apply( false );
+		}
+
+		$toggle.on( 'change', function () {
+			const hide = $( this ).is( ':checked' );
+			apply( hide );
+			try {
+				window.localStorage.setItem( storageKey, hide ? '1' : '0' );
+			} catch ( err ) {
+				// Storage unavailable; the choice just won't persist.
+			}
+		} );
+
+		$( document ).on( 'click', '.ndizi-show-completed-link', function () {
+			$( this )
+				.closest( '.ndizi-project-card' )
+				.toggleClass( 'ndizi-show-completed' );
+			syncLinkLabels();
 		} );
 	}
 
