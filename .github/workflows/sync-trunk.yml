@@ -100,7 +100,7 @@ jobs:
           svn update --set-depth infinity "$SVN_DIR/trunk"
 
           # Build rsync exclusions from .distignore (preferred) or .gitattributes
-          EXCLUDES="--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore"
+          EXCLUDES="--exclude=.git --exclude=.github/ --exclude=node_modules/ --exclude=.distignore"
           if [ -f "$SRC/.distignore" ]; then
             echo "Using .distignore for exclusions:"
             while IFS= read -r line; do
