@@ -73,7 +73,23 @@ The SVN release goes out immediately; the PR gives you a record and a merge path
 Every workflow deploys the commit the monorepo **pins** for a submodule, not the tip of its upstream
 branch, so merging something upstream doesn't reach WordPress.org until the pointer here moves.
 Dependabot (`.github/dependabot.yml`) checks weekly and opens a `Bump submodule …` PR for each
-submodule whose upstream default branch has moved ahead; merge it to pick the change up.
+submodule whose upstream default branch has moved ahead; merge it to pick the change up, or use
+`update_submodule` (below) to deploy the upstream tip directly.
+
+### Deploying a submodule's latest commit
+
+To ship what's on the upstream default branch without waiting for a pointer bump, tick **`update_submodule`** when dispatching `deploy.yml`,
+`asset-update.yml` or `sync-trunk.yml`. The workflow then:
+
+1. Fetches the upstream default branch (whatever it's called) and deploys its tip.
+2. After a successful SVN commit, commits the new pointer to `main` (`deploy.yml` folds it into
+   its "Update deploy status" commit; the other two commit `Point <slug> at <sha>`).
+
+With `dry_run` it still deploys from the tip but records nothing. It's ignored for
+direct-directory plugins. Note that it ships *everything* merged upstream, not just the change you
+had in mind, so check the upstream branch first. If `deploy.yml` then opens a `bump-v…` PR
+upstream, merging it leaves the pointer one commit behind again; that's harmless, and the next
+`update_submodule` run catches it up.
 
 ---
 
