@@ -1,0 +1,12 @@
+# Opens a PR here whenever a submodule plugin's upstream default branch moves
+# ahead of the commit this repo pins, so pointer bumps don't depend on someone
+# remembering to make them. See "Submodule pointers" in ACTIONS.md.
+version: 2
+updates:
+  - package-ecosystem: gitsubmodule
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 20
+    commit-message:
+      prefix: Bump submodule

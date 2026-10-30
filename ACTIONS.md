@@ -68,6 +68,13 @@ When deploying a submodule plugin (one with a standalone GitHub repo), the deplo
 
 The SVN release goes out immediately; the PR gives you a record and a merge path to keep the upstream repo in sync.
 
+### Submodule pointers
+
+Every workflow deploys the commit the monorepo **pins** for a submodule, not the tip of its upstream
+branch, so merging something upstream doesn't reach WordPress.org until the pointer here moves.
+Dependabot (`.github/dependabot.yml`) checks weekly and opens a `Bump submodule …` PR for each
+submodule whose upstream default branch has moved ahead; merge it to pick the change up.
+
 ---
 
 ## Version tracking
