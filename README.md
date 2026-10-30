@@ -33,6 +33,7 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 | [omnisearch](omnisearch/) | [georgestephanis/omnisearch](https://github.com/georgestephanis/omnisearch) ¹ | Unified search across all WordPress admin search providers. |
 | [press-this-v2](press-this-v2/) | — | Rewrite of the Press This bookmarklet functionality from Core. |
 | [random-blocks](random-blocks/) | [georgestephanis/random-blocks](https://github.com/georgestephanis/random-blocks) ¹ | Additional blocks for the WordPress block editor. |
+| [react](react/) | [pento/react](https://github.com/pento/react) ¹ ⁴ | "Reactions" — lets visitors react to posts with emoji; reactions are stored as ordinary comments. Has JS build step (`npm run build`). |
 | [restrict-block-content](restrict-block-content/) | [bethinkstudio/restrict-block-content](https://github.com/bethinkstudio/restrict-block-content) ¹ | Applies Restrict Content membership restrictions to specific blocks. Has JS build step (`npm run build`). |
 | [reusable-block-count](reusable-block-count/) | [georgestephanis/Reusable-Block-Count](https://github.com/georgestephanis/Reusable-Block-Count) ¹ | Admin listing page showing reusable blocks and which posts contain each one. |
 | [secret-santa](secret-santa/) | [georgestephanis/secret-santa](https://github.com/georgestephanis/secret-santa) ¹ ³ | Organizes Secret Santa groups (admin page + block). |
@@ -50,7 +51,8 @@ A monorepo of WordPress.org plugins. Most plugins live directly in this repo; so
 
 ¹ Tracked as a git submodule — the directory here mirrors the standalone repo.  
 ² Co-authored with chipbennett; source lives under their account.  
-³ **GitHub-only** — not published on WordPress.org. Intentionally excluded from `versions.json` and the `deploy.yml` / `sync-trunk.yml` workflow dropdowns, so it cannot be deployed by the wp.org tooling.
+³ **GitHub-only** — not published on WordPress.org. Intentionally excluded from `versions.json` and the `deploy.yml` / `sync-trunk.yml` workflow dropdowns, so it cannot be deployed by the wp.org tooling.  
+⁴ Co-maintained with pento; source lives under their account.
 
 ## Repo structure
 

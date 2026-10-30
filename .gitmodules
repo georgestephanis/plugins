@@ -73,3 +73,6 @@
 [submodule "ai-provider-for-openai-compatible-servers"]
 	path = ai-provider-for-openai-compatible-servers
 	url = https://github.com/georgestephanis/ai-provider-for-openai-compatible-servers
+[submodule "react"]
+	path = react
+	url = https://github.com/pento/react

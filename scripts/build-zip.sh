@@ -44,7 +44,7 @@ build_with_rsync() {
   mkdir -p "$dest"
 
   # Mirror the exclusion logic used by the SVN deploy step.
-  local excludes=(--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore)
+  local excludes=(--exclude=.git --exclude=.github/ --exclude=node_modules/ --exclude=.distignore)
   if [ -f "$SRC/.distignore" ]; then
     while IFS= read -r line; do
       [[ -z "$line" || "$line" == \#* ]] && continue
