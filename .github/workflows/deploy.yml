@@ -45,6 +45,11 @@ on:
         required: false
         type: boolean
         default: false
+      update_submodule:
+        description: Submodule plugins only — deploy the tip of the upstream default branch instead of the pinned commit, and record it here
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   deploy:
@@ -82,8 +87,21 @@ jobs:
           if git config -f .gitmodules --get "submodule.$SLUG.url" > /dev/null 2>&1; then
             echo "$SLUG is a submodule — initializing only this one"
             git submodule update --init "$SLUG"
+            if [ "${{ inputs.update_submodule }}" = "true" ]; then
+              # A bare `fetch origin HEAD` leaves the upstream default branch's tip
+              # in FETCH_HEAD, whatever that branch is called (master, main, trunk).
+              PINNED=$(git rev-parse --short HEAD:"$SLUG")
+              git -C "$SLUG" fetch origin HEAD
+              git -C "$SLUG" checkout --detach FETCH_HEAD
+              echo "Moved $SLUG from pinned $PINNED to upstream $(git -C "$SLUG" rev-parse --short HEAD)"
+            fi
+            # Captured before any version bump, so it names a real upstream commit.
+            echo "DEPLOYED_SHA=$(git -C "$SLUG" rev-parse HEAD)" >> "$GITHUB_ENV"
           else
             echo "$SLUG is a direct-directory plugin — no submodule init needed"
+            if [ "${{ inputs.update_submodule }}" = "true" ]; then
+              echo "::notice::update_submodule only applies to submodule plugins — ignoring it."
+            fi
           fi
 
       - name: Bump version in plugin files
@@ -281,7 +299,12 @@ jobs:
 
             # Back to monorepo root — commit versions.json + README.md
             cd "$GITHUB_WORKSPACE"
-            if ! git diff --quiet versions.json README.md; then
+            if [ "${{ inputs.update_submodule }}" = "true" ]; then
+              # The submodule's working tree is now on the bump branch, so stage the
+              # pointer from the commit that was actually deployed instead.
+              git update-index --cacheinfo "160000,$DEPLOYED_SHA,$SLUG"
+            fi
+            if ! git diff --quiet versions.json README.md || ! git diff --cached --quiet; then
               git add versions.json README.md
               git commit -m "Update deploy status for $SLUG v$VERSION"
               git push
